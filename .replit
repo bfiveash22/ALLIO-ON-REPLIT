@@ -24,10 +24,10 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "FFPMA App"
+args = "Start application"
 
 [[workflows.workflow]]
-name = "FFPMA App"
+name = "Start application"
 author = "agent"
 
 [[workflows.workflow.tasks]]
