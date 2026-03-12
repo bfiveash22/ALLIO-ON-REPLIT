@@ -122,6 +122,122 @@ export async function registerRoutes(
   const { registerProtocolBuilderRoutes } = await import("./services/protocol-builder");
   registerProtocolBuilderRoutes(app);
 
+  // Register Protocol Assembly routes
+  const {
+    analyzeTranscript,
+    generateProtocol,
+    generateProtocolSlides,
+    profileFromIntakeForm,
+    saveProtocol,
+    updateProtocolSlides,
+    getProtocol,
+    listProtocols,
+  } = await import('./services/protocol-assembly');
+
+  app.post('/api/protocol-assembly/generate', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req, res) => {
+    try {
+      const { transcript, generateSlides: shouldGenerateSlides } = req.body;
+      if (!transcript || typeof transcript !== 'string') {
+        return res.status(400).json({ error: 'transcript is required' });
+      }
+      if (transcript.length > 500000) {
+        return res.status(400).json({ error: 'Transcript exceeds maximum length of 500,000 characters' });
+      }
+      const profile = await analyzeTranscript(transcript);
+      const protocol = await generateProtocol(profile);
+      const protocolId = await saveProtocol(profile, protocol, 'transcript', (req.user as any)?.username);
+      let slides = null;
+      if (shouldGenerateSlides) {
+        try {
+          slides = await generateProtocolSlides(protocol, profile);
+          await updateProtocolSlides(protocolId, slides.presentationId, slides.webViewLink);
+        } catch (slideError: any) {
+          console.error('[Protocol Assembly] Slide generation failed:', slideError.message);
+        }
+      }
+      res.json({ id: protocolId, profile, protocol, slides });
+    } catch (error: any) {
+      console.error('[Protocol Assembly] Generate error:', error);
+      res.status(500).json({ error: 'Failed to generate protocol. Please try again.' });
+    }
+  });
+
+  app.post('/api/protocol-assembly/generate-from-intake/:id', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req, res) => {
+    try {
+      const intakeId = parseInt(req.params.id);
+      if (isNaN(intakeId)) return res.status(400).json({ error: 'Invalid intake form ID' });
+      const schemaModule = await import('@shared/schema');
+      const [intakeRecord] = await db.select().from(schemaModule.intakeForms).where(eq(schemaModule.intakeForms.id, intakeId));
+      if (!intakeRecord) return res.status(404).json({ error: 'Intake form not found' });
+      const formData = intakeRecord.formData as any || {};
+      const patientInfo = {
+        name: (intakeRecord as any).patientName || formData.basicInfo?.name || 'Unknown',
+        email: (intakeRecord as any).patientEmail || formData.basicInfo?.email || '',
+        phone: formData.basicInfo?.phone || '',
+        age: formData.basicInfo?.age || null,
+        dob: formData.basicInfo?.dateOfBirth || null,
+      };
+      const profile = await profileFromIntakeForm(formData, patientInfo);
+      profile.intakeFormId = intakeId;
+      const protocol = await generateProtocol(profile);
+      const protocolId = await saveProtocol(profile, protocol, 'intake_form', (req.user as any)?.username);
+      const { generateSlides: shouldGenerateSlides } = req.body || {};
+      let slides = null;
+      if (shouldGenerateSlides) {
+        try {
+          slides = await generateProtocolSlides(protocol, profile);
+          await updateProtocolSlides(protocolId, slides.presentationId, slides.webViewLink);
+        } catch (slideError: any) {
+          console.error('[Protocol Assembly] Slide generation failed:', slideError.message);
+        }
+      }
+      res.json({ id: protocolId, profile, protocol, slides });
+    } catch (error: any) {
+      console.error('[Protocol Assembly] Generate from intake error:', error);
+      res.status(500).json({ error: 'Failed to generate protocol from intake. Please try again.' });
+    }
+  });
+
+  app.get('/api/protocol-assembly/protocols', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (_req, res) => {
+    try {
+      const protocols = await listProtocols();
+      res.json(protocols);
+    } catch (error: any) {
+      console.error('[Protocol Assembly] List error:', error);
+      res.status(500).json({ error: 'Failed to list protocols' });
+    }
+  });
+
+  app.get('/api/protocol-assembly/protocols/:id', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+      const protocol = await getProtocol(id);
+      if (!protocol) return res.status(404).json({ error: 'Protocol not found' });
+      res.json(protocol);
+    } catch (error: any) {
+      console.error('[Protocol Assembly] Get error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/protocol-assembly/protocols/:id/slides', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+      const record = await getProtocol(id);
+      if (!record) return res.status(404).json({ error: 'Protocol not found' });
+      const protocol = record.protocol as any;
+      const profile = record.patientProfile as any;
+      const slides = await generateProtocolSlides(protocol, profile);
+      await updateProtocolSlides(id, slides.presentationId, slides.webViewLink);
+      res.json(slides);
+    } catch (error: any) {
+      console.error('[Protocol Assembly] Slides error:', error);
+      res.status(500).json({ error: 'Failed to generate slides. Please try again.' });
+    }
+  });
+
   // Register Peptide Console routes
   const { registerPeptideConsoleRoutes } = await import("./services/peptide-console");
   registerPeptideConsoleRoutes(app);

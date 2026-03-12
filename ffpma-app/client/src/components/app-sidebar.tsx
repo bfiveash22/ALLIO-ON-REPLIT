@@ -23,6 +23,7 @@ import {
   Headphones,
   Dna,
   Scale,
+  Sparkles,
 } from "lucide-react";
 
 import {
@@ -100,6 +101,7 @@ const resourceMenuItems = [
   { title: "Library", url: "/library", icon: FileText },
   { title: "Peptide Console", url: "/resources/peptide-console", icon: Bot },
   { title: "Protocol Builder", url: "/resources/protocol-builder", icon: Dna },
+  { title: "Protocol Assembly", url: "/protocol-assembly", icon: Sparkles },
   { title: "Dosage Calculator", url: "/resources/dosage-calculator", icon: Calculator },
 ];
 

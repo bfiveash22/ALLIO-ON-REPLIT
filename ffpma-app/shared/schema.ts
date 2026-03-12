@@ -2092,3 +2092,25 @@ export const implementedOutputs = pgTable("implemented_outputs", {
 export const insertImplementedOutputSchema = createInsertSchema(implementedOutputs).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertImplementedOutput = z.infer<typeof insertImplementedOutputSchema>;
 export type ImplementedOutput = typeof implementedOutputs.$inferSelect;
+
+
+export const generatedProtocols = pgTable("generated_protocols", {
+  id: serial("id").primaryKey(),
+  patientName: varchar("patient_name", { length: 255 }).notNull(),
+  patientAge: integer("patient_age"),
+  sourceType: varchar("source_type", { length: 50 }).notNull(),
+  intakeFormId: integer("intake_form_id"),
+  patientProfile: jsonb("patient_profile").notNull(),
+  protocol: jsonb("protocol").notNull(),
+  slidesPresentationId: varchar("slides_presentation_id", { length: 255 }),
+  slidesWebViewLink: varchar("slides_web_view_link", { length: 500 }),
+  status: varchar("status", { length: 50 }).default("draft").notNull(),
+  generatedBy: varchar("generated_by", { length: 255 }),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export const insertGeneratedProtocolSchema = createInsertSchema(generatedProtocols).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertGeneratedProtocol = z.infer<typeof insertGeneratedProtocolSchema>;
+export type GeneratedProtocol = typeof generatedProtocols.$inferSelect;

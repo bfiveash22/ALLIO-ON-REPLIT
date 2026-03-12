@@ -91,6 +91,27 @@ Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used b
 
 Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
 
+### Protocol Assembly System
+
+AI-powered pipeline in `ffpma-app/server/services/protocol-assembly.ts` that:
+- Analyzes call transcripts via OpenAI to extract structured patient profiles
+- Generates comprehensive 90-day healing protocols cross-referencing `protocol-knowledge.ts` and detox knowledge base
+- Creates Google Slides presentations via the Slides API
+- Stores generated protocols in the `generated_protocols` database table
+
+Key files:
+- `ffpma-app/server/services/protocol-assembly.ts` — Core service (analyzeTranscript, generateProtocol, generateProtocolSlides)
+- `ffpma-app/shared/types/protocol-assembly.ts` — PatientProfile and HealingProtocol TypeScript types
+- `ffpma-app/client/src/pages/protocol-assembly.tsx` — UI page (transcript input, protocol library, protocol detail viewer)
+- `ffpma-app/knowledge-base/detox-protocols/` — Markdown knowledge files for detox protocols
+
+API Routes (all require auth + admin/trustee/doctor role):
+- `POST /api/protocol-assembly/generate` — Generate from transcript
+- `POST /api/protocol-assembly/generate-from-intake/:id` — Generate from intake form
+- `GET /api/protocol-assembly/protocols` — List protocols
+- `GET /api/protocol-assembly/protocols/:id` — Get protocol detail
+- `POST /api/protocol-assembly/protocols/:id/slides` — Generate slides for existing protocol
+
 ### `scripts` (`@workspace/scripts`)
 
 Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.

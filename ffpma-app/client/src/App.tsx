@@ -48,6 +48,7 @@ import TrainingPage from "@/pages/training";
 import DoctorNetworkPage from "@/pages/doctor-network";
 import TrainingModulePage from "@/pages/training-module";
 import ProtocolsPage from "@/pages/protocols";
+import ProtocolAssemblyPage from '@/pages/protocol-assembly';
 import AdminDashboardPage from "@/pages/admin-dashboard";
 import AdminSyncPage from "@/pages/admin-sync";
 import AdminMembersPage from "@/pages/admin-members";
@@ -472,6 +473,13 @@ function Router() {
         <ProtectedRoute>
           <AppLayout>
             <ProtocolsPage />
+          </AppLayout>
+        </ProtectedRoute>
+      )} />
+      <Route path="/protocol-assembly" component={() => (
+        <ProtectedRoute>
+          <AppLayout>
+            <ProtocolAssemblyPage />
           </AppLayout>
         </ProtectedRoute>
       )} />
