@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Forgotten Formula PMA"
+version = "1.0.0"
+id = "artifacts/ffpma"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 22608
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/ffpma run dev"
+
+[services.env]
+PORT = "22608"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/ffpma", "run", "build"]
+publicDir = "artifacts/ffpma/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
