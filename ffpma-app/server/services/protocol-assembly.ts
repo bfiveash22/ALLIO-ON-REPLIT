@@ -50,7 +50,7 @@ function loadDetoxKnowledge(): string {
 }
 
 function buildKnowledgeBase(): string {
-  const safeMap = (arr: any[], mapper: (item: any) => string) =>
+  const safeMap = <T>(arr: T[] | undefined | null, mapper: (item: T) => string): string =>
     arr && Array.isArray(arr) ? arr.map(mapper).join("\n") : "";
 
   const peptideList = safeMap(
@@ -300,7 +300,25 @@ Return ONLY valid JSON, no markdown.`,
   return JSON.parse(content) as HealingProtocol;
 }
 
-export async function profileFromIntakeForm(formData: any, patientInfo: any): Promise<PatientProfile> {
+interface IntakeFormData {
+  basicInfo?: { primaryConcern?: string; name?: string; email?: string; phone?: string; age?: number; dateOfBirth?: string };
+  timeline?: Record<string, unknown>;
+  environmental?: { moldExposure?: string; heavyMetals?: Record<string, unknown>; chemicalExposure?: string; waterQuality?: string };
+  trauma?: Record<string, unknown>;
+  symptoms?: Record<string, unknown>;
+  surgical?: Record<string, unknown>;
+  lifestyle?: { dietType?: string; exerciseFrequency?: string; sleepHours?: number; stressLevel?: string };
+}
+
+interface PatientInfo {
+  name: string;
+  email: string;
+  phone: string;
+  age: number | null;
+  dob: string | null;
+}
+
+export async function profileFromIntakeForm(formData: IntakeFormData, patientInfo: PatientInfo): Promise<PatientProfile> {
   const transcript = `
 Patient Name: ${patientInfo.name || "Unknown"}
 Email: ${patientInfo.email || "N/A"}
@@ -366,14 +384,15 @@ export async function generateProtocolSlides(
       presentationId,
       webViewLink: `https://docs.google.com/presentation/d/${presentationId}/edit`,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[Protocol Assembly] Failed to generate slides:", error);
-    throw new Error(`Failed to generate slides: ${error.message}`);
+    throw new Error(`Failed to generate slides: ${message}`);
   }
 }
 
-function buildSlideRequests(protocol: HealingProtocol, profile: PatientProfile): any[] {
-  const requests: any[] = [];
+function buildSlideRequests(protocol: HealingProtocol, profile: PatientProfile): Record<string, unknown>[] {
+  const requests: Record<string, unknown>[] = [];
   let slideIndex = 0;
 
   function addSlide(layoutId?: string) {
@@ -496,7 +515,7 @@ function buildSlideRequests(protocol: HealingProtocol, profile: PatientProfile):
     for (const [period, items] of Object.entries(protocol.dailySchedule)) {
       if (items && items.length > 0) {
         schedParts.push(
-          `${period.toUpperCase()}:\n${(items as any[]).map((i: any) => `• ${i.item}${i.details ? ` — ${i.details}` : ""}`).join("\n")}`
+          `${period.toUpperCase()}:\n${(items as Array<{item: string; details?: string}>).map((i) => `• ${i.item}${i.details ? ` — ${i.details}` : ""}`).join("\n")}`
         );
       }
     }
@@ -596,7 +615,8 @@ export async function saveProtocol(
   profile: PatientProfile,
   protocol: HealingProtocol,
   sourceType: "transcript" | "intake_form",
-  generatedBy?: string
+  generatedBy?: string,
+  memberId?: string
 ): Promise<number> {
   const [result] = await db
     .insert(generatedProtocols)
@@ -605,8 +625,9 @@ export async function saveProtocol(
       patientAge: protocol.patientAge,
       sourceType,
       intakeFormId: profile.intakeFormId || null,
-      patientProfile: profile as any,
-      protocol: protocol as any,
+      memberId: memberId || null,
+      patientProfile: profile as Record<string, unknown>,
+      protocol: protocol as Record<string, unknown>,
       status: "draft",
       generatedBy: generatedBy || "system",
     })

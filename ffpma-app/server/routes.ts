@@ -17,7 +17,7 @@ import { z } from "zod";
 import { storage } from "./storage";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
-import { doctorOnboarding, memberEnrollment, trainingModuleSections, trainingModuleKeyPoints, trainingCertifications, doctorAppointments, doctorPatientMessages, intakeForms } from "@shared/schema";
+import { doctorOnboarding, memberEnrollment, trainingModuleSections, trainingModuleKeyPoints, trainingCertifications, doctorAppointments, doctorPatientMessages, intakeForms, generatedProtocols } from "@shared/schema";
 import { signNowService } from "./services/signnow";
 import { sendAthenaIntroduction, sendEmail, getInbox, getMessage, replyToMessage } from "./services/gmail";
 import crypto from "crypto";
@@ -136,7 +136,7 @@ export async function registerRoutes(
 
   app.post('/api/protocol-assembly/generate', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req, res) => {
     try {
-      const { transcript, generateSlides: shouldGenerateSlides } = req.body;
+      const { transcript, generateSlides: shouldGenerateSlides, memberId } = req.body;
       if (!transcript || typeof transcript !== 'string') {
         return res.status(400).json({ error: 'transcript is required' });
       }
@@ -145,7 +145,7 @@ export async function registerRoutes(
       }
       const profile = await analyzeTranscript(transcript);
       const protocol = await generateProtocol(profile);
-      const protocolId = await saveProtocol(profile, protocol, 'transcript', (req.user as { username?: string })?.username);
+      const protocolId = await saveProtocol(profile, protocol, 'transcript', (req.user as { username?: string })?.username, memberId as string | undefined);
       let slides = null;
       if (shouldGenerateSlides) {
         try {
@@ -169,10 +169,10 @@ export async function registerRoutes(
       const schemaModule = await import('@shared/schema');
       const [intakeRecord] = await db.select().from(schemaModule.intakeForms).where(eq(schemaModule.intakeForms.id, intakeId));
       if (!intakeRecord) return res.status(404).json({ error: 'Intake form not found' });
-      const formData = intakeRecord.formData as any || {};
+      const formData = (intakeRecord.formData || {}) as Record<string, any>;
       const patientInfo = {
-        name: (intakeRecord as any).patientName || formData.basicInfo?.name || 'Unknown',
-        email: (intakeRecord as any).patientEmail || formData.basicInfo?.email || '',
+        name: intakeRecord.patientName || formData.basicInfo?.name || 'Unknown',
+        email: intakeRecord.patientEmail || formData.basicInfo?.email || '',
         phone: formData.basicInfo?.phone || '',
         age: formData.basicInfo?.age || null,
         dob: formData.basicInfo?.dateOfBirth || null,
@@ -180,7 +180,7 @@ export async function registerRoutes(
       const profile = await profileFromIntakeForm(formData, patientInfo);
       profile.intakeFormId = intakeId;
       const protocol = await generateProtocol(profile);
-      const protocolId = await saveProtocol(profile, protocol, 'intake_form', (req.user as { username?: string })?.username);
+      const protocolId = await saveProtocol(profile, protocol, 'intake_form', (req.user as { username?: string })?.username, req.body?.memberId as string | undefined);
       const { generateSlides: shouldGenerateSlides } = req.body || {};
       let slides = null;
       if (shouldGenerateSlides) {
@@ -225,6 +225,28 @@ export async function registerRoutes(
     }
   });
 
+  app.get('/api/protocol-assembly/protocols/member/:memberId', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req, res) => {
+    try {
+      const { memberId } = req.params;
+      if (!memberId) return res.status(400).json({ error: 'memberId is required' });
+      const memberProtocols = await db.select({
+        id: generatedProtocols.id,
+        patientName: generatedProtocols.patientName,
+        patientAge: generatedProtocols.patientAge,
+        sourceType: generatedProtocols.sourceType,
+        status: generatedProtocols.status,
+        slidesWebViewLink: generatedProtocols.slidesWebViewLink,
+        generatedBy: generatedProtocols.generatedBy,
+        createdAt: generatedProtocols.createdAt,
+        updatedAt: generatedProtocols.updatedAt,
+      }).from(generatedProtocols).where(eq(generatedProtocols.memberId, memberId)).orderBy(desc(generatedProtocols.createdAt));
+      res.json(memberProtocols);
+    } catch (error: unknown) {
+      console.error('[Protocol Assembly] Member protocols error:', error);
+      res.status(500).json({ error: 'Failed to list member protocols' });
+    }
+  });
+
   app.get('/api/protocol-assembly/protocols/:id', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -234,7 +256,7 @@ export async function registerRoutes(
       res.json(protocol);
     } catch (error: unknown) {
       console.error('[Protocol Assembly] Get error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: 'Failed to retrieve protocol' });
     }
   });
 
@@ -244,8 +266,8 @@ export async function registerRoutes(
       if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
       const record = await getProtocol(id);
       if (!record) return res.status(404).json({ error: 'Protocol not found' });
-      const protocol = record.protocol as any;
-      const profile = record.patientProfile as any;
+      const protocol = record.protocol as Record<string, unknown>;
+      const profile = record.patientProfile as Record<string, unknown>;
       const slides = await generateProtocolSlides(protocol, profile);
       await updateProtocolSlides(id, slides.presentationId, slides.webViewLink);
       res.json(slides);
