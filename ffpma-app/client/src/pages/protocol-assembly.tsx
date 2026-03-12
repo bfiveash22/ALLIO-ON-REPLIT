@@ -152,6 +152,12 @@ interface PatientProfileData {
   }>;
 }
 
+interface MemberSummary {
+  id: string;
+  fullName: string;
+  email: string;
+}
+
 interface FullProtocolRecord {
   id: number;
   patientName: string;
@@ -177,6 +183,7 @@ export default function ProtocolAssemblyPage() {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [sourceMode, setSourceMode] = useState<"transcript" | "intake">("transcript");
   const [selectedIntakeId, setSelectedIntakeId] = useState<number | null>(null);
+  const [selectedMemberId, setSelectedMemberId] = useState<string>("");
 
   const { data: protocols = [], isLoading: loadingProtocols } = useQuery<GeneratedProtocolSummary[]>({
     queryKey: ["/api/protocol-assembly/protocols"],
@@ -184,6 +191,10 @@ export default function ProtocolAssemblyPage() {
 
   const { data: intakeForms = [] } = useQuery<IntakeFormSummary[]>({
     queryKey: ["/api/protocol-assembly/intake-forms"],
+  });
+
+  const { data: members = [] } = useQuery<MemberSummary[]>({
+    queryKey: ["/api/doctor/members"],
   });
 
   const { data: selectedProtocol, isLoading: loadingDetail } = useQuery<FullProtocolRecord>({
@@ -196,6 +207,7 @@ export default function ProtocolAssemblyPage() {
       const res = await apiRequest("POST", "/api/protocol-assembly/generate", {
         transcript,
         generateSlides,
+        memberId: selectedMemberId || undefined,
       });
       return res.json();
     },
@@ -204,6 +216,7 @@ export default function ProtocolAssemblyPage() {
       setSelectedProtocolId(data.id);
       setActiveTab("library");
       setTranscript("");
+      setSelectedMemberId("");
     },
   });
 
@@ -211,6 +224,7 @@ export default function ProtocolAssemblyPage() {
     mutationFn: async (intakeId: number) => {
       const res = await apiRequest("POST", `/api/protocol-assembly/generate-from-intake/${intakeId}`, {
         generateSlides,
+        memberId: selectedMemberId || undefined,
       });
       return res.json();
     },
@@ -219,6 +233,7 @@ export default function ProtocolAssemblyPage() {
       setSelectedProtocolId(data.id);
       setActiveTab("library");
       setSelectedIntakeId(null);
+      setSelectedMemberId("");
     },
   });
 
@@ -398,6 +413,25 @@ export default function ProtocolAssemblyPage() {
                     )}
                   </>
                 )}
+
+                <div className="mt-4 mb-3">
+                  <label className="text-sm text-slate-300 mb-1.5 block flex items-center gap-2">
+                    <User className="w-4 h-4 text-slate-400" />
+                    Link to Member (optional)
+                  </label>
+                  <select
+                    value={selectedMemberId}
+                    onChange={(e) => setSelectedMemberId(e.target.value)}
+                    className="w-full max-w-sm bg-slate-800/50 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                  >
+                    <option value="">No member linked</option>
+                    {members.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.fullName} ({m.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
                 <div className="flex items-center justify-between mt-4">
                   <label className="flex items-center gap-2 cursor-pointer">

@@ -370,8 +370,13 @@ export async function generateProtocolSlides(
     });
 
     const presentationId = createRes.data.presentationId!;
+    const initialSlideId = createRes.data.slides?.[0]?.objectId;
 
     const slideRequests = buildSlideRequests(protocol, profile);
+
+    if (initialSlideId) {
+      slideRequests.push({ deleteObject: { objectId: initialSlideId } });
+    }
 
     if (slideRequests.length > 0) {
       await slides.presentations.batchUpdate({
@@ -599,13 +604,6 @@ function buildSlideRequests(protocol: HealingProtocol, profile: PatientProfile):
       ...(protocol.labsRequired || []).map((l) => `• ${l}`),
     ].join("\n");
     addTextBox(fuSlide, fuText, 30, 70, 660, 400, 12);
-  }
-
-  const initialSlideId = requests.length > 0 ? "p" : null;
-  if (initialSlideId) {
-    requests.push({
-      deleteObject: { objectId: initialSlideId },
-    });
   }
 
   return requests;

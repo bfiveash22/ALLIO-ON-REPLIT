@@ -151,7 +151,7 @@ export async function registerRoutes(
         try {
           slides = await generateProtocolSlides(protocol, profile);
           await updateProtocolSlides(protocolId, slides.presentationId, slides.webViewLink);
-        } catch (slideError: any) {
+        } catch (slideError: unknown) {
           console.error('[Protocol Assembly] Slide generation failed:', slideError.message);
         }
       }
@@ -169,7 +169,7 @@ export async function registerRoutes(
       const schemaModule = await import('@shared/schema');
       const [intakeRecord] = await db.select().from(schemaModule.intakeForms).where(eq(schemaModule.intakeForms.id, intakeId));
       if (!intakeRecord) return res.status(404).json({ error: 'Intake form not found' });
-      const formData = (intakeRecord.formData || {}) as Record<string, any>;
+      const formData = (intakeRecord.formData || {}) as Record<string, unknown>;
       const patientInfo = {
         name: intakeRecord.patientName || formData.basicInfo?.name || 'Unknown',
         email: intakeRecord.patientEmail || formData.basicInfo?.email || '',
@@ -187,7 +187,7 @@ export async function registerRoutes(
         try {
           slides = await generateProtocolSlides(protocol, profile);
           await updateProtocolSlides(protocolId, slides.presentationId, slides.webViewLink);
-        } catch (slideError: any) {
+        } catch (slideError: unknown) {
           console.error('[Protocol Assembly] Slide generation failed:', slideError.message);
         }
       }
