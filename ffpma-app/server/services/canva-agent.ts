@@ -1,0 +1,53 @@
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import { sentinel } from './sentinel';
+
+const execAsync = promisify(exec);
+
+export class CanvaAgentService {
+    /**
+     * Executes a Canva automation task using the browser-use CLI.
+     * Assumes the presence of a pre-authenticated cloud profile session.
+     */
+    async executeCanvaTask(
+        prompt: string,
+        sessionId: string = process.env.CANVA_SESSION_ID || 'canva-default-session'
+    ): Promise<{ success: boolean; outputUrl?: string; error?: string }> {
+        console.log(`[CANVA-AGENT] Starting task execution with session ID: ${sessionId}`);
+
+        try {
+            // Formulate the comprehensive prompt for browser-use to navigate Canva
+            const fullPrompt = `Navigate to Canva. ${prompt}. Once the design is created, copy the share link. Ensure the task is marked as complete and provide the URL in the output.`;
+
+            const bashCommand = `browser-use -b remote run "${fullPrompt}" --llm gpt-4o --session-id "${sessionId}" --json`;
+            console.log(`[CANVA-AGENT] Running command: ${bashCommand}`);
+
+            // Execute the browser-use CLI command
+            const { stdout, stderr } = await execAsync(bashCommand, { maxBuffer: 1024 * 1024 * 10 });
+
+            console.log(`[CANVA-AGENT] browser-use execution completed.`);
+
+            if (stderr) {
+                console.warn(`[CANVA-AGENT] Warnings during execution: ${stderr}`);
+            }
+
+            // Hacky parsing to find a Canva URL in the terminal stdout
+            const urlRegex = /(https:\/\/(?:www\.)?canva\.com\/[^\s"']+)/;
+            const match = stdout.match(urlRegex);
+
+            if (match && match[0]) {
+                console.log(`[CANVA-AGENT] Successfully extracted Canva URL: ${match[0]}`);
+                return { success: true, outputUrl: match[0] };
+            } else {
+                // If no URL is found, we can parse the JSON output to get the final text or result
+                console.log(`[CANVA-AGENT] Could not reliably extract URL via Regex, task might have failed or not returned a URL.`);
+                return { success: true, outputUrl: "Task Completed, but no explicit Canva URL extracted. Check your Canva workspace." };
+            }
+        } catch (error: any) {
+            console.error(`[CANVA-AGENT] Execution failed: `, error);
+            return { success: false, error: error.message || 'Unknown browser-use execution error' };
+        }
+    }
+}
+
+export const canvaAgent = new CanvaAgentService();

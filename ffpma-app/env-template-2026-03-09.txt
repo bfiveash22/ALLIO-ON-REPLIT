@@ -1,0 +1,22 @@
+OPENAI_API_KEY=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
+DATABASE_URL=postgresql://neondb_owner:npg_GcYmap1rVP6I@ep-square-wildflower-a6u9shej.us-west-2.aws.neon.tech/neondb?sslmode=require
+SESSION_SECRET=allio_session_secret_2026_secure_random_fallback
+WP_SITE_URL=https://forgottenformula.com
+WP_USERNAME=blake
+WP_APPLICATION_PASSWORD="UygL b3PJ b9EB QALx YUOb FgIz"
+
+HUGGINGFACE_API_KEY=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
+
+# Research APIs (Added in Phase 4)
+SEMANTIC_SCHOLAR_API_KEY=
+PUBMED_API_KEY=9f7f39877f985198c6daff9e78e7d9918008
+CORE_API_KEY=Ey9ON0FhMqJGvDHxbuVWI8Y4ZgQTK5fr
+
+# WooCommerce Integration
+WC_CONSUMER_KEY=ck_62433cefb20a8aefc78002932bba320f93565747
+WC_CONSUMER_SECRET=cs_38a2e70ce3335c86670b8d9c5298532e2a2ddcf7
+
+# Google Workspace Integration
+GOOGLE_CLIENT_ID=989121620312-d8cs5vmra3pfr1esceue2ctgheoosjep.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=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
+GOOGLE_REFRESH_TOKEN=1//04Sk989pzbn5rCgYIARAAGAQSNwF-L9IrkAZgKBI1ICHR3MQzOq9fL1j9cuN3zNS2dCZU_m04LElfVF0Kq2PiBibn43txgls4mCA

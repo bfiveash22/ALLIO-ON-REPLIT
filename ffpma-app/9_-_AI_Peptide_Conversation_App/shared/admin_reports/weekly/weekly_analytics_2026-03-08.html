@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; color: #e0e0e0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { color: #10b981; border-bottom: 2px solid #10b981; padding-bottom: 10px; }
+        h2 { color: #6366f1; margin-top: 30px; }
+        h3 { color: #a855f7; }
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-box { background: #1e293b; border-radius: 10px; padding: 15px; text-align: center; }
+        .metric-value { font-size: 32px; font-weight: bold; color: #10b981; }
+        .metric-label { color: #94a3b8; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #334155; color: #10b981; padding: 12px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #334155; }
+        tr:nth-child(even) { background: #1e293b; }
+        .alert { background: #7c2d12; border-left: 4px solid #f97316; padding: 15px; margin: 20px 0; }
+        .timestamp { color: #64748b; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Weekly Database Analytics</h1>
+        <p class="timestamp">Report Period: Week ending March 08, 2026</p>
+        
+        <h2>📈 Platform Overview</h2>
+        <div class="metric-grid">
+            <div class="metric-box">
+                <div class="metric-value">82</div>
+                <div class="metric-label">Total Users</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-value">2</div>
+                <div class="metric-label">Active (30d)</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-value">80</div>
+                <div class="metric-label">Inactive Users</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-value">2</div>
+                <div class="metric-label">Total Conversations</div>
+            </div>
+        </div>
+        
+        <div class="metric-grid">
+            <div class="metric-box">
+                <div class="metric-value" style="color: #06b6d4;">50</div>
+                <div class="metric-label">Peptides</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-value" style="color: #6366f1;">16</div>
+                <div class="metric-label">IV Therapies</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-value" style="color: #ec4899;">11</div>
+                <div class="metric-label">IM Therapies</div>
+            </div>
+        </div>
+        
+        <h2>🧬 Top 10 Peptides by Usage</h2>
+        <table>
+            <tr><th>#</th><th>Peptide</th><th>Era</th><th>Conversations</th></tr>
+            <tr><td>1</td><td>Retatrutide</td><td>Metabolic & Weight Loss</td><td>1</td></tr><tr><td>2</td><td>ARA 290 10mg Injectable</td><td>Immune & Inflammation</td><td>1</td></tr><tr><td>3</td><td>Oxytocin</td><td>Sexual Health</td><td>0</td></tr><tr><td>4</td><td>5-Amino-1MQ</td><td>Metabolic & Weight Loss</td><td>0</td></tr><tr><td>5</td><td>Epithalon (Epitalon)</td><td>Anti-Aging & Longevity</td><td>0</td></tr><tr><td>6</td><td>LL-37</td><td>Regenerative & Healing</td><td>0</td></tr><tr><td>7</td><td>Semax</td><td>Cognitive & Neuroprotective</td><td>0</td></tr><tr><td>8</td><td>P21 (Cerebrolysin Fragment)</td><td>Cognitive & Neuroprotective</td><td>0</td></tr><tr><td>9</td><td>Ipamorelin</td><td>Growth Hormone Peptides</td><td>0</td></tr><tr><td>10</td><td>NAD+</td><td>Anti-Aging & Longevity</td><td>0</td></tr>
+        </table>
+        
+        <h2>💧 Top 10 IV Therapies by Usage</h2>
+        <table>
+            <tr><th>#</th><th>IV Therapy</th><th>Category</th><th>Conversations</th></tr>
+            <tr><td>1</td><td>Artemisinin IV</td><td>Oncology Support</td><td>0</td></tr><tr><td>2</td><td>Hydrogen Peroxide IV</td><td>Oxidative Therapy</td><td>0</td></tr><tr><td>3</td><td>Ozone Therapy IV</td><td>Oxidative Therapy</td><td>0</td></tr><tr><td>4</td><td>Ozonated Glycerin</td><td>Oxidative Therapy</td><td>0</td></tr><tr><td>5</td><td>B17/Laetrile IV</td><td>Oncology Support</td><td>0</td></tr><tr><td>6</td><td>NAD+ IV Therapy</td><td>Anti-Aging & Cellular Repair</td><td>0</td></tr><tr><td>7</td><td>Curcumin IV</td><td>Anti-Inflammatory & Oncology Support</td><td>0</td></tr><tr><td>8</td><td>Mistletoe (Iscador) IV</td><td>Oncology Support</td><td>0</td></tr><tr><td>9</td><td>High Dose Vitamin C</td><td>Immune & Oncology Support</td><td>0</td></tr><tr><td>10</td><td>EDTA Chelation Therapy</td><td>Detoxification</td><td>0</td></tr>
+        </table>
+        
+        <h2>💊 Top 10 IM Therapies by Usage</h2>
+        <table>
+            <tr><th>#</th><th>IM Therapy</th><th>Category</th><th>Conversations</th></tr>
+            <tr><td>1</td><td>Tri-Immune Boost (Vitamin C + Glutathione + Zinc)</td><td>Immune Support</td><td>0</td></tr><tr><td>2</td><td>Biotin (Vitamin B7) IM</td><td>Beauty & Hair</td><td>0</td></tr><tr><td>3</td><td>Glutathione IM</td><td>Wellness</td><td>0</td></tr><tr><td>4</td><td>Vitamin D3 (Cholecalciferol) IM</td><td>Immune Support</td><td>0</td></tr><tr><td>5</td><td>Vitamin B12 (Methylcobalamin) IM</td><td>Energy & Cellular</td><td>0</td></tr><tr><td>6</td><td>Lipotropic Complex (MIC + B12)</td><td>Metabolic</td><td>0</td></tr><tr><td>7</td><td>Super B Complex IM</td><td>Energy & Cellular</td><td>0</td></tr><tr><td>8</td><td>PCC Lipolytic Solution (Lipo Lab)</td><td>Fat Dissolving</td><td>0</td></tr><tr><td>9</td><td>CoQ10 (Ubiquinone) IM</td><td>Anti-Aging & Cardiovascular</td><td>0</td></tr><tr><td>10</td><td>Lipo-Mino Mix (Enhanced Lipotropic)</td><td>Metabolic</td><td>0</td></tr>
+        </table>
+        
+        <h2>📂 Conversations by Category</h2>
+        
+        <h3>Peptide Eras</h3>
+        <table>
+            <tr><th>Era/Category</th><th>Conversations</th></tr>
+            <tr><td>Metabolic & Weight Loss</td><td>1</td></tr><tr><td>Immune & Inflammation</td><td>1</td></tr><tr><td>Sexual Health</td><td>0</td></tr><tr><td>Cancer & Specialized</td><td>0</td></tr><tr><td>Growth Hormone Peptides</td><td>0</td></tr><tr><td>Regenerative & Healing</td><td>0</td></tr><tr><td>Cognitive & Neuroprotective</td><td>0</td></tr><tr><td>Anti-Aging & Longevity</td><td>0</td></tr>
+        </table>
+        
+        <h3>IV Therapy Categories</h3>
+        <table>
+            <tr><th>Category</th><th>Conversations</th></tr>
+            <tr><td>Detoxification</td><td>0</td></tr><tr><td>Metabolic & Neuroprotection</td><td>0</td></tr><tr><td>Oxidative Therapy</td><td>0</td></tr><tr><td>Liver & Cellular Repair</td><td>0</td></tr><tr><td>Oncology Support</td><td>0</td></tr><tr><td>Anti-Inflammatory & Pain</td><td>0</td></tr><tr><td>Immune & Oncology Support</td><td>0</td></tr><tr><td>Anti-Inflammatory & Oncology Support</td><td>0</td></tr><tr><td>General Wellness</td><td>0</td></tr><tr><td>Anti-Aging & Cellular Repair</td><td>0</td></tr><tr><td>Nutritional Support</td><td>0</td></tr>
+        </table>
+        
+        <h3>IM Therapy Categories</h3>
+        <table>
+            <tr><th>Category</th><th>Conversations</th></tr>
+            <tr><td>Fat Dissolving</td><td>0</td></tr><tr><td>Wellness</td><td>0</td></tr><tr><td>Immune Support</td><td>0</td></tr><tr><td>Anti-Aging & Cardiovascular</td><td>0</td></tr><tr><td>Energy & Cellular</td><td>0</td></tr><tr><td>Metabolic</td><td>0</td></tr><tr><td>Beauty & Hair</td><td>0</td></tr>
+        </table>
+        
+        <h2>⚠️ Inactive Users (30+ Days)</h2>
+        <div class="alert">Found 80 users with no activity in the last 30 days.</div><table>
+            <tr><th>Name</th><th>Email</th><th>Last Activity</th></tr>
+            <tr><td>Rick Murphy</td><td>elvenroguete@gmail.com</td><td>Never</td></tr><tr><td>Test User</td><td>testuservc9nlw8y@example.com</td><td>Never</td></tr><tr><td>Justin M</td><td>justinmuhlhauser@gmail.com</td><td>Never</td></tr><tr><td>Test User</td><td>testuser0xauvu96@example.com</td><td>Never</td></tr><tr><td>Test User</td><td>testusergade9abw@example.com</td><td>Never</td></tr><tr><td>Test User</td><td>testuser00jqf3ar@example.com</td><td>Never</td></tr><tr><td>Heather Wilkins</td><td>dr.heatherwilkins@gmail.com</td><td>Never</td></tr><tr><td>Test User</td><td>testusero2i9g8xw@example.com</td><td>Never</td></tr><tr><td>Amelie Jodry</td><td>amelie.jodry@gmail.com</td><td>Never</td></tr><tr><td>Michael Dick</td><td>drdave@doctordaviddick.com</td><td>Never</td></tr><tr><td>Katie Logan</td><td>kmjlogan@gmail.com</td><td>Never</td></tr><tr><td>NR</td><td>nancyrawal4@gmail.com</td><td>Never</td></tr><tr><td>Natural Wellness</td><td>gotennant13@gmail.com</td><td>Never</td></tr><tr><td>Test User</td><td>testuserdsnlj0hh@example.com</td><td>Never</td></tr><tr><td>Dusti Hastie</td><td>holisticalternativewellness@gmail.com</td><td>Never</td></tr><tr><td>John Doe</td><td>john@doe.com</td><td>Never</td></tr><tr><td>Test User</td><td>testusersivawi4e@example.com</td><td>Never</td></tr><tr><td>Wil Helser</td><td>wilhelser@gmail.com</td><td>Never</td></tr><tr><td>Kami Fiveash</td><td>kami@forgottenformula.com</td><td>Never</td></tr><tr><td>Test User</td><td>testuseryocqk9i3@example.com</td><td>Never</td></tr>
+        </table>
+        <p>Showing top 20 of 80 inactive users</p>
+        
+        <p style="margin-top: 40px; color: #64748b; font-size: 12px;">
+            This weekly analytics report is automatically generated by the FF Clinical Intelligence Console.
+        </p>
+    </div>
+</body>
+</html>
