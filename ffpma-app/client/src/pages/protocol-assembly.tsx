@@ -26,6 +26,7 @@ import {
   Sun,
   Sunset,
   Calendar,
+  ClipboardList,
 } from "lucide-react";
 
 interface GeneratedProtocolSummary {
@@ -40,14 +41,125 @@ interface GeneratedProtocolSummary {
   updatedAt: string;
 }
 
+interface IntakeFormSummary {
+  id: number;
+  patientName: string;
+  patientEmail: string;
+  status: string;
+  createdAt: string;
+  submittedAt: string | null;
+}
+
+interface RootCause {
+  rank: number;
+  cause: string;
+  category: string;
+  details: string;
+  relatedSymptoms: string[];
+}
+
+interface Phase {
+  phaseNumber: number;
+  name: string;
+  weekRange: string;
+  focus: string;
+  keyActions: string[];
+}
+
+interface ScheduleItem {
+  time?: string;
+  item: string;
+  details?: string;
+  frequency?: string;
+}
+
+interface InjectablePeptide {
+  name: string;
+  vialSize: string;
+  reconstitution: string;
+  dose: string;
+  frequency: string;
+  duration: string;
+  route: string;
+  purpose: string;
+}
+
+interface Supplement {
+  name: string;
+  dose: string;
+  timing: string;
+  purpose: string;
+}
+
+interface DetoxProtocol {
+  name: string;
+  method: string;
+  frequency: string;
+  duration: string;
+  instructions: string;
+}
+
+interface ParasiteProtocol {
+  name: string;
+  dose: string;
+  schedule: string;
+  duration: string;
+  purpose: string;
+}
+
+interface LifestyleRec {
+  category: string;
+  recommendation: string;
+  details?: string;
+}
+
+interface FollowUp {
+  weekNumber: number;
+  action: string;
+  details?: string;
+}
+
+interface ProtocolData {
+  patientName: string;
+  patientAge: number;
+  generatedDate: string;
+  protocolDurationDays: number;
+  summary: string;
+  rootCauseAnalysis: RootCause[];
+  phases: Phase[];
+  dailySchedule: Record<string, ScheduleItem[]>;
+  injectablePeptides: InjectablePeptide[];
+  supplements: Supplement[];
+  detoxProtocols: DetoxProtocol[];
+  parasiteAntiviralProtocols: ParasiteProtocol[];
+  lifestyleRecommendations: LifestyleRec[];
+  dietaryGuidelines: string[];
+  followUpPlan: FollowUp[];
+  labsRequired: string[];
+}
+
+interface PatientProfileData {
+  gender?: string;
+  location?: string;
+  chiefComplaints: string[];
+  currentDiagnoses: string[];
+  goals: string[];
+  medicalTimeline: Array<{
+    ageRange: string;
+    year?: string;
+    event: string;
+    significance: string;
+  }>;
+}
+
 interface FullProtocolRecord {
   id: number;
   patientName: string;
   patientAge: number | null;
   sourceType: string;
   status: string;
-  patientProfile: any;
-  protocol: any;
+  patientProfile: PatientProfileData;
+  protocol: ProtocolData;
   slidesPresentationId: string | null;
   slidesWebViewLink: string | null;
   generatedBy: string | null;
@@ -63,9 +175,15 @@ export default function ProtocolAssemblyPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<"generate" | "library">("generate");
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [sourceMode, setSourceMode] = useState<"transcript" | "intake">("transcript");
+  const [selectedIntakeId, setSelectedIntakeId] = useState<number | null>(null);
 
   const { data: protocols = [], isLoading: loadingProtocols } = useQuery<GeneratedProtocolSummary[]>({
     queryKey: ["/api/protocol-assembly/protocols"],
+  });
+
+  const { data: intakeForms = [] } = useQuery<IntakeFormSummary[]>({
+    queryKey: ["/api/protocol-assembly/intake-forms"],
   });
 
   const { data: selectedProtocol, isLoading: loadingDetail } = useQuery<FullProtocolRecord>({
@@ -81,11 +199,26 @@ export default function ProtocolAssemblyPage() {
       });
       return res.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data: { id: number }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/protocol-assembly/protocols"] });
       setSelectedProtocolId(data.id);
       setActiveTab("library");
       setTranscript("");
+    },
+  });
+
+  const generateFromIntakeMutation = useMutation({
+    mutationFn: async (intakeId: number) => {
+      const res = await apiRequest("POST", `/api/protocol-assembly/generate-from-intake/${intakeId}`, {
+        generateSlides,
+      });
+      return res.json();
+    },
+    onSuccess: (data: { id: number }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/protocol-assembly/protocols"] });
+      setSelectedProtocolId(data.id);
+      setActiveTab("library");
+      setSelectedIntakeId(null);
     },
   });
 
@@ -115,6 +248,11 @@ export default function ProtocolAssemblyPage() {
   const proto = selectedProtocol?.protocol;
   const profile = selectedProtocol?.patientProfile;
 
+  const isGenerating = generateMutation.isPending || generateFromIntakeMutation.isPending;
+  const generateError = generateMutation.error || generateFromIntakeMutation.error;
+  const isGenerateError = generateMutation.isError || generateFromIntakeMutation.isError;
+  const isGenerateSuccess = generateMutation.isSuccess || generateFromIntakeMutation.isSuccess;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950/30 to-slate-950 text-white">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -127,7 +265,7 @@ export default function ProtocolAssemblyPage() {
               Protocol Assembly System
             </h1>
             <p className="text-slate-400 text-sm">
-              AI-powered healing protocol generation from transcripts
+              AI-powered healing protocol generation from transcripts and intake forms
             </p>
           </div>
         </div>
@@ -172,16 +310,95 @@ export default function ProtocolAssemblyPage() {
               className="space-y-6"
             >
               <div className="bg-slate-900/70 border border-slate-700/50 rounded-2xl p-6">
-                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-purple-400" />
-                  Paste Call Transcript
-                </h2>
-                <textarea
-                  value={transcript}
-                  onChange={(e) => setTranscript(e.target.value)}
-                  placeholder="Paste the full patient call transcript here. The AI will extract the patient profile, identify root causes, and generate a complete 90-day healing protocol..."
-                  className="w-full h-64 bg-slate-800/50 border border-slate-600/50 rounded-xl p-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 resize-none font-mono text-sm"
-                />
+                <div className="flex gap-3 mb-5">
+                  <button
+                    onClick={() => setSourceMode("transcript")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                      sourceMode === "transcript"
+                        ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
+                        : "bg-slate-800/50 text-slate-400 border border-slate-700/30 hover:text-white"
+                    }`}
+                  >
+                    <FileText className="w-4 h-4" />
+                    From Transcript
+                  </button>
+                  <button
+                    onClick={() => setSourceMode("intake")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                      sourceMode === "intake"
+                        ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
+                        : "bg-slate-800/50 text-slate-400 border border-slate-700/30 hover:text-white"
+                    }`}
+                  >
+                    <ClipboardList className="w-4 h-4" />
+                    From Intake Form
+                  </button>
+                </div>
+
+                {sourceMode === "transcript" && (
+                  <>
+                    <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-purple-400" />
+                      Paste Call Transcript
+                    </h2>
+                    <textarea
+                      value={transcript}
+                      onChange={(e) => setTranscript(e.target.value)}
+                      placeholder="Paste the full patient call transcript here. The AI will extract the patient profile, identify root causes, and generate a complete 90-day healing protocol..."
+                      className="w-full h-64 bg-slate-800/50 border border-slate-600/50 rounded-xl p-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 resize-none font-mono text-sm"
+                    />
+                  </>
+                )}
+
+                {sourceMode === "intake" && (
+                  <>
+                    <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                      <ClipboardList className="w-5 h-5 text-purple-400" />
+                      Select Intake Form
+                    </h2>
+                    {intakeForms.length === 0 ? (
+                      <div className="text-center py-12 text-slate-500">
+                        <ClipboardList className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                        <p className="text-sm">No intake forms found</p>
+                        <p className="text-xs mt-1">Submit intake forms first to generate protocols from them</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                        {intakeForms.map((form) => (
+                          <button
+                            key={form.id}
+                            onClick={() => setSelectedIntakeId(form.id)}
+                            className={`w-full text-left p-4 rounded-xl border transition-all ${
+                              selectedIntakeId === form.id
+                                ? "bg-purple-500/15 border-purple-500/40"
+                                : "bg-slate-800/30 border-slate-700/30 hover:bg-slate-800/60"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-white">{form.patientName}</span>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                                form.status === "submitted"
+                                  ? "bg-green-500/20 text-green-400"
+                                  : form.status === "reviewed"
+                                  ? "bg-blue-500/20 text-blue-400"
+                                  : "bg-yellow-500/20 text-yellow-400"
+                              }`}>
+                                {form.status}
+                              </span>
+                            </div>
+                            <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
+                              <span>{form.patientEmail}</span>
+                              <span>•</span>
+                              <Clock className="w-3 h-3" />
+                              <span>{new Date(form.createdAt).toLocaleDateString()}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+
                 <div className="flex items-center justify-between mt-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -196,15 +413,27 @@ export default function ProtocolAssemblyPage() {
                     </span>
                   </label>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-slate-500">
-                      {transcript.length.toLocaleString()} characters
-                    </span>
+                    {sourceMode === "transcript" && (
+                      <span className="text-xs text-slate-500">
+                        {transcript.length.toLocaleString()} characters
+                      </span>
+                    )}
                     <button
-                      onClick={() => generateMutation.mutate()}
-                      disabled={!transcript.trim() || generateMutation.isPending}
+                      onClick={() => {
+                        if (sourceMode === "transcript") {
+                          generateMutation.mutate();
+                        } else if (selectedIntakeId) {
+                          generateFromIntakeMutation.mutate(selectedIntakeId);
+                        }
+                      }}
+                      disabled={
+                        isGenerating ||
+                        (sourceMode === "transcript" && !transcript.trim()) ||
+                        (sourceMode === "intake" && !selectedIntakeId)
+                      }
                       className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 text-white rounded-xl font-medium transition-all shadow-lg shadow-purple-500/25 disabled:shadow-none flex items-center gap-2"
                     >
-                      {generateMutation.isPending ? (
+                      {isGenerating ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
                           Generating...
@@ -219,7 +448,7 @@ export default function ProtocolAssemblyPage() {
                   </div>
                 </div>
 
-                {generateMutation.isPending && (
+                {isGenerating && (
                   <div className="mt-4 p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl">
                     <div className="flex items-center gap-3">
                       <Loader2 className="w-5 h-5 text-purple-400 animate-spin" />
@@ -228,26 +457,28 @@ export default function ProtocolAssemblyPage() {
                           Protocol Assembly in progress...
                         </p>
                         <p className="text-xs text-purple-400/70 mt-1">
-                          Analyzing transcript → Extracting patient profile → Generating protocol → Building slides
+                          {sourceMode === "transcript"
+                            ? "Analyzing transcript → Extracting patient profile → Generating protocol → Building slides"
+                            : "Reading intake form → Building patient profile → Generating protocol → Building slides"}
                         </p>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {generateMutation.isError && (
+                {isGenerateError && (
                   <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 shrink-0" />
                     <div>
                       <p className="text-sm text-red-300 font-medium">Generation Failed</p>
                       <p className="text-xs text-red-400/70 mt-1">
-                        {(generateMutation.error as any)?.message || "Unknown error"}
+                        {(generateError as Error)?.message || "An error occurred during protocol generation"}
                       </p>
                     </div>
                   </div>
                 )}
 
-                {generateMutation.isSuccess && (
+                {isGenerateSuccess && (
                   <div className="mt-4 p-4 bg-green-500/10 border border-green-500/20 rounded-xl flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 text-green-400 mt-0.5 shrink-0" />
                     <div>
@@ -402,7 +633,7 @@ export default function ProtocolAssemblyPage() {
                       expanded={expandedSections["rootCause"]}
                       onToggle={() => toggleSection("rootCause")}
                     >
-                      {proto.rootCauseAnalysis?.map((rc: any, i: number) => (
+                      {proto.rootCauseAnalysis?.map((rc: RootCause, i: number) => (
                         <div key={i} className="p-3 bg-slate-800/40 rounded-lg mb-2">
                           <div className="flex items-center gap-2">
                             <span className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 text-xs flex items-center justify-center font-bold">
@@ -433,7 +664,7 @@ export default function ProtocolAssemblyPage() {
                       expanded={expandedSections["phases"]}
                       onToggle={() => toggleSection("phases")}
                     >
-                      {proto.phases?.map((p: any, i: number) => (
+                      {proto.phases?.map((p: Phase, i: number) => (
                         <div key={i} className="p-3 bg-slate-800/40 rounded-lg mb-2">
                           <div className="flex items-center justify-between">
                             <span className="font-medium text-white text-sm">
@@ -460,7 +691,7 @@ export default function ProtocolAssemblyPage() {
                       onToggle={() => toggleSection("schedule")}
                     >
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {proto.dailySchedule && Object.entries(proto.dailySchedule).map(([period, items]: [string, any]) => (
+                        {proto.dailySchedule && Object.entries(proto.dailySchedule).map(([period, items]) => (
                           <div key={period} className="p-3 bg-slate-800/40 rounded-lg">
                             <div className="flex items-center gap-2 mb-2">
                               {period === "morning" && <Sun className="w-4 h-4 text-yellow-400" />}
@@ -469,7 +700,7 @@ export default function ProtocolAssemblyPage() {
                               {period === "bedtime" && <Moon className="w-4 h-4 text-blue-400" />}
                               <span className="font-medium text-white text-sm capitalize">{period}</span>
                             </div>
-                            {items?.map((item: any, j: number) => (
+                            {(items as ScheduleItem[])?.map((item: ScheduleItem, j: number) => (
                               <div key={j} className="text-xs text-slate-300 mb-1 flex items-start gap-1">
                                 <span className="text-green-400 mt-0.5 shrink-0">▸</span>
                                 <span>
@@ -490,7 +721,7 @@ export default function ProtocolAssemblyPage() {
                       onToggle={() => toggleSection("peptides")}
                     >
                       <div className="space-y-2">
-                        {proto.injectablePeptides?.map((p: any, i: number) => (
+                        {proto.injectablePeptides?.map((p: InjectablePeptide, i: number) => (
                           <div key={i} className="p-3 bg-slate-800/40 rounded-lg">
                             <div className="font-medium text-white text-sm">{p.name}</div>
                             <div className="grid grid-cols-2 gap-x-4 mt-1 text-xs text-slate-400">
@@ -514,7 +745,7 @@ export default function ProtocolAssemblyPage() {
                       onToggle={() => toggleSection("supplements")}
                     >
                       <div className="space-y-1">
-                        {proto.supplements?.map((s: any, i: number) => (
+                        {proto.supplements?.map((s: Supplement, i: number) => (
                           <div key={i} className="flex items-center justify-between p-2 bg-slate-800/40 rounded-lg text-xs">
                             <span className="font-medium text-white">{s.name}</span>
                             <span className="text-slate-400">{s.dose} | {s.timing}</span>
@@ -531,7 +762,7 @@ export default function ProtocolAssemblyPage() {
                       onToggle={() => toggleSection("detox")}
                     >
                       <div className="space-y-2">
-                        {proto.detoxProtocols?.map((d: any, i: number) => (
+                        {proto.detoxProtocols?.map((d: DetoxProtocol, i: number) => (
                           <div key={i} className="p-3 bg-slate-800/40 rounded-lg">
                             <div className="font-medium text-white text-sm">{d.name}</div>
                             <div className="text-xs text-slate-400 mt-1">
@@ -550,7 +781,7 @@ export default function ProtocolAssemblyPage() {
                       onToggle={() => toggleSection("lifestyle")}
                     >
                       <div className="space-y-2">
-                        {proto.lifestyleRecommendations?.map((l: any, i: number) => (
+                        {proto.lifestyleRecommendations?.map((l: LifestyleRec, i: number) => (
                           <div key={i} className="text-xs text-slate-300 flex items-start gap-1">
                             <span className="text-lime-400 mt-0.5">•</span>
                             <span>
@@ -576,7 +807,7 @@ export default function ProtocolAssemblyPage() {
                       onToggle={() => toggleSection("followup")}
                     >
                       <div className="space-y-1">
-                        {proto.followUpPlan?.map((f: any, i: number) => (
+                        {proto.followUpPlan?.map((f: FollowUp, i: number) => (
                           <div key={i} className="flex items-center gap-2 text-xs p-2 bg-slate-800/40 rounded-lg">
                             <span className="font-medium text-amber-400 w-16 shrink-0">Week {f.weekNumber}</span>
                             <span className="text-white">{f.action}</span>

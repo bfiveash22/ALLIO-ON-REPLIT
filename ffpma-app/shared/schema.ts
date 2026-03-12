@@ -2100,6 +2100,7 @@ export const generatedProtocols = pgTable("generated_protocols", {
   patientAge: integer("patient_age"),
   sourceType: varchar("source_type", { length: 50 }).notNull(),
   intakeFormId: integer("intake_form_id"),
+  memberId: varchar("member_id", { length: 255 }),
   patientProfile: jsonb("patient_profile").notNull(),
   protocol: jsonb("protocol").notNull(),
   slidesPresentationId: varchar("slides_presentation_id", { length: 255 }),

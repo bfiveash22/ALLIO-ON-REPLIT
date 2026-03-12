@@ -16,7 +16,7 @@ declare global {
 import { z } from "zod";
 import { storage } from "./storage";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { doctorOnboarding, memberEnrollment, trainingModuleSections, trainingModuleKeyPoints, trainingCertifications, doctorAppointments, doctorPatientMessages, intakeForms } from "@shared/schema";
 import { signNowService } from "./services/signnow";
 import { sendAthenaIntroduction, sendEmail, getInbox, getMessage, replyToMessage } from "./services/gmail";
@@ -145,7 +145,7 @@ export async function registerRoutes(
       }
       const profile = await analyzeTranscript(transcript);
       const protocol = await generateProtocol(profile);
-      const protocolId = await saveProtocol(profile, protocol, 'transcript', (req.user as any)?.username);
+      const protocolId = await saveProtocol(profile, protocol, 'transcript', (req.user as { username?: string })?.username);
       let slides = null;
       if (shouldGenerateSlides) {
         try {
@@ -156,7 +156,7 @@ export async function registerRoutes(
         }
       }
       res.json({ id: protocolId, profile, protocol, slides });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Protocol Assembly] Generate error:', error);
       res.status(500).json({ error: 'Failed to generate protocol. Please try again.' });
     }
@@ -180,7 +180,7 @@ export async function registerRoutes(
       const profile = await profileFromIntakeForm(formData, patientInfo);
       profile.intakeFormId = intakeId;
       const protocol = await generateProtocol(profile);
-      const protocolId = await saveProtocol(profile, protocol, 'intake_form', (req.user as any)?.username);
+      const protocolId = await saveProtocol(profile, protocol, 'intake_form', (req.user as { username?: string })?.username);
       const { generateSlides: shouldGenerateSlides } = req.body || {};
       let slides = null;
       if (shouldGenerateSlides) {
@@ -192,9 +192,26 @@ export async function registerRoutes(
         }
       }
       res.json({ id: protocolId, profile, protocol, slides });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Protocol Assembly] Generate from intake error:', error);
       res.status(500).json({ error: 'Failed to generate protocol from intake. Please try again.' });
+    }
+  });
+
+  app.get('/api/protocol-assembly/intake-forms', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (_req, res) => {
+    try {
+      const forms = await db.select({
+        id: intakeForms.id,
+        patientName: intakeForms.patientName,
+        patientEmail: intakeForms.patientEmail,
+        status: intakeForms.status,
+        createdAt: intakeForms.createdAt,
+        submittedAt: intakeForms.submittedAt,
+      }).from(intakeForms).orderBy(desc(intakeForms.createdAt)).limit(100);
+      res.json(forms);
+    } catch (error: unknown) {
+      console.error('[Protocol Assembly] List intake forms error:', error);
+      res.status(500).json({ error: 'Failed to list intake forms' });
     }
   });
 
@@ -202,7 +219,7 @@ export async function registerRoutes(
     try {
       const protocols = await listProtocols();
       res.json(protocols);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Protocol Assembly] List error:', error);
       res.status(500).json({ error: 'Failed to list protocols' });
     }
@@ -215,7 +232,7 @@ export async function registerRoutes(
       const protocol = await getProtocol(id);
       if (!protocol) return res.status(404).json({ error: 'Protocol not found' });
       res.json(protocol);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Protocol Assembly] Get error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -232,7 +249,7 @@ export async function registerRoutes(
       const slides = await generateProtocolSlides(protocol, profile);
       await updateProtocolSlides(id, slides.presentationId, slides.webViewLink);
       res.json(slides);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Protocol Assembly] Slides error:', error);
       res.status(500).json({ error: 'Failed to generate slides. Please try again.' });
     }
@@ -254,7 +271,7 @@ export async function registerRoutes(
       const { promisify } = await import('util');
       const execAsync = promisify(exec);
 
-      console.log(`[OVERSEER] System update initiated by ${(req.user as any)?.username || (req.user as any)?.wpUsername || 'Trustee'}`);
+      console.log(`[OVERSEER] System update initiated by ${(req.user as { username?: string })?.username || (req.user as any)?.wpUsername || 'Trustee'}`);
 
       // We return success immediately so the agent doesn't timeout
       res.json({ message: "Update initiated. System will reload shortly without downtime." });

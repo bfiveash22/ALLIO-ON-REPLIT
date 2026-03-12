@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import * as fs from "fs";
 import * as path from "path";
 import { db } from "../db";
-import { generatedProtocols } from "@shared/schema";
+import { generatedProtocols, type GeneratedProtocol } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 import {
   peptides,
@@ -630,7 +630,7 @@ export async function updateProtocolSlides(
     .where(eq(generatedProtocols.id, protocolId));
 }
 
-export async function getProtocol(id: number) {
+export async function getProtocol(id: number): Promise<GeneratedProtocol | null> {
   const [protocol] = await db
     .select()
     .from(generatedProtocols)
