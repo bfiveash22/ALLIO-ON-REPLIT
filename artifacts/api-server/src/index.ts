@@ -184,6 +184,8 @@ registerHealthRoutes(app);
   registerAdminRoutes(app);
   const { registerMiscRoutes } = await import("./routes/misc-routes");
   registerMiscRoutes(app);
+  const { registerFrequencyRoutes } = await import("./routes/frequency-routes");
+  registerFrequencyRoutes(app);
   const { registerProtocolAssemblyRoutes } = await import("./routes/protocol-assembly-routes");
   await registerProtocolAssemblyRoutes(app);
 

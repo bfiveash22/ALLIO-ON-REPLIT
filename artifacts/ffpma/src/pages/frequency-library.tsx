@@ -33,9 +33,16 @@ import {
   Activity,
   Star,
   Waves,
-  Settings,
   Plus,
   Monitor,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Cpu,
+  FileText,
+  Info,
+  BookOpen,
 } from "lucide-react";
 
 interface Frequency {
@@ -67,6 +74,41 @@ interface FrequencyCategory {
   icon: string | null;
 }
 
+interface RifeProtocol {
+  id: string;
+  conditionName: string;
+  category: "infectious" | "chronic" | "detox_cellular_repair";
+  categoryLabel: string;
+  frequencyRange: string;
+  primaryFrequencies: number[];
+  mechanism: string;
+  treatmentDuration: string;
+  sessionsPerWeek: number;
+  equipment: string[];
+  safetyProtocols: string[];
+  contraindications: string[];
+  notes: string;
+  researchBasis: string;
+  tags: string[];
+}
+
+interface RifeSafetyData {
+  safety: {
+    generalSafety: string[];
+    universalContraindications: string[];
+    herxheimerReaction: {
+      description: string;
+      management: string[];
+    };
+    equipmentGuidelines: {
+      plasmaDevices: string;
+      contactDevices: string;
+      pemfDevices: string;
+    };
+  };
+  categories: Record<string, { label: string; description: string; icon: string }>;
+}
+
 const categoryIcons: Record<string, typeof Heart> = {
   healing: Heart,
   longevity: Timer,
@@ -91,6 +133,18 @@ const categoryColors: Record<string, string> = {
   binaural: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
   schumann: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   custom: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+};
+
+const rifeCategoryColors: Record<string, string> = {
+  infectious: "bg-red-500/10 text-red-400 border-red-500/20",
+  chronic: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  detox_cellular_repair: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+};
+
+const rifeCategoryIcons: Record<string, typeof Shield> = {
+  infectious: Shield,
+  chronic: Heart,
+  detox_cellular_repair: Sparkles,
 };
 
 function formatDuration(seconds: number | null): string {
@@ -131,7 +185,6 @@ function FrequencyPlayer({ frequency, onClose }: { frequency: Frequency; onClose
         const devices = await navigator.mediaDevices.enumerateDevices();
         setOutputDevices(devices.filter(d => d.kind === "audiooutput"));
       } catch {
-        // permissions denied or no devices
       }
     }
     getDevices();
@@ -565,10 +618,366 @@ function GenerateToneDialog() {
   );
 }
 
+function RifeProtocolCard({ protocol, onSelect }: { protocol: RifeProtocol; onSelect: (p: RifeProtocol) => void }) {
+  const Icon = rifeCategoryIcons[protocol.category] || Zap;
+  const colorClass = rifeCategoryColors[protocol.category] || "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
+
+  return (
+    <Card
+      className="group hover:border-primary/40 transition-all duration-200 cursor-pointer"
+      onClick={() => onSelect(protocol)}
+    >
+      <CardHeader className="pb-3">
+        <div className="flex items-start gap-3">
+          <div className={`p-2.5 rounded-lg border ${colorClass}`}>
+            <Icon className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-sm font-semibold leading-tight line-clamp-2">
+              {protocol.conditionName}
+            </CardTitle>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${colorClass}`}>
+                {protocol.categoryLabel}
+              </Badge>
+              <span className="text-xs font-mono text-muted-foreground">
+                {protocol.frequencyRange}
+              </span>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
+          {protocol.mechanism}
+        </p>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {protocol.treatmentDuration.split(",")[0]}
+          </span>
+          <span className="flex items-center gap-1">
+            <Activity className="h-3 w-3" />
+            {protocol.sessionsPerWeek}x/week
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-1 mt-2">
+          {protocol.primaryFrequencies.slice(0, 5).map(f => (
+            <Badge key={f} variant="secondary" className="text-[10px] px-1.5 py-0 font-mono">
+              {f} Hz
+            </Badge>
+          ))}
+          {protocol.primaryFrequencies.length > 5 && (
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+              +{protocol.primaryFrequencies.length - 5} more
+            </Badge>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function RifeProtocolDetail({ protocol, onBack }: { protocol: RifeProtocol; onBack: () => void }) {
+  const Icon = rifeCategoryIcons[protocol.category] || Zap;
+  const colorClass = rifeCategoryColors[protocol.category] || "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
+
+  return (
+    <div className="space-y-6">
+      <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
+        <ChevronUp className="h-4 w-4 rotate-[-90deg]" />
+        Back to Protocols
+      </Button>
+
+      <div className="flex items-start gap-4">
+        <div className={`p-4 rounded-xl border ${colorClass}`}>
+          <Icon className="h-8 w-8" />
+        </div>
+        <div className="flex-1">
+          <h2 className="text-2xl font-bold">{protocol.conditionName}</h2>
+          <div className="flex items-center gap-2 mt-2">
+            <Badge variant="outline" className={colorClass}>
+              {protocol.categoryLabel}
+            </Badge>
+            <Badge variant="outline" className="font-mono">
+              {protocol.frequencyRange}
+            </Badge>
+          </div>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Waves className="h-5 w-5 text-violet-400" />
+            Primary Frequencies
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {protocol.primaryFrequencies.map(f => (
+              <Badge key={f} variant="secondary" className="text-sm px-3 py-1 font-mono">
+                {f} Hz
+              </Badge>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Dna className="h-5 w-5 text-blue-400" />
+            Mechanism of Action
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground leading-relaxed">{protocol.mechanism}</p>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Clock className="h-5 w-5 text-amber-400" />
+              Treatment Duration
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">{protocol.treatmentDuration}</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              <strong>Sessions per week:</strong> {protocol.sessionsPerWeek}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Cpu className="h-5 w-5 text-cyan-400" />
+              Equipment Needed
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              {protocol.equipment.map((eq, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-cyan-400 mt-1">•</span>
+                  {eq}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="border-amber-500/30 bg-amber-950/10">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Shield className="h-5 w-5 text-amber-400" />
+            Safety Protocols
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="text-sm text-muted-foreground space-y-2">
+            {protocol.safetyProtocols.map((sp, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className="text-amber-400 mt-0.5 shrink-0">⚠</span>
+                {sp}
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+
+      <Card className="border-red-500/30 bg-red-950/10">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-red-400" />
+            Contraindications
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="text-sm text-muted-foreground space-y-2">
+            {protocol.contraindications.map((ci, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className="text-red-400 mt-0.5 shrink-0">✕</span>
+                {ci}
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Info className="h-5 w-5 text-blue-400" />
+            Clinical Notes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground leading-relaxed">{protocol.notes}</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-violet-400" />
+            Research Basis
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground leading-relaxed">{protocol.researchBasis}</p>
+        </CardContent>
+      </Card>
+
+      <div className="flex flex-wrap gap-1">
+        {protocol.tags.map(tag => (
+          <Badge key={tag} variant="outline" className="text-xs">
+            {tag}
+          </Badge>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SafetyGuidelinesSection({ safetyData }: { safetyData: RifeSafetyData }) {
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    general: true,
+    contraindications: true,
+    herxheimer: false,
+    equipment: false,
+  });
+
+  const toggleSection = (key: string) => {
+    setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card className="border-red-500/30 bg-gradient-to-r from-red-950/20 to-amber-950/10">
+        <CardHeader>
+          <div className="flex items-center justify-between cursor-pointer" onClick={() => toggleSection("general")}>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Shield className="h-5 w-5 text-red-400" />
+              General Safety Guidelines
+            </CardTitle>
+            {expandedSections.general ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </div>
+        </CardHeader>
+        {expandedSections.general && (
+          <CardContent>
+            <ul className="text-sm text-muted-foreground space-y-2">
+              {safetyData.safety.generalSafety.map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-amber-400 mt-0.5 shrink-0">⚠</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        )}
+      </Card>
+
+      <Card className="border-red-500/40 bg-red-950/10">
+        <CardHeader>
+          <div className="flex items-center justify-between cursor-pointer" onClick={() => toggleSection("contraindications")}>
+            <CardTitle className="text-base flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-400" />
+              Universal Contraindications
+            </CardTitle>
+            {expandedSections.contraindications ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </div>
+        </CardHeader>
+        {expandedSections.contraindications && (
+          <CardContent>
+            <ul className="text-sm text-muted-foreground space-y-2">
+              {safetyData.safety.universalContraindications.map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-red-400 mt-0.5 shrink-0">✕</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        )}
+      </Card>
+
+      <Card className="border-amber-500/30">
+        <CardHeader>
+          <div className="flex items-center justify-between cursor-pointer" onClick={() => toggleSection("herxheimer")}>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Activity className="h-5 w-5 text-amber-400" />
+              Herxheimer Reaction (Healing Crisis)
+            </CardTitle>
+            {expandedSections.herxheimer ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </div>
+        </CardHeader>
+        {expandedSections.herxheimer && (
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-3">{safetyData.safety.herxheimerReaction.description}</p>
+            <h4 className="text-sm font-semibold mb-2">Management Steps:</h4>
+            <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+              {safetyData.safety.herxheimerReaction.management.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ol>
+          </CardContent>
+        )}
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between cursor-pointer" onClick={() => toggleSection("equipment")}>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Cpu className="h-5 w-5 text-cyan-400" />
+              Equipment Guidelines
+            </CardTitle>
+            {expandedSections.equipment ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </div>
+        </CardHeader>
+        {expandedSections.equipment && (
+          <CardContent className="space-y-4">
+            <div>
+              <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
+                <Zap className="h-4 w-4 text-violet-400" />
+                Plasma Devices
+              </h4>
+              <p className="text-sm text-muted-foreground">{safetyData.safety.equipmentGuidelines.plasmaDevices}</p>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
+                <Monitor className="h-4 w-4 text-green-400" />
+                Contact Devices
+              </h4>
+              <p className="text-sm text-muted-foreground">{safetyData.safety.equipmentGuidelines.contactDevices}</p>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
+                <Waves className="h-4 w-4 text-blue-400" />
+                PEMF Devices
+              </h4>
+              <p className="text-sm text-muted-foreground">{safetyData.safety.equipmentGuidelines.pemfDevices}</p>
+            </div>
+          </CardContent>
+        )}
+      </Card>
+    </div>
+  );
+}
+
 export default function FrequencyLibraryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [activeFrequency, setActiveFrequency] = useState<Frequency | null>(null);
+  const [selectedProtocol, setSelectedProtocol] = useState<RifeProtocol | null>(null);
+  const [rifeCategory, setRifeCategory] = useState<string>("all");
+  const [rifeSearch, setRifeSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("library");
 
   const { data: frequencyList = [], isLoading } = useQuery<Frequency[]>({
     queryKey: ["/api/frequencies", selectedCategory, searchQuery],
@@ -587,6 +996,27 @@ export default function FrequencyLibraryPage() {
     queryFn: async () => {
       const res = await fetch("/api/frequencies/categories");
       if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  const { data: rifeProtocols = [], isLoading: rifeLoading } = useQuery<RifeProtocol[]>({
+    queryKey: ["/api/frequencies/rife-protocols", rifeCategory, rifeSearch],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (rifeCategory !== "all") params.set("category", rifeCategory);
+      if (rifeSearch) params.set("search", rifeSearch);
+      const res = await fetch(`/api/frequencies/rife-protocols?${params}`);
+      if (!res.ok) throw new Error("Failed to fetch Rife protocols");
+      return res.json();
+    },
+  });
+
+  const { data: safetyData } = useQuery<RifeSafetyData>({
+    queryKey: ["/api/frequencies/rife-safety"],
+    queryFn: async () => {
+      const res = await fetch("/api/frequencies/rife-safety");
+      if (!res.ok) throw new Error("Failed to fetch safety guidelines");
       return res.json();
     },
   });
@@ -611,12 +1041,12 @@ export default function FrequencyLibraryPage() {
               Frequency Healing Library
             </h1>
             <p className="text-muted-foreground mt-1">
-              Browse healing frequencies, play through speakers, or transmit via Bluetooth to plasma devices
+              Browse healing frequencies, Rife protocol database, and safety guidelines
             </p>
           </div>
           <div className="flex items-center gap-2">
             <GenerateToneDialog />
-            {frequencyList.length === 0 && !isLoading && (
+            {frequencyList.length === 0 && !isLoading && activeTab === "library" && (
               <Button
                 variant="default"
                 size="sm"
@@ -629,147 +1059,305 @@ export default function FrequencyLibraryPage() {
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search frequencies by name, purpose, or description..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full md:w-[200px]">
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map(cat => (
-                <SelectItem key={cat.slug} value={cat.slug}>
-                  {cat.name}
-                </SelectItem>
-              ))}
-              {categories.length === 0 && (
-                <>
-                  <SelectItem value="healing">Healing</SelectItem>
-                  <SelectItem value="solfeggio">Solfeggio</SelectItem>
-                  <SelectItem value="rife">Rife</SelectItem>
-                  <SelectItem value="binaural">Binaural</SelectItem>
-                  <SelectItem value="schumann">Schumann</SelectItem>
-                  <SelectItem value="dna_repair">DNA Repair</SelectItem>
-                  <SelectItem value="pain_relief">Pain Relief</SelectItem>
-                  <SelectItem value="relaxation">Relaxation</SelectItem>
-                  <SelectItem value="longevity">Longevity</SelectItem>
-                  <SelectItem value="custom">Custom</SelectItem>
-                </>
-              )}
-            </SelectContent>
-          </Select>
-        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3 max-w-lg">
+            <TabsTrigger value="library" className="gap-2">
+              <Music className="h-4 w-4" />
+              Audio Library
+            </TabsTrigger>
+            <TabsTrigger value="rife" className="gap-2">
+              <Zap className="h-4 w-4" />
+              Rife Protocols
+            </TabsTrigger>
+            <TabsTrigger value="safety" className="gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              Safety
+            </TabsTrigger>
+          </TabsList>
 
-        {activeFrequency && (
-          <Card className="border-violet-500/30 bg-gradient-to-r from-violet-950/20 to-indigo-950/20">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Waves className="h-5 w-5 text-violet-400" />
-                  Now Playing
-                </CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => setActiveFrequency(null)}>
-                  Close
-                </Button>
+          <TabsContent value="library" className="space-y-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search frequencies by name, purpose, or description..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-            </CardHeader>
-            <CardContent>
-              <FrequencyPlayer frequency={activeFrequency} onClose={() => setActiveFrequency(null)} />
-            </CardContent>
-          </Card>
-        )}
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.map(cat => (
+                    <SelectItem key={cat.slug} value={cat.slug}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                  {categories.length === 0 && (
+                    <>
+                      <SelectItem value="healing">Healing</SelectItem>
+                      <SelectItem value="solfeggio">Solfeggio</SelectItem>
+                      <SelectItem value="rife">Rife</SelectItem>
+                      <SelectItem value="binaural">Binaural</SelectItem>
+                      <SelectItem value="schumann">Schumann</SelectItem>
+                      <SelectItem value="dna_repair">DNA Repair</SelectItem>
+                      <SelectItem value="pain_relief">Pain Relief</SelectItem>
+                      <SelectItem value="relaxation">Relaxation</SelectItem>
+                      <SelectItem value="longevity">Longevity</SelectItem>
+                      <SelectItem value="custom">Custom</SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
 
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Card key={i}>
-                <CardHeader>
-                  <div className="flex items-start gap-3">
-                    <Skeleton className="h-10 w-10 rounded-lg" />
-                    <div className="flex-1">
-                      <Skeleton className="h-4 w-3/4 mb-2" />
-                      <Skeleton className="h-3 w-1/2" />
-                    </div>
+            {activeFrequency && (
+              <Card className="border-violet-500/30 bg-gradient-to-r from-violet-950/20 to-indigo-950/20">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Waves className="h-5 w-5 text-violet-400" />
+                      Now Playing
+                    </CardTitle>
+                    <Button variant="ghost" size="sm" onClick={() => setActiveFrequency(null)}>
+                      Close
+                    </Button>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Skeleton className="h-3 w-full mb-2" />
-                  <Skeleton className="h-3 w-2/3" />
+                  <FrequencyPlayer frequency={activeFrequency} onClose={() => setActiveFrequency(null)} />
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        ) : frequencyList.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <Radio className="h-16 w-16 text-muted-foreground/30 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Frequencies Found</h3>
-              <p className="text-sm text-muted-foreground mb-4 max-w-md">
-                {searchQuery || selectedCategory !== "all"
-                  ? "No frequencies match your current filters. Try adjusting your search or category."
-                  : "The frequency library is empty. Load the starter library to get started with well-known healing frequencies."}
-              </p>
-              {!searchQuery && selectedCategory === "all" && (
-                <Button onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending}>
-                  {seedMutation.isPending ? "Loading..." : "Load Starter Library"}
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          <Tabs defaultValue="all" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="all">All ({frequencyList.length})</TabsTrigger>
-              {featured.length > 0 && (
-                <TabsTrigger value="featured">Featured ({featured.length})</TabsTrigger>
-              )}
-            </TabsList>
+            )}
 
-            <TabsContent value="all">
+            {isLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {frequencyList.map(freq => (
-                  <FrequencyCard key={freq.id} frequency={freq} onPlay={setActiveFrequency} />
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <Card key={i}>
+                    <CardHeader>
+                      <div className="flex items-start gap-3">
+                        <Skeleton className="h-10 w-10 rounded-lg" />
+                        <div className="flex-1">
+                          <Skeleton className="h-4 w-3/4 mb-2" />
+                          <Skeleton className="h-3 w-1/2" />
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <Skeleton className="h-3 w-full mb-2" />
+                      <Skeleton className="h-3 w-2/3" />
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
-            </TabsContent>
+            ) : frequencyList.length === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                  <Radio className="h-16 w-16 text-muted-foreground/30 mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Frequencies Found</h3>
+                  <p className="text-sm text-muted-foreground mb-4 max-w-md">
+                    {searchQuery || selectedCategory !== "all"
+                      ? "No frequencies match your current filters. Try adjusting your search or category."
+                      : "The frequency library is empty. Load the starter library to get started with well-known healing frequencies."}
+                  </p>
+                  {!searchQuery && selectedCategory === "all" && (
+                    <Button onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending}>
+                      {seedMutation.isPending ? "Loading..." : "Load Starter Library"}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <Tabs defaultValue="all" className="space-y-4">
+                <TabsList>
+                  <TabsTrigger value="all">All ({frequencyList.length})</TabsTrigger>
+                  {featured.length > 0 && (
+                    <TabsTrigger value="featured">Featured ({featured.length})</TabsTrigger>
+                  )}
+                </TabsList>
 
-            {featured.length > 0 && (
-              <TabsContent value="featured">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {featured.map(freq => (
-                    <FrequencyCard key={freq.id} frequency={freq} onPlay={setActiveFrequency} />
-                  ))}
-                </div>
-              </TabsContent>
+                <TabsContent value="all">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {frequencyList.map(freq => (
+                      <FrequencyCard key={freq.id} frequency={freq} onPlay={setActiveFrequency} />
+                    ))}
+                  </div>
+                </TabsContent>
+
+                {featured.length > 0 && (
+                  <TabsContent value="featured">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {featured.map(freq => (
+                        <FrequencyCard key={freq.id} frequency={freq} onPlay={setActiveFrequency} />
+                      ))}
+                    </div>
+                  </TabsContent>
+                )}
+              </Tabs>
             )}
-          </Tabs>
-        )}
 
-        <Card className="bg-muted/30 border-dashed">
-          <CardContent className="py-6">
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
-                <Bluetooth className="h-6 w-6 text-violet-400" />
+            <Card className="bg-muted/30 border-dashed">
+              <CardContent className="py-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
+                    <Bluetooth className="h-6 w-6 text-violet-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-1">Bluetooth & Plasma Device Support</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Connect your Bluetooth speakers or plasma frequency devices to transmit healing frequencies.
+                      When playing a frequency, use the audio output selector to route sound to any paired Bluetooth device.
+                      Your device receives standard audio — no special firmware required.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="rife" className="space-y-6">
+            {selectedProtocol ? (
+              <RifeProtocolDetail
+                protocol={selectedProtocol}
+                onBack={() => setSelectedProtocol(null)}
+              />
+            ) : (
+              <>
+                <Card className="bg-gradient-to-r from-yellow-950/20 to-amber-950/10 border-yellow-500/30">
+                  <CardContent className="py-4">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                        <Zap className="h-6 w-6 text-yellow-400" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-1">Rife Frequency Protocol Database</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Comprehensive protocols based on Dr. Royal Rife's research, organized by condition category.
+                          Each protocol includes specific frequencies, mechanisms, treatment schedules, equipment requirements,
+                          and safety guidelines. Always consult a healthcare provider before beginning any frequency protocol.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by condition, symptom, or keyword..."
+                      value={rifeSearch}
+                      onChange={e => setRifeSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Select value={rifeCategory} onValueChange={setRifeCategory}>
+                    <SelectTrigger className="w-full md:w-[250px]">
+                      <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      <SelectItem value="infectious">Infectious Diseases</SelectItem>
+                      <SelectItem value="chronic">Chronic Conditions</SelectItem>
+                      <SelectItem value="detox_cellular_repair">Detox & Cellular Repair</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {rifeLoading ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <Card key={i}>
+                        <CardHeader>
+                          <div className="flex items-start gap-3">
+                            <Skeleton className="h-10 w-10 rounded-lg" />
+                            <div className="flex-1">
+                              <Skeleton className="h-4 w-3/4 mb-2" />
+                              <Skeleton className="h-3 w-1/2" />
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <Skeleton className="h-3 w-full mb-2" />
+                          <Skeleton className="h-3 w-2/3" />
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : rifeProtocols.length === 0 ? (
+                  <Card className="border-dashed">
+                    <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                      <Zap className="h-16 w-16 text-muted-foreground/30 mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">No Protocols Found</h3>
+                      <p className="text-sm text-muted-foreground max-w-md">
+                        No Rife protocols match your search criteria. Try adjusting your search or category filter.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <FileText className="h-4 w-4" />
+                      {rifeProtocols.length} protocol{rifeProtocols.length !== 1 ? "s" : ""} found
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {rifeProtocols.map(protocol => (
+                        <RifeProtocolCard
+                          key={protocol.id}
+                          protocol={protocol}
+                          onSelect={setSelectedProtocol}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </TabsContent>
+
+          <TabsContent value="safety" className="space-y-6">
+            <Card className="bg-gradient-to-r from-red-950/20 to-amber-950/10 border-red-500/30">
+              <CardContent className="py-4">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                    <AlertTriangle className="h-6 w-6 text-red-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-1">Important Safety Information</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Rife frequency therapy is a complementary approach and should never replace conventional medical care.
+                      Always consult with a qualified healthcare provider before beginning any frequency protocol.
+                      Review all contraindications and safety guidelines carefully before use.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {safetyData ? (
+              <SafetyGuidelinesSection safetyData={safetyData} />
+            ) : (
+              <div className="space-y-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Card key={i}>
+                    <CardHeader>
+                      <Skeleton className="h-5 w-1/3" />
+                    </CardHeader>
+                    <CardContent>
+                      <Skeleton className="h-3 w-full mb-2" />
+                      <Skeleton className="h-3 w-4/5 mb-2" />
+                      <Skeleton className="h-3 w-3/5" />
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-              <div>
-                <h3 className="font-semibold mb-1">Bluetooth & Plasma Device Support</h3>
-                <p className="text-sm text-muted-foreground">
-                  Connect your Bluetooth speakers or plasma frequency devices to transmit healing frequencies.
-                  When playing a frequency, use the audio output selector to route sound to any paired Bluetooth device.
-                  Your device receives standard audio — no special firmware required.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
