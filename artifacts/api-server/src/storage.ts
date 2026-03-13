@@ -1,6 +1,6 @@
-import { type User, type UpsertUser, type Contract, type InsertContract, type LegalDocument, type InsertLegalDocument, type AgentTask, type InsertAgentTask, type TrainingModule, type TrainingTrack, type Quiz, type DriveDocument, type Program, type ProgramEnrollment, type InsertProgramEnrollment, type UserProgress, type InsertUserProgress, type AgentConfiguration, type InsertAgentConfiguration, type AthenaEmailApproval, type InsertAthenaEmailApproval, type AgentTaskReview, type InsertAgentTaskReview, type DivisionLead, type InsertDivisionLead, type BloodSample, type InsertBloodSample, type BloodSampleTag, type InsertBloodSampleTag, type DianeKnowledge, type Achievement, type InsertAchievement, type UserAchievement, type InsertUserAchievement, type ModuleBookmark, type InsertModuleBookmark, type DiscussionThread, type InsertDiscussionThread, type DiscussionReply, type InsertDiscussionReply, type PatientRecord, type InsertPatientRecord, type PatientUpload, type InsertPatientUpload, type PatientProtocol, type InsertPatientProtocol, type DoctorPatientMessage, type InsertDoctorPatientMessage, type Conversation, type InsertConversation, type QuizAttempt, type QuizResponse, type UiRefactorProposal, type InsertUiRefactorProposal, users, contracts, legalDocuments, memberProfiles, agentTasks, clinics, trainingModules, trainingTracks, quizzes, quizQuestions, quizAnswers, moduleQuizzes, driveDocuments, programs, programEnrollments, userProgress, agentConfigurations, athenaEmailApprovals, agentTaskReviews, divisionLeads, userWpRoles, bloodSamples, bloodSampleTags, dianeKnowledge, achievements, userAchievements, moduleBookmarks, discussionThreads, discussionReplies, patientRecords, patientUploads, patientProtocols, doctorPatientMessages, conversations, quizAttempts, quizResponses, uiRefactorProposals, openclawMessages } from "@shared/schema";
+import { type User, type UpsertUser, type Contract, type InsertContract, type LegalDocument, type InsertLegalDocument, type AgentTask, type InsertAgentTask, type TrainingModule, type TrainingTrack, type Quiz, type DriveDocument, type Program, type ProgramEnrollment, type InsertProgramEnrollment, type UserProgress, type InsertUserProgress, type AgentConfiguration, type InsertAgentConfiguration, type AthenaEmailApproval, type InsertAthenaEmailApproval, type AgentTaskReview, type InsertAgentTaskReview, type DivisionLead, type InsertDivisionLead, type BloodSample, type InsertBloodSample, type BloodSampleTag, type InsertBloodSampleTag, type DianeKnowledge, type Achievement, type InsertAchievement, type UserAchievement, type InsertUserAchievement, type ModuleBookmark, type InsertModuleBookmark, type DiscussionThread, type InsertDiscussionThread, type DiscussionReply, type InsertDiscussionReply, type PatientRecord, type InsertPatientRecord, type PatientUpload, type InsertPatientUpload, type PatientProtocol, type InsertPatientProtocol, type DoctorPatientMessage, type InsertDoctorPatientMessage, type Conversation, type InsertConversation, type QuizAttempt, type QuizResponse, type UiRefactorProposal, type InsertUiRefactorProposal, type Frequency, type InsertFrequency, type FrequencyCategory, type InsertFrequencyCategory, users, contracts, legalDocuments, memberProfiles, agentTasks, clinics, trainingModules, trainingTracks, quizzes, quizQuestions, quizAnswers, moduleQuizzes, driveDocuments, programs, programEnrollments, userProgress, agentConfigurations, athenaEmailApprovals, agentTaskReviews, divisionLeads, userWpRoles, bloodSamples, bloodSampleTags, dianeKnowledge, achievements, userAchievements, moduleBookmarks, discussionThreads, discussionReplies, patientRecords, patientUploads, patientProtocols, doctorPatientMessages, conversations, quizAttempts, quizResponses, uiRefactorProposals, openclawMessages, frequencies, frequencyCategories } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, ilike, inArray } from "drizzle-orm";
+import { eq, desc, and, or, ilike, inArray, sql } from "drizzle-orm";
 
 type MemberProfile = typeof memberProfiles.$inferSelect;
 
@@ -970,6 +970,59 @@ export class DatabaseStorage implements IStorage {
   async updateUiRefactorProposal(id: string, updates: Partial<UiRefactorProposal>): Promise<UiRefactorProposal | undefined> {
     const [updated] = await db.update(uiRefactorProposals).set(updates).where(eq(uiRefactorProposals.id, id)).returning();
     return updated || undefined;
+  }
+
+  async getFrequencies(filters?: { category?: string; search?: string; featured?: boolean }): Promise<Frequency[]> {
+    const conditions = [eq(frequencies.isActive, true)];
+    if (filters?.category) {
+      conditions.push(eq(frequencies.category, filters.category));
+    }
+    if (filters?.search) {
+      conditions.push(
+        or(
+          ilike(frequencies.title, `%${filters.search}%`),
+          ilike(frequencies.description, `%${filters.search}%`),
+          ilike(frequencies.purpose, `%${filters.search}%`)
+        )!
+      );
+    }
+    if (filters?.featured) {
+      conditions.push(eq(frequencies.isFeatured, true));
+    }
+    return await db.select().from(frequencies).where(and(...conditions)).orderBy(desc(frequencies.isFeatured), frequencies.title);
+  }
+
+  async getFrequency(id: string): Promise<Frequency | undefined> {
+    const [freq] = await db.select().from(frequencies).where(eq(frequencies.id, id));
+    return freq || undefined;
+  }
+
+  async createFrequency(data: InsertFrequency): Promise<Frequency> {
+    const [freq] = await db.insert(frequencies).values(data).returning();
+    return freq;
+  }
+
+  async updateFrequency(id: string, updates: Partial<Frequency>): Promise<Frequency | undefined> {
+    const [updated] = await db.update(frequencies).set({ ...updates, updatedAt: new Date() }).where(eq(frequencies.id, id)).returning();
+    return updated || undefined;
+  }
+
+  async deleteFrequency(id: string): Promise<boolean> {
+    const [deleted] = await db.update(frequencies).set({ isActive: false }).where(eq(frequencies.id, id)).returning();
+    return !!deleted;
+  }
+
+  async incrementFrequencyPlayCount(id: string): Promise<void> {
+    await db.update(frequencies).set({ playCount: sql`${frequencies.playCount} + 1` }).where(eq(frequencies.id, id));
+  }
+
+  async getFrequencyCategories(): Promise<FrequencyCategory[]> {
+    return await db.select().from(frequencyCategories).where(eq(frequencyCategories.isActive, true)).orderBy(frequencyCategories.sortOrder);
+  }
+
+  async createFrequencyCategory(data: InsertFrequencyCategory): Promise<FrequencyCategory> {
+    const [cat] = await db.insert(frequencyCategories).values(data).returning();
+    return cat;
   }
 }
 

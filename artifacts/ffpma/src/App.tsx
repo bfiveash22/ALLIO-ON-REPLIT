@@ -78,6 +78,7 @@ import VideoStudioPage from "@/pages/video-studio";
 import PMANetworkPage from "@/pages/pma-network";
 import ContractReviewPage from "@/pages/contract-review";
 import BloodAnalysisPage from "@/pages/blood-analysis";
+import FrequencyLibraryPage from "@/pages/frequency-library";
 import BecomeAMemberPage from "@/pages/become-a-member";
 import NotFound from "@/pages/not-found";
 
@@ -604,6 +605,13 @@ function Router() {
             <ContractReviewPage />
           </AppLayout>
         </RoleProtectedRoute>
+      )} />
+      <Route path="/frequency-library" component={() => (
+        <ProtectedRoute>
+          <AppLayout>
+            <FrequencyLibraryPage />
+          </AppLayout>
+        </ProtectedRoute>
       )} />
       <Route path="/blood-analysis" component={() => (
         <RoleProtectedRoute allowedRoles={["admin", "trustee", "clinic", "doctor"]}>

@@ -5086,6 +5086,259 @@ INSTRUCTIONS:
     }
   });
 
+  app.get("/api/frequencies", async (req: Request, res: Response) => {
+    try {
+      const { category, search, featured } = req.query;
+      const filters: { category?: string; search?: string; featured?: boolean } = {};
+      if (category && typeof category === "string") filters.category = category;
+      if (search && typeof search === "string") filters.search = search;
+      if (featured === "true") filters.featured = true;
+      const results = await storage.getFrequencies(filters);
+      res.json(results);
+    } catch (error: any) {
+      console.error("[Frequencies] List error:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/frequencies/categories", async (req: Request, res: Response) => {
+    try {
+      const categories = await storage.getFrequencyCategories();
+      res.json(categories);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/frequencies/:id", async (req: Request, res: Response) => {
+    try {
+      const freq = await storage.getFrequency(req.params.id);
+      if (!freq) return res.status(404).json({ error: "Frequency not found" });
+      res.json(freq);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/frequencies/:id/play", async (req: Request, res: Response) => {
+    try {
+      await storage.incrementFrequencyPlayCount(req.params.id);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  const createFrequencySchema = z.object({
+    title: z.string().min(1),
+    description: z.string().optional(),
+    frequencyHz: z.string().or(z.number()),
+    waveformType: z.enum(["sine", "square", "triangle", "sawtooth"]).optional(),
+    durationSeconds: z.number().min(1).max(3600).optional(),
+    category: z.string().min(1),
+    purpose: z.string().optional(),
+    sourceAgent: z.string().optional(),
+    audioUrl: z.string().optional(),
+    driveFileId: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+    isFeatured: z.boolean().optional(),
+  });
+
+  app.post("/api/frequencies", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const parsed = createFrequencySchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Invalid request", details: parsed.error.errors });
+      }
+      const data = parsed.data;
+      const freq = await storage.createFrequency({
+        title: data.title,
+        description: data.description || null,
+        frequencyHz: String(data.frequencyHz),
+        waveformType: (data.waveformType as any) || "sine",
+        durationSeconds: data.durationSeconds || 300,
+        category: data.category,
+        purpose: data.purpose || null,
+        sourceAgent: data.sourceAgent || null,
+        audioUrl: data.audioUrl || null,
+        audioBase64: null,
+        driveFileId: data.driveFileId || null,
+        tags: data.tags || null,
+        isFeatured: data.isFeatured || false,
+        isActive: true,
+        createdBy: req.user?.id || "admin",
+      });
+      res.status(201).json(freq);
+    } catch (error: any) {
+      console.error("[Frequencies] Create error:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/frequencies/:id", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const updated = await storage.updateFrequency(req.params.id, req.body);
+      if (!updated) return res.status(404).json({ error: "Frequency not found" });
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/frequencies/:id", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const deleted = await storage.deleteFrequency(req.params.id);
+      if (!deleted) return res.status(404).json({ error: "Frequency not found" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/frequencies/generate-tone", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const toneSchema = z.object({
+        frequencyHz: z.number().min(1).max(20000),
+        durationSeconds: z.number().min(1).max(600).default(30),
+        waveformType: z.enum(["sine", "square", "triangle", "sawtooth"]).default("sine"),
+        title: z.string().optional(),
+        category: z.string().optional(),
+        purpose: z.string().optional(),
+        saveToLibrary: z.boolean().optional(),
+      });
+      const parsed = toneSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Invalid request", details: parsed.error.errors });
+      }
+      const { generateToneWav } = await import("./services/frequency-generator");
+      const tone = generateToneWav({
+        frequencyHz: parsed.data.frequencyHz,
+        durationSeconds: parsed.data.durationSeconds,
+        waveformType: parsed.data.waveformType,
+      });
+
+      if (parsed.data.saveToLibrary) {
+        const freq = await storage.createFrequency({
+          title: parsed.data.title || `${parsed.data.frequencyHz} Hz ${parsed.data.waveformType} tone`,
+          description: `Generated ${parsed.data.waveformType} wave at ${parsed.data.frequencyHz} Hz`,
+          frequencyHz: String(parsed.data.frequencyHz),
+          waveformType: parsed.data.waveformType as any,
+          durationSeconds: parsed.data.durationSeconds,
+          category: parsed.data.category || "custom",
+          purpose: parsed.data.purpose || null,
+          sourceAgent: "FORGE",
+          audioBase64: tone.audioBase64,
+          audioUrl: null,
+          driveFileId: null,
+          tags: ["generated", parsed.data.waveformType],
+          isFeatured: false,
+          isActive: true,
+          createdBy: req.user?.id || "admin",
+        });
+        res.json({ ...tone, savedFrequency: freq });
+      } else {
+        res.json(tone);
+      }
+    } catch (error: any) {
+      console.error("[Frequencies] Generate tone error:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/frequencies/seed", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { FREQUENCY_PRESETS, CATEGORY_SEED_DATA } = await import("./services/frequency-generator");
+
+      let categoriesCreated = 0;
+      for (const cat of CATEGORY_SEED_DATA) {
+        try {
+          await storage.createFrequencyCategory(cat);
+          categoriesCreated++;
+        } catch (e: any) {
+          if (!e.message?.includes("duplicate")) console.error(`Category seed error: ${e.message}`);
+        }
+      }
+
+      let frequenciesCreated = 0;
+      for (const preset of FREQUENCY_PRESETS) {
+        try {
+          await storage.createFrequency({
+            title: preset.title,
+            description: preset.description,
+            frequencyHz: String(preset.frequencyHz),
+            waveformType: "sine",
+            durationSeconds: 300,
+            category: preset.category,
+            purpose: preset.purpose,
+            sourceAgent: preset.sourceAgent,
+            audioUrl: null,
+            audioBase64: null,
+            driveFileId: null,
+            tags: preset.tags,
+            isFeatured: preset.isFeatured,
+            isActive: true,
+            createdBy: "system-seed",
+          });
+          frequenciesCreated++;
+        } catch (e: any) {
+          if (!e.message?.includes("duplicate")) console.error(`Frequency seed error: ${e.message}`);
+        }
+      }
+
+      res.json({ success: true, categoriesCreated, frequenciesCreated });
+    } catch (error: any) {
+      console.error("[Frequencies] Seed error:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/frequencies/import-drive", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { folderId } = req.body;
+      if (!folderId) {
+        return res.status(400).json({ error: "folderId is required" });
+      }
+      const { listFolderContents } = await import("./services/drive");
+      const files = await listFolderContents(folderId);
+      const audioFiles = files.filter(f =>
+        f.mimeType.startsWith("audio/") ||
+        f.name.endsWith(".wav") || f.name.endsWith(".mp3") ||
+        f.name.endsWith(".flac") || f.name.endsWith(".ogg")
+      );
+
+      const imported = [];
+      for (const file of audioFiles) {
+        try {
+          const freq = await storage.createFrequency({
+            title: file.name.replace(/\.[^.]+$/, ""),
+            description: `Imported from Google Drive: ${file.name}`,
+            frequencyHz: "0",
+            waveformType: "sine",
+            durationSeconds: 0,
+            category: "custom",
+            purpose: "Imported audio file",
+            sourceAgent: "HERMES",
+            audioUrl: file.webViewLink || null,
+            audioBase64: null,
+            driveFileId: file.id,
+            tags: ["imported", "drive"],
+            isFeatured: false,
+            isActive: true,
+            createdBy: req.user?.id || "admin",
+          });
+          imported.push(freq);
+        } catch (e: any) {
+          console.error(`Drive import error for ${file.name}:`, e.message);
+        }
+      }
+
+      res.json({ success: true, totalAudioFiles: audioFiles.length, imported: imported.length, files: imported });
+    } catch (error: any) {
+      console.error("[Frequencies] Drive import error:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Video Production API
   app.get("/api/video/status", requireRole("admin"), async (req: Request, res: Response) => {
     try {

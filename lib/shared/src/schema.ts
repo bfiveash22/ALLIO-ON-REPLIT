@@ -2115,3 +2115,51 @@ export const generatedProtocols = pgTable("generated_protocols", {
 export const insertGeneratedProtocolSchema = createInsertSchema(generatedProtocols).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertGeneratedProtocol = z.infer<typeof insertGeneratedProtocolSchema>;
 export type GeneratedProtocol = typeof generatedProtocols.$inferSelect;
+
+export const frequencyCategoryEnum = pgEnum("frequency_category", [
+  "healing", "longevity", "dna_repair", "pain_relief", "relaxation",
+  "solfeggio", "rife", "binaural", "schumann", "custom"
+]);
+
+export const waveformTypeEnum = pgEnum("waveform_type", ["sine", "square", "triangle", "sawtooth"]);
+
+export const frequencyCategories = pgTable("frequency_categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull().unique(),
+  slug: varchar("slug").notNull().unique(),
+  description: text("description"),
+  icon: varchar("icon"),
+  sortOrder: integer("sort_order").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const frequencies = pgTable("frequencies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  frequencyHz: decimal("frequency_hz", { precision: 12, scale: 4 }).notNull(),
+  waveformType: waveformTypeEnum("waveform_type").default("sine"),
+  durationSeconds: integer("duration_seconds").default(300),
+  category: varchar("category").notNull(),
+  purpose: text("purpose"),
+  sourceAgent: varchar("source_agent"),
+  audioUrl: varchar("audio_url"),
+  audioBase64: text("audio_base64"),
+  driveFileId: varchar("drive_file_id"),
+  tags: text("tags").array(),
+  isFeatured: boolean("is_featured").default(false),
+  isActive: boolean("is_active").default(true),
+  playCount: integer("play_count").default(0),
+  createdBy: varchar("created_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertFrequencySchema = createInsertSchema(frequencies).omit({ id: true, createdAt: true, updatedAt: true, playCount: true });
+export type InsertFrequency = z.infer<typeof insertFrequencySchema>;
+export type Frequency = typeof frequencies.$inferSelect;
+
+export const insertFrequencyCategorySchema = createInsertSchema(frequencyCategories).omit({ id: true, createdAt: true });
+export type InsertFrequencyCategory = z.infer<typeof insertFrequencyCategorySchema>;
+export type FrequencyCategory = typeof frequencyCategories.$inferSelect;

@@ -24,6 +24,7 @@ import {
   Dna,
   Scale,
   Sparkles,
+  Radio,
 } from "lucide-react";
 
 import {
@@ -103,6 +104,7 @@ const resourceMenuItems = [
   { title: "Protocol Builder", url: "/resources/protocol-builder", icon: Dna },
   { title: "Protocol Assembly", url: "/protocol-assembly", icon: Sparkles },
   { title: "Dosage Calculator", url: "/resources/dosage-calculator", icon: Calculator },
+  { title: "Frequency Library", url: "/frequency-library", icon: Radio },
 ];
 
 const doctorMenuItems = [
