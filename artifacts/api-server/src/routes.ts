@@ -227,47 +227,6 @@ export async function registerRoutes(
       res.status(500).json({ error: 'Failed to download protocol' });
     }
   });
-  // Register Learning/Interactive Healing routes
-  const { registerLearningRoutes } = await import("./learning-routes");
-  registerLearningRoutes(app);
-
-  // Register Diane AI routes
-  const { registerDianeRoutes } = await import("./services/diane-ai");
-  registerDianeRoutes(app);
-
-  // Register Protocol Builder routes
-  const { registerProtocolBuilderRoutes } = await import("./services/protocol-builder");
-  registerProtocolBuilderRoutes(app);
-
-  // Register domain route modules (modularized from monolithic routes.ts)
-  const { registerTrainingRoutes } = await import("./routes/training-routes");
-  registerTrainingRoutes(app);
-  const { registerMemberRoutes } = await import("./routes/member-routes");
-  registerMemberRoutes(app);
-  const { registerDoctorRoutes } = await import("./routes/doctor-routes");
-  registerDoctorRoutes(app);
-  const { registerSettingsRoutes } = await import("./routes/settings-routes");
-  registerSettingsRoutes(app);
-  const { registerMediaRoutes } = await import("./routes/media-routes");
-  registerMediaRoutes(app);
-  const { registerContractRoutes } = await import("./routes/contract-routes");
-  registerContractRoutes(app);
-  const { registerWooCommerceRoutes } = await import("./routes/woocommerce-routes");
-  registerWooCommerceRoutes(app);
-  const { registerOnboardingRoutes } = await import("./routes/onboarding-routes");
-  registerOnboardingRoutes(app);
-  const { registerAgentRoutes } = await import("./routes/agent-routes");
-  registerAgentRoutes(app);
-  const { registerAthenaRoutes } = await import("./routes/athena-routes");
-  registerAthenaRoutes(app);
-  const { registerDriveRoutes } = await import("./routes/drive-routes");
-  registerDriveRoutes(app);
-  const { registerBloodResearchRoutes } = await import("./routes/blood-research-routes");
-  registerBloodResearchRoutes(app);
-  const { registerAdminRoutes } = await import("./routes/admin-routes");
-  registerAdminRoutes(app);
-  const { registerMiscRoutes } = await import("./routes/misc-routes");
-  registerMiscRoutes(app);
 
   // Register Protocol Assembly routes
   const {

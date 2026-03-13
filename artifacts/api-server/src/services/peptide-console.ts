@@ -2,6 +2,10 @@ import type { Express, Request, Response } from "express";
 import fetch from "node-fetch";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const ABACUSAI_API_KEY = process.env.ABACUSAI_API_KEY;
 
