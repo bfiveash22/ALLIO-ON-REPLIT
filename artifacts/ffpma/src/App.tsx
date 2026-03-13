@@ -78,6 +78,7 @@ import VideoStudioPage from "@/pages/video-studio";
 import PMANetworkPage from "@/pages/pma-network";
 import ContractReviewPage from "@/pages/contract-review";
 import BloodAnalysisPage from "@/pages/blood-analysis";
+import BecomeAMemberPage from "@/pages/become-a-member";
 import NotFound from "@/pages/not-found";
 
 async function fetchProfile(): Promise<MemberProfile | null> {
@@ -510,6 +511,9 @@ function Router() {
             <QuizTakePage />
           </AppLayout>
         </ProtectedRoute>
+      )} />
+      <Route path="/become-a-member" component={() => (
+        <BecomeAMemberPage />
       )} />
       <Route path="/join" component={() => (
         <ProtectedRoute>

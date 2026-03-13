@@ -470,7 +470,7 @@ export default function LandingPage() {
                   </>
                 ) : (
                   <>
-                    <Link href="/join">
+                    <Link href="/become-a-member">
                       <Button size="lg" className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-bold px-8 shadow-xl shadow-amber-500/30 transition-all hover:scale-105" data-testid="button-hero-join">
                         Become a Member
                         <ChevronRight className="ml-2 h-4 w-4" />
@@ -1035,7 +1035,7 @@ export default function LandingPage() {
                 ) : (
                   <>
                     <li>
-                      <Link href="/join" className="text-primary font-medium">Become a Member</Link>
+                      <Link href="/become-a-member" className="text-primary font-medium">Become a Member</Link>
                     </li>
                     <li>
                       <Link href="/login">Member Login</Link>

@@ -3815,6 +3815,19 @@ INSTRUCTIONS:
     }
   });
 
+  app.get("/api/public/member-signing-link", async (_req: Request, res: Response) => {
+    try {
+      const clinic = await storage.getClinicByWpId(4);
+      if (!clinic || !clinic.signNowMemberLink) {
+        return res.status(404).json({ error: "Member signing link not available" });
+      }
+      res.json({ signNowMemberLink: clinic.signNowMemberLink });
+    } catch (error: any) {
+      console.error("Error fetching public member signing link:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   let publicStatsCache: { data: any; timestamp: number } | null = null;
   const PUBLIC_STATS_CACHE_TTL = 300000;
 
