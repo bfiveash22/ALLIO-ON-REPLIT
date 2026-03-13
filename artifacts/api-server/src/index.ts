@@ -92,6 +92,7 @@ app.use('/api/catalog', readRateLimiter);
 app.use('/api/programs', readRateLimiter);
 app.use('/api/doctor', readRateLimiter);
 app.use('/api/settings', writeRateLimiter);
+app.use('/api/enrollment', writeRateLimiter);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -194,6 +195,8 @@ registerHealthRoutes(app);
   await registerProtocolAssemblyRoutes(app);
   const { registerVitalityRoutes } = await import("./routes/vitality-routes");
   registerVitalityRoutes(app);
+  const { registerAutomationRoutes } = await import("./routes/automation-routes");
+  registerAutomationRoutes(app);
 
   try {
     const { seedDatabase } = await import('./seed');

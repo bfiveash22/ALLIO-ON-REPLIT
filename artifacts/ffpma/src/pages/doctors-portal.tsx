@@ -942,6 +942,30 @@ export default function DoctorsPortal() {
                                   <p className="font-medium capitalize">{member.status.replace('_', ' ')}</p>
                                 </div>
                               </div>
+                              <div className="flex gap-3 mt-4">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    window.open(`/api/doctor/patients/${member.id}/healing-report/pdf`, '_blank');
+                                  }}
+                                >
+                                  <Download className="w-4 h-4 mr-2" />
+                                  Healing Report PDF
+                                </Button>
+                                <Link href={`/doctor/patients/${member.id}/ecs-profile`} onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-purple-400 border-purple-500/30 hover:bg-purple-500/10"
+                                  >
+                                    <Dna className="w-4 h-4 mr-2" />
+                                    ECS Profile
+                                  </Button>
+                                </Link>
+                              </div>
                             </motion.div>
                           )}
                         </AnimatePresence>

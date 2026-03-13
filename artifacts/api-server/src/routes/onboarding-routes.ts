@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { doctorOnboarding, memberEnrollment, doctorAppointments, doctorPatientMessages } from "@shared/schema";
 import { signNowService } from "../services/signnow";
 import { wordPressAuthService } from "../services/wordpress-auth";
+import { triggerWelcomeOnSignup } from "../services/enrollment-automation";
 
 const DOCTOR_ONBOARDING_TEMPLATE = process.env.SIGNNOW_DOCTOR_ONBOARDING_TEMPLATE_ID || '253597f6c6724abd976af62a69b3e0a5b92b38dd';
 const MEMBER_ONBOARDING_TEMPLATE = process.env.SIGNNOW_MEMBER_TEMPLATE_ID || '';
@@ -120,6 +121,16 @@ export function registerOnboardingRoutes(app: Express): void {
         signNowDocumentId: signNowResult.documentId,
         signingUrl: signNowResult.signingUrl,
       }).returning();
+
+      triggerWelcomeOnSignup(email, fullName, doctorCode).then((result) => {
+        if (result.emailSent) {
+          console.log(`[enrollment] Welcome email sent to ${email}`);
+        } else {
+          console.warn(`[enrollment] Welcome email failed for ${email}: ${result.error}`);
+        }
+      }).catch((err) => {
+        console.error(`[enrollment] Welcome email error for ${email}:`, err.message);
+      });
 
       res.json({ success: true, enrollmentId: enrollmentRecord[0].id, signingUrl: signNowResult.signingUrl, documentId: signNowResult.documentId, doctorClinic: doctor.clinicName });
     } catch (error: any) {

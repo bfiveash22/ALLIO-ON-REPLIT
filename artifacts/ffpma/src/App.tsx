@@ -71,6 +71,7 @@ import AboutPage from "@/pages/about";
 import SupportPage from "@/pages/support-hub";
 import AdminBackoffice from "@/pages/admin-backoffice";
 import DoctorsPortal from "@/pages/doctors-portal";
+import PatientECSProfile from "@/pages/patient-ecs-profile";
 import FormulaAllio from "@/pages/formula-nexus";
 import MemberHomePage from "@/pages/member-home";
 import MemberOnboardingPage from "@/pages/member-onboarding";
@@ -656,6 +657,13 @@ function Router() {
         <RoleProtectedRoute allowedRoles={["admin", "doctor"]}>
           <AppLayout>
             <DoctorsPortal />
+          </AppLayout>
+        </RoleProtectedRoute>
+      )} />
+      <Route path="/doctor/patients/:patientId/ecs-profile" component={() => (
+        <RoleProtectedRoute allowedRoles={["admin", "doctor"]}>
+          <AppLayout>
+            <PatientECSProfile />
           </AppLayout>
         </RoleProtectedRoute>
       )} />

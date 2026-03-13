@@ -44,7 +44,7 @@ workspace/
 │   │   │   ├── routes.ts         # 7,300+ line route definitions
 │   │   │   ├── db.ts             # Drizzle database connection
 │   │   │   ├── storage.ts        # Storage abstraction layer
-│   │   │   ├── services/         # 51 service modules (AI, payments, sync, etc.)
+│   │   │   ├── services/         # 54 service modules (AI, payments, sync, automation, etc.)
 │   │   │   ├── middleware/       # Auth middleware
 │   │   │   ├── seeds/            # 16 database seed files
 │   │   │   ├── scripts/          # Utility scripts
