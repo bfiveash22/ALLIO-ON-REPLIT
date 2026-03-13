@@ -24,6 +24,20 @@ function getCSTDateString(): string {
   return parts;
 }
 
+function getCSTDayOfWeek(): number {
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'short' }).formatToParts(new Date());
+  const day = parts.find(p => p.type === 'weekday')?.value || '';
+  const map: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  return map[day] ?? 0;
+}
+
+function getCSTWeekStartString(): string {
+  const now = new Date();
+  const dayOfWeek = getCSTDayOfWeek();
+  const sunday = new Date(now.getTime() - dayOfWeek * 86400000);
+  return new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(sunday);
+}
+
 function getTimeOfDay(): string {
   const hour = getCSTHour();
   if (hour < 12) return 'morning';
@@ -261,7 +275,7 @@ let clinicSyncInterval: NodeJS.Timeout | null = null;
 let lastMorningDate: string | null = null;
 let lastEveningDate: string | null = null;
 let lastHourlyHour: number | null = null;
-let lastUIEvolutionDate: string | null = null;
+let lastUIEvolutionWeek: string | null = null;
 
 function checkSchedule(): void {
   const hour = getCSTHour();
@@ -272,8 +286,9 @@ function checkSchedule(): void {
     sendMorningBriefing();
   }
 
-  if (hour === 2 && lastUIEvolutionDate !== today) {
-    lastUIEvolutionDate = today;
+  const currentWeek = getCSTWeekStartString();
+  if (hour === 2 && getCSTDayOfWeek() === 0 && lastUIEvolutionWeek !== currentWeek) {
+    lastUIEvolutionWeek = currentWeek;
     scheduleUIEvolutionTasks();
   }
 
@@ -295,11 +310,12 @@ function checkSchedule(): void {
 async function scheduleUIEvolutionTasks(): Promise<void> {
   try {
     log('Scheduling Continuous UI Evolution tasks...', 'scheduler');
-    const today = getCSTDateString();
+    const weekStart = getCSTWeekStartString();
+    const weekLabel = `Week of ${weekStart}`;
 
     const existing = await db.select().from(agentTasks).where(
       and(
-        eq(agentTasks.title, `Continuous UI Evolution - ${today}`),
+        eq(agentTasks.title, `Continuous UI Evolution - ${weekLabel}`),
         eq(agentTasks.agentId, 'FORGE')
       )
     );
@@ -310,7 +326,7 @@ async function scheduleUIEvolutionTasks(): Promise<void> {
       {
         agentId: 'FORGE',
         division: 'engineering',
-        title: `Continuous UI Evolution - ${today}`,
+        title: `Continuous UI Evolution - ${weekLabel}`,
         description: 'Analyze components in client/src/pages/ for UI/UX enhancements and generate UI Refactor Proposals for Sentinel review.',
         status: 'pending',
         priority: 1,
@@ -319,7 +335,7 @@ async function scheduleUIEvolutionTasks(): Promise<void> {
       {
         agentId: 'SYNTHESIS',
         division: 'marketing',
-        title: `Continuous Formatting Evolution - ${today}`,
+        title: `Continuous Formatting Evolution - ${weekLabel}`,
         description: 'Analyze marketing and information pages for layout improvements and generate UI Refactor Proposals.',
         status: 'pending',
         priority: 1,
@@ -328,7 +344,7 @@ async function scheduleUIEvolutionTasks(): Promise<void> {
       {
         agentId: 'FORGE',
         division: 'engineering',
-        title: `Educational & Portal UI Evolution - ${today}`,
+        title: `Educational & Portal UI Evolution - ${weekLabel}`,
         description: 'Analyze training modules (training.tsx), quizzes (quizzes.tsx), and the Doctor Portal (doctors-portal.tsx) for layout completeness, accessibility, aesthetic premium feel, and content clarity, generating UI Refactor Proposals.',
         status: 'pending',
         priority: 1,
