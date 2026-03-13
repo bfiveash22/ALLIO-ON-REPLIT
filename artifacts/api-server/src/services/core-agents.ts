@@ -10,7 +10,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export const CORE_AGENTS = ['ATHENA', 'SENTINEL', 'MUSE', 'PRISM', 'PEXEL', 'FORGE', 'JURIS', 'PROMETHEUS', 'ATLAS', 'DIANE', 'DR-TRIAGE'] as const;
+export const CORE_AGENTS = ['ATHENA', 'SENTINEL', 'MUSE', 'PRISM', 'PEXEL', 'FORGE', 'JURIS', 'PROMETHEUS', 'ATLAS', 'DIANE', 'DR-TRIAGE', 'DR_FORMULA'] as const;
 export type CoreAgent = typeof CORE_AGENTS[number];
 
 export interface CoreAgentStatus {
@@ -93,7 +93,8 @@ PROTECTION STRUCTURE:
 const PMA_LEGAL_AGENTS = ['JURIS', 'LEXICON', 'AEGIS', 'SCRIBE', 'SENTINEL'];
 
 function getAgentProfile(agentId: string) {
-  return agents.find(a => a.id.toLowerCase() === agentId.toLowerCase());
+  const normalizedId = agentId.toLowerCase().replace(/_/g, '-');
+  return agents.find(a => a.id.toLowerCase() === normalizedId);
 }
 
 function getAgentDivision(agentId: string): Division {
@@ -109,6 +110,7 @@ function getAgentDivision(agentId: string): Division {
     'ATLAS': 'financial',
     'DIANE': 'support',
     'DR-TRIAGE': 'support',
+    'DR_FORMULA': 'science'
   };
   return divisionMap[agentId] || 'executive';
 }
@@ -147,6 +149,7 @@ export async function getCoreAgentStatus(): Promise<CoreAgentStatus[]> {
       'ATLAS': ['Financial reporting', 'Payment processing', 'Member billing', 'Crypto treasury'],
       'DIANE': ['Nutrition guidance', 'Candida protocols', 'Dietary healing', 'Keto optimization'],
       'DR-TRIAGE': ['5 R\'s Protocol', 'Symptom assessment', 'Diagnostic triage', 'Healing pathways'],
+      'DR_FORMULA': ['Root cause analysis', 'Protocol generation', 'Patient intake automation', 'PDF deliverables', 'Research citation', 'QA validation']
     };
 
     return {
@@ -296,7 +299,7 @@ ORGANIZATIONAL CONTEXT:
 
 NETWORK CONTEXT:
 You are one of 43 agents in the ALLIO network serving Forgotten Formula PMA.
-Core agents: ATHENA, SENTINEL, MUSE, PRISM, PEXEL, FORGE
+Core agents: ATHENA, SENTINEL, MUSE, PRISM, PEXEL, FORGE, JURIS, PROMETHEUS, ATLAS, DIANE, DR-TRIAGE, DR_FORMULA
 Legal: JURIS, LEXICON, AEGIS, SCRIBE
 Science: HIPPOCRATES, SERPENS, PARACELSUS, HELIX, SYNTHESIS
 Support: DIANE, PETE, SAM, PAT, DR. TRIAGE, MAX MINERAL

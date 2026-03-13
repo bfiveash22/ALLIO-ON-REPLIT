@@ -22,6 +22,167 @@ import type {
 import {
   getUncachableSlidesClient,
 } from "./slides";
+import { researchApi } from "./research-api";
+import { generateProtocolPDF } from "./protocol-pdf";
+
+export interface ProtocolCitation {
+  title: string;
+  authors: string[];
+  journal?: string;
+  year?: string;
+  url?: string;
+  doi?: string;
+}
+
+export async function fetchProtocolCitations(
+  protocol: HealingProtocol,
+  profile: PatientProfile
+): Promise<ProtocolCitation[]> {
+  const citations: ProtocolCitation[] = [];
+
+  try {
+    const searchTerms: string[] = [];
+
+    if (profile.chiefComplaints?.length > 0) {
+      searchTerms.push(profile.chiefComplaints.slice(0, 2).join(" ") + " treatment protocol");
+    }
+
+    if (protocol.injectablePeptides?.length > 0) {
+      const topPeptides = protocol.injectablePeptides.slice(0, 3).map((p) => p.name);
+      searchTerms.push(topPeptides.join(" ") + " peptide therapy");
+    }
+
+    if (protocol.rootCauseAnalysis?.length > 0) {
+      const topCause = protocol.rootCauseAnalysis[0];
+      searchTerms.push(`${topCause.cause} root cause integrative medicine`);
+    }
+
+    if (protocol.detoxProtocols?.length > 0) {
+      searchTerms.push("chelation detoxification protocol evidence");
+    }
+
+    if (searchTerms.length === 0) {
+      searchTerms.push("integrative medicine personalized protocol");
+    }
+
+    const allPaperIds: string[] = [];
+    for (const term of searchTerms.slice(0, 3)) {
+      try {
+        const paperIds = await researchApi.agentSearch(
+          "DR_FORMULA",
+          "DR. FORMULA",
+          term,
+          "Protocol citation for patient protocol generation"
+        );
+        allPaperIds.push(...paperIds);
+      } catch (err) {
+        console.warn(`[Protocol Assembly] Research search failed for "${term}":`, err);
+      }
+    }
+
+    if (allPaperIds.length > 0) {
+      const { researchPapers } = await import("@shared/schema");
+      const { inArray } = await import("drizzle-orm");
+
+      const uniqueIds = [...new Set(allPaperIds)].slice(0, 10);
+      const papers = await db
+        .select()
+        .from(researchPapers)
+        .where(inArray(researchPapers.id, uniqueIds));
+
+      papers.forEach((paper) => {
+        citations.push({
+          title: paper.title,
+          authors: (paper.authors as string[]) || [],
+          journal: paper.journal || undefined,
+          year: paper.publicationDate?.split("-")[0] || undefined,
+          url: paper.url || undefined,
+          doi: paper.doi || undefined,
+        });
+      });
+    }
+  } catch (err) {
+    console.warn("[Protocol Assembly] Citation fetch failed:", err);
+  }
+
+  return citations;
+}
+
+export async function generateProtocolPDFBuffer(
+  protocol: HealingProtocol,
+  profile: PatientProfile,
+  citations?: ProtocolCitation[]
+): Promise<Buffer> {
+  return generateProtocolPDF(protocol, profile, citations);
+}
+
+export async function runProtocolQA(protocol: HealingProtocol): Promise<{
+  overallScore: number;
+  overallValid: boolean;
+  readiness: string;
+  methodology: { valid: boolean; score: number; errors: string[]; warnings: string[]; passes: string[] };
+  catalog: { valid: boolean; matchRate: number; totalProducts: number; catalogMatches: number; nonCatalogItems: Array<{ name: string; category: string }>; warnings: string[] };
+  template: { valid: boolean; estimatedPages: number; errors: string[]; warnings: string[]; passes: string[] };
+}> {
+  const { createRequire } = await import("module");
+  const require = createRequire(import.meta.url);
+
+  const scriptBase = path.resolve(process.cwd(), ".agents/skills/dr-formula-assistant/scripts");
+  const validateProtocolModule = require(path.join(scriptBase, "validate-protocol.js"));
+  const catalogCheckerModule = require(path.join(scriptBase, "catalog-checker.js"));
+  const templateAuditModule = require(path.join(scriptBase, "template-audit.js"));
+
+  const validationResult = validateProtocolModule.validateProtocol(protocol);
+  const catalogResult = catalogCheckerModule.checkCatalog(protocol);
+  const templateResult = templateAuditModule.auditTemplate(protocol);
+
+  const overallScore = Math.round(
+    validationResult.score * 0.4 +
+    catalogResult.catalogPercentage * 0.3 +
+    (templateResult.valid ? 100 : 50) * 0.3
+  );
+
+  const overallValid = validationResult.valid && catalogResult.valid && templateResult.valid;
+
+  let readiness: string;
+  if (overallScore >= 90 && overallValid) {
+    readiness = "READY FOR DELIVERY";
+  } else if (overallScore >= 70) {
+    readiness = "NEEDS MINOR REVISIONS";
+  } else if (overallScore >= 50) {
+    readiness = "NEEDS SIGNIFICANT REVISIONS";
+  } else {
+    readiness = "REJECT — MAJOR ISSUES";
+  }
+
+  return {
+    overallScore,
+    overallValid,
+    readiness,
+    methodology: {
+      valid: validationResult.valid,
+      score: validationResult.score,
+      errors: validationResult.errors,
+      warnings: validationResult.warnings,
+      passes: validationResult.passes,
+    },
+    catalog: {
+      valid: catalogResult.valid,
+      matchRate: catalogResult.catalogPercentage,
+      totalProducts: catalogResult.totalProducts,
+      catalogMatches: catalogResult.catalogMatches.length,
+      nonCatalogItems: catalogResult.nonCatalogItems,
+      warnings: catalogResult.warnings,
+    },
+    template: {
+      valid: templateResult.valid,
+      estimatedPages: templateResult.estimatedPages,
+      errors: templateResult.errors,
+      warnings: templateResult.warnings,
+      passes: templateResult.passes,
+    },
+  };
+}
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 

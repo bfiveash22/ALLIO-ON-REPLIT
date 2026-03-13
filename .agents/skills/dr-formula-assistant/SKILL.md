@@ -10,18 +10,18 @@ Quality assurance and methodology enforcement for patient protocol generation.
 ## Steve Baker 2026 Methodology Validation
 
 **The 5 Rs Framework (MANDATORY ORDER):**
-1. **REDUCE** - Detox parasites/virals/heavy metals
-2. **RESTORE** - Gut microbiome restoration  
-3. **REACTIVATE** - Endocannabinoid System (ECS) targeting
-4. **REGENERATE** - Mitochondrial function
-5. **REVITALIZE** - Mind/body/spirit integration
+1. **REMOVE** - Detox parasites/virals/heavy metals, clear pathways before rebuilding
+2. **RESTORE** - Periodontal & gut health, amalgam removal, microbiome restoration
+3. **REPLENISH** - Dr. Wallach's 90 essential nutrients, mineral repletion, vitamin optimization
+4. **REGENERATE** - Targeted molecular therapy, peptides for specific pathways, bioregulators
+5. **REBALANCE** - Holistic integration, spiritual/mental health, lifestyle modifications, maintenance
 
 **Validation Checklist:**
-- [ ] All 5 phases present in correct order
+- [ ] All 5 phases present in correct order (Remove → Restore → Replenish → Regenerate → Rebalance)
 - [ ] Each phase has specific products listed
 - [ ] Mechanism of action explained for each intervention
 - [ ] Molecular pathways cited (PI3K-AKT, NF-κB, mTOR, etc.)
-- [ ] CB1/CB2 receptor targeting specified (Phase 3)
+- [ ] ECS/cannabinoid targeting specified where applicable
 - [ ] Dosing includes UNITS for injectables (e.g., "50 units = 2.5mg")
 - [ ] Reconstitution instructions included (mg vial + mL BAC water)
 - [ ] Duration specified for each phase
@@ -33,7 +33,7 @@ Quality assurance and methodology enforcement for patient protocol generation.
 - Suppositories (ECS, B17, DMSO, Ivermectin, Probiotic, EDTA)
 - IV Protocols (ALA, DMSO, EDTA, Glutathione, H2O2, Myers', NAD+, Vitamin C, Ozone)
 - Peptides (BPC-157, Thymosin Alpha-1, Thymosin Beta-4, etc.)
-- Bioregulators (Organ-specific)
+- Bioregulators (Organ-specific Khavinson peptides)
 - Cannabinoids (12-cannabinoid formulations)
 - Minerals (Dr. Wallach's 90 nutrients)
 - Supplements (MitoSTAC, GlyNAC, CoQ10, etc.)
@@ -49,11 +49,11 @@ Quality assurance and methodology enforcement for patient protocol generation.
 
 **Required Sections:**
 1. **Root Cause Analysis** - Identify all underlying issues
-2. **Phase 1 (REDUCE)** - Products → Targets → Duration
+2. **Phase 1 (REMOVE)** - Products → Targets → Duration
 3. **Phase 2 (RESTORE)** - Products → Targets → Duration
-4. **Phase 3 (REACTIVATE)** - Products → CB1/CB2 specificity → Duration
-5. **Phase 4 (REGENERATE)** - Products → Mitochondrial targets → Duration
-6. **Phase 5 (REVITALIZE)** - Therapies → Methods → Ongoing
+4. **Phase 3 (REPLENISH)** - Products → Nutrient targets → Duration
+5. **Phase 4 (REGENERATE)** - Products → Molecular targets → Duration
+6. **Phase 5 (REBALANCE)** - Therapies → Methods → Ongoing
 7. **Daily Schedule** - Morning/Midday/Evening/Bedtime checklists (☐ format)
 8. **Monitoring & Follow-up** - Blood work, timelines, retesting
 
@@ -80,7 +80,7 @@ TA-1 strengthens immune system's ability to combat cancer cells.
 
 **Before Delivery:**
 1. Run protocol through validation checklist
-2. Verify all 5 Rs present and in order
+2. Verify all 5 Rs present and in order (Remove → Restore → Replenish → Regenerate → Rebalance)
 3. Check product catalog integration
 4. Confirm template compliance
 5. Ensure daily schedule included
@@ -88,14 +88,13 @@ TA-1 strengthens immune system's ability to combat cancer cells.
 7. Check for patient-specific customization
 
 **Red Flags (REJECT if present):**
-- ❌ Missing any of the 5 Rs
-- ❌ Generic products (not FFPMA catalog)
-- ❌ No CB1/CB2 targeting in Phase 3
-- ❌ Missing daily schedule
-- ❌ Less than 5 pages (too brief)
-- ❌ No molecular pathway citations
-- ❌ Missing root cause analysis
-- ❌ No dosing in UNITS for injectables
+- Missing any of the 5 Rs
+- Generic products (not FFPMA catalog)
+- Missing daily schedule
+- Less than 5 pages (too brief)
+- No molecular pathway citations
+- Missing root cause analysis
+- No dosing in UNITS for injectables
 
 ## Reference Materials
 
@@ -113,7 +112,27 @@ Location: `/root/.openclaw/workspace/ffpma-library/reference/Steve-Baker-Protoco
 ## Scripts
 
 See `scripts/` directory:
-- `validate-protocol.js` - Check methodology compliance
-- `catalog-checker.js` - Verify product integration
-- `template-audit.js` - Ensure format compliance
-- `qa-report.js` - Generate quality report
+- `validate-protocol.js` - Check 5 Rs methodology compliance (all phases present in order, dosing units, reconstitution instructions)
+- `catalog-checker.js` - Verify products match FFPMA catalog from protocol-knowledge.ts
+- `template-audit.js` - Ensure required sections present, length compliance, daily schedule format
+- `qa-report.js` - Run all 3 checks and output a comprehensive quality summary report
+
+### Running QA Scripts
+
+```bash
+# Individual checks
+node scripts/validate-protocol.js protocol.json
+node scripts/catalog-checker.js protocol.json
+node scripts/template-audit.js protocol.json
+
+# Full QA report (runs all checks)
+node scripts/qa-report.js protocol.json
+```
+
+### API-Based QA
+
+The QA validation is also available via the API:
+```
+POST /api/protocol-assembly/protocols/:id/qa
+```
+Returns a comprehensive QA report for the specified protocol.

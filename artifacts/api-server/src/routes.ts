@@ -279,6 +279,9 @@ export async function registerRoutes(
     updateProtocolSlides,
     getProtocol,
     listProtocols,
+    fetchProtocolCitations,
+    generateProtocolPDFBuffer,
+    runProtocolQA,
   } = await import('./services/protocol-assembly');
 
   app.post('/api/protocol-assembly/generate', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req, res) => {
@@ -408,6 +411,69 @@ export async function registerRoutes(
       res.status(500).json({ error: 'Failed to generate slides. Please try again.' });
     }
   });
+
+
+  app.get('/api/protocol-assembly/protocols/:id/pdf', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+      const record = await getProtocol(id);
+      if (!record) return res.status(404).json({ error: 'Protocol not found' });
+      const protocol = record.protocol as any;
+      const profile = record.patientProfile as any;
+      let citations;
+      try {
+        citations = await fetchProtocolCitations(protocol, profile);
+      } catch (citErr) {
+        console.warn('[Protocol Assembly] Citation fetch failed for PDF, continuing without:', citErr);
+      }
+      const pdfBuffer = await generateProtocolPDFBuffer(protocol, profile, citations);
+      const safeName = (protocol.patientName || 'protocol').replace(/[^a-zA-Z0-9_-]/g, '_');
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeName}_Protocol_${protocol.generatedDate || 'draft'}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.send(pdfBuffer);
+    } catch (error: unknown) {
+      console.error('[Protocol Assembly] PDF generation error:', error);
+      res.status(500).json({ error: 'Failed to generate PDF. Please try again.' });
+    }
+  });
+
+  app.post('/api/protocol-assembly/protocols/:id/qa', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+      const record = await getProtocol(id);
+      if (!record) return res.status(404).json({ error: 'Protocol not found' });
+      const protocol = record.protocol as any;
+      const qaReport = await runProtocolQA(protocol);
+      res.json({
+        protocolId: id,
+        patientName: record.patientName,
+        ...qaReport,
+      });
+    } catch (error: unknown) {
+      console.error('[Protocol Assembly] QA validation error:', error);
+      res.status(500).json({ error: 'Failed to run QA validation. Please try again.' });
+    }
+  });
+
+  app.post('/api/protocol-assembly/protocols/:id/citations', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+      const record = await getProtocol(id);
+      if (!record) return res.status(404).json({ error: 'Protocol not found' });
+      const protocol = record.protocol as any;
+      const profile = record.patientProfile as any;
+      const citations = await fetchProtocolCitations(protocol, profile);
+      res.json({ protocolId: id, citationCount: citations.length, citations });
+    } catch (error: unknown) {
+      console.error('[Protocol Assembly] Citations error:', error);
+      res.status(500).json({ error: 'Failed to fetch citations. Please try again.' });
+    }
+  });
+
 
   // Register Peptide Console routes
   const { registerPeptideConsoleRoutes } = await import("./services/peptide-console");
