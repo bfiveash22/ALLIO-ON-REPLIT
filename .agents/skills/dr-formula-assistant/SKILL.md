@@ -96,6 +96,56 @@ TA-1 strengthens immune system's ability to combat cancer cells.
 - Missing root cause analysis
 - No dosing in UNITS for injectables
 
+## ECS & Cannabinoid Data Layer
+
+**Structured Data Source:** `lib/shared/src/ecs-data.ts`
+**Primary Source:** MasterListofECS.xlsx (Tables S1-S6, Li et al., Applied Sciences 2022)
+
+When building protocols involving cannabinoids, use the programmatic data exports:
+
+### Core Data (Tables S1-S2)
+- **`cannabinoids`** — 12 cannabinoids (CBD, CBDA, CBG, CBGA, CBN, CBC, CBDV, THCV, Δ9-THCA, Δ9-THC, Δ8-THC, 11-OH-THC) with:
+  - **32 ADMET properties** per cannabinoid from Table S1: BBB, HIA%, half-life, PPB%, drug-likeness, logS, logD7.4, logP, logPapp, Pgp-inhibitor, Pgp-substrate, F20/F30 bioavailability, logVD, clearance, AMES, DILI, hERG, hepatotoxicity, skin sensitization, logLD50, FDAMDD
+  - **CYP450 interactions** with inhibitor AND substrate scores for CYP1A2, CYP3A4, CYP2C9, CYP2C19, CYP2D6 (threshold: >0.4 inhibitor or >0.5 substrate)
+  - **Full putative protein targets** from Table S2 (22-126 targets per cannabinoid, 234 unique genes total)
+  - Binding affinities for key targets (kcal/mol from docking studies)
+- **`productMappings`** — 12 FFPMA products with cannabinoid content and ligand scores
+- **`clinicalPrescribingMatrix`** — 23-entry lookup mapping conditions → cannabinoids, ratios, delivery, rationale, FFPMA products
+
+### Enrichment Data (Tables S3-S6)
+- **`goEnrichmentTerms`** — Top 50 GO function enrichment terms (Table S3): biological functions with gene ratios and significance
+- **`keggPathways`** — 101 KEGG pathway enrichment entries (Table S4): pathways with categories and gene lists
+- **`diseasePathwayMappings`** — 67 disease-pathway mappings (Table S5): links pathways to diseases with beneficial/adverse/unknown effects
+- **`proteinCentralityValues`** — IC values for 122 protein targets (Table S6): ranks target importance in functional modules
+
+### Helper Functions
+- **`getCYP450Warnings(cannabinoidIds, medications)`** — Drug interaction warnings with inhibitor/substrate scoring
+- **`getAdverseEffectRisks(cannabinoidIds)`** — Adverse effect categories for selected cannabinoids
+- **`getProductsForCannabinoid(name)`** — FFPMA products containing a cannabinoid
+- **`getProductRecommendations(conditionName)`** — Clinical prescribing entry + products for a condition
+- **`getCannabinoidProfile(productName)`** — Full breakdown for any FFPMA product
+- **`getDiseasesForPathway(pathwayId)`** — Disease mappings for a KEGG pathway
+- **`getBeneficialDiseases()` / `getAdverseDiseases()`** — Filter diseases by effect type
+- **`getGOTermsForGene(gene)` / `getKEGGPathwaysForGene(gene)`** — Enrichment lookups by gene
+- **`getProteinCentrality(gene)`** — IC value for a protein target
+- **`getTopCentralityProteins(limit)`** — Top N most important protein targets
+- **`getCannabinoidTargetOverlap(id1, id2)`** — Shared targets between two cannabinoids
+
+**Protocol Integration Checklist:**
+- [ ] Use `clinicalPrescribingMatrix` to match patient conditions to cannabinoid recommendations
+- [ ] Reference specific FFPMA products using `getProductRecommendations()` or `getProductsForCannabinoid()`
+- [ ] Run `getCYP450Warnings()` against patient's medications (now includes inhibitor + substrate scores)
+- [ ] Run `getAdverseEffectRisks()` and document risks in protocol safety section
+- [ ] Reference full ADMET profile for delivery method selection (BBB, HIA, clearance, Pgp, F20 bioavailability)
+- [ ] Use `proteinCentralityValues` to prioritize high-IC targets in protocol rationale
+- [ ] Reference `diseasePathwayMappings` for evidence-based pathway citations
+- [ ] Cite data source: Li et al., Applied Sciences 2022 (DOI: 10.3390/app12042205)
+
+**OpenClaw Export Files (knowledge-base):**
+- `knowledge-base/openclaw-exports/ECS-Master-Pharmacokinetics-Table-S1.md` — Raw pharmacokinetic predictions
+- `knowledge-base/openclaw-exports/ECS-COMPLETE-CLINICAL-REFERENCE.md` — Clinical prescribing, adverse effects, drug interactions
+- `knowledge-base/openclaw-exports/CANNABINOID-TARGET-PATHWAY-DISEASE-MAP.md` — Target-pathway-disease mapping
+
 ## Reference Materials
 
 **Steve Baker 2026 Protocol:**

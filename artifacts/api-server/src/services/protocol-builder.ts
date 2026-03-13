@@ -10,8 +10,14 @@ import {
   exosomes, 
   topicals 
 } from "../protocol-knowledge";
+import {
+  cannabinoids as ecsCannabinoidsData,
+  clinicalPrescribingMatrix,
+  adverseEffectCategories,
+  productMappings
+} from "@shared/ecs-data";
 
-export async function handleProtocolBuilder(req: Request, res: Response) {
+export async function handleProtocolBuilder(req: Request, res: Response): Promise<void> {
   // Load detox protocol knowledge
   let detoxKnowledge = '';
   try {
@@ -28,7 +34,8 @@ export async function handleProtocolBuilder(req: Request, res: Response) {
     const { message, conversationHistory } = req.body;
 
     if (!message) {
-      return res.status(400).json({ error: "Message is required" });
+      res.status(400).json({ error: "Message is required" });
+      return;
     }
 
     // Build comprehensive knowledge base
@@ -102,9 +109,31 @@ export async function handleProtocolBuilder(req: Request, res: Response) {
       `Mechanism: ${t.mechanism}`
     );
 
+    const ecsCannabinoidsKnowledge = ecsCannabinoidsData.map(c =>
+      `CANNABINOID: ${c.name} (${c.fullName}) - ${c.type}${c.psychoactive ? ' [PSYCHOACTIVE]' : ''}\n` +
+      `Description: ${c.description}\n` +
+      `Pharmacokinetics: BBB=${c.pharmacokinetics.bbb}, HIA=${c.pharmacokinetics.hia}%, Half-life=${c.pharmacokinetics.halfLife}h, PPB=${c.pharmacokinetics.ppb}%, Clearance=${c.pharmacokinetics.clearance}mL/min/kg, Drug-likeness=${c.pharmacokinetics.drugLikeness}\n` +
+      `Absorption: F20-bioavail=${c.pharmacokinetics.f20Bioavailability}%, Pgp-inhibitor=${c.pharmacokinetics.pgpInhibitor}, Pgp-substrate=${c.pharmacokinetics.pgpSubstrate}\n` +
+      `Safety: AMES=${c.pharmacokinetics.amesToxicity}, DILI=${c.pharmacokinetics.diliRisk}, hERG=${c.pharmacokinetics.hergRisk}, Hepatotox=${c.pharmacokinetics.hepatotoxicity}, SkinSen=${c.pharmacokinetics.skinSensitization}\n` +
+      `Protein Targets (${c.proteinTargets.length}): ${c.proteinTargets.slice(0, 30).join(', ')}${c.proteinTargets.length > 30 ? '...' : ''}\n` +
+      `CYP450 Interactions: ${c.cyp450Interactions.length > 0 ? c.cyp450Interactions.map(i => `${i.enzyme} (inhibitor: ${i.inhibitorScore}, substrate: ${i.substrateScore}) - Risk drugs: ${i.highRiskDrugs.join(', ')}`).join('; ') : 'None significant'}\n` +
+      `Found in FF Products: ${productMappings.filter(p => p.cannabinoids.includes(c.name)).map(p => p.productName).join(', ') || 'N/A'}`
+    ).join('\n\n');
+
+    const prescribingKnowledge = clinicalPrescribingMatrix.map(e =>
+      `${e.condition}: ${e.recommendedCannabinoids.join('+')} (${e.ratio}) via ${e.deliveryMethod}\n` +
+      `Targets: ${e.primaryTargets.join(', ')} | ${e.rationale}\n` +
+      `FF Products: ${e.recommendedProducts.join(', ')}`
+    ).join('\n');
+
+    const adverseEffectKnowledge = adverseEffectCategories.map(ae =>
+      `${ae.name}: ${ae.symptoms.join(', ')} | Risk: ${ae.riskPopulations.join(', ')} | Mitigation: ${ae.mitigationStrategies.join(', ')}`
+    ).join('\n');
+
     const totalProducts = (peptides?.length || 0) + (ivTherapies?.length || 0) + (imTherapies?.length || 0) + 
                           (bioregulators?.length || 0) + (oralPeptides?.length || 0) + (suppositories?.length || 0) + 
-                          (supplements?.length || 0) + (exosomes?.length || 0) + (topicals?.length || 0);
+                          (supplements?.length || 0) + (exosomes?.length || 0) + (topicals?.length || 0) +
+                          ecsCannabinoidsData.length;
 
     const systemPrompt = `You are the Forgotten Formula Protocol Architect - a master clinical strategist with deep expertise in peptide therapy, IV protocols, IM injections, Khavinson bioregulators, oral peptides, suppositories, vitamins/supplements, exosomes, and topical/transdermal therapies. You work alongside Dr. Blake and the FF PMA medical team, trained on their exact protocols and clinical philosophy.
 
@@ -141,6 +170,24 @@ ${detoxKnowledge || 'Detox protocols include Beyond Fasting (metabolic reset wit
 
 === TOPICALS & TRANSDERMAL (${topicals?.length || 0} products) ===
 ${topicalKnowledge}
+
+=== ECS CANNABINOIDS (${ecsCannabinoidsData.length} compounds) ===
+${ecsCannabinoidsKnowledge}
+
+=== CLINICAL PRESCRIBING MATRIX (${clinicalPrescribingMatrix.length} condition-cannabinoid mappings) ===
+${prescribingKnowledge}
+
+=== CANNABINOID ADVERSE EFFECTS & SAFETY (${adverseEffectCategories.length} categories) ===
+${adverseEffectKnowledge}
+
+ECS CANNABINOID PRESCRIBING RULES:
+- Always check CYP450 interactions before recommending cannabinoids alongside other medications
+- Reference specific FF products (Elixir, ECS Suppositories, Kaneh Bosem, DMSO Recovery Cream, etc.) not generic cannabinoid names
+- For CNS conditions: prioritize high-BBB cannabinoids (Δ8-THC 0.913, THCV 0.893, Δ9-THC 0.878)
+- For oral delivery: prioritize high-HIA cannabinoids (CBC 82.9%, Δ9-THC 82.0%, THCV 81.8%)
+- For sustained effect: prioritize long half-life (Δ9-THC 2.96h, Δ8-THC 2.90h, CBN 2.74h)
+- Suppository delivery bypasses first-pass metabolism — recommend ECS Suppositories for liver-compromised or renal patients
+- All cannabinoids have AMES mutagenicity <0.25 (safe), but monitor DILI risk in hepatic patients (CBN highest at 0.52)
 
 PROTOCOL BUILDING PRINCIPLES:
 
@@ -222,7 +269,8 @@ WRITING STYLE - BE A CLINICAL MENTOR:
         }
       }
       res.write('data: [DONE]\n\n');
-      return res.end();
+      res.end();
+      return;
     }
 
     // Proxy the Abacus stream

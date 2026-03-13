@@ -22,7 +22,9 @@ import {
   ChevronRight,
   Leaf,
   Target,
+  FlaskConical,
 } from "lucide-react";
+import { cannabinoids as cannabinoidData, productMappings, type Cannabinoid } from "@shared/ecs-data";
 
 interface AssessmentQuestion {
   id: string;
@@ -162,11 +164,56 @@ const ecsInfo = {
   },
 };
 
+function PharmaRow({ label, value, format, description }: { label: string; value: number; format: 'score' | 'percent' | 'hours'; description: string }) {
+  const displayValue = format === 'score' ? value.toFixed(3) : format === 'percent' ? `${value}%` : `${value}h`;
+  const barWidth = format === 'score' ? value * 100 : format === 'percent' ? value : (value / 3) * 100;
+  const barColor = format === 'score'
+    ? (value > 0.8 ? 'bg-green-500' : value > 0.6 ? 'bg-cyan-500' : 'bg-amber-500')
+    : format === 'percent'
+    ? (value > 90 ? 'bg-green-500' : value > 80 ? 'bg-cyan-500' : 'bg-amber-500')
+    : (value > 2.5 ? 'bg-green-500' : value > 2 ? 'bg-cyan-500' : 'bg-amber-500');
+
+  return (
+    <div className="p-2 rounded-lg bg-slate-700/20">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-white/80 text-sm font-medium">{label}</span>
+        <span className="text-white font-semibold text-sm">{displayValue}</span>
+      </div>
+      <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden mb-1">
+        <div className={`h-full rounded-full ${barColor}`} style={{ width: `${Math.min(barWidth, 100)}%` }} />
+      </div>
+      <p className="text-white/40 text-xs">{description}</p>
+    </div>
+  );
+}
+
+function SafetyRow({ label, value, threshold, description }: { label: string; value: number; threshold: number; description: string }) {
+  const isSafe = value < threshold;
+
+  return (
+    <div className="p-2 rounded-lg bg-slate-700/20">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-white/80 text-sm font-medium">{label}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-white font-semibold text-sm">{value.toFixed(3)}</span>
+          {isSafe ? (
+            <CheckCircle2 className="w-4 h-4 text-green-400" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-amber-400" />
+          )}
+        </div>
+      </div>
+      <p className="text-white/40 text-xs">{description}</p>
+    </div>
+  );
+}
+
 export default function ECSToolPage() {
   const [activeTab, setActiveTab] = useState("learn");
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [showResults, setShowResults] = useState(false);
+  const [selectedCannabinoid, setSelectedCannabinoid] = useState<Cannabinoid | null>(null);
 
   const handleAnswer = (questionId: string, value: number) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
@@ -253,6 +300,10 @@ export default function ECSToolPage() {
               <Info className="w-4 h-4 mr-2" />
               Learn
             </TabsTrigger>
+            <TabsTrigger value="cannabinoids" className="data-[state=active]:bg-green-500/20 data-[state=active]:text-green-400">
+              <FlaskConical className="w-4 h-4 mr-2" />
+              Cannabinoids
+            </TabsTrigger>
             <TabsTrigger value="assess" className="data-[state=active]:bg-green-500/20 data-[state=active]:text-green-400">
               <Target className="w-4 h-4 mr-2" />
               Assess
@@ -331,6 +382,259 @@ export default function ECSToolPage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="cannabinoids" className="space-y-6">
+            <Card className="bg-slate-800/30 border-white/10">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <FlaskConical className="w-5 h-5 text-green-400" />
+                  12 Key Cannabinoids — Pharmacokinetic Profiles
+                </CardTitle>
+                <CardDescription className="text-white/70">
+                  In silico pharmacokinetic predictions from the Network-Based Pharmacology Study (Li et al., 2022). Select a cannabinoid to view detailed properties.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            {selectedCannabinoid ? (
+              <div className="space-y-6">
+                <Button
+                  variant="ghost"
+                  onClick={() => setSelectedCannabinoid(null)}
+                  className="text-white/60 hover:text-white gap-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to All Cannabinoids
+                </Button>
+
+                <Card className="bg-slate-800/30 border-white/10">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-white text-2xl">{selectedCannabinoid.name}</CardTitle>
+                        <CardDescription className="text-white/60 text-base">{selectedCannabinoid.fullName}</CardDescription>
+                      </div>
+                      <div className="flex gap-2">
+                        <Badge className={selectedCannabinoid.psychoactive ? "bg-amber-500/20 text-amber-300 border-amber-500/30" : "bg-green-500/20 text-green-300 border-green-500/30"}>
+                          {selectedCannabinoid.psychoactive ? "Psychoactive" : "Non-Psychoactive"}
+                        </Badge>
+                        <Badge variant="outline" className="text-white/60 border-white/20 capitalize">
+                          {selectedCannabinoid.type}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-white/80">{selectedCannabinoid.description}</p>
+                  </CardContent>
+                </Card>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <Card className="bg-slate-800/30 border-white/10">
+                    <CardHeader>
+                      <CardTitle className="text-white text-lg flex items-center gap-2">
+                        <Brain className="w-4 h-4 text-cyan-400" />
+                        Pharmacokinetic Properties
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <PharmaRow label="BBB Penetration" value={selectedCannabinoid.pharmacokinetics.bbb} format="score" description="Blood-brain barrier access (higher = better CNS penetration)" />
+                      <PharmaRow label="Intestinal Absorption (HIA)" value={selectedCannabinoid.pharmacokinetics.hia} format="percent" description="Oral bioavailability percentage" />
+                      <PharmaRow label="Half-Life" value={selectedCannabinoid.pharmacokinetics.halfLife} format="hours" description="Duration in body (longer = less frequent dosing)" />
+                      <PharmaRow label="Plasma Protein Binding" value={selectedCannabinoid.pharmacokinetics.ppb} format="percent" description="Binding to blood proteins (higher = longer reservoir)" />
+                      <PharmaRow label="Drug-Likeness" value={selectedCannabinoid.pharmacokinetics.drugLikeness} format="score" description="Drug-likeness score (higher = more drug-like)" />
+                      <PharmaRow label="Clearance" value={selectedCannabinoid.pharmacokinetics.clearance} format="score" description="Clearance rate (mL/min/kg)" />
+                      <PharmaRow label="20% Bioavailability" value={selectedCannabinoid.pharmacokinetics.f20Bioavailability} format="percent" description="Probability of ≥20% oral bioavailability" />
+                      <PharmaRow label="P-gp Inhibitor" value={selectedCannabinoid.pharmacokinetics.pgpInhibitor} format="score" description="P-glycoprotein inhibitor probability (affects drug efflux)" />
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-slate-800/30 border-white/10">
+                    <CardHeader>
+                      <CardTitle className="text-white text-lg flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-green-400" />
+                        Safety Profile
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <SafetyRow label="AMES Mutagenicity" value={selectedCannabinoid.pharmacokinetics.amesToxicity} threshold={0.25} description="Mutation risk (lower = safer, all <0.25 is safe)" />
+                      <SafetyRow label="DILI (Liver Injury)" value={selectedCannabinoid.pharmacokinetics.diliRisk} threshold={0.52} description="Drug-induced liver injury risk (lower = safer)" />
+                      <SafetyRow label="hERG Cardiac Risk" value={selectedCannabinoid.pharmacokinetics.hergRisk} threshold={0.70} description="Cardiac arrhythmia risk (monitor in cardiac patients)" />
+                      <SafetyRow label="Hepatotoxicity" value={selectedCannabinoid.pharmacokinetics.hepatotoxicity} threshold={0.70} description="Human hepatotoxicity risk" />
+                      <SafetyRow label="Skin Sensitization" value={selectedCannabinoid.pharmacokinetics.skinSensitization} threshold={0.60} description="Topical sensitization risk" />
+                      <SafetyRow label="FDA Max Daily Dose" value={selectedCannabinoid.pharmacokinetics.fdamdd} threshold={0.50} description="FDA recommended max daily dose exceedance risk (lower = safer)" />
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {selectedCannabinoid.cyp450Interactions.length > 0 && (
+                  <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20">
+                    <CardHeader>
+                      <CardTitle className="text-white text-lg flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-amber-400" />
+                        CYP450 Drug Interactions
+                      </CardTitle>
+                      <CardDescription className="text-white/60">
+                        Space dosing 2-4 hours from these medication classes
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {selectedCannabinoid.cyp450Interactions.map((interaction, i) => (
+                        <div key={i} className="p-3 rounded-lg bg-slate-800/50 border border-white/5">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge className={interaction.affinityScore > 0.7 ? "bg-red-500/20 text-red-300 border-red-500/30" : "bg-amber-500/20 text-amber-300 border-amber-500/30"}>
+                              {interaction.enzyme}
+                            </Badge>
+                            <span className="text-white/50 text-sm">Inhibitor: {interaction.inhibitorScore.toFixed(3)} | Substrate: {interaction.substrateScore.toFixed(3)}</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {interaction.highRiskDrugs.map((drug, j) => (
+                              <Badge key={j} variant="outline" className="text-white/60 border-white/15 text-xs">
+                                {drug}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+
+                <Card className="bg-slate-800/30 border-white/10">
+                  <CardHeader>
+                    <CardTitle className="text-white text-lg flex items-center gap-2">
+                      <Target className="w-4 h-4 text-purple-400" />
+                      Protein Targets ({selectedCannabinoid.proteinTargets.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedCannabinoid.proteinTargets.map((target, i) => (
+                        <Badge key={i} className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+                          {target}
+                          {selectedCannabinoid.bindingAffinities[target] && (
+                            <span className="ml-1 opacity-70">({selectedCannabinoid.bindingAffinities[target]} kcal/mol)</span>
+                          )}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {(() => {
+                  const containingProducts = productMappings.filter(p => p.cannabinoids.includes(selectedCannabinoid.name));
+                  return containingProducts.length > 0 ? (
+                    <Card className="bg-gradient-to-br from-emerald-500/10 to-green-500/10 border-emerald-500/20">
+                      <CardHeader>
+                        <CardTitle className="text-white text-lg flex items-center gap-2">
+                          <Leaf className="w-4 h-4 text-emerald-400" />
+                          Found In FF Products ({containingProducts.length})
+                        </CardTitle>
+                        <CardDescription className="text-white/60">
+                          FFPMA catalog products containing {selectedCannabinoid.name}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {containingProducts.map((product, i) => (
+                          <div key={i} className="p-3 rounded-lg bg-slate-800/50 border border-white/5">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium text-white">{product.productName}</span>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-white/50 border-white/15 text-xs capitalize">{product.productType}</Badge>
+                                {product.ligandScore > 0 && (
+                                  <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-xs">
+                                    Score: {product.ligandScore}/10
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-1 mb-2">
+                              {product.cannabinoids.map((cName, j) => (
+                                <Badge key={j} className={cName === selectedCannabinoid.name ? "bg-emerald-500/30 text-emerald-200 border-emerald-500/40 text-xs" : "bg-slate-700/50 text-white/40 border-white/10 text-xs"}>
+                                  {cName}
+                                </Badge>
+                              ))}
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {product.primaryIndications.map((ind, j) => (
+                                <span key={j} className="text-white/40 text-xs">{j > 0 ? ' · ' : ''}{ind}</span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  ) : null;
+                })()}
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {cannabinoidData.map((c) => (
+                  <Card
+                    key={c.id}
+                    className="bg-slate-800/30 border-white/10 hover:border-green-500/30 transition-all cursor-pointer"
+                    onClick={() => setSelectedCannabinoid(c)}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-white text-lg">{c.name}</CardTitle>
+                        <div className="flex gap-1">
+                          {c.psychoactive && (
+                            <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-xs">PSY</Badge>
+                          )}
+                          <Badge variant="outline" className="text-white/50 border-white/15 text-xs capitalize">{c.type}</Badge>
+                        </div>
+                      </div>
+                      <CardDescription className="text-white/50 text-xs">{c.fullName}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        {c.pharmacokinetics.bbb !== null && (
+                          <div className="bg-slate-700/30 rounded p-1.5 text-center">
+                            <span className="text-white/50 block">BBB</span>
+                            <span className="text-cyan-400 font-semibold">{c.pharmacokinetics.bbb.toFixed(3)}</span>
+                          </div>
+                        )}
+                        {c.pharmacokinetics.hia !== null && (
+                          <div className="bg-slate-700/30 rounded p-1.5 text-center">
+                            <span className="text-white/50 block">HIA</span>
+                            <span className="text-green-400 font-semibold">{c.pharmacokinetics.hia}%</span>
+                          </div>
+                        )}
+                        {c.pharmacokinetics.halfLife !== null && (
+                          <div className="bg-slate-700/30 rounded p-1.5 text-center">
+                            <span className="text-white/50 block">Half-Life</span>
+                            <span className="text-amber-400 font-semibold">{c.pharmacokinetics.halfLife}h</span>
+                          </div>
+                        )}
+                        {c.pharmacokinetics.ppb !== null && (
+                          <div className="bg-slate-700/30 rounded p-1.5 text-center">
+                            <span className="text-white/50 block">PPB</span>
+                            <span className="text-purple-400 font-semibold">{c.pharmacokinetics.ppb}%</span>
+                          </div>
+                        )}
+                      </div>
+                      {(() => {
+                        const productCount = productMappings.filter(p => p.cannabinoids.includes(c.name)).length;
+                        return productCount > 0 ? (
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/20 text-[10px]">
+                              <Leaf className="w-3 h-3 mr-1" />
+                              {productCount} FF product{productCount > 1 ? 's' : ''}
+                            </Badge>
+                          </div>
+                        ) : null;
+                      })()}
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-white/40 text-xs">{c.proteinTargets.length} targets</span>
+                        <ChevronRight className="w-4 h-4 text-white/30" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="assess" className="space-y-6">
