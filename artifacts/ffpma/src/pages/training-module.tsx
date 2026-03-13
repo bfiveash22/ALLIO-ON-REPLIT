@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 import { 
   BookOpen, 
   Clock, 
@@ -21,12 +22,52 @@ import {
   GraduationCap,
   Dna,
   FlaskConical,
+  Loader2,
 } from "lucide-react";
 import type { TrainingModule } from "@shared/schema";
 import { InteractiveQuiz, AITutor, ECS_QUIZ, type QuizQuestion } from "@/components/InteractiveQuiz";
 import { InteractiveTrainingPlayer, AudioNarrationButton } from "@/components/InteractiveTrainingPlayer";
 import { EnhancedInteractiveModule } from "@/components/EnhancedInteractiveModule";
 import { getKnowledgeChecksForModule, hasKnowledgeCheck } from "@shared/training-knowledge-checks";
+
+function isPlaceholderVideoUrl(url?: string | null): boolean {
+  if (!url) return true;
+  const placeholderPatterns = [
+    /1VIDEO_/,
+    /_VIDEO$/,
+    /_VIDEO"/,
+    /VIDEO_ECS/,
+    /VIDEO_CB/,
+    /VIDEO_ENDO/,
+    /VIDEO_CECD/,
+    /VIDEO_SUPPORT$/,
+    /VIDEO_NEURO/,
+    /VIDEO_IMMUNE/,
+    /VIDEO_ASSESSMENT/,
+    /VIDEO_PHYTO/,
+    /VIDEO_TERPENES/,
+    /VIDEO_DOSING/,
+    /VIDEO_INTERACTIONS/,
+    /VIDEO_EXAM/,
+    /VIDEO_WELCOME/,
+    /VIDEO_NAV/,
+    /VIDEO_PRODUCTS/,
+    /VIDEO_SUPPORT_SKILLS/,
+    /VIDEO_COMPLIANCE/,
+    /VIDEO_DOC/,
+    /VIDEO_INTAKE/,
+    /VIDEO_LBA/,
+    /VIDEO_PRESCRIBING/,
+    /VIDEO_REFERRALS/,
+    /VIDEO_AI_AGENTS/,
+    /VIDEO_CASES/,
+    /VIDEO_RESEARCH/,
+    /VIDEO_COMPLEX/,
+    /VIDEO_COMPOUNDING/,
+    /VIDEO_EMERGING/,
+  ];
+  return placeholderPatterns.some(p => p.test(url));
+}
 
 function getDifficultyColor(difficulty: string | null) {
   switch (difficulty) {
@@ -930,6 +971,9 @@ interface ModuleContent {
 export default function TrainingModulePage() {
   const [match, params] = useRoute("/training/:slug");
   const slug = params?.slug;
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isCompleted, setIsCompleted] = useState(false);
 
   const { data: module, isLoading, error } = useQuery<TrainingModule>({
     queryKey: ["/api/training/modules", slug],
@@ -947,6 +991,48 @@ export default function TrainingModulePage() {
     },
     enabled: !!module?.id && !!module?.isInteractive,
   });
+
+  const { data: progressData } = useQuery({
+    queryKey: ["/api/learning/progress", module?.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/learning/progress/${module?.id}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!module?.id,
+  });
+
+  const markCompleteMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/learning/progress/${module?.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ progressPercentage: 100, status: "completed" }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Failed to mark as complete" }));
+        throw new Error(err.error || "Failed to mark as complete");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      setIsCompleted(true);
+      queryClient.invalidateQueries({ queryKey: ["/api/learning/progress", module?.id] });
+      toast({
+        title: "Module Completed!",
+        description: `You've successfully completed "${module?.title}".`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Could not mark module as complete. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const alreadyCompleted = isCompleted || progressData?.status === "completed";
 
   if (!match || !slug) {
     return (
@@ -1042,19 +1128,19 @@ export default function TrainingModulePage() {
             knowledgeChecks={getKnowledgeChecksForModule(module.id)}
             instructorName={module.instructorName || "Dr. Miller"}
             instructorTitle={module.instructorTitle || "Medical Director"}
-            onComplete={() => console.log("Module completed with knowledge checks")}
+            onComplete={() => markCompleteMutation.mutate()}
           />
         ) : (
           <InteractiveTrainingPlayer
             title={module.title}
             description={module.description || undefined}
-            videoUrl={module.videoUrl}
+            videoUrl={isPlaceholderVideoUrl(module.videoUrl) ? null : module.videoUrl}
             audioUrl={module.audioUrl}
             pdfUrl={(staticContent as any)?.pdfUrl || module.pdfUrl}
             driveFileId={module.driveFileId}
             sections={content.sections}
             keyPoints={content.keyPoints}
-            onComplete={() => console.log("Module completed")}
+            onComplete={() => markCompleteMutation.mutate()}
           />
         )
       ) : (
@@ -1149,9 +1235,18 @@ export default function TrainingModulePage() {
             Back to Training
           </Link>
         </Button>
-        <Button data-testid="button-mark-complete">
-          <CheckCircle2 className="mr-2 h-4 w-4" />
-          Mark as Complete
+        <Button
+          data-testid="button-mark-complete"
+          disabled={alreadyCompleted || markCompleteMutation.isPending}
+          onClick={() => markCompleteMutation.mutate()}
+          variant={alreadyCompleted ? "outline" : "default"}
+        >
+          {markCompleteMutation.isPending ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <CheckCircle2 className="mr-2 h-4 w-4" />
+          )}
+          {alreadyCompleted ? "Completed" : markCompleteMutation.isPending ? "Saving..." : "Mark as Complete"}
         </Button>
       </div>
     </div>

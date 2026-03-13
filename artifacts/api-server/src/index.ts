@@ -138,6 +138,34 @@ app.use((req, res, next) => {
 
   await registerRoutes(httpServer, app);
 
+  try {
+    const { seedDatabase } = await import('./seed');
+    await seedDatabase();
+    log('[startup] Base database seeding complete', 'seed');
+  } catch (err: any) {
+    log(`[startup] Base seed failed (non-fatal): ${err.message}`, 'seed');
+  }
+
+  const seedSteps: Array<{ name: string; fn: () => Promise<any> }> = [
+    { name: 'ECS Training', fn: async () => { const { seedECSTraining } = await import('./seeds/ecs-training-seed'); return seedECSTraining(); } },
+    { name: 'PMA Law Training', fn: async () => { const { seedPMALawTraining } = await import('./seeds/pma-law-training-seed'); return seedPMALawTraining(); } },
+    { name: 'Peptide Training', fn: async () => { const { seedPeptideTraining } = await import('./seeds/peptide-training-seed'); return seedPeptideTraining(false); } },
+    { name: 'Ozone Training', fn: async () => { const { seedOzoneTraining } = await import('./seeds/ozone-training-seed'); return seedOzoneTraining(false); } },
+    { name: 'Diet-Cancer Training', fn: async () => { const { seedDietCancerTraining } = await import('./seeds/diet-cancer-training-seed'); return seedDietCancerTraining(false); } },
+    { name: 'Ivermectin Training', fn: async () => { const { seedIvermectinTraining } = await import('./seeds/ivermectin-training-seed'); return seedIvermectinTraining(); } },
+  ];
+
+  let seedSuccessCount = 0;
+  for (const step of seedSteps) {
+    try {
+      await step.fn();
+      seedSuccessCount++;
+    } catch (err: any) {
+      log(`[startup] ${step.name} seed failed (non-fatal): ${err.message}`, 'seed');
+    }
+  }
+  log(`[startup] Training content seeding complete: ${seedSuccessCount}/${seedSteps.length} succeeded`, 'seed');
+
   app.use('/generated', express.static(path.join(process.cwd(), 'attached_assets', 'generated_images')));
 
   app.use('/downloads', express.static(path.join(process.cwd(), 'public'), {
