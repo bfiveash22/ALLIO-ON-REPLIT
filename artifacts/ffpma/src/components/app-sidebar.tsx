@@ -25,6 +25,7 @@ import {
   Scale,
   Sparkles,
   Radio,
+  Droplets,
 } from "lucide-react";
 
 import {
@@ -99,6 +100,7 @@ const resourceMenuItems = [
   { title: "Diane - Dietician AI", url: "/diane", icon: Apple },
   { title: "Training Hub", url: "/training", icon: GraduationCap },
   { title: "Protocols", url: "/protocols", icon: ClipboardList },
+  { title: "Detox Protocols", url: "/resources/detox-protocols", icon: Droplets },
   { title: "Library", url: "/library", icon: FileText },
   { title: "Peptide Console", url: "/resources/peptide-console", icon: Bot },
   { title: "Protocol Builder", url: "/resources/protocol-builder", icon: Dna },

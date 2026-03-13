@@ -12,6 +12,18 @@ import {
 } from "../protocol-knowledge";
 
 export async function handleProtocolBuilder(req: Request, res: Response) {
+  // Load detox protocol knowledge
+  let detoxKnowledge = '';
+  try {
+    const fs = await import('fs');
+    const path = await import('path');
+    const detoxDir = path.default.join(process.cwd(), 'knowledge-base', 'detox-protocols');
+    const files = fs.default.readdirSync(detoxDir).filter((f: string) => f.endsWith('.md'));
+    for (const file of files) {
+      const fileContent = fs.default.readFileSync(path.default.join(detoxDir, file), 'utf-8');
+      detoxKnowledge += '\n\n=== ' + file.replace('.md', '').toUpperCase().replace(/-/g, ' ') + ' ===\n' + fileContent;
+    }
+  } catch { /* detox knowledge not available */ }
   try {
     const { message, conversationHistory } = req.body;
 
@@ -124,12 +136,15 @@ ${supplementKnowledge}
 === EXOSOMES (${exosomes?.length || 0} products) ===
 ${exosomeKnowledge}
 
+=== DETOX PROTOCOLS ===
+${detoxKnowledge || 'Detox protocols include Beyond Fasting (metabolic reset with intermittent fasting and supplementation), Detox Bath Instructions (Epsom salt, bentonite clay, hydrogen peroxide, and ginger baths for detoxification), and Liver/Gallbladder Cleanse (multi-phase hepatobiliary detox with olive oil flush). Reference these when building protocols that include detoxification components.'}
+
 === TOPICALS & TRANSDERMAL (${topicals?.length || 0} products) ===
 ${topicalKnowledge}
 
 PROTOCOL BUILDING PRINCIPLES:
 
-1. LAYERED APPROACH: Build protocols using multiple modalities - foundation (IV/IM), targeted therapy (injectables/bioregulators), support (oral/suppositories/vitamins), regenerative (exosomes), and topical adjuncts
+1. LAYERED APPROACH: Build protocols using multiple modalities - including detox protocols (Beyond Fasting, Detox Baths, Liver/Gallbladder Cleanse) as preparation or adjunct phases - foundation (IV/IM), targeted therapy (injectables/bioregulators), support (oral/suppositories/vitamins), regenerative (exosomes), and topical adjuncts
 2. SYNERGY MAPPING: Identify products that enhance each other's effects. Example: BPC-157 + TB-500 for tissue repair, Thymus bioregulators + Thymosin Alpha-1 for immune support
 3. TIMING ARCHITECTURE: Structure protocols with proper sequencing - loading phases, maintenance phases, cycling schedules
 4. PATIENT-CENTERED: Consider the patient's condition, goals, compliance ability, and budget when recommending
@@ -144,6 +159,8 @@ WHEN BUILDING PROTOCOLS:
 - Include specific dosages, timing, and cycling guidance
 - Note any required labs or monitoring
 - Estimate typical protocol duration
+- When appropriate, incorporate detox protocols (Beyond Fasting, Detox Baths, Liver/Gallbladder Cleanse) as preparatory or supportive phases
+- Reference specific detox bath recipes, fasting schedules, or liver cleanse timelines when relevant
 
 SYRINGE SELECTION GUIDANCE:
 - Injectable peptides 10mg or less: 1cc insulin syringe

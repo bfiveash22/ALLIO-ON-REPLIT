@@ -126,6 +126,73 @@ export async function registerRoutes(
   const { registerProtocolBuilderRoutes } = await import("./services/protocol-builder");
   registerProtocolBuilderRoutes(app);
 
+  // Detox Protocols API - accessible to all authenticated members
+  app.get('/api/detox-protocols', requireAuth, async (_req, res) => {
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      const detoxDir = path.default.join(process.cwd(), 'knowledge-base', 'detox-protocols');
+      const files = fs.default.readdirSync(detoxDir).filter((f) => f.endsWith('.md'));
+      const protocols = files.map((file) => {
+        const content = fs.default.readFileSync(path.default.join(detoxDir, file), 'utf-8');
+        const slug = file.replace('.md', '');
+        const titleMatch = content.match(/^#\s+(.+)$/m);
+        const title = titleMatch ? titleMatch[1] : slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+        const overviewMatch = content.match(/## Overview\n([\s\S]*?)(?=\n## )/);
+        const overview = overviewMatch ? overviewMatch[1].trim() : '';
+        return { slug, title, overview, content };
+      });
+      res.json(protocols);
+    } catch (error) {
+      console.error('[Detox Protocols] Error loading protocols:', error);
+      res.status(500).json({ error: 'Failed to load detox protocols' });
+    }
+  });
+
+  app.get('/api/detox-protocols/:slug', requireAuth, async (req, res) => {
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      const { slug } = req.params;
+      if (!/^[a-z0-9-]+$/.test(slug)) {
+        return res.status(400).json({ error: 'Invalid protocol slug' });
+      }
+      const filePath = path.default.join(process.cwd(), 'knowledge-base', 'detox-protocols', slug + '.md');
+      if (!fs.default.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Protocol not found' });
+      }
+      const content = fs.default.readFileSync(filePath, 'utf-8');
+      const titleMatch = content.match(/^#\s+(.+)$/m);
+      const title = titleMatch ? titleMatch[1] : slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+      res.json({ slug, title, content });
+    } catch (error) {
+      console.error('[Detox Protocols] Error loading protocol:', error);
+      res.status(500).json({ error: 'Failed to load protocol' });
+    }
+  });
+
+  app.get('/api/detox-protocols/:slug/download', requireAuth, async (req, res) => {
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      const { slug } = req.params;
+      if (!/^[a-z0-9-]+$/.test(slug)) {
+        return res.status(400).json({ error: 'Invalid protocol slug' });
+      }
+      const filePath = path.default.join(process.cwd(), 'knowledge-base', 'detox-protocols', slug + '.md');
+      if (!fs.default.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Protocol not found' });
+      }
+      const content = fs.default.readFileSync(filePath, 'utf-8');
+      res.setHeader('Content-Type', 'text/markdown');
+      res.setHeader('Content-Disposition', 'attachment; filename="' + slug + '.md"');
+      res.send(content);
+    } catch (error) {
+      console.error('[Detox Protocols] Download error:', error);
+      res.status(500).json({ error: 'Failed to download protocol' });
+    }
+  });
+
   // Register Protocol Assembly routes
   const {
     analyzeTranscript,
@@ -289,7 +356,6 @@ export async function registerRoutes(
   app.use("/api/settings", auditLog());
   app.use("/api/sentinel", auditLog());
   app.use("/api/athena", auditLog());
-
   // ========== Operation Overseer: Zero-Downtime System Updates ==========
   app.post("/api/admin/system/update", requireAuth, requireRole('trustee'), async (req, res) => {
     try {

@@ -46,6 +46,16 @@ const SUGGESTED_PROMPTS = [
     title: "Metabolic Optimization",
     prompt: "Build a weight loss and metabolic optimization protocol combining peptides, IM therapies, and oral supplements for sustainable fat loss.",
   },
+  {
+    icon: Droplets,
+    title: "Detox Protocol",
+    prompt: "Design a comprehensive detoxification protocol incorporating the Beyond Fasting program, detox bath schedules, and liver/gallbladder cleanse. Include timing, supplementation, and supportive therapies.",
+  },
+  {
+    icon: Pill,
+    title: "Detox + Peptide Combo",
+    prompt: "Build a protocol that combines detox baths and the liver/gallbladder cleanse as preparation phases before starting an intensive peptide therapy program. Include specific bath recipes and cleanse timelines.",
+  },
 ];
 
 export default function ProtocolBuilder() {
