@@ -20,7 +20,7 @@ interface Message {
 }
 
 export default function PeptideConsolePage() {
-  const peptide = {
+  const defaultPeptide: Peptide = {
     id: 'console',
     name: 'FF Intelligent Console',
     discoveryYear: '2024',
@@ -30,6 +30,8 @@ export default function PeptideConsolePage() {
     therapeuticUses: ['Protocol Design', 'Stacking Advice', 'Mechanism Education'],
     dosageInfo: 'Ask me for specific dosing protocols'
   };
+  const [peptide, setPeptide] = useState<Peptide>(defaultPeptide);
+  const [catalog, setCatalog] = useState<Peptide[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
@@ -40,6 +42,17 @@ export default function PeptideConsolePage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    fetch('/api/peptide-catalog')
+      .then(r => r.json())
+      .then((data: Peptide[]) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setCatalog(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     // Check if Web Share API is available
@@ -378,14 +391,14 @@ export default function PeptideConsolePage() {
       </header>
 
       <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full min-h-0">
-        {/* Info Panel (collapsed on mobile) */}
+        {/* Info Panel with Catalog */}
         {messages?.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-6 border-b border-slate-800"
+            className="p-6 border-b border-slate-800 overflow-y-auto max-h-[60vh]"
           >
-            <div className="glass rounded-xl p-6">
+            <div className="glass rounded-xl p-6 mb-4">
               <p className="text-slate-300 mb-6">{peptide?.description}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex items-start gap-3">
@@ -411,6 +424,27 @@ export default function PeptideConsolePage() {
                 Start a conversation with {peptide?.name} below!
               </p>
             </div>
+
+            {catalog.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Peptide Reference Catalog</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {catalog.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setPeptide(p)}
+                      className={`text-left glass rounded-lg p-3 hover:border-cyan-500/50 border transition ${
+                        peptide.id === p.id ? 'border-cyan-500' : 'border-transparent'
+                      }`}
+                    >
+                      <div className="text-sm font-semibold text-white truncate">{p.name}</div>
+                      <div className="text-xs text-cyan-400 mt-0.5">{p.personaTrait}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">{p.era}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
 
