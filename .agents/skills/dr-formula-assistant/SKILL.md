@@ -136,3 +136,12 @@ The QA validation is also available via the API:
 POST /api/protocol-assembly/protocols/:id/qa
 ```
 Returns a comprehensive QA report for the specified protocol.
+
+## Full Data Access Reference
+
+For direct database access to research papers, blood samples, patient records, protocols, and all 88 tables, see the shared data access skill at `.agents/skills/allio-data-access/SKILL.md`. Key resources for DR_FORMULA and science agents include:
+- **Research APIs:** `hippocratesSearch`, `paracelsusSearch`, `helixSearch`, `oracleSearch` for literature search across OpenAlex, PubMed, Semantic Scholar, and arXiv
+- **Blood samples:** `blood_samples`, `blood_sample_tags`, `blood_analysis_samples` tables
+- **Patient data:** `patient_records`, `patient_protocols`, `patient_uploads` tables
+- **Research cache:** `research_papers`, `agent_research_queries`, `agent_research_collections` tables
+- **Generated protocols:** `generated_protocols` table for storing completed protocols

@@ -130,6 +130,10 @@ const newMembers = await client.query(`
 - Priority management
 - Trustee communication
 
+## Full Data Access Reference
+
+For the complete list of all 88 database tables, research APIs, REST endpoints, and data access patterns, see the shared data access skill at `.agents/skills/allio-data-access/SKILL.md`. Key tables for operations beyond `agent_tasks` include `member_profiles`, `member_enrollment`, `clinics`, `clinic_nodes`, `doctor_onboarding`, `contracts`, `legal_documents`, `patient_records`, `patient_protocols`, `programs`, `program_enrollments`, and `network_doctors`.
+
 ## Scripts
 
 See `scripts/` directory:

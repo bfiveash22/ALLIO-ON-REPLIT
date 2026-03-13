@@ -161,6 +161,10 @@ Send alerts via:
 
 Use `message` tool for WhatsApp alerts.
 
+## Full Data Access Reference
+
+For the complete list of all 88 database tables, research APIs, REST endpoints, and query patterns available to monitoring agents, see the shared data access skill at `.agents/skills/allio-data-access/SKILL.md`. Key tables beyond `agent_tasks` and `agent_registry` include `sentinel_notifications`, `division_leads`, `agent_configurations`, `agent_task_reviews`, `athena_email_approvals`, and `implemented_outputs`.
+
 ## Scripts
 
 See `scripts/` directory for executable monitoring scripts:
