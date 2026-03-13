@@ -45,13 +45,19 @@ function loadPeptideCatalog(): PeptideRecord[] {
   }
 }
 
-const PEPTIDE_IMAGES_DIR = resolveFromWorkspace('artifacts', 'ffpma', 'public', 'assets', 'peptide-images');
+let _peptideImagesDir: string | null = null;
+function getPeptideImagesDir(): string {
+  if (!_peptideImagesDir) {
+    _peptideImagesDir = resolveFromWorkspace('artifacts', 'ffpma', 'public', 'assets', 'peptide-images');
+  }
+  return _peptideImagesDir;
+}
 
 let peptideImageCache: string[] | null = null;
 function listPeptideImageFiles(): string[] {
   if (peptideImageCache) return peptideImageCache;
   try {
-    peptideImageCache = fs.readdirSync(PEPTIDE_IMAGES_DIR);
+    peptideImageCache = fs.readdirSync(getPeptideImagesDir());
     return peptideImageCache;
   } catch {
     return [];
@@ -79,7 +85,7 @@ function findPeptideImages(peptideId: string): string[] {
 try {
   const catalog = loadPeptideCatalog();
   const imageFiles = listPeptideImageFiles();
-  console.log(`[Peptide Console] Loaded ${catalog.length} peptides, ${imageFiles.length} product images from ${PEPTIDE_IMAGES_DIR}`);
+  console.log(`[Peptide Console] Loaded ${catalog.length} peptides, ${imageFiles.length} product images from ${getPeptideImagesDir()}`);
   for (const p of catalog) {
     const matched = findPeptideImages(p.id);
     if (matched.length > 0) {
