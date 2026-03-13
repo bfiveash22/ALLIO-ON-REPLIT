@@ -192,6 +192,8 @@ registerHealthRoutes(app);
   registerFrequencyRoutes(app);
   const { registerProtocolAssemblyRoutes } = await import("./routes/protocol-assembly-routes");
   await registerProtocolAssemblyRoutes(app);
+  const { registerVitalityRoutes } = await import("./routes/vitality-routes");
+  registerVitalityRoutes(app);
 
   try {
     const { seedDatabase } = await import('./seed');

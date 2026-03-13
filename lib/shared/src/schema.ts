@@ -2282,3 +2282,36 @@ export type LabResult = typeof labResults.$inferSelect;
 export const insertSavedTestPanelSchema = createInsertSchema(savedTestPanels).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertSavedTestPanel = z.infer<typeof insertSavedTestPanelSchema>;
 export type SavedTestPanel = typeof savedTestPanels.$inferSelect;
+
+export const vitalityAssessmentStatusEnum = pgEnum("vitality_assessment_status", ["draft", "completed"]);
+
+export const vitalityAssessments = pgTable("vitality_assessments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  memberId: varchar("member_id").notNull(),
+  memberName: varchar("member_name"),
+  doctorId: varchar("doctor_id").notNull(),
+  status: vitalityAssessmentStatusEnum("status").default("completed"),
+  overallScore: integer("overall_score"),
+  cellularHealthScore: integer("cellular_health_score"),
+  detoxScore: integer("detox_score"),
+  systemicHealthScore: integer("systemic_health_score"),
+  dietNutritionScore: integer("diet_nutrition_score"),
+  environmentalScore: integer("environmental_score"),
+  stressEmotionalScore: integer("stress_emotional_score"),
+  physicalActivityScore: integer("physical_activity_score"),
+  cellularHealthData: jsonb("cellular_health_data"),
+  detoxData: jsonb("detox_data"),
+  systemicHealthData: jsonb("systemic_health_data"),
+  dietNutritionData: jsonb("diet_nutrition_data"),
+  environmentalData: jsonb("environmental_data"),
+  stressEmotionalData: jsonb("stress_emotional_data"),
+  physicalActivityData: jsonb("physical_activity_data"),
+  recommendations: jsonb("recommendations"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertVitalityAssessmentSchema = createInsertSchema(vitalityAssessments).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertVitalityAssessment = z.infer<typeof insertVitalityAssessmentSchema>;
+export type VitalityAssessment = typeof vitalityAssessments.$inferSelect;

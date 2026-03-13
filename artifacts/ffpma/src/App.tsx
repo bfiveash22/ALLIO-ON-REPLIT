@@ -82,6 +82,7 @@ import ContractReviewPage from "@/pages/contract-review";
 import BloodAnalysisPage from "@/pages/blood-analysis";
 import FrequencyLibraryPage from "@/pages/frequency-library";
 import ResearchViewerPage from "@/pages/research-viewer";
+import VitalityAssessmentPage from "@/pages/vitality-assessment";
 import BecomeAMemberPage from "@/pages/become-a-member";
 import LegalDocumentPage from "@/pages/legal-document";
 import NotFound from "@/pages/not-found";
@@ -642,6 +643,13 @@ function Router() {
       <Route path="/admin/backoffice" component={() => (
         <RoleProtectedRoute allowedRoles={["admin"]}>
           <AdminBackoffice />
+        </RoleProtectedRoute>
+      )} />
+      <Route path="/vitality-assessment" component={() => (
+        <RoleProtectedRoute allowedRoles={["admin", "doctor"]}>
+          <AppLayout>
+            <VitalityAssessmentPage />
+          </AppLayout>
         </RoleProtectedRoute>
       )} />
       <Route path="/doctors" component={() => (

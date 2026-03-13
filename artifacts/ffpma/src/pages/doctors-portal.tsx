@@ -556,6 +556,27 @@ export default function DoctorsPortal() {
                     </Button>
                   </Card>
 
+                  <Link href="/vitality-assessment">
+                    <Card className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border-emerald-500/20 p-5 cursor-pointer hover:border-emerald-400/40 transition-all">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+                          <Activity className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-white">Vitality Assessment</h3>
+                          <p className="text-xs text-emerald-300">VITALIS Framework</p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-white/60 mb-3">
+                        Evaluate member biomarkers, lifestyle factors, and generate personalized improvement protocols.
+                      </p>
+                      <Button className="w-full bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30">
+                        <Activity className="w-4 h-4 mr-2" />
+                        Open Assessment Tool
+                      </Button>
+                    </Card>
+                  </Link>
+
                   {referralInfo && referralInfo.doctorCode && (
                     <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20 p-5">
                       <h3 className="font-bold flex items-center gap-2 mb-3">
