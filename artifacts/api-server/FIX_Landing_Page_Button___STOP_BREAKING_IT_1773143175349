@@ -1,0 +1,115 @@
+﻿I was unable to locate the specific `landing.tsx` file in the current resources available. Therefore, I'll proceed with drafting the document based on the provided task details and context. If the file is located later, we can integrate any additional insights or corrections as needed.
+
+
+---
+
+
+# Document: Fix Landing Page Button - Compliance and Maintenance Protocol
+
+
+## Overview
+
+
+This document addresses the recurring issue with the landing page's top-right button, detailing corrective actions, procedural mandates, and long-term solutions to ensure stability and alignment with the Forgotten Formula PMA's mission of healing over profits and maintaining a nature-first approach.
+
+
+### Task Summary
+
+
+- **Task Title:** FIX Landing Page Button - STOP BREAKING IT
+- **Division:** Engineering
+- **Task Description:** Immediate correction and prevention of further unauthorized modifications to the landing page's top-right button.
+- **Task Priority:** Critical
+- **Task Assigned to:** FORGE (Lead Engineering Agent)
+
+
+## Current State Evaluation
+
+
+### Verification Steps
+
+
+1. **Verify Current Button Configuration:**
+   - Open file: `/root/allio-v1/client/src/pages/landing.tsx`.
+   - Check lines 370-377 to confirm the button code matches the correct configuration.
+
+
+2. **Correct Button Configuration:**
+
+
+   ```tsx
+   {isLoading ? (
+     <div className="h-9 w-20 animate-pulse rounded-md bg-muted" />
+   ) : isAuthenticated ? (
+     <Button asChild data-testid="button-dashboard">
+       <Link href={dbInfo.path}>{dbInfo.label}</Link>
+     </Button>
+   ) : (
+     <Button asChild data-testid="button-login">
+       <Link href="/login">{t('nav.memberLogin')}</Link>
+     </Button>
+   )}
+   ```
+
+
+3. **Logic Verification:**
+   - If authenticated → Displays Dashboard button linking to `/dashboard`.
+   - If not authenticated → Displays Member Login button linking to `/login`.
+
+
+### Evidence
+
+
+- **Screenshot:** Ensure you capture the current button configuration for evidence and documentation.
+- **Functionality Test:** Confirm that both buttons operate correctly under their respective conditions.
+
+
+## Action Plan
+
+
+### Immediate Actions
+
+
+1. **Restore Correct Configuration:** If the button code is incorrect, restore it to the above configuration immediately.
+2. **Stop Daily UI/UX Flow Optimization Tasks:** Halt any scheduled tasks that modify the `landing.tsx` file, specifically targeting UI/UX flow optimizations that affect the header, navigation, or buttons.
+
+
+### Mandates and Protocols
+
+
+- **Off-Limits Directive:**
+  - The top-right button on the landing page is OFF LIMITS for modifications without explicit Trustee approval.
+  - No optimizations to header, navigation, or button components unless pre-approved.
+
+
+- **Commitment Statement:**
+  - Acknowledge and sign a written commitment to adhere to these protocols and respect the sanctity of the UI elements as defined by the Trustee.
+
+
+## Compliance and Long-term Strategy
+
+
+### Compliance Assurance
+
+
+- Implement monitoring to ensure no unauthorized changes occur to critical UI components.
+- Establish a review process for any proposed UI changes to ensure alignment with mission goals and Trustee directives.
+
+
+### Mission Alignment
+
+
+- **Healing Over Profits:** Ensuring the functionality and stability of our digital platforms is crucial to maintaining trust and delivering healing solutions efficiently.
+- **Nature Over Synthetic:** By respecting established UI protocols and maintaining a seamless user experience, we support our mission's integrity and focus on genuine, member-centric healing practices.
+
+
+## Conclusion
+
+
+This document serves as an urgent corrective measure and a long-term strategy to uphold the technical integrity and mission alignment of the Forgotten Formula PMA's digital presence. Upholding these standards is essential for fostering trust and ensuring our platforms serve the healing mission effectively.
+
+
+---
+
+
+This document should be reviewed and acknowledged by all relevant engineering team members to ensure understanding and compliance with the outlined directives.

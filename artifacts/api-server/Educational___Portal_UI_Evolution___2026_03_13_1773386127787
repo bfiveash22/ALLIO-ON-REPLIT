@@ -1,0 +1,113 @@
+﻿I'll proceed without specific internal guidelines since they aren't available. I will create a comprehensive document based on general UI/UX principles and the FFPMA mission.
+
+
+---
+
+
+# Educational & Portal UI Evolution - 2026-03-13
+
+
+## Division: Engineering
+
+
+### Overview
+
+
+This document outlines the analysis and refactor proposals for the training modules, quizzes, and Doctor Portal interfaces. The aim is to enhance layout completeness, accessibility, aesthetic appeal, and content clarity, aligning with the FFPMA's mission of prioritizing healing over profits and nature over synthetic solutions.
+
+
+### Sections
+
+
+1. **Introduction**
+2. **UI Analysis**
+3. **Refactor Proposals**
+4. **Implementation Plan**
+5. **Conclusion and Mission Alignment**
+
+
+---
+
+
+## 1. Introduction
+
+
+In our pursuit of advancing true healing, the Forgotten Formula PMA emphasizes the importance of seamless, accessible, and aesthetically pleasing digital experiences. This document presents a thorough analysis of the current interfaces used in our educational and portal systems, alongside actionable refactor proposals to elevate their effectiveness and user engagement.
+
+
+## 2. UI Analysis
+
+
+### 2.1 Training Modules (training.tsx)
+
+
+- **Layout Completeness:** Currently structured to provide a step-by-step educational journey. However, there are opportunities to enhance modular learning paths.
+- **Accessibility:** Needs improvement in color contrast and text-to-background ratios to support users with visual impairments.
+- **Aesthetic Premium Feel:** Lacks cohesive design elements that reflect our brand's identity of healing and enlightenment.
+- **Content Clarity:** Information is well-organized but can benefit from more interactive elements to engage diverse learning styles.
+
+
+### 2.2 Quizzes (quizzes.tsx)
+
+
+- **Layout Completeness:** Functional but could integrate more dynamic elements to hold user attention.
+- **Accessibility:** Requires better focus management for users navigating via keyboard.
+- **Aesthetic Premium Feel:** Missing consistent use of brand colors and motifs.
+- **Content Clarity:** Questions are clear; however, feedback mechanisms need enhancement for educational value.
+
+
+### 2.3 Doctor Portal (doctors-portal.tsx)
+
+
+- **Layout Completeness:** Adequately supports doctor interactions but requires restructuring for intuitive navigation.
+- **Accessibility:** Needs improved semantic HTML elements for assistive technologies.
+- **Aesthetic Premium Feel:** Can better embody the warm, healing presence of our brand.
+- **Content Clarity:** Essential information is present but can be streamlined for more efficient user interaction.
+
+
+## 3. Refactor Proposals
+
+
+### 3.1 Training Modules
+
+
+- **Enhance Modular Pathways:** Introduce personalized learning tracks with clear progress indicators.
+- **Improve Visual Contrast:** Adopt a palette with higher contrast using our brand colors for better readability.
+- **Integrate Interactive Elements:** Use quizzes and mini-games to reinforce learning.
+
+
+### 3.2 Quizzes
+
+
+- **Introduce Dynamic Interactions:** Implement animations and transitions to make quizzes engaging.
+- **Enhance Navigation Accessibility:** Ensure all elements are reachable and operable via keyboard shortcuts.
+- **Brand Consistency:** Apply deep blues, teals, and gold consistently across all quiz interfaces.
+
+
+### 3.3 Doctor Portal
+
+
+- **Revamp Navigation Structure:** Implement a sidebar with intuitive categorization of features.
+- **Semantic HTML Improvements:** Use ARIA roles and landmarks to boost accessibility.
+- **Brand Cohesiveness:** Utilize DNA helix motifs and flowing energy patterns subtly in the background.
+
+
+## 4. Implementation Plan
+
+
+1. **Research & Design (March - April 2026):** Conduct user research and finalize design prototypes.
+2. **Development (May - June 2026):** Implement front-end changes with a focus on modularity and reusability.
+3. **Testing & Refinement (July 2026):** User testing with feedback loops to refine the interfaces.
+4. **Launch & Monitor (August 2026):** Deploy updates and monitor user interactions for continuous improvement.
+
+
+## 5. Conclusion and Mission Alignment
+
+
+By refining these interfaces, we enhance our ability to provide accessible and engaging educational experiences, further aligning our operations with the FFPMA's mission of promoting healing through informed, nature-based practices. This evolution underscores our commitment to member sovereignty and the body's innate healing capabilities, fostering a community united by the principles of truth and transparency.
+
+
+---
+
+
+This document serves as a roadmap to a more effective and healing-centered digital presence for our members, aligning our technical infrastructure with our holistic mission.
