@@ -11,6 +11,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "html2canvas-pro": "^2.0.2",
+    "jspdf": "^4.2.0",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-router-dom": "^7.9.5",

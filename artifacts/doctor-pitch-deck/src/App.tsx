@@ -1,5 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import html2canvas from "html2canvas-pro";
+import { jsPDF } from "jspdf";
 
 import { slides } from "@/slideLoader";
 
@@ -61,6 +63,7 @@ function SlideEditor() {
           <slide.Component />
         </div>
       ))}
+      <DownloadButton />
     </>
   );
 }
@@ -80,6 +83,118 @@ function AllSlides() {
         </div>
       ))}
     </div>
+  );
+}
+
+function DownloadButton() {
+  const [downloading, setDownloading] = useState(false);
+  const [progress, setProgress] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleDownload = useCallback(async () => {
+    setDownloading(true);
+    setProgress("Preparing slides...");
+
+    try {
+      const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [1920, 1080] });
+      const container = containerRef.current;
+      if (!container) return;
+
+      container.style.display = "block";
+
+      await new Promise(r => setTimeout(r, 500));
+
+      const slideElements = container.querySelectorAll<HTMLElement>(".pdf-slide");
+
+      for (let i = 0; i < slideElements.length; i++) {
+        setProgress(`Rendering slide ${i + 1} of ${slideElements.length}...`);
+        const el = slideElements[i];
+
+        const canvas = await html2canvas(el, {
+          width: 1920,
+          height: 1080,
+          scale: 1,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: "#000000",
+          logging: false,
+        });
+
+        const imgData = canvas.toDataURL("image/jpeg", 0.92);
+
+        if (i > 0) pdf.addPage([1920, 1080], "landscape");
+        pdf.addImage(imgData, "JPEG", 0, 0, 1920, 1080);
+      }
+
+      container.style.display = "none";
+
+      setProgress("Saving PDF...");
+      pdf.save("ALLIO-Doctor-Pitch-Deck.pdf");
+      setProgress("");
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      setProgress("Download failed. Try Print to PDF instead.");
+      setTimeout(() => setProgress(""), 3000);
+    } finally {
+      setDownloading(false);
+      if (containerRef.current) containerRef.current.style.display = "none";
+    }
+  }, []);
+
+  return (
+    <>
+      <button
+        onClick={handleDownload}
+        disabled={downloading}
+        style={{
+          position: "fixed",
+          bottom: "24px",
+          right: "24px",
+          zIndex: 9999,
+          padding: "12px 24px",
+          borderRadius: "12px",
+          border: "none",
+          background: downloading ? "#374151" : "linear-gradient(135deg, #00D4AA, #0ea5e9)",
+          color: "white",
+          fontSize: "14px",
+          fontWeight: 600,
+          cursor: downloading ? "not-allowed" : "pointer",
+          boxShadow: "0 4px 20px rgba(0,212,170,0.3)",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          transition: "all 0.2s",
+        }}
+      >
+        {downloading ? (
+          <>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: "spin 1s linear infinite" }}>
+              <path d="M21 12a9 9 0 11-6.219-8.56" />
+            </svg>
+            {progress}
+          </>
+        ) : (
+          <>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download PDF
+          </>
+        )}
+      </button>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div ref={containerRef} style={{ position: "fixed", left: "-9999px", top: 0, display: "none" }}>
+        {slides.map((slide) => (
+          <div key={slide.id} className="pdf-slide" style={{ width: "1920px", height: "1080px", overflow: "hidden" }}>
+            <div className="h-full w-full [&_.h-screen]:!h-full [&_.w-screen]:!w-full">
+              <slide.Component />
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 
