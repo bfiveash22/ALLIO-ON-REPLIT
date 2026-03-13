@@ -201,10 +201,6 @@ function DownloadButton() {
           inset: 0,
           zIndex: 10000,
           background: "#000",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
           overflow: "hidden",
         }}>
           <div style={{
@@ -226,11 +222,12 @@ function DownloadButton() {
           <div
             id={`pdf-render-slide-${activeSlideIndex}`}
             style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
               width: "1920px",
               height: "1080px",
               overflow: "hidden",
-              transformOrigin: "top left",
-              transform: `scale(${Math.min(window.innerWidth / 1920, window.innerHeight / 1080)})`,
             }}
           >
             <div className="h-full w-full [&_.h-screen]:!h-full [&_.w-screen]:!w-full" style={{ width: "1920px", height: "1080px" }}>
