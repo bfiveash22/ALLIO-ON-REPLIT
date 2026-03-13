@@ -484,18 +484,32 @@ class SignNowService {
 
   async createDoctorAgreement(
     templateId: string,
-    data: { doctorName: string; doctorEmail: string; clinicName?: string; licenseNumber?: string }
+    data: { doctorName: string; doctorEmail: string; clinicName?: string; licenseNumber?: string; doctorCode?: string }
   ): Promise<{ documentId: string; signingUrl: string }> {
-    const documentName = `Doctor Agreement - ${data.doctorName} - ${new Date().toISOString().split('T')[0]}`;
+    const dateStr = new Date().toISOString().split('T')[0];
+    const codeSegment = data.doctorCode ? ` - ${data.doctorCode}` : '';
+    const documentName = `Unified Contract - ${data.doctorName}${codeSegment} - ${dateStr}`;
     return this.createAgreement(templateId, data.doctorName, data.doctorEmail, documentName);
   }
 
   async createMemberAgreement(
     templateId: string,
-    data: { memberName: string; memberEmail: string }
+    data: { memberName: string; memberEmail: string; doctorCode?: string }
   ): Promise<{ documentId: string; signingUrl: string }> {
-    const documentName = `Member Agreement - ${data.memberName} - ${new Date().toISOString().split('T')[0]}`;
+    const dateStr = new Date().toISOString().split('T')[0];
+    const codeSegment = data.doctorCode ? ` - ${data.doctorCode}` : '';
+    const documentName = `Unified Contract - ${data.memberName}${codeSegment} - ${dateStr}`;
     return this.createAgreement(templateId, data.memberName, data.memberEmail, documentName);
+  }
+
+  async listTemplates(): Promise<any[]> {
+    try {
+      const documents = await this.listDocuments();
+      return documents.filter((d: any) => d.template === true || d.is_template);
+    } catch (error) {
+      console.error("Failed to list templates:", error);
+      return [];
+    }
   }
 }
 

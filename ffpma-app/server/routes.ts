@@ -899,9 +899,28 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
   // Download signed document
   app.get("/api/signnow/documents/:id/download", requireRole("admin"), async (req: Request, res: Response) => {
     try {
-      const buffer = await signNowService.downloadDocument(req.params.id);
+      const documentId = req.params.id;
+      const buffer = await signNowService.downloadDocument(documentId);
+
+      let filename = `Unified-Contract-${documentId}.pdf`;
+      const doctorRecord = await db.query.doctorOnboarding.findFirst({
+        where: (d, { eq }) => eq(d.signNowDocumentId, documentId)
+      });
+      if (doctorRecord) {
+        const dateStr = doctorRecord.documentSignedAt ? new Date(doctorRecord.documentSignedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+        filename = `Unified-Contract-${doctorRecord.fullName.replace(/\s+/g, '_')}-${doctorRecord.doctorCode || 'Doctor'}-${dateStr}.pdf`;
+      } else {
+        const memberRecord = await db.query.memberEnrollment.findFirst({
+          where: (m, { eq }) => eq(m.signNowDocumentId, documentId)
+        });
+        if (memberRecord) {
+          const dateStr = memberRecord.documentSignedAt ? new Date(memberRecord.documentSignedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+          filename = `Unified-Contract-${memberRecord.fullName.replace(/\s+/g, '_')}-${memberRecord.doctorCode || 'Member'}-${dateStr}.pdf`;
+        }
+      }
+
       res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `attachment; filename="document-${req.params.id}.pdf"`);
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
       res.send(buffer);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -932,8 +951,10 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
   // Doctor Onboarding Routes (SignNow Flow)
   // ==========================================
 
-  const DOCTOR_ONBOARDING_TEMPLATE = process.env.SIGNNOW_DOCTOR_ONBOARDING_TEMPLATE_ID || '253597f6c6724abd976af62a69b3e0a5b92b38dd';
-  const MEMBER_ONBOARDING_TEMPLATE = process.env.SIGNNOW_MEMBER_TEMPLATE_ID || '';
+  const UNIFIED_CONTRACT_TEMPLATE = process.env.SIGNNOW_UNIFIED_CONTRACT_TEMPLATE_ID || '';
+  const DOCTOR_ONBOARDING_TEMPLATE = process.env.SIGNNOW_DOCTOR_ONBOARDING_TEMPLATE_ID || UNIFIED_CONTRACT_TEMPLATE || '253597f6c6724abd976af62a69b3e0a5b92b38dd';
+  const MEMBER_ONBOARDING_TEMPLATE = process.env.SIGNNOW_MEMBER_TEMPLATE_ID || UNIFIED_CONTRACT_TEMPLATE || '';
+  const FFPMA_ADMIN_EMAIL = process.env.FFPMA_ADMIN_EMAIL || 'admin@forgottenformula.com';
   const DOCTOR_MEMBERSHIP_PRODUCT_ID = process.env.WC_DOCTOR_MEMBERSHIP_PRODUCT_ID || '5000';
   const MEMBER_MEMBERSHIP_PRODUCT_ID = process.env.WC_MEMBER_MEMBERSHIP_PRODUCT_ID || '10';
   const WOOCOMMERCE_URL = process.env.WOOCOMMERCE_URL || 'https://forgottenformula.com';
@@ -1033,12 +1054,13 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       // Generate unique doctor code with collision check
       const doctorCode = await generateUniqueDoctorCode();
 
-      // Create SignNow document from template
+      // Create SignNow document from Unified Contract template
       const signNowResult = await signNowService.createDoctorAgreement(DOCTOR_ONBOARDING_TEMPLATE, {
         doctorName: fullName,
         doctorEmail: email,
         clinicName,
         licenseNumber,
+        doctorCode,
       });
 
       // Save onboarding record with 'started' status
@@ -1137,10 +1159,11 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
         return res.status(500).json({ error: "Member template not configured" });
       }
 
-      // Create SignNow document
+      // Create SignNow document from Unified Contract template
       const signNowResult = await signNowService.createMemberAgreement(MEMBER_ONBOARDING_TEMPLATE, {
         memberName: fullName,
         memberEmail: email,
+        doctorCode,
       });
 
       // Save enrollment record
@@ -1182,19 +1205,20 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       console.log("SignNow webhook received:", { event, document_id });
 
       if (event === 'document_complete' || event === 'document.complete') {
+        const dateStr = new Date().toISOString().split('T')[0];
+
         // Check if this is a doctor onboarding document
         const doctorRecord = await db.query.doctorOnboarding.findFirst({
           where: (d, { eq }) => eq(d.signNowDocumentId, document_id)
         });
 
         if (doctorRecord) {
-          // Only update if document was sent (not already signed)
           if (doctorRecord.status !== 'document_sent') {
             console.log(`Doctor onboarding ${doctorRecord.id} already processed, status: ${doctorRecord.status}`);
             return res.json({ success: true, type: 'doctor_onboarding', skipped: true });
           }
 
-          // Update to document_signed, next step is payment
+          const contractUrl = `/contracts/doctor/${doctorRecord.id}/signed`;
           await db.update(doctorOnboarding)
             .set({
               status: 'document_signed',
@@ -1202,6 +1226,44 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
               updatedAt: new Date(),
             })
             .where(eq(doctorOnboarding.signNowDocumentId, document_id));
+
+          // Update associated contract record with standardized URL
+          const contractRecord = await db.query.contracts.findFirst({
+            where: (c, { eq }) => eq(c.signNowDocumentId, document_id)
+          });
+          if (contractRecord) {
+            await storage.updateContract(contractRecord.id, {
+              status: 'signed',
+              signedAt: new Date(),
+              contractUrl,
+            });
+          }
+
+          // Send CC notification emails
+          const ccRecipients = [FFPMA_ADMIN_EMAIL];
+          if (doctorRecord.referredBy) {
+            const referrer = await db.query.doctorOnboarding.findFirst({
+              where: (d, { eq }) => eq(d.doctorCode, doctorRecord.referredBy!)
+            });
+            if (referrer?.email) ccRecipients.push(referrer.email);
+          }
+          try {
+            await sendEmail(
+              doctorRecord.email,
+              `Unified Contract Signed - ${doctorRecord.fullName}`,
+              `<h2>Doctor Onboarding Contract Signed</h2>
+              <p><strong>Doctor:</strong> ${doctorRecord.fullName}</p>
+              <p><strong>Email:</strong> ${doctorRecord.email}</p>
+              <p><strong>Clinic:</strong> ${doctorRecord.clinicName || 'N/A'}</p>
+              <p><strong>Doctor Code:</strong> ${doctorRecord.doctorCode || 'N/A'}</p>
+              <p><strong>Date:</strong> ${dateStr}</p>
+              <p>The Unified Contract has been successfully signed. Next step: payment processing.</p>`,
+              ccRecipients.join(', ')
+            );
+            console.log(`CC notification sent for doctor onboarding ${doctorRecord.id}`);
+          } catch (emailErr: any) {
+            console.error(`Failed to send CC notification for doctor ${doctorRecord.id}:`, emailErr.message);
+          }
 
           console.log(`Doctor onboarding ${doctorRecord.id} document signed - awaiting payment`);
           return res.json({ success: true, type: 'doctor_onboarding' });
@@ -1213,13 +1275,12 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
         });
 
         if (memberRecord) {
-          // Only update if document was sent
           if (memberRecord.status !== 'document_sent') {
             console.log(`Member enrollment ${memberRecord.id} already processed, status: ${memberRecord.status}`);
             return res.json({ success: true, type: 'member_enrollment', skipped: true });
           }
 
-          // Update member enrollment status
+          const contractUrl = `/contracts/member/${memberRecord.id}/signed`;
           await db.update(memberEnrollment)
             .set({
               status: 'document_signed',
@@ -1227,6 +1288,48 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
               updatedAt: new Date(),
             })
             .where(eq(memberEnrollment.signNowDocumentId, document_id));
+
+          // Update associated contract record with standardized URL
+          const contractRecord = await db.query.contracts.findFirst({
+            where: (c, { eq }) => eq(c.signNowDocumentId, document_id)
+          });
+          if (contractRecord) {
+            await storage.updateContract(contractRecord.id, {
+              status: 'signed',
+              signedAt: new Date(),
+              contractUrl,
+            });
+          }
+
+          // Send CC notification emails
+          const ccRecipients = [FFPMA_ADMIN_EMAIL];
+          const referringDoctor = await db.query.doctorOnboarding.findFirst({
+            where: (d, { eq }) => eq(d.doctorCode, memberRecord.doctorCode)
+          });
+          if (referringDoctor?.email) {
+            ccRecipients.push(referringDoctor.email);
+          }
+          if (referringDoctor?.clinicId) {
+            const clinic = await storage.getClinic(referringDoctor.clinicId);
+            if (clinic?.email) ccRecipients.push(clinic.email);
+          }
+          try {
+            await sendEmail(
+              memberRecord.email,
+              `Unified Contract Signed - ${memberRecord.fullName}`,
+              `<h2>Member Enrollment Contract Signed</h2>
+              <p><strong>Member:</strong> ${memberRecord.fullName}</p>
+              <p><strong>Email:</strong> ${memberRecord.email}</p>
+              <p><strong>Referring Doctor Code:</strong> ${memberRecord.doctorCode}</p>
+              <p><strong>Referring Doctor:</strong> ${referringDoctor?.fullName || 'N/A'}</p>
+              <p><strong>Date:</strong> ${dateStr}</p>
+              <p>The Unified Contract has been successfully signed.</p>`,
+              ccRecipients.join(', ')
+            );
+            console.log(`CC notification sent for member enrollment ${memberRecord.id}`);
+          } catch (emailErr: any) {
+            console.error(`Failed to send CC notification for member ${memberRecord.id}:`, emailErr.message);
+          }
 
           console.log(`Member enrollment ${memberRecord.id} document signed`);
           return res.json({ success: true, type: 'member_enrollment' });
@@ -3439,8 +3542,8 @@ INSTRUCTIONS:
 
   // Contract Routes
 
-  const DOCTOR_TEMPLATE_ID = process.env.SIGNNOW_DOCTOR_ONBOARDING_TEMPLATE_ID || process.env.SIGNNOW_DOCTOR_TEMPLATE_ID || '253597f6c6724abd976af62a69b3e0a5b92b38dd';
-  const MEMBER_TEMPLATE_ID = process.env.SIGNNOW_MEMBER_TEMPLATE_ID || '';
+  const DOCTOR_TEMPLATE_ID = process.env.SIGNNOW_DOCTOR_ONBOARDING_TEMPLATE_ID || UNIFIED_CONTRACT_TEMPLATE || process.env.SIGNNOW_DOCTOR_TEMPLATE_ID || '253597f6c6724abd976af62a69b3e0a5b92b38dd';
+  const MEMBER_TEMPLATE_ID = process.env.SIGNNOW_MEMBER_TEMPLATE_ID || UNIFIED_CONTRACT_TEMPLATE || '';
 
   // Create doctor agreement
   app.post("/api/signnow/doctor-agreement", requireRole("admin"), async (req: Request, res: Response) => {
@@ -3492,6 +3595,7 @@ INSTRUCTIONS:
         doctorEmail,
         clinicName,
         licenseNumber,
+        doctorCode: undefined,
       });
 
       const contract = await storage.createContract({
@@ -3572,6 +3676,7 @@ INSTRUCTIONS:
       const result = await signNowService.createMemberAgreement(effectiveTemplateId, {
         memberName,
         memberEmail,
+        doctorCode: undefined,
       });
 
       const contract = await storage.createContract({
@@ -3950,6 +4055,89 @@ INSTRUCTIONS:
       res.json(updatedClinic);
     } catch (error: any) {
       console.error("Error updating clinic SignNow links:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/migrate-clinic-links", requireRole("admin", "trustee"), async (req: Request, res: Response) => {
+    try {
+
+      const { signNowDoctorLink, signNowMemberLink } = req.body;
+      if (!signNowDoctorLink && !signNowMemberLink) {
+        return res.status(400).json({ error: "At least one of signNowDoctorLink or signNowMemberLink is required" });
+      }
+
+      const { clinics } = await import("@shared/schema");
+      const allClinics = await db.select().from(clinics);
+      let updated = 0;
+      const results: Array<{ clinicId: string; name: string; updated: boolean }> = [];
+
+      for (const clinic of allClinics) {
+        const updateData: Record<string, string> = {};
+        if (signNowDoctorLink) updateData.signNowDoctorLink = signNowDoctorLink;
+        if (signNowMemberLink) updateData.signNowMemberLink = signNowMemberLink;
+
+        await storage.updateClinic(clinic.id, updateData);
+        updated++;
+        results.push({ clinicId: clinic.id, name: clinic.name, updated: true });
+      }
+
+      console.log(`Bulk migrated SignNow links for ${updated} clinics`);
+      res.json({ success: true, totalClinics: allClinics.length, updated, results });
+    } catch (error: any) {
+      console.error("Error migrating clinic links:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/signnow/templates", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const templates = await signNowService.listTemplates();
+      res.json({
+        templates,
+        currentConfig: {
+          unifiedContractTemplateId: UNIFIED_CONTRACT_TEMPLATE || null,
+          doctorTemplateId: DOCTOR_TEMPLATE_ID,
+          memberTemplateId: MEMBER_TEMPLATE_ID,
+        },
+      });
+    } catch (error: any) {
+      console.error("Error listing SignNow templates:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/import-clinic-signnow-links", requireRole("admin", "trustee"), async (req: Request, res: Response) => {
+    try {
+
+      const entries: Array<{ wpClinicId: number; signNowMemberLink: string; clinicName?: string }> = req.body.entries || [];
+      if (entries.length === 0) {
+        return res.status(400).json({ error: "No entries provided. Provide an array of { wpClinicId, signNowMemberLink, clinicName? }" });
+      }
+
+      const results: Array<{ wpClinicId: number; clinicName?: string; status: string }> = [];
+      for (const entry of entries) {
+        try {
+          const clinic = await storage.getClinicByWpId(entry.wpClinicId);
+          if (clinic) {
+            await storage.updateClinic(clinic.id, {
+              signNowMemberLink: entry.signNowMemberLink,
+            });
+            results.push({ wpClinicId: entry.wpClinicId, clinicName: clinic.name, status: 'updated' });
+          } else {
+            results.push({ wpClinicId: entry.wpClinicId, clinicName: entry.clinicName, status: 'clinic_not_found' });
+          }
+        } catch (err: any) {
+          results.push({ wpClinicId: entry.wpClinicId, clinicName: entry.clinicName, status: `error: ${err.message}` });
+        }
+      }
+
+      const updated = results.filter(r => r.status === 'updated').length;
+      const notFound = results.filter(r => r.status === 'clinic_not_found').length;
+      console.log(`Imported SignNow links: ${updated} updated, ${notFound} clinics not found`);
+      res.json({ success: true, total: entries.length, updated, notFound, results });
+    } catch (error: any) {
+      console.error("Error importing clinic SignNow links:", error);
       res.status(500).json({ error: error.message });
     }
   });

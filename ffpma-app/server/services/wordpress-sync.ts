@@ -1733,6 +1733,7 @@ interface WPClinic {
   title: { rendered: string };
   slug: string;
   acf?: {
+    signnow_link?: string;
     signnow_member_link?: string;
     signnow_doctor_link?: string;
     signnow_template_id?: string;
@@ -1752,6 +1753,7 @@ interface WPClinic {
     wc_doctor_product_id?: number;
   };
   meta?: {
+    signnow_link?: string;
     signnow_member_link?: string;
     signnow_doctor_link?: string;
     signnow_template_id?: string;
@@ -1829,7 +1831,7 @@ export async function syncClinics(): Promise<ClinicSyncResult> {
       for (const wpClinic of wpClinics) {
         try {
           // Extract SignNow links from ACF or meta
-          const signNowMemberLink = wpClinic.acf?.signnow_member_link || wpClinic.meta?.signnow_member_link || null;
+          const signNowMemberLink = wpClinic.acf?.signnow_member_link || wpClinic.meta?.signnow_member_link || wpClinic.acf?.signnow_link || wpClinic.meta?.signnow_link || null;
           const signNowDoctorLink = wpClinic.acf?.signnow_doctor_link || wpClinic.meta?.signnow_doctor_link || null;
           const signNowTemplateId = wpClinic.acf?.signnow_template_id || wpClinic.meta?.signnow_template_id || null;
           

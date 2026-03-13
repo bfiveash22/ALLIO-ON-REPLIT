@@ -135,6 +135,29 @@ API Routes (all require auth + admin/trustee/doctor role):
 
 `artifacts/api-server/src/services/protocol-automation-test.ts` tests AI engines for protocol generation quality. Sends a simulated Annette Gomer transcript through Abacus AI (gpt-4.1-mini), Gemini 1.5 Pro + RAG, and OpenAI Direct (gpt-4o). Scores output on 7 criteria (therapy selection, dosing detail, research citations, daily schedule, 5 Rs adherence, personalization, completeness). Generates a comparison report saved to the knowledge base.
 
+### SignNow Unified Contract Migration
+
+All signing workflows now use the Unified Contract template from SignNow. Key env vars:
+- `SIGNNOW_UNIFIED_CONTRACT_TEMPLATE_ID` — The unified template ID (takes precedence)
+- `SIGNNOW_DOCTOR_ONBOARDING_TEMPLATE_ID` — Falls back from unified, then hardcoded default
+- `SIGNNOW_MEMBER_TEMPLATE_ID` — Falls back from unified
+- `FFPMA_ADMIN_EMAIL` — Admin email for CC notifications on signing completion
+
+Document naming: `Unified Contract - [Name] - [DoctorCode] - [Date]`
+
+Admin endpoints:
+- `POST /api/admin/migrate-clinic-links` — Bulk update all clinic SignNow links
+- `POST /api/admin/import-clinic-signnow-links` — Import per-clinic links from spreadsheet data
+- `GET /api/admin/signnow/templates` — List available SignNow templates and current config
+
+Webhook CC notifications: On `document_complete`, emails are sent to the signer with CC to admin, referring doctor, and clinic email.
+
+WordPress sync: `syncClinics()` reads `signnow_link`, `signnow_member_link`, `signnow_doctor_link` ACF fields and preserves local values when WP fields are empty.
+
+Reference data: `ffpma-app/data/clinic-signnow-links.csv` contains the clinic-to-SignNow link mappings from the master spreadsheet.
+
+### `scripts` (`@workspace/scripts`)
+
 ## Agent Network
 
 The platform includes an AI agent network with:
