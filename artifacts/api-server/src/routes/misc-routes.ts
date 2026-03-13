@@ -403,4 +403,30 @@ export function registerMiscRoutes(app: Express): void {
       res.json({ success: true, uploaded: results.filter(r => r.success).length, failed: results.filter(r => !r.success).length, results });
     } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
   });
+
+  app.post("/api/protocol-slides/annette-gomer", requireAuth, requireRole('admin', 'trustee', 'doctor'), async (_req, res) => {
+    try {
+      const { generateAnnetteGomerSlides } = await import("../services/protocol-slide-generator");
+      console.log('[Protocol Slides] Generating Annette Gomer presentation...');
+      const result = await generateAnnetteGomerSlides();
+      console.log(`[Protocol Slides] Annette Gomer presentation created: ${result.webViewLink} (${result.slideCount} slides)`);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      console.error('[Protocol Slides] Annette Gomer generation failed:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.post("/api/protocol-slides/kathryn-smith", requireAuth, requireRole('admin', 'trustee', 'doctor'), async (_req, res) => {
+    try {
+      const { generateKathrynSmithSlides } = await import("../services/protocol-slide-generator");
+      console.log('[Protocol Slides] Generating Kathryn Smith presentation...');
+      const result = await generateKathrynSmithSlides();
+      console.log(`[Protocol Slides] Kathryn Smith presentation created: ${result.webViewLink} (${result.slideCount} slides)`);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      console.error('[Protocol Slides] Kathryn Smith generation failed:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
 }
