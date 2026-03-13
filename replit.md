@@ -2,108 +2,118 @@
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+Allio v1 (Forgotten Formula PMA) — a full-stack health/wellness platform migrated into a pnpm workspace monorepo. React+Vite frontend with 62 pages and 83+ components, Express+Drizzle backend with 51 services.
 
 ## Stack
 
 - **Monorepo tool**: pnpm workspaces
 - **Node.js version**: 24
 - **Package manager**: pnpm
-- **TypeScript version**: 5.9
-- **API framework**: Express 5
+- **TypeScript version**: 5.6
+- **Frontend**: React 19 + Vite 7 + Tailwind CSS v4 + shadcn/ui (New York style)
+- **Backend**: Express 4 + Drizzle ORM 0.39
 - **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+- **Validation**: Zod v3, `drizzle-zod` v0.7
+- **Auth**: WordPress OAuth + session-based auth
+- **AI**: OpenAI, Anthropic, Google Gemini, HuggingFace
+- **Payments**: Stripe, WooCommerce
+- **Build**: Vite (frontend), esbuild/tsx (backend)
 
 ## Structure
 
 ```text
-artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
-│   ├── api-spec/           # OpenAPI spec + Orval codegen config
-│   ├── api-client-react/   # Generated React Query hooks
-│   ├── api-zod/            # Generated Zod schemas from OpenAPI
-│   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+workspace/
+├── artifacts/                    # Deployable applications
+│   ├── ffpma/                    # React+Vite frontend (62 pages, 83+ components)
+│   │   ├── src/
+│   │   │   ├── pages/            # 62 route pages
+│   │   │   ├── components/       # 83+ UI and feature components
+│   │   │   │   ├── ui/           # shadcn/ui components
+│   │   │   │   ├── intake/       # Intake form step components
+│   │   │   │   └── dashboard/    # Dashboard widget components
+│   │   │   ├── hooks/            # use-auth, use-toast, use-mobile
+│   │   │   ├── lib/              # queryClient, i18n, utils, auth-utils
+│   │   │   ├── locales/          # en/es translations
+│   │   │   └── assets/           # Brand images + 9 Allio 1080p videos
+│   │   ├── public/               # Static assets (favicon, opengraph, videos)
+│   │   ├── vite.config.ts        # Vite config with @shared alias
+│   │   └── index.html
+│   ├── api-server/               # Express API server (51 services)
+│   │   ├── src/
+│   │   │   ├── index.ts          # Server entry point with rate limiting, helmet, graceful shutdown
+│   │   │   ├── routes.ts         # 7,164-line route definitions
+│   │   │   ├── db.ts             # Drizzle database connection
+│   │   │   ├── storage.ts        # Storage abstraction layer
+│   │   │   ├── services/         # 51 service modules (AI, payments, sync, etc.)
+│   │   │   ├── middleware/       # Auth middleware
+│   │   │   ├── seeds/            # 16 database seed files
+│   │   │   ├── scripts/          # Utility scripts
+│   │   │   └── reports/          # Generated reports
+│   │   ├── drizzle.config.ts     # Drizzle Kit configuration
+│   │   └── build.ts              # esbuild production bundle config
+│   └── mockup-sandbox/           # Component preview server (design tool)
+├── lib/                          # Shared libraries
+│   ├── shared/                   # Shared code (schema, agents, types)
+│   │   └── src/
+│   │       ├── schema.ts         # Main Drizzle schema (tables, relations, insert schemas)
+│   │       ├── schema/           # Additional schema modules (intake)
+│   │       ├── models/           # Auth and chat models
+│   │       ├── types/            # TypeScript types (protocol-assembly)
+│   │       ├── agents.ts         # Agent definitions and FFPMA creed
+│   │       ├── allio-identity.ts # Brand identity constants
+│   │       ├── ecs-data.ts       # Endocannabinoid system data
+│   │       ├── ligand-pathway-data.ts # Ligand pathway reference data
+│   │       ├── security.ts       # Security utilities
+│   │       └── training-knowledge-checks.ts # Training content
+│   ├── api-spec/                 # OpenAPI spec + Orval codegen config
+│   ├── api-client-react/         # Generated React Query hooks
+│   ├── api-zod/                  # Generated Zod schemas from OpenAPI
+│   └── db/                       # Drizzle ORM schema + DB connection (template)
+├── .alliorules.md                # Project rules and conventions
+├── CLAUDE-HANDOFF.md             # Handoff documentation
+├── ANNETTE-GOMER-PROTOCOL-FF-PMA-MODEL.md  # Protocol model documentation
+├── pnpm-workspace.yaml           # Workspace config with catalog versions
+├── tsconfig.base.json            # Shared TS options
+└── package.json                  # Root package
 ```
 
-## TypeScript & Composite Projects
+## Import Aliases
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+- `@/*` → `./src/*` (within each artifact)
+- `@shared/*` → `lib/shared/src/*` (shared code package)
+- `@assets/*` → `./src/assets/*` (frontend assets)
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+## Key Commands
 
-## Root Scripts
+- `pnpm --filter @workspace/ffpma run dev` — Start frontend dev server
+- `pnpm --filter @workspace/api-server run dev` — Start API server
+- `pnpm --filter @workspace/ffpma run build` — Build frontend for production
+- `pnpm --filter @workspace/api-server run db:push` — Push schema to database
+- `pnpm install` — Install all dependencies
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+## Environment Variables
 
-## Packages
+The API server requires:
+- `DATABASE_URL` — PostgreSQL connection string
+- `PORT` — Server port
+- Various API keys for AI services (OpenAI, Anthropic, Google, HuggingFace)
+- WordPress/WooCommerce credentials for auth sync
+- Stripe keys for payments
+- Google OAuth credentials
+- `ENABLE_SCHEDULERS` — Enable background agent schedulers
 
-### `artifacts/api-server` (`@workspace/api-server`)
+## Protocol Assembly System
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
-
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
-
-### `lib/db` (`@workspace/db`)
-
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
-
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
-
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
-
-### `lib/api-spec` (`@workspace/api-spec`)
-
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
-
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
-
-### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
-
-### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
-
-### Protocol Assembly System
-
-AI-powered pipeline in `ffpma-app/server/services/protocol-assembly.ts` that:
+AI-powered pipeline in `artifacts/api-server/src/services/protocol-assembly.ts` that:
 - Analyzes call transcripts via OpenAI to extract structured patient profiles
-- Generates comprehensive 90-day healing protocols cross-referencing `protocol-knowledge.ts` and detox knowledge base
+- Generates comprehensive 90-day healing protocols
 - Creates Google Slides presentations via the Slides API
 - Stores generated protocols in the `generated_protocols` database table
 
 Key files:
-- `ffpma-app/server/services/protocol-assembly.ts` — Core service (analyzeTranscript, generateProtocol, generateProtocolSlides)
-- `ffpma-app/shared/types/protocol-assembly.ts` — PatientProfile and HealingProtocol TypeScript types
-- `ffpma-app/client/src/pages/protocol-assembly.tsx` — UI page (transcript input, protocol library, protocol detail viewer)
-- `ffpma-app/knowledge-base/detox-protocols/` — Markdown knowledge files for detox protocols
+- `artifacts/api-server/src/services/protocol-assembly.ts` — Core service
+- `lib/shared/src/types/protocol-assembly.ts` — PatientProfile and HealingProtocol types
+- `artifacts/ffpma/src/pages/protocol-assembly.tsx` — UI page
 
 API Routes (all require auth + admin/trustee/doctor role):
 - `POST /api/protocol-assembly/generate` — Generate from transcript
@@ -119,12 +129,16 @@ API Routes (all require auth + admin/trustee/doctor role):
 
 ### Protocol Slide Generator
 
-`ffpma-app/server/services/protocol-slide-generator.ts` generates a branded 20-slide Google Slides presentation from the Annette Gomer protocol. Slides include FF PMA / Allio branding (deep blue, teal, cyan, gold), accent bars, section dividers for each of the 5 Rs, and embedded research links (PubMed, TheCandidaDiet.com). Presentation is moved to the ALLIO/Protocols folder in Google Drive.
+`artifacts/api-server/src/services/protocol-slide-generator.ts` generates a branded 20-slide Google Slides presentation from the Annette Gomer protocol. Slides include FF PMA / Allio branding (deep blue, teal, cyan, gold), accent bars, section dividers for each of the 5 Rs, and embedded research links (PubMed, TheCandidaDiet.com). Presentation is moved to the ALLIO/Protocols folder in Google Drive.
 
 ### Protocol Automation Test Harness
 
-`ffpma-app/server/services/protocol-automation-test.ts` tests AI engines for protocol generation quality. Sends a simulated Annette Gomer transcript through Abacus AI (gpt-4.1-mini), Gemini 1.5 Pro + RAG, and OpenAI Direct (gpt-4o). Scores output on 7 criteria (therapy selection, dosing detail, research citations, daily schedule, 5 Rs adherence, personalization, completeness). Generates a comparison report saved to the knowledge base.
+`artifacts/api-server/src/services/protocol-automation-test.ts` tests AI engines for protocol generation quality. Sends a simulated Annette Gomer transcript through Abacus AI (gpt-4.1-mini), Gemini 1.5 Pro + RAG, and OpenAI Direct (gpt-4o). Scores output on 7 criteria (therapy selection, dosing detail, research citations, daily schedule, 5 Rs adherence, personalization, completeness). Generates a comparison report saved to the knowledge base.
 
-### `scripts` (`@workspace/scripts`)
+## Agent Network
 
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+The platform includes an AI agent network with:
+- 51 backend services covering AI, payments, content, marketing, and more
+- Agent scheduler for automated tasks
+- Sentinel monitoring system
+- Diane AI assistant for member support

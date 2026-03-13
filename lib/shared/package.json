@@ -1,0 +1,29 @@
+{
+  "name": "@workspace/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts",
+    "./schema/*": "./src/schema/*.ts",
+    "./agents": "./src/agents.ts",
+    "./allio-identity": "./src/allio-identity.ts",
+    "./ecs-data": "./src/ecs-data.ts",
+    "./ligand-pathway-data": "./src/ligand-pathway-data.ts",
+    "./security": "./src/security.ts",
+    "./training-knowledge-checks": "./src/training-knowledge-checks.ts",
+    "./models/*": "./src/models/*.ts",
+    "./types/*": "./src/types/*.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.39.3",
+    "drizzle-zod": "^0.7.1",
+    "pg": "^8.20.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/pg": "^8.18.0"
+  }
+}
