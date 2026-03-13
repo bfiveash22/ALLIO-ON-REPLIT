@@ -1,4 +1,4 @@
-modules = ["nodejs-24"]
+modules = ["nodejs-24", "python-3.11"]
 
 [[artifacts]]
 id = "artifacts/api-server"
@@ -40,3 +40,4 @@ RUPA_USERNAME = "blake@forgottenformula.com"
 
 [nix]
 channel = "stable-25_05"
+packages = ["gitFull", "playwright-driver", "nspr", "nss", "at-spi2-atk", "cups", "libdrm", "mesa", "pango", "cairo", "alsa-lib", "expat", "xorg.libX11", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXext", "xorg.libXfixes", "xorg.libXrandr", "xorg.libxcb", "dbus", "glib", "gtk3", "libxkbcommon", "mesa_glu"]

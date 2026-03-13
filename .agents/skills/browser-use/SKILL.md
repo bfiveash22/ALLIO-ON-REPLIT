@@ -13,8 +13,11 @@ The `browser-use` command provides fast, persistent browser automation. It maint
 Before using this skill, `browser-use` must be installed and configured. Run diagnostics to verify:
 
 ```bash
+source .agents/skills/browser-use/scripts/setup_env.sh  # Required on Replit/NixOS
 browser-use doctor
 ```
+
+Expected output: 3/5 checks pass. The `api_key` check (for remote/cloud browser) and `cloudflared` check (auto-installed on first tunnel use) are optional and non-blocking for local automation.
 
 For more information, see https://github.com/browser-use/browser-use/blob/main/browser_use/skill_cli/README.md
 
@@ -534,6 +537,213 @@ browser-use -b remote run "new task" --session-id <new-session-id>
 **Task stuck at "started"**: Check cost with `task status` — if not increasing, the task is stuck. View live URL with `session get`, then stop and start a new agent.
 
 **Sessions persist after tasks complete**: Tasks finishing doesn't auto-stop sessions. Run `browser-use session stop --all` to clean up.
+
+## Python API (Programmatic browser-use)
+
+The `browser-use` Python library provides a powerful Agent class for autonomous browser automation driven by LLMs. This section covers programmatic usage beyond the CLI.
+
+### Prerequisites
+
+```bash
+# Packages (already installed in this workspace)
+pip install browser-use playwright langchain-anthropic langchain-openai
+
+# Chromium browser binaries
+python3 -m playwright install chromium
+
+# System dependency: libgbm (required on NixOS/Replit)
+# Source the environment setup script before running any Python automation:
+source .agents/skills/browser-use/scripts/setup_env.sh
+```
+
+### Core Concepts
+
+- **Agent**: The main class that combines an LLM with a browser to accomplish tasks autonomously
+- **Browser**: Manages the Playwright browser instance (Chromium by default); accepts config params directly (e.g. `headless`, `viewport`)
+- **Controller**: Registers custom actions the agent can invoke during execution
+
+### Quick Start
+
+```python
+import asyncio
+from browser_use import Agent, Browser
+from langchain_anthropic import ChatAnthropic
+
+async def main():
+    llm = ChatAnthropic(model_name="claude-sonnet-4-6")
+    browser = Browser(headless=True)
+
+    agent = Agent(
+        task="Go to https://example.com and extract the page title and main heading",
+        llm=llm,
+        browser=browser,
+    )
+
+    result = await agent.run()
+    print(result)
+    await browser.close()
+
+asyncio.run(main())
+```
+
+### LLM Provider Configuration
+
+#### Anthropic (via Replit AI Integrations)
+
+```python
+from langchain_anthropic import ChatAnthropic
+import os
+
+llm = ChatAnthropic(
+    model_name="claude-sonnet-4-6",
+    api_key=os.environ.get("AI_INTEGRATIONS_ANTHROPIC_API_KEY", ""),
+    base_url=os.environ.get("AI_INTEGRATIONS_ANTHROPIC_BASE_URL"),
+)
+```
+
+Available models: `claude-opus-4-6`, `claude-sonnet-4-6`, `claude-haiku-4-5`
+
+#### OpenAI (via Replit AI Integrations)
+
+```python
+from langchain_openai import ChatOpenAI
+import os
+
+llm = ChatOpenAI(
+    model="gpt-4o",
+    api_key=os.environ.get("AI_INTEGRATIONS_OPENAI_API_KEY", ""),
+    base_url=os.environ.get("AI_INTEGRATIONS_OPENAI_BASE_URL"),
+)
+```
+
+Available models: `gpt-4o`, `gpt-4o-mini`, `gpt-5.2`, `gpt-5-mini`
+
+#### OpenRouter (via Replit AI Integrations)
+
+```python
+from langchain_openai import ChatOpenAI
+import os
+
+llm = ChatOpenAI(
+    model="anthropic/claude-sonnet-4-6",  # Any OpenRouter model ID
+    api_key=os.environ.get("AI_INTEGRATIONS_OPENROUTER_API_KEY", ""),
+    base_url=os.environ.get("AI_INTEGRATIONS_OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
+)
+```
+
+Popular models: `meta-llama/llama-4-maverick`, `deepseek/deepseek-chat-v3-0324`, `mistralai/mistral-large-latest`, `x-ai/grok-3`
+
+#### inference.sh
+
+```python
+from langchain_openai import ChatOpenAI
+import os
+
+llm = ChatOpenAI(
+    model="anthropic/claude-sonnet-4-6",
+    api_key=os.environ.get("INFERENCE_API_KEY", ""),
+    base_url="https://api.inference.sh/v1",
+)
+```
+
+### Browser Configuration
+
+```python
+from browser_use import Browser
+
+browser = Browser(
+    headless=True,
+    disable_security=False,
+)
+```
+
+### Custom Controller Actions
+
+Register custom functions the agent can call during execution:
+
+```python
+from browser_use import Agent, Browser, Controller
+from pydantic import BaseModel
+
+controller = Controller()
+
+class ExtractedData(BaseModel):
+    title: str
+    items: list[str]
+
+@controller.action("Save extracted data to a file")
+def save_data(data: ExtractedData):
+    import json
+    with open("output.json", "w") as f:
+        json.dump(data.model_dump(), f, indent=2)
+    return "Data saved to output.json"
+
+agent = Agent(
+    task="Extract product names from https://example.com/products and save them",
+    llm=llm,
+    browser=Browser(),
+    controller=controller,
+)
+```
+
+### Direct Playwright Access
+
+For simpler tasks that don't need AI, use Playwright directly:
+
+```python
+from playwright.async_api import async_playwright
+import asyncio
+
+async def scrape_simple():
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page()
+        await page.goto("https://example.com")
+
+        title = await page.title()
+        headings = await page.eval_on_selector_all("h1", "els => els.map(e => e.textContent)")
+
+        await browser.close()
+        return {"title": title, "headings": headings}
+
+result = asyncio.run(scrape_simple())
+```
+
+### Ready-to-Use Helper Scripts
+
+Helper scripts are available in `.agents/skills/browser-use/scripts/`:
+
+| Script | Description | Usage |
+|--------|-------------|-------|
+| `setup_env.sh` | Sets LD_LIBRARY_PATH for libgbm (required on Replit/NixOS) | `source scripts/setup_env.sh` |
+| `ai_scraper.py` | AI-powered web scraping with configurable LLM | `python scripts/ai_scraper.py --url URL --task "..." --provider anthropic` |
+| `form_filler.py` | Autonomous form filling and submission | `python scripts/form_filler.py --url URL --task "..." --submit` |
+| `multi_page_navigator.py` | Navigate across pages collecting data | `python scripts/multi_page_navigator.py --start-url URL --task "..."` |
+| `data_extractor.py` | Extract tables, links, or custom data | `python scripts/data_extractor.py --url URL --extract tables` |
+
+All scripts support `--provider` (anthropic, openai, openrouter, inference) and `--model` flags. The `inference` provider uses the inference.sh API (requires `INFERENCE_API_KEY` env var).
+
+### Model Selection Reference
+
+| Use Case | Recommended Model | Provider | Why |
+|----------|-------------------|----------|-----|
+| **Fast scraping** | `claude-haiku-4-5` | Anthropic | Fastest, cheapest, good for simple extraction |
+| **Fast scraping** | `gpt-4o-mini` | OpenAI | Fast, cost-effective alternative |
+| **General automation** | `claude-sonnet-4-6` | Anthropic | Best balance of speed and capability |
+| **General automation** | `gpt-4o` | OpenAI | Strong all-around performance |
+| **Complex reasoning** | `claude-opus-4-6` | Anthropic | Most capable for multi-step tasks |
+| **Complex reasoning** | `gpt-5.2` | OpenAI | Most capable OpenAI model |
+| **Open-source (fast)** | `meta-llama/llama-4-maverick` | OpenRouter | Strong open model, fast inference |
+| **Open-source (reasoning)** | `deepseek/deepseek-chat-v3-0324` | OpenRouter | Excellent reasoning capability |
+| **Open-source (balanced)** | `mistralai/mistral-large-latest` | OpenRouter | Good balance of capabilities |
+| **Budget-friendly** | `gpt-5-mini` | OpenAI | Low cost, solid for simple tasks |
+| **Bulk processing** | `gpt-5-nano` | OpenAI | Lowest cost, for high-volume jobs |
+
+**Choosing a provider:**
+- **Anthropic**: Best for coding-related scraping, form analysis, complex page understanding
+- **OpenAI**: Best default for general tasks, good vision support
+- **OpenRouter**: Access to open-source models (Llama, DeepSeek, Mistral, Grok) without separate API keys
+- **inference.sh**: Access to 150+ models via CLI, good for experimentation
 
 ## Cleanup
 
