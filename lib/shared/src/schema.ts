@@ -2216,3 +2216,69 @@ export const wpSyncTracking = pgTable("wp_sync_tracking", {
 export const insertWpSyncTrackingSchema = createInsertSchema(wpSyncTracking).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertWpSyncTracking = z.infer<typeof insertWpSyncTrackingSchema>;
 export type WpSyncTracking = typeof wpSyncTracking.$inferSelect;
+
+export const labOrderStatusEnum = pgEnum("lab_order_status", [
+  "draft", "pending", "submitted", "in_progress", "completed", "cancelled"
+]);
+
+export const labResultStatusEnum = pgEnum("lab_result_status", [
+  "normal", "low", "high", "critical_low", "critical_high"
+]);
+
+export const labOrders = pgTable("lab_orders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  memberId: varchar("member_id").notNull(),
+  memberName: varchar("member_name"),
+  doctorId: varchar("doctor_id").notNull(),
+  status: labOrderStatusEnum("status").default("draft").notNull(),
+  panels: jsonb("panels").$type<string[]>().default([]),
+  rupaOrderId: varchar("rupa_order_id"),
+  rupaOrderUrl: varchar("rupa_order_url"),
+  notes: text("notes"),
+  orderedAt: timestamp("ordered_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const labResults = pgTable("lab_results", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  memberId: varchar("member_id").notNull(),
+  memberName: varchar("member_name"),
+  doctorId: varchar("doctor_id").notNull(),
+  labOrderId: varchar("lab_order_id").references(() => labOrders.id, { onDelete: "set null" }),
+  testName: varchar("test_name").notNull(),
+  category: varchar("category").notNull(),
+  value: decimal("value", { precision: 12, scale: 4 }).notNull(),
+  unit: varchar("unit").notNull(),
+  referenceMin: decimal("reference_min", { precision: 12, scale: 4 }),
+  referenceMax: decimal("reference_max", { precision: 12, scale: 4 }),
+  status: labResultStatusEnum("status").default("normal").notNull(),
+  resultDate: timestamp("result_date").defaultNow(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const savedTestPanels = pgTable("saved_test_panels", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  doctorId: varchar("doctor_id").notNull(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  testList: jsonb("test_list").$type<Array<{ testName: string; category: string; unit: string; referenceMin?: number; referenceMax?: number }>>().default([]),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertLabOrderSchema = createInsertSchema(labOrders).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertLabOrder = z.infer<typeof insertLabOrderSchema>;
+export type LabOrder = typeof labOrders.$inferSelect;
+
+export const insertLabResultSchema = createInsertSchema(labResults).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertLabResult = z.infer<typeof insertLabResultSchema>;
+export type LabResult = typeof labResults.$inferSelect;
+
+export const insertSavedTestPanelSchema = createInsertSchema(savedTestPanels).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertSavedTestPanel = z.infer<typeof insertSavedTestPanelSchema>;
+export type SavedTestPanel = typeof savedTestPanels.$inferSelect;

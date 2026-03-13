@@ -41,4 +41,4 @@ PREVIEW_TOKEN_SECRET = "4175182e27d318e22d3b9d91599f0cb0fb1ed2ab88099908978f4cf9
 
 [nix]
 channel = "stable-25_05"
-packages = ["gitFull", "playwright-driver", "nspr", "nss", "at-spi2-atk", "cups", "libdrm", "mesa", "pango", "cairo", "alsa-lib", "expat", "xorg.libX11", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXext", "xorg.libXfixes", "xorg.libXrandr", "xorg.libxcb", "dbus", "glib", "gtk3", "libxkbcommon", "mesa_glu"]
+packages = ["alsa-lib", "at-spi2-atk", "cairo", "cups", "dbus", "expat", "gitFull", "glib", "gtk3", "libdrm", "libxkbcommon", "mesa", "mesa_glu", "nspr", "nss", "pango", "playwright-driver", "xorg.libX11", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXext", "xorg.libXfixes", "xorg.libXrandr", "xorg.libxcb"]

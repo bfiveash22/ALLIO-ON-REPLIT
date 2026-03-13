@@ -1,4 +1,4 @@
-import { type User, type UpsertUser, type Contract, type InsertContract, type LegalDocument, type InsertLegalDocument, type AgentTask, type InsertAgentTask, type TrainingModule, type TrainingTrack, type Quiz, type DriveDocument, type Program, type ProgramEnrollment, type InsertProgramEnrollment, type UserProgress, type InsertUserProgress, type AgentConfiguration, type InsertAgentConfiguration, type AthenaEmailApproval, type InsertAthenaEmailApproval, type AgentTaskReview, type InsertAgentTaskReview, type DivisionLead, type InsertDivisionLead, type BloodSample, type InsertBloodSample, type BloodSampleTag, type InsertBloodSampleTag, type DianeKnowledge, type Achievement, type InsertAchievement, type UserAchievement, type InsertUserAchievement, type ModuleBookmark, type InsertModuleBookmark, type DiscussionThread, type InsertDiscussionThread, type DiscussionReply, type InsertDiscussionReply, type PatientRecord, type InsertPatientRecord, type PatientUpload, type InsertPatientUpload, type PatientProtocol, type InsertPatientProtocol, type DoctorPatientMessage, type InsertDoctorPatientMessage, type Conversation, type InsertConversation, type QuizAttempt, type QuizResponse, type UiRefactorProposal, type InsertUiRefactorProposal, type Frequency, type InsertFrequency, type FrequencyCategory, type InsertFrequencyCategory, users, contracts, legalDocuments, memberProfiles, agentTasks, clinics, trainingModules, trainingTracks, quizzes, quizQuestions, quizAnswers, moduleQuizzes, driveDocuments, programs, programEnrollments, userProgress, agentConfigurations, athenaEmailApprovals, agentTaskReviews, divisionLeads, userWpRoles, bloodSamples, bloodSampleTags, dianeKnowledge, achievements, userAchievements, moduleBookmarks, discussionThreads, discussionReplies, patientRecords, patientUploads, patientProtocols, doctorPatientMessages, conversations, quizAttempts, quizResponses, uiRefactorProposals, openclawMessages, frequencies, frequencyCategories } from "@shared/schema";
+import { type User, type UpsertUser, type Contract, type InsertContract, type LegalDocument, type InsertLegalDocument, type AgentTask, type InsertAgentTask, type TrainingModule, type TrainingTrack, type Quiz, type DriveDocument, type Program, type ProgramEnrollment, type InsertProgramEnrollment, type UserProgress, type InsertUserProgress, type AgentConfiguration, type InsertAgentConfiguration, type AthenaEmailApproval, type InsertAthenaEmailApproval, type AgentTaskReview, type InsertAgentTaskReview, type DivisionLead, type InsertDivisionLead, type BloodSample, type InsertBloodSample, type BloodSampleTag, type InsertBloodSampleTag, type DianeKnowledge, type Achievement, type InsertAchievement, type UserAchievement, type InsertUserAchievement, type ModuleBookmark, type InsertModuleBookmark, type DiscussionThread, type InsertDiscussionThread, type DiscussionReply, type InsertDiscussionReply, type PatientRecord, type InsertPatientRecord, type PatientUpload, type InsertPatientUpload, type PatientProtocol, type InsertPatientProtocol, type DoctorPatientMessage, type InsertDoctorPatientMessage, type Conversation, type InsertConversation, type QuizAttempt, type QuizResponse, type UiRefactorProposal, type InsertUiRefactorProposal, type Frequency, type InsertFrequency, type FrequencyCategory, type InsertFrequencyCategory, type LabOrder, type InsertLabOrder, type LabResult, type InsertLabResult, type SavedTestPanel, type InsertSavedTestPanel, users, contracts, legalDocuments, memberProfiles, agentTasks, clinics, trainingModules, trainingTracks, quizzes, quizQuestions, quizAnswers, moduleQuizzes, driveDocuments, programs, programEnrollments, userProgress, agentConfigurations, athenaEmailApprovals, agentTaskReviews, divisionLeads, userWpRoles, bloodSamples, bloodSampleTags, dianeKnowledge, achievements, userAchievements, moduleBookmarks, discussionThreads, discussionReplies, patientRecords, patientUploads, patientProtocols, doctorPatientMessages, conversations, quizAttempts, quizResponses, uiRefactorProposals, openclawMessages, frequencies, frequencyCategories, labOrders, labResults, savedTestPanels } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, inArray, sql } from "drizzle-orm";
 
@@ -127,6 +127,24 @@ export interface IStorage {
   getAiModelEvaluations(status?: string): Promise<any[]>;
   getAiModelEvaluation(id: number): Promise<any | undefined>;
   updateAiModelEvaluation(id: number, updates: any): Promise<any | undefined>;
+  // Bloodwork & Labs
+  getLabOrders(doctorId: string): Promise<LabOrder[]>;
+  getLabOrder(id: string): Promise<LabOrder | undefined>;
+  createLabOrder(order: InsertLabOrder): Promise<LabOrder>;
+  updateLabOrder(id: string, updates: Partial<LabOrder>): Promise<LabOrder | undefined>;
+  deleteLabOrder(id: string): Promise<boolean>;
+  getLabResults(memberId: string): Promise<LabResult[]>;
+  getLabResultsByDoctor(doctorId: string): Promise<LabResult[]>;
+  getLabResult(id: string): Promise<LabResult | undefined>;
+  createLabResult(result: InsertLabResult): Promise<LabResult>;
+  createLabResults(results: InsertLabResult[]): Promise<LabResult[]>;
+  updateLabResult(id: string, updates: Partial<LabResult>): Promise<LabResult | undefined>;
+  deleteLabResult(id: string): Promise<boolean>;
+  getSavedTestPanels(doctorId: string): Promise<SavedTestPanel[]>;
+  getSavedTestPanel(id: string): Promise<SavedTestPanel | undefined>;
+  createSavedTestPanel(panel: InsertSavedTestPanel): Promise<SavedTestPanel>;
+  updateSavedTestPanel(id: string, updates: Partial<SavedTestPanel>): Promise<SavedTestPanel | undefined>;
+  deleteSavedTestPanel(id: string): Promise<boolean>;
 }
 
 let membersCache: { data: any, timestamp: number } | null = null;
@@ -1023,6 +1041,87 @@ export class DatabaseStorage implements IStorage {
   async createFrequencyCategory(data: InsertFrequencyCategory): Promise<FrequencyCategory> {
     const [cat] = await db.insert(frequencyCategories).values(data).returning();
     return cat;
+  }
+
+  async getLabOrders(doctorId: string): Promise<LabOrder[]> {
+    return await db.select().from(labOrders).where(eq(labOrders.doctorId, doctorId)).orderBy(desc(labOrders.createdAt));
+  }
+
+  async getLabOrder(id: string): Promise<LabOrder | undefined> {
+    const [order] = await db.select().from(labOrders).where(eq(labOrders.id, id));
+    return order || undefined;
+  }
+
+  async createLabOrder(order: InsertLabOrder): Promise<LabOrder> {
+    const [newOrder] = await db.insert(labOrders).values(order).returning();
+    return newOrder;
+  }
+
+  async updateLabOrder(id: string, updates: Partial<LabOrder>): Promise<LabOrder | undefined> {
+    const [updated] = await db.update(labOrders).set({ ...updates, updatedAt: new Date() }).where(eq(labOrders.id, id)).returning();
+    return updated || undefined;
+  }
+
+  async deleteLabOrder(id: string): Promise<boolean> {
+    await db.delete(labOrders).where(eq(labOrders.id, id));
+    return true;
+  }
+
+  async getLabResults(memberId: string): Promise<LabResult[]> {
+    return await db.select().from(labResults).where(eq(labResults.memberId, memberId)).orderBy(desc(labResults.resultDate));
+  }
+
+  async getLabResultsByDoctor(doctorId: string): Promise<LabResult[]> {
+    return await db.select().from(labResults).where(eq(labResults.doctorId, doctorId)).orderBy(desc(labResults.resultDate));
+  }
+
+  async getLabResult(id: string): Promise<LabResult | undefined> {
+    const [result] = await db.select().from(labResults).where(eq(labResults.id, id));
+    return result || undefined;
+  }
+
+  async createLabResult(result: InsertLabResult): Promise<LabResult> {
+    const [newResult] = await db.insert(labResults).values(result).returning();
+    return newResult;
+  }
+
+  async createLabResults(results: InsertLabResult[]): Promise<LabResult[]> {
+    if (results.length === 0) return [];
+    return await db.insert(labResults).values(results).returning();
+  }
+
+  async updateLabResult(id: string, updates: Partial<LabResult>): Promise<LabResult | undefined> {
+    const [updated] = await db.update(labResults).set({ ...updates, updatedAt: new Date() }).where(eq(labResults.id, id)).returning();
+    return updated || undefined;
+  }
+
+  async deleteLabResult(id: string): Promise<boolean> {
+    await db.delete(labResults).where(eq(labResults.id, id));
+    return true;
+  }
+
+  async getSavedTestPanels(doctorId: string): Promise<SavedTestPanel[]> {
+    return await db.select().from(savedTestPanels).where(and(eq(savedTestPanels.doctorId, doctorId), eq(savedTestPanels.isActive, true))).orderBy(desc(savedTestPanels.createdAt));
+  }
+
+  async getSavedTestPanel(id: string): Promise<SavedTestPanel | undefined> {
+    const [panel] = await db.select().from(savedTestPanels).where(eq(savedTestPanels.id, id));
+    return panel || undefined;
+  }
+
+  async createSavedTestPanel(panel: InsertSavedTestPanel): Promise<SavedTestPanel> {
+    const [newPanel] = await db.insert(savedTestPanels).values(panel).returning();
+    return newPanel;
+  }
+
+  async updateSavedTestPanel(id: string, updates: Partial<SavedTestPanel>): Promise<SavedTestPanel | undefined> {
+    const [updated] = await db.update(savedTestPanels).set({ ...updates, updatedAt: new Date() }).where(eq(savedTestPanels.id, id)).returning();
+    return updated || undefined;
+  }
+
+  async deleteSavedTestPanel(id: string): Promise<boolean> {
+    const [deleted] = await db.update(savedTestPanels).set({ isActive: false }).where(eq(savedTestPanels.id, id)).returning();
+    return !!deleted;
   }
 }
 

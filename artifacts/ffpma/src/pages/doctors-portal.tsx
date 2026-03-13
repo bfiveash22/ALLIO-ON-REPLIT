@@ -62,6 +62,7 @@ import { BloodAnalysisUpload } from "@/components/BloodAnalysisUpload";
 import { DoctorScheduling } from "@/components/DoctorScheduling";
 import { DoctorPatientMessaging } from "@/components/DoctorPatientMessaging";
 import { EnrollMemberModal } from "@/components/EnrollMemberModal";
+import { BloodworkLabs } from "@/components/BloodworkLabs";
 
 interface DoctorReferralInfo {
   doctorCode: string | null;
@@ -468,6 +469,10 @@ export default function DoctorsPortal() {
               <TabsTrigger value="documents" className="data-[state=active]:bg-rose-500/20 data-[state=active]:text-rose-300">
                 <FileSignature className="w-4 h-4 mr-2" />
                 Documents
+              </TabsTrigger>
+              <TabsTrigger value="bloodwork" className="data-[state=active]:bg-teal-500/20 data-[state=active]:text-teal-300" data-testid="tab-bloodwork">
+                <Beaker className="w-4 h-4 mr-2" />
+                Bloodwork & Labs
               </TabsTrigger>
               <TabsTrigger value="settings" className="data-[state=active]:bg-green-500/20 data-[state=active]:text-green-300" data-testid="tab-settings">
                 <Settings className="w-4 h-4 mr-2" />
@@ -1409,6 +1414,10 @@ export default function DoctorsPortal() {
             {/* Messaging Tab */}
             <TabsContent value="messaging" className="space-y-6">
               <DoctorPatientMessaging />
+            </TabsContent>
+
+            <TabsContent value="bloodwork" className="space-y-6">
+              <BloodworkLabs />
             </TabsContent>
 
             <TabsContent value="settings" className="space-y-6">

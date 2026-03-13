@@ -178,6 +178,8 @@ registerHealthRoutes(app);
   registerDriveRoutes(app);
   const { registerBloodResearchRoutes } = await import("./routes/blood-research-routes");
   registerBloodResearchRoutes(app);
+  const { registerBloodworkRoutes } = await import("./routes/bloodwork-routes");
+  registerBloodworkRoutes(app);
   const { registerPaymentRoutes } = await import("./routes/payment-routes");
   registerPaymentRoutes(app);
   const { registerAdminRoutes } = await import("./routes/admin-routes");
