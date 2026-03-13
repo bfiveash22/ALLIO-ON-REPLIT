@@ -29,8 +29,8 @@
     "features": "Our Approach",
     "constitutionalProtection": "Constitutional Protection",
     "constitutionalDesc": "Operating under First and Fourteenth Amendment protections as a Private Member Association.",
-    "rootCauseMedicine": "Root Cause Medicine",
-    "rootCauseDesc": "Focus on treating the underlying causes of illness, not just managing symptoms.",
+    "rootCauseMedicine": "Root Cause Wellness",
+    "rootCauseDesc": "Focus on addressing the underlying causes of illness, not just managing symptoms.",
     "holisticHealing": "Holistic Healing",
     "holisticDesc": "Integration of body, mind, and spirit for complete wellness and regeneration.",
     "memberCommunity": "Member Community",
@@ -88,15 +88,15 @@
   },
   "doctors": {
     "portal": "Doctors Portal",
-    "patients": "My Patients",
+    "patients": "My Members",
     "protocols": "Protocols",
     "analysis": "AI Analysis",
     "messaging": "Messages",
     "documents": "Documents",
     "rootCause": "Root Cause",
     "assignProtocol": "Assign Protocol",
-    "newPatient": "New Patient",
-    "patientManagement": "Patient Management",
+    "newPatient": "New Member",
+    "patientManagement": "Member Management",
     "practiceAnalytics": "Practice Analytics"
   },
   "analysis": {
@@ -106,7 +106,7 @@
     "recentUploads": "Recent Uploads",
     "analysisQueue": "Analysis Queue",
     "pmaNotice": "PMA Educational Notice",
-    "pmaDisclaimer": "All AI analysis tools are provided for research and educational purposes only within our Private Membership Association. These tools support functional medicine practitioners in pattern recognition and do not constitute medical diagnosis."
+    "pmaDisclaimer": "All AI analysis tools are provided for research and educational purposes only within our Private Membership Association. These tools support functional medicine practitioners in pattern recognition and do not constitute a medical assessment or diagnosis."
   },
   "protocols": {
     "active": "Active Protocols",

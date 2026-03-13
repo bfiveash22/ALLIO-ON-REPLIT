@@ -114,6 +114,19 @@ export async function registerRoutes(
   // Register OpenClaw outbox routes
   registerOpenClawRoutes(app);
 
+
+  // Agent Health Check Endpoint (Preservation Plan Phase 1)
+  app.get('/api/agent-health', async (_req: Request, res: Response) => {
+    try {
+      const { getAgentHealthReport } = await import('./services/agent-health');
+      const report = await getAgentHealthReport();
+      res.json(report);
+    } catch (error: any) {
+      console.error('[Agent Health] Failed to generate health report:', error);
+      res.status(500).json({ error: error.message || 'Failed to generate health report' });
+    }
+  });
+
   // Register Learning/Interactive Healing routes
   const { registerLearningRoutes } = await import("./learning-routes");
   registerLearningRoutes(app);
@@ -388,7 +401,7 @@ export async function registerRoutes(
     }
   });
 
-  // ========== Patient Intake Form Routes ==========
+  // ========== Member Intake Form Routes ==========
 
   app.post("/api/intake/save-draft", async (req: Request, res: Response) => {
     try {
@@ -431,29 +444,29 @@ export async function registerRoutes(
       const { patientInfo, formData } = req.body;
 
       if (!patientInfo?.name || !patientInfo?.email) {
-        return res.status(400).json({ error: "Patient name and email are required" });
+        return res.status(400).json({ error: "Member name and email are required" });
       }
 
       // Process submission via service (handles Google Sheets & Database)
       const result = await submitIntakeForm(patientInfo, formData);
 
-      // Send email notification to patient
+      // Send email notification to member
       try {
         await sendEmail(
           patientInfo.email,
-          "FFPMA - Patient Intake Received",
-          `Dear ${patientInfo.name},\n\nWe have received your completed patient intake form for the FFPMA 2026 Protocol.\n\nOur team will review your information shortly.\n\nBest regards,\nThe FFPMA Team`
+          "FFPMA - Member Intake Received",
+          `Dear ${patientInfo.name},\n\nWe have received your completed member intake form for the FFPMA 2026 Protocol.\n\nOur team will review your information shortly.\n\nBest regards,\nThe FFPMA Team`
         );
       } catch (emailError) {
-        console.error("Failed to send patient confirmation email:", emailError);
+        console.error("Failed to send member confirmation email:", emailError);
       }
 
       // Send email notification to Trustee
       try {
         await sendEmail(
           "blake@forgottenformula.com",
-          "New Patient Intake Submitted",
-          `A new patient intake form has been submitted by ${patientInfo.name} (${patientInfo.email}).\nPrimary Concern: ${formData.basicInfo?.primaryConcern || "N/A"}\n\nReview the latest entry in the FFPMA Patient Intake Forms Data Google Sheet.`
+          "New Member Intake Submitted",
+          `A new member intake form has been submitted by ${patientInfo.name} (${patientInfo.email}).\nPrimary Concern: ${formData.basicInfo?.primaryConcern || "N/A"}\n\nReview the latest entry in the FFPMA Member Intake Forms Data.`
         );
       } catch (emailError) {
         console.error("Failed to send trustee notification email:", emailError);
@@ -1729,7 +1742,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
     }
   });
 
-  // GET /api/doctor/messages/:patientId - Get conversation with patient
+  // GET /api/doctor/messages/:patientId - Get conversation with member
   app.get("/api/doctor/messages/:patientId", requireAuth, async (req: Request, res: Response) => {
     try {
       const userId = (req.user as any)?.id;
@@ -1749,7 +1762,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
     }
   });
 
-  // POST /api/doctor/messages/:patientId - Send message to patient
+  // POST /api/doctor/messages/:patientId - Send message to member
   app.post("/api/doctor/messages/:patientId", requireAuth, async (req: Request, res: Response) => {
     try {
       const userId = (req.user as any)?.id;
@@ -7194,7 +7207,7 @@ Status: DRAFT - Pending Trustee Review`,
   // DOCTOR DASHBOARD API
   // ========================
 
-  // Patient Records
+  // Member Records
   app.get("/api/doctor/patients", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
     try {
       const doctorId = req.user?.id as string;
@@ -7209,7 +7222,7 @@ Status: DRAFT - Pending Trustee Review`,
     try {
       const patient = await storage.getPatientRecord(req.params.id);
       if (!patient) {
-        return res.status(404).json({ success: false, error: "Patient not found" });
+        return res.status(404).json({ success: false, error: "Member record not found" });
       }
       const uploads = await storage.getPatientUploads(patient.id);
       const protocols = await storage.getPatientProtocols(patient.id);
@@ -7238,7 +7251,7 @@ Status: DRAFT - Pending Trustee Review`,
     }
   });
 
-  // Patient Uploads
+  // Member Uploads
   app.post("/api/doctor/patients/:patientId/uploads", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
     try {
       const doctorId = req.user?.id as string;
@@ -7254,7 +7267,7 @@ Status: DRAFT - Pending Trustee Review`,
     }
   });
 
-  // Patient Protocols
+  // Member Protocols
   app.get("/api/doctor/protocols", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
     try {
       const doctorId = req.user?.id as string;
@@ -7553,14 +7566,14 @@ Status: DRAFT - Pending Trustee Review`,
     }
   });
 
-  // ========== Patient Intake System ==========
+  // ========== Member Intake System ==========
   app.post("/api/intake/submit", async (req: Request, res: Response) => {
     try {
       const { submitIntakeForm } = await import("./services/intake");
       const { patientInfo, formData } = req.body;
 
       if (!patientInfo || !patientInfo.name || !patientInfo.email) {
-        return res.status(400).json({ success: false, error: "Missing required patient info (name, email)" });
+        return res.status(400).json({ success: false, error: "Missing required member info (name, email)" });
       }
 
       const result = await submitIntakeForm(patientInfo, formData);

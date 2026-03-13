@@ -49,9 +49,9 @@ const features = [
   },
   {
     icon: Dna,
-    title: "Root Cause Medicine",
+    title: "Root Cause Wellness",
     description:
-      "Focus on treating the underlying causes of illness, not just managing symptoms.",
+      "Focus on addressing the underlying causes of illness, not just managing symptoms.",
   },
   {
     icon: Heart,
@@ -187,7 +187,7 @@ const programs = [
     icon: Activity,
     title: "Protocols",
     description:
-      "Comprehensive treatment protocols developed by our network of root cause doctors.",
+      "Comprehensive wellness protocols developed by our network of root cause practitioners.",
     badge: "Essential",
     link: "/protocols",
   },
@@ -241,7 +241,7 @@ const testimonials = [
   },
   {
     quote:
-      "The peptide protocols and AI-powered guidance have transformed my practice. My patients are seeing results they never thought possible.",
+      "The peptide protocols and AI-powered guidance have transformed my practice. My members are seeing results they never thought possible.",
     author: "Dr. James L.",
     role: "Chiropractor, D.C.",
   },
@@ -714,7 +714,7 @@ export default function LandingPage() {
                 Cutting-Edge Therapies
               </Badge>
               <h2 className="mb-4 text-3xl font-bold tracking-tight bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                Advanced Treatment Modalities
+                Advanced Wellness Modalities
               </h2>
               <p className="mx-auto max-w-2xl text-muted-foreground">
                 Beyond conventional medicine, we integrate the latest advancements in regenerative and energy medicine.
@@ -1103,6 +1103,9 @@ export default function LandingPage() {
             </p>
             <p className="mt-2">
               Located in Justin, TX 76247 | Private Member Association
+            </p>
+            <p className="mt-4 max-w-3xl mx-auto text-xs text-muted-foreground/70 leading-relaxed">
+              PMA Disclaimer: Forgotten Formula PMA is a Private Member Association operating in the private domain under the protections of the First and Fourteenth Amendments to the United States Constitution. The information provided on this platform is for educational purposes only and is shared exclusively among private members. Nothing on this platform constitutes medical advice, a diagnosis, or a prescription. All wellness protocols, assessments, and educational materials are shared member-to-member and do not create a doctor-patient relationship. Members assume full responsibility for their own health decisions. By accessing this platform, you acknowledge that you are a private member exercising your constitutional rights.
             </p>
           </div>
         </div>

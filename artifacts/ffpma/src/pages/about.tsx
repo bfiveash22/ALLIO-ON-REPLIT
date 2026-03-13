@@ -45,10 +45,10 @@ const CORE_PRINCIPLES = [
   },
   {
     icon: Target,
-    title: "Root Cause Medicine",
-    description: "We focus on identifying and treating underlying causes, not just managing symptoms.",
+    title: "Root Cause Wellness",
+    description: "We focus on identifying and addressing underlying causes, not just managing symptoms.",
     details: [
-      "Comprehensive diagnostic approach",
+      "Comprehensive assessment approach",
       "Body, mind, spirit integration",
       "Prevention and reversal vs. management",
       "Cellular-level healing",
@@ -98,7 +98,7 @@ const HEALTH_FOCUS_AREAS = [
     title: "Regenerative Medicine",
     icon: Zap,
     description: "Harnessing the body's natural healing capabilities",
-    topics: ["Stem cell therapies", "Exosome treatments", "Cellular regeneration", "Anti-aging protocols", "Tissue repair"],
+    topics: ["Stem cell therapies", "Exosome modalities", "Cellular regeneration", "Anti-aging protocols", "Tissue repair"],
   },
   {
     title: "Alternative Therapies",
@@ -116,7 +116,7 @@ const PMA_BENEFITS = [
   },
   {
     title: "Freedom of Choice",
-    description: "Access therapies and treatments not available through conventional channels.",
+    description: "Access modalities not available through conventional channels.",
     icon: Scale,
   },
   {
@@ -145,7 +145,7 @@ const PHILOSOPHY_SECTIONS = [
   {
     id: "root-cause",
     title: "Root Cause Philosophy",
-    content: `Our approach centers on identifying and addressing the fundamental causes of illness, rather than merely managing symptoms. We believe that true healing occurs when we go beyond surface-level treatments to understand what's really happening at the cellular level.
+    content: `Our approach centers on identifying and addressing the fundamental causes of illness, rather than merely managing symptoms. We believe that true healing occurs when we go beyond surface-level approaches to understand what's really happening at the cellular level.
 
 Every symptom is a message from your body. Instead of silencing these messages with medications that mask the problem, we work to decode what your body is telling you and address the underlying imbalances.
 
@@ -174,7 +174,7 @@ We believe in informed consent, personal responsibility, and the freedom to expl
     title: "Science & Innovation",
     content: `While we honor traditional wisdom, we also embrace cutting-edge science and technology. Our approach combines the best of both worlds: time-tested natural remedies enhanced by modern research and innovation.
 
-Peptide therapy, bioregulators, exosome treatments, and regenerative medicine represent the frontier of healing. We stay at the forefront of these developments, carefully vetting new therapies and making them available to our members.
+Peptide therapy, bioregulators, exosome modalities, and regenerative medicine represent the frontier of healing. We stay at the forefront of these developments, carefully vetting new therapies and making them available to our members.
 
 Every product in our catalog comes with a Certificate of Analysis (COA), ensuring quality, purity, and potency. We believe in transparency and scientific rigor while maintaining respect for the mysteries of healing that science has yet to fully explain.`,
   },
@@ -197,7 +197,7 @@ export default function AboutPage() {
                 Forgotten Formula PMA Handbook
               </h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-                The all-in-one ecosystem for true healing. AI and humanity coexisting to deliver genuine healthcare outcomes,
+                The all-in-one ecosystem for true healing. AI and humanity coexisting to deliver genuine wellness outcomes,
                 free from corporate stockholder influence.
               </p>
               <div className="flex flex-wrap justify-center gap-3">

@@ -2,17 +2,21 @@ import { getUncachableSheetsClient } from "./sheets";
 import { db } from "../db";
 import { intakeForms } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { encryptSensitiveFields, encryptJsonField } from "../utils/field-encryption";
 
-const SPREADSHEET_TITLE = `FFPMA Patient Intake Forms Data`;
+const SPREADSHEET_TITLE = `FFPMA Member Intake Forms Data`;
 
-/**
- * Creates a formatted Google Sheet template for the intake process if one does not exist.
- * It strictly creates the three required tabs and sets up header structures.
- */
+function isSheetsEnabled(): boolean {
+  const flag = process.env.INTAKE_SHEETS_ENABLED;
+  if (!flag || flag.toLowerCase() === 'false' || flag === '0') {
+    return false;
+  }
+  return true;
+}
+
 export async function createIntakeSheetTemplate(): Promise<string> {
   const sheets = await getUncachableSheetsClient();
 
-  // Create the spreadsheet
   const response = await sheets.spreadsheets.create({
     requestBody: {
       properties: {
@@ -37,76 +41,59 @@ export async function createIntakeSheetTemplate(): Promise<string> {
     throw new Error("Failed to create spreadsheet template");
   }
 
-  // Set up the headers for Raw Responses
   await sheets.spreadsheets.values.update({
     spreadsheetId,
     range: "'Raw Responses'!A1:F1",
     valueInputOption: "USER_ENTERED",
     requestBody: {
-      values: [["Submission Date", "Patient Name", "Email", "Phone", "Age", "Primary Concern", "Full Data JSON Dump"]]
+      values: [["Submission Date", "Member Name", "Email", "Phone", "Age", "Primary Concern", "Full Data JSON Dump"]]
     }
   });
 
-  // Set up the headers for Timeline
   await sheets.spreadsheets.values.update({
     spreadsheetId,
     range: "'Timeline'!A1:E1",
     valueInputOption: "USER_ENTERED",
     requestBody: {
-      values: [["Patient Name", "Decade", "Health Events", "Environmental Changes", "Symptoms"]]
+      values: [["Member Name", "Decade", "Health Events", "Environmental Changes", "Symptoms"]]
     }
   });
 
-  // Set up the headers for Root Cause Flags
   await sheets.spreadsheets.values.update({
     spreadsheetId,
     range: "'Root Cause Flags'!A1:G1",
     valueInputOption: "USER_ENTERED",
     requestBody: {
-      values: [["Patient", "Mold Exposure", "Heavy Metals", "Childhood Trauma", "Gut Issues", "Hormone Disruption", "Autoimmune"]]
+      values: [["Member", "Mold Exposure", "Heavy Metals", "Childhood Trauma", "Gut Issues", "Hormone Disruption", "Autoimmune"]]
     }
   });
 
-  // Create permission to share with the trustee alias or public editing (depending on organizational setup)
-  // But since the service account / app creates it, let's keep it under the blake@forgottenformula.com authority.
-  
   return spreadsheetId;
 }
 
-/**
- * Gets or creates the default spreadsheet ID
- */
 export async function getOrCreateIntakeSheetId(): Promise<string> {
   if (process.env.INTAKE_SHEET_TEMPLATE_ID) {
     return process.env.INTAKE_SHEET_TEMPLATE_ID;
   }
   
-  // If no env var, create one dynamically and theoretically we'd save it in DB/settings.
-  // For now, return a freshly created one (in real-world, cache it).
   const newSheetId = await createIntakeSheetTemplate();
   process.env.INTAKE_SHEET_TEMPLATE_ID = newSheetId;
   return newSheetId;
 }
 
-/**
- * Parses JSON form data and maps it to a single row for the Raw Responses tab
- */
-function formatRawDataRow(formData: any, patientInfo: any): any[] {
+function formatRawDataRow(formData: any, memberInfo: any): any[] {
   return [
     new Date().toLocaleString(),
-    patientInfo.name,
-    patientInfo.email,
-    patientInfo.phone || "",
-    patientInfo.age || "",
+    memberInfo.name,
+    memberInfo.email,
+    memberInfo.phone || "",
+    memberInfo.age || "",
     formData.basicInfo?.primaryConcern || "",
     JSON.stringify(formData)
   ];
 }
 
-/**
- * Helper to process timeline history data from the form
- */
-async function appendTimelineData(sheetId: string, patientName: string, timelineData: any) {
+async function appendTimelineData(sheetId: string, memberName: string, timelineData: any) {
   if (!timelineData || Object.keys(timelineData).length === 0) return;
   
   const sheets = await getUncachableSheetsClient();
@@ -114,8 +101,8 @@ async function appendTimelineData(sheetId: string, patientName: string, timeline
   
   for (const [decade, records] of Object.entries(timelineData)) {
     rows.push([
-      patientName,
-      decade, // e.g. "0-10"
+      memberName,
+      decade,
       (records as any).healthEvents || "",
       (records as any).environmentalChanges || "",
       (records as any).symptoms || ""
@@ -132,17 +119,12 @@ async function appendTimelineData(sheetId: string, patientName: string, timeline
   }
 }
 
-/**
- * Extracts and sets the boolean/text flags for the third tab
- */
-async function appendRootCauseFlags(sheetId: string, patientName: string, formData: any) {
+async function appendRootCauseFlags(sheetId: string, memberName: string, formData: any) {
   const sheets = await getUncachableSheetsClient();
   
-  // Simple heuristics based on standard structure definitions in the prompt
   const hasMold = formData.environmental?.moldExposure === "Yes" ? "Yes" : "No";
   const hasMetals = formData.environmental?.heavyMetals?.amalgamFillings === "Yes" ? "Yes" : "No";
   
-  // ACE score calculator
   let aceScore = 0;
   if (formData.trauma?.childhood) {
     Object.values(formData.trauma.childhood).forEach(val => {
@@ -155,7 +137,7 @@ async function appendRootCauseFlags(sheetId: string, patientName: string, formDa
   const hasAutoimmune = formData.symptoms?.immune?.autoimmuneCondition === "Yes" ? "Yes" : "No";
   
   const row = [
-    patientName,
+    memberName,
     hasMold,
     hasMetals,
     aceScore.toString(),
@@ -172,43 +154,56 @@ async function appendRootCauseFlags(sheetId: string, patientName: string, formDa
   });
 }
 
-/**
- * Main service to submit an intake form natively
- */
-export async function submitIntakeForm(patientInfo: any, formData: any): Promise<{ success: boolean; sheetId: string; dbId: number }> {
+export async function submitIntakeForm(memberInfo: any, formData: any): Promise<{ success: boolean; sheetId?: string; dbId: number }> {
   try {
-    const sheetId = await getOrCreateIntakeSheetId();
-    const sheets = await getUncachableSheetsClient();
+    const encryptedInfo = encryptSensitiveFields(
+      {
+        patientName: memberInfo.name,
+        patientEmail: memberInfo.email,
+        patientPhone: memberInfo.phone,
+      },
+      ['patientName', 'patientEmail', 'patientPhone']
+    );
 
     const [dbInsertResult] = await db.insert(intakeForms).values({
-      patientName: patientInfo.name,
-      patientEmail: patientInfo.email,
-      patientPhone: patientInfo.phone,
-      dateOfBirth: patientInfo.dob ? new Date(patientInfo.dob) : null,
-      age: patientInfo.age ? parseInt(patientInfo.age, 10) : null,
-      formData: formData,
+      patientName: encryptedInfo.patientName,
+      patientEmail: encryptedInfo.patientEmail,
+      patientPhone: encryptedInfo.patientPhone,
+      dateOfBirth: memberInfo.dob ? new Date(memberInfo.dob) : null,
+      age: memberInfo.age ? parseInt(memberInfo.age, 10) : null,
+      formData: encryptJsonField(formData),
       status: "submitted",
-      googleSheetId: sheetId,
       submittedAt: new Date()
     }).returning();
 
-    // Write to tab 1
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: sheetId,
-      range: "'Raw Responses'!A:ZZ",
-      valueInputOption: "USER_ENTERED",
-      requestBody: {
-        values: [formatRawDataRow(formData, patientInfo)]
+    let sheetId: string | undefined;
+
+    if (isSheetsEnabled()) {
+      console.warn('[Intake] DATA SOVEREIGNTY WARNING: Google Sheets mirror is enabled. Sensitive member data is being written to a third-party SaaS platform. Set INTAKE_SHEETS_ENABLED=false to disable.');
+      try {
+        sheetId = await getOrCreateIntakeSheetId();
+        const sheets = await getUncachableSheetsClient();
+
+        await sheets.spreadsheets.values.append({
+          spreadsheetId: sheetId,
+          range: "'Raw Responses'!A:ZZ",
+          valueInputOption: "USER_ENTERED",
+          requestBody: {
+            values: [formatRawDataRow(formData, memberInfo)]
+          }
+        });
+
+        if (formData.timeline) {
+          await appendTimelineData(sheetId, memberInfo.name, formData.timeline);
+        }
+
+        await appendRootCauseFlags(sheetId, memberInfo.name, formData);
+      } catch (sheetError) {
+        console.error("[Intake] Google Sheets mirror failed (non-fatal):", sheetError);
       }
-    });
-
-    // Write to tab 2
-    if (formData.timeline) {
-      await appendTimelineData(sheetId, patientInfo.name, formData.timeline);
+    } else {
+      console.log('[Intake] Google Sheets mirror is disabled (INTAKE_SHEETS_ENABLED not set). Data stored in database only.');
     }
-
-    // Write to tab 3
-    await appendRootCauseFlags(sheetId, patientInfo.name, formData);
 
     return {
       success: true,
@@ -216,7 +211,7 @@ export async function submitIntakeForm(patientInfo: any, formData: any): Promise
       dbId: dbInsertResult.id
     };
   } catch (error) {
-    console.error("Failed to submit intake form to Google Sheets / DB:", error);
+    console.error("Failed to submit intake form:", error);
     throw error;
   }
 }
