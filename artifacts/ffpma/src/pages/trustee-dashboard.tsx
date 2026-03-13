@@ -1592,7 +1592,8 @@ export default function TrusteeDashboard() {
   });
 
   const gmailConnected = inboxData?.connected && !inboxError;
-  const wooCommerceStatus = integrationStatuses.find(i => i.id === "woocommerce");
+  const safeIntegrationStatuses = Array.isArray(integrationStatuses) ? integrationStatuses : [];
+  const wooCommerceStatus = safeIntegrationStatuses.find(i => i.id === "woocommerce");
 
   const integrations: IntegrationStatus[] = [
     { name: "SignNow", status: signNowStatus?.connected ? "connected" : "disconnected", icon: FileText, lastSync: "Just now" },
@@ -1798,9 +1799,9 @@ export default function TrusteeDashboard() {
                       Integrations
                       <Badge className="bg-green-500/20 text-green-300 text-[10px] px-1 py-0">LIVE</Badge>
                     </div>
-                    <p className="text-3xl font-bold text-cyan-400">{integrationStatuses.filter(i => i.connectionState === "connected").length}/{integrationStatuses.length}</p>
+                    <p className="text-3xl font-bold text-cyan-400">{safeIntegrationStatuses.filter(i => i.connectionState === "connected").length}/{safeIntegrationStatuses.length}</p>
                     <p className="text-xs text-white/50 mt-1">
-                      {integrationStatuses.filter(i => i.mode === "live" && i.connectionState === "connected").length} live systems
+                      {safeIntegrationStatuses.filter(i => i.mode === "live" && i.connectionState === "connected").length} live systems
                     </p>
                   </div>
                   <div className="w-14 h-14 rounded-xl bg-cyan-500/20 flex items-center justify-center">
@@ -2375,7 +2376,7 @@ export default function TrusteeDashboard() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      {integrationStatuses.map((integration) => {
+                      {safeIntegrationStatuses.map((integration) => {
                         const iconMap: Record<string, React.ElementType> = {
                           signnow: FileText,
                           gmail: Mail,
@@ -3263,7 +3264,7 @@ export default function TrusteeDashboard() {
                   <span className="text-xs text-white/40">Real connections to external services</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {integrationStatuses.filter(i => i.mode === "live").map((integration) => {
+                  {safeIntegrationStatuses.filter(i => i.mode === "live").map((integration) => {
                     const iconMap: Record<string, React.ElementType> = {
                       signnow: FileText,
                       gmail: Mail,
@@ -3330,7 +3331,7 @@ export default function TrusteeDashboard() {
               </div>
 
               {/* Disconnected/Problematic Integrations - Show any that need attention */}
-              {(integrationStatuses.filter(i => i.connectionState === "disconnected" || i.connectionState === "not_implemented" || i.connectionState === "error").length > 0) && (
+              {(safeIntegrationStatuses.filter(i => i.connectionState === "disconnected" || i.connectionState === "not_implemented" || i.connectionState === "error").length > 0) && (
                 <div>
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-3 h-3 rounded-full bg-amber-500 animate-pulse" />
@@ -3338,7 +3339,7 @@ export default function TrusteeDashboard() {
                     <span className="text-xs text-white/40">These integrations require configuration</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {integrationStatuses.filter(i => i.connectionState === "disconnected" || i.connectionState === "not_implemented" || i.connectionState === "error").map((integration) => {
+                    {safeIntegrationStatuses.filter(i => i.connectionState === "disconnected" || i.connectionState === "not_implemented" || i.connectionState === "error").map((integration) => {
                       const iconMap: Record<string, React.ElementType> = {
                         woocommerce: ShoppingCart,
                         wordpress: Users,

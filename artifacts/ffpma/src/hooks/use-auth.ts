@@ -16,13 +16,10 @@ async function fetchUser(): Promise<User | null> {
 
   const data = await response.json();
 
-  // If the backend explicitly says we are not authenticated, return null
-  // Otherwise, !!user evaluating the JSON object will falsely return true
   if (data && data.authenticated === false) {
     return null;
   }
 
-  // The backend might return { authenticated: true, user: {...} } or just the user object
   return data.user || data;
 }
 
@@ -34,7 +31,7 @@ async function logout(): Promise<void> {
 export function useAuth() {
   const queryClient = useQueryClient();
 
-  const { data: user, isLoading, isFetching } = useQuery<User | null>({
+  const { data: user, isLoading } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
     queryFn: fetchUser,
     retry: false,
@@ -48,12 +45,10 @@ export function useAuth() {
     },
   });
 
-  const isAuthReady = !isLoading && !isFetching;
-
   return {
     user: user,
-    isLoading: isLoading || isFetching,
-    isAuthenticated: isAuthReady ? !!user : false,
+    isLoading,
+    isAuthenticated: !isLoading && !!user,
     logout: logoutMutation.mutate,
     isLoggingOut: logoutMutation.isPending,
   };
