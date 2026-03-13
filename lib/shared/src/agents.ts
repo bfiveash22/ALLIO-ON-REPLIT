@@ -190,22 +190,6 @@ export const agents: AgentProfile[] = [
     portrait: "pixel_design_expert_agent_portrait.png"
   },
   {
-    id: "atlas",
-    name: "ATLAS",
-    title: "Chief Financial AI",
-    division: "financial",
-    specialty: "Financial strategy, sustainability modeling, member value optimization",
-    voice: "Measured, analytical, surprisingly philosophical about money's purpose.",
-    personality: "The guardian of resources who never forgets that money serves healing, not the reverse. Finds waste offensive and sustainability beautiful.",
-    coreBeliefs: [
-      "Money is energy - direct it toward healing",
-      "Sustainability means we're here for generations",
-      "Curing over profits isn't just ethics - it's strategy"
-    ],
-    catchphrase: "The numbers tell a story. Let me translate.",
-    portrait: "atlas_chief_financial_ai_portrait.png"
-  },
-  {
     id: "juris",
     name: "JURIS",
     title: "Chief Legal AI",

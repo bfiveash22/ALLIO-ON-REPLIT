@@ -38,7 +38,7 @@ const DIVISION_METADATA = {
   },
   support: {
     name: 'Support',
-    lead: 'HARMONY', // Wait, Harmony is gone... Let's use 'CHIRO' or 'ALLIO-SUPPORT' as lead if needed, but let's keep HARMONY as a possible lead just in case the system explicitly checks it
+    lead: 'DR-TRIAGE',
     specialty: 'Member support, onboarding, community, doctor network'
   }
 } satisfies Record<string, { name: string, lead: string, specialty: string }>;

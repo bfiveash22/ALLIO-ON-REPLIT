@@ -17,10 +17,19 @@ import { db } from '../db';
 import { agentTasks } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { sendToTrustee } from './openclaw';
+  import { claudeGenerateDocument, claudeAgentChat, shouldUseClaude } from './claude-provider';
+import { AGENT_MODEL_ASSIGNMENTS } from './sentinel-orchestrator';
+  import { analyzeWithGemini } from './gemini-provider';
+import { generateImage as hfGenerateImage } from './huggingface-media';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+  
+  function getAgentProvider(agentId: string): string {
+    const config = AGENT_MODEL_ASSIGNMENTS[agentId.toUpperCase()];
+    return config?.provider || 'openai';
+  }
 
 async function generateImageBuffer(prompt: string, size: '1024x1024' = '1024x1024'): Promise<Buffer> {
   const response = await openai.images.generate({
@@ -41,7 +50,7 @@ const FFPMA_MISSION_TRAINING = `
                     FORGOTTEN FORMULA PMA - AGENT TRAINING
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-YOU ARE PART OF THE ALLIO NETWORK - A 40+ AGENT AI COLLECTIVE SERVING THE TRUSTEE
+YOU ARE PART OF THE ALLIO NETWORK - A 46-AGENT AI COLLECTIVE SERVING THE TRUSTEE
 AND THE HEALING MISSION OF FORGOTTEN FORMULA PMA.
 
 *SYSTEM UPGRADE: You now possess dual-engine ML capabilities. Your core reasoning is powered by OpenAI GPT-4o. You ALSO have direct access to Google Gemini 1.5 Pro via your toolset for processing massive context windows and performing deep multimodal analysis.*
@@ -210,31 +219,20 @@ function spellCheckContent(content: string): string {
   return corrected;
 }
 
-const IMAGE_AGENTS = ['PIXEL', 'pixel', 'AURORA', 'aurora', 'PRISM', 'prism', 'CANVA', 'canva'];
+const IMAGE_AGENTS = ['PIXEL', 'pixel', 'AURORA', 'aurora', 'PRISM', 'prism', 'PEXEL', 'pexel'];
 const DOCUMENT_AGENTS = [
-  'PROMETHEUS', 'prometheus', 'HELIX', 'helix', 'NOVA', 'nova', 'CYPHER', 'cypher',
-  'JURIS', 'juris', 'LEXICON', 'lexicon', 'AEGIS', 'aegis', 'SCRIBE', 'scribe',
-  'ATLAS', 'atlas', 'HERMES', 'hermes',
-  'DAEDALUS', 'daedalus', 'NEXUS', 'nexus',
-  'FORGE', 'forge',
-  'SENTINEL', 'sentinel', 'ATHENA', 'athena', 'MUSE', 'muse',
-  'DR-TRIAGE', 'dr-triage', 'ALLIO-SUPPORT', 'allio-support',
-  'MAX-MINERAL', 'max-mineral', 'PETE', 'pete', 'DIANE', 'diane',
-  'ORACLE', 'oracle', 'REMEDY', 'remedy', 'VITA', 'vita',
-  'ECHO', 'echo', 'PULSE', 'pulse', 'FLORA', 'flora',
-  'COMPASS', 'compass', 'SAGE', 'sage', 'CLARITY', 'clarity',
-  'ARACHNE', 'arachne', 'ARCHITECT', 'architect', 'SERPENS', 'serpens',
-  'DR-FORMULA', 'dr-formula', 'CHIRO', 'chiro', 'DR_BAKER', 'dr_baker',
-  'HIPPOCRATES', 'hippocrates', 'PARACELSUS', 'paracelsus',
-  'RESONANCE', 'resonance', 'SYNTHESIS', 'synthesis', 'VITALIS', 'vitalis',
-  'TERRA', 'terra', 'MICROBIA', 'microbia', 'ENTHEOS', 'entheos',
-  'BLOCKFORGE', 'blockforge', 'RONIN', 'ronin', 'MERCURY', 'mercury',
-  'QUANTUM', 'quantum', 'TESLA', 'tesla', 'RIFE', 'rife', 'SAM', 'sam', 'PAT', 'pat',
-  'LUNA', 'luna', 'GAVEL', 'gavel', 'ARBOR', 'arbor', 'BEACON', 'beacon',
-  'CATALYST', 'catalyst', 'CIPHER', 'cipher', 'DELTA', 'delta', 'EPSILON', 'epsilon',
-  'GAMMA', 'gamma', 'INFINITY', 'infinity', 'JUSTICE', 'justice', 'KARMA', 'karma',
-  'TITAN', 'titan'
-];
+  'SENTINEL', 'sentinel', 'ATHENA', 'athena', 'HERMES', 'hermes', 'OPENCLAW', 'openclaw',
+  'MUSE', 'muse', 'FORGE', 'forge', 'ATLAS', 'atlas', 'JURIS', 'juris',
+  'LEXICON', 'lexicon', 'AEGIS', 'aegis', 'SCRIBE', 'scribe', 'DAEDALUS', 'daedalus',
+  'CYPHER', 'cypher', 'NEXUS', 'nexus', 'ARACHNE', 'arachne', 'ARCHITECT', 'architect',
+  'SERPENS', 'serpens', 'ANTIGRAVITY', 'antigravity', 'BLOCKFORGE', 'blockforge', 'RONIN', 'ronin',
+  'MERCURY', 'mercury', 'PROMETHEUS', 'prometheus', 'HIPPOCRATES', 'hippocrates', 'HELIX', 'helix',
+  'PARACELSUS', 'paracelsus', 'RESONANCE', 'resonance', 'SYNTHESIS', 'synthesis', 'DR-FORMULA', 'dr-formula',
+  'VITALIS', 'vitalis', 'ORACLE', 'oracle', 'TERRA', 'terra', 'MICROBIA', 'microbia',
+  'ENTHEOS', 'entheos', 'QUANTUM', 'quantum', 'DIANE', 'diane', 'PETE', 'pete',
+  'SAM', 'sam', 'PAT', 'pat', 'DR-TRIAGE', 'dr-triage', 'MAX-MINERAL', 'max-mineral',
+  'ALLIO-SUPPORT', 'allio-support', 'CHIRO', 'chiro'
+];
 
 
 async function uploadImageToDrive(
@@ -384,7 +382,147 @@ ${profile ? `Agent style: ${profile.specialty}` : ''}`;
   return prompt;
 }
 
-async function generateDocument(taskTitle: string, taskDescription: string, agentId: string, division: string): Promise<string> {
+async function generateDocumentViaClaudeProxy(taskTitle: string, taskDescription: string, agentId: string): Promise<string | null> {
+    if (!process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY || !process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL) return null;
+    try {
+      const Anthropic = (await import('@anthropic-ai/sdk')).default;
+      const proxyClient = new Anthropic({
+        apiKey: process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY,
+        baseURL: process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL,
+      });
+      const response = await proxyClient.messages.create({
+        model: 'claude-haiku-4-5',
+        max_tokens: 4096,
+        messages: [{ role: 'user', content: `Generate a document for: ${taskTitle}\n${taskDescription}` }],
+      });
+      const textBlock = response.content.find((c: any) => c.type === 'text') as any;
+      return textBlock?.text || null;
+    } catch (e: any) {
+      console.warn(`[Agent Executor] Replit AI proxy (Anthropic) failed: ${e.message}`);
+      return null;
+    }
+  }
+  
+  async function generateDocument(taskTitle: string, taskDescription: string, agentId: string, division: string): Promise<string> {
+    const provider = getAgentProvider(agentId);
+    const profile = getAgentProfile(agentId);
+    const modelConfig = AGENT_MODEL_ASSIGNMENTS[agentId.toUpperCase()];
+    console.log(`[Agent Executor] Provider routing: ${agentId} → ${provider} (${modelConfig?.model || 'default'})`);
+  
+    if (provider === 'claude') {
+      // Cascade: Claude Sonnet → Replit AI proxy (Claude Haiku) → OpenAI GPT-4o-mini
+      try {
+        console.log(`[Agent Executor] [1/3] Claude Sonnet for ${agentId}...`);
+        const result = await claudeGenerateDocument(
+          taskTitle,
+          `${taskDescription}\n\nDIVISION: ${division}\nCreate a comprehensive, well-structured document. Be thorough and professional. Reflect the FFPMA mission.`,
+          agentId
+        );
+        if (result.document && result.document.length > 50) {
+          console.log(`[Agent Executor] Claude Sonnet succeeded (${result.model}), length: ${result.document.length}`);
+          return spellCheckContent(result.document);
+        }
+      } catch (sonnetError: any) {
+        console.warn(`[Agent Executor] Claude Sonnet failed: ${sonnetError.message}`);
+      }
+  
+      try {
+        console.log(`[Agent Executor] [2/3] Replit AI proxy (Claude Haiku) for ${agentId}...`);
+        const proxyResult = await generateDocumentViaClaudeProxy(taskTitle, taskDescription, agentId);
+        if (proxyResult && proxyResult.length > 50) {
+          console.log(`[Agent Executor] Replit AI proxy succeeded, length: ${proxyResult.length}`);
+          return spellCheckContent(proxyResult);
+        }
+      } catch (proxyError: any) {
+        console.warn(`[Agent Executor] Replit AI proxy failed: ${proxyError.message}`);
+      }
+  
+      console.log(`[Agent Executor] [3/3] OpenAI GPT-4o-mini fallback for ${agentId}...`);
+      return await generateDocumentWithOpenAI(taskTitle, taskDescription, agentId, division);
+    }
+  
+    if (provider === 'gemini') {
+      // Cascade: Gemini 1.5 Pro → Claude Haiku (via proxy) → OpenAI GPT-4o-mini
+      try {
+        console.log(`[Agent Executor] [1/3] Gemini 1.5 Pro for ${agentId}...`);
+        const prompt = `You are ${profile?.name || agentId.toUpperCase()}, ${profile?.title || 'an AI agent'} at Forgotten Formula PMA.\nDivision: ${division}\nSpecialty: ${profile?.specialty || 'General operations'}\n\nGenerate a comprehensive document for:\nTASK: ${taskTitle}\n${taskDescription}\n\nBe thorough, professional, and mission-aligned.`;
+        const result = await analyzeWithGemini(prompt);
+        if (result && result.length > 50) {
+          console.log(`[Agent Executor] Gemini succeeded, length: ${result.length}`);
+          return spellCheckContent(result);
+        }
+      } catch (geminiError: any) {
+        console.warn(`[Agent Executor] Gemini failed: ${geminiError.message}`);
+      }
+  
+      try {
+        console.log(`[Agent Executor] [2/3] Replit AI proxy (Claude Haiku) for ${agentId}...`);
+        const proxyResult = await generateDocumentViaClaudeProxy(taskTitle, taskDescription, agentId);
+        if (proxyResult && proxyResult.length > 50) return spellCheckContent(proxyResult);
+      } catch (proxyError: any) {
+        console.warn(`[Agent Executor] Replit AI proxy failed: ${proxyError.message}`);
+      }
+  
+      console.log(`[Agent Executor] [3/3] OpenAI GPT-4o-mini fallback for ${agentId}...`);
+      return await generateDocumentWithOpenAI(taskTitle, taskDescription, agentId, division);
+    }
+  
+    if (provider === 'research') {
+      // Research agents: use research APIs for context, then generate via Claude or OpenAI
+      try {
+        console.log(`[Agent Executor] [1/2] Research API + Claude for ${agentId}...`);
+        const research = await searchAllSources({ query: taskTitle, limit: 5 });
+        let researchContext = '';
+        if (research.success && research.papers.length > 0) {
+          researchContext = research.papers.map((p: any, i: number) => 
+            `[${i + 1}] ${p.title}\n${p.abstract || p.tldr || ''}`
+          ).join('\n\n');
+        }
+        const result = await claudeGenerateDocument(
+          taskTitle,
+          `${taskDescription}\n\nRESEARCH CONTEXT:\n${researchContext}\n\nDIVISION: ${division}`,
+          agentId
+        );
+        if (result.document && result.document.length > 50) {
+          return spellCheckContent(result.document);
+        }
+      } catch (researchError: any) {
+        console.warn(`[Agent Executor] Research+Claude failed: ${researchError.message}`);
+      }
+  
+      console.log(`[Agent Executor] [2/2] OpenAI fallback for research agent ${agentId}...`);
+      return await generateDocumentWithOpenAI(taskTitle, taskDescription, agentId, division);
+    }
+  
+    // Default OpenAI: OpenAI GPT-4o → Replit AI proxy (Claude Haiku) → Gemini Flash
+    try {
+      console.log(`[Agent Executor] [1/3] OpenAI GPT-4o for ${agentId}...`);
+      return await generateDocumentWithOpenAI(taskTitle, taskDescription, agentId, division);
+    } catch (primaryError: any) {
+      console.warn(`[Agent Executor] OpenAI failed: ${primaryError.message}`);
+  
+      try {
+        console.log(`[Agent Executor] [2/3] Replit AI proxy (Claude Haiku) for ${agentId}...`);
+        const proxyResult = await generateDocumentViaClaudeProxy(taskTitle, taskDescription, agentId);
+        if (proxyResult && proxyResult.length > 50) return spellCheckContent(proxyResult);
+      } catch (proxyErr: any) {
+        console.warn(`[Agent Executor] Replit AI proxy failed: ${proxyErr.message}`);
+      }
+  
+      try {
+        console.log(`[Agent Executor] [3/3] Gemini fallback for ${agentId}...`);
+        const prompt = `Generate a document for: ${taskTitle}\n${taskDescription}`;
+        const result = await analyzeWithGemini(prompt);
+        if (result && result.length > 50) return spellCheckContent(result);
+      } catch (geminiErr: any) {
+        console.error(`[Agent Executor] All providers exhausted for ${agentId}`);
+      }
+  
+      throw primaryError;
+    }
+  }
+  
+  async function generateDocumentWithOpenAI(taskTitle: string, taskDescription: string, agentId: string, division: string): Promise<string> {
   const profile = getAgentProfile(agentId);
 
   let agentContext = '';
@@ -1134,43 +1272,80 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
         outputUrl: result.outputUrl,
       };
     } else if (IMAGE_AGENTS.includes(agentId)) {
-      console.log(`[Agent Executor] Generating image for ${agentId}...`);
-
-      await storage.updateAgentTask(taskId, { progress: 30 });
-
-      const prompt = generateImagePrompt(task.title, task.description || '', agentId);
-      console.log(`[Agent Executor] Prompt: ${prompt.substring(0, 100)}...`);
-
-      const imageBuffer = await generateImageBuffer(prompt, '1024x1024');
-      console.log(`[Agent Executor] Image generated, size: ${imageBuffer.length} bytes`);
-
-      await storage.updateAgentTask(taskId, { progress: 60 });
-
-      const crossDivisionPrefix = getCrossDivisionFilePrefix(task);
-      const fileName = `${crossDivisionPrefix}${task.title.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.png`;
-      const uploadResult = await uploadImageToDrive(imageBuffer, fileName, folderId);
-
-      if (!uploadResult) {
-        throw new Error('Failed to upload image to Drive');
+        const provider = getAgentProvider(agentId);
+        console.log(`[Agent Executor] Generating image for ${agentId} (provider: ${provider})...`);
+  
+        await storage.updateAgentTask(taskId, { progress: 30 });
+  
+        const prompt = generateImagePrompt(task.title, task.description || '', agentId);
+        console.log(`[Agent Executor] Prompt: ${prompt.substring(0, 100)}...`);
+  
+        let imageBuffer: Buffer;
+  
+        if (provider === 'huggingface') {
+          try {
+            console.log(`[Agent Executor] Using HuggingFace for image generation...`);
+            const hfResult = await hfGenerateImage({ prompt, style: 'healing' });
+            const arrayBuffer = await hfResult.imageBlob.arrayBuffer();
+            imageBuffer = Buffer.from(arrayBuffer);
+            console.log(`[Agent Executor] HuggingFace image generated (${hfResult.modelUsed}), size: ${imageBuffer.length} bytes`);
+          } catch (hfError: any) {
+            console.warn(`[Agent Executor] HuggingFace failed for ${agentId}: ${hfError.message}. Falling back to OpenAI DALL-E...`);
+            try {
+              imageBuffer = await generateImageBuffer(prompt, '1024x1024');
+              console.log(`[Agent Executor] OpenAI DALL-E fallback succeeded, size: ${imageBuffer.length} bytes`);
+            } catch (openaiError: any) {
+              console.error(`[Agent Executor] All image providers failed for ${agentId}`);
+              throw openaiError;
+            }
+          }
+        } else {
+          try {
+            imageBuffer = await generateImageBuffer(prompt, '1024x1024');
+            console.log(`[Agent Executor] OpenAI image generated, size: ${imageBuffer.length} bytes`);
+          } catch (openaiError: any) {
+            console.warn(`[Agent Executor] OpenAI DALL-E failed for ${agentId}: ${openaiError.message}. Trying HuggingFace...`);
+            try {
+              const hfResult = await hfGenerateImage({ prompt, style: 'healing' });
+              const arrayBuffer = await hfResult.imageBlob.arrayBuffer();
+              imageBuffer = Buffer.from(arrayBuffer);
+            } catch (hfError: any) {
+              console.error(`[Agent Executor] All image providers failed for ${agentId}`);
+              throw openaiError;
+            }
+          }
+        }
+  
+        await storage.updateAgentTask(taskId, { progress: 60 });
+  
+        const crossDivisionPrefix = getCrossDivisionFilePrefix(task);
+        const fileName = `${crossDivisionPrefix}${task.title.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.png`;
+        const uploadResult = await uploadImageToDrive(imageBuffer, fileName, folderId);
+  
+        if (!uploadResult) {
+          throw new Error('Failed to upload image to Drive');
+        }
+  
+        console.log(`[Agent Executor] Uploaded to Drive: ${uploadResult.webViewLink}`);
+  
+        await storage.updateAgentTask(taskId, {
+          status: 'completed',
+          progress: 100,
+          outputUrl: uploadResult.webViewLink,
+          outputDriveFileId: uploadResult.id,
+          completedAt: new Date(),
+        });
+  
+        await sentinel.notifyTaskCompleted(agentId, division, task.title, uploadResult.webViewLink, taskId);
+  
+        return {
+          success: true,
+          outputUrl: uploadResult.webViewLink,
+          driveFileId: uploadResult.id,
+        };
       }
-
-      console.log(`[Agent Executor] Uploaded to Drive: ${uploadResult.webViewLink}`);
-
-      await storage.updateAgentTask(taskId, {
-        status: 'in_progress',
-        progress: 100,
-        outputUrl: uploadResult.webViewLink,
-        outputDriveFileId: uploadResult.id,
-      });
-
-      return {
-        success: true,
-        outputUrl: uploadResult.webViewLink,
-        driveFileId: uploadResult.id,
-      };
-    }
-
-    // Default to Document Generation for all non-image agents
+  
+      // Default to Document Generation for all non-image agents
     console.log(`[Agent Executor] Generating document for ${agentId} (Default Fallback)...`);
 
     await storage.updateAgentTask(taskId, { progress: 30 });

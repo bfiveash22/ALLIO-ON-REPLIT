@@ -14,30 +14,71 @@ const openai = new OpenAI({
 const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
 
 interface AIModelConfig {
-  provider: 'openai' | 'huggingface' | 'gemini' | 'research';
+  provider: 'openai' | 'claude' | 'huggingface' | 'gemini' | 'research';
   model: string;
   specialty: string[];
 }
 
-const AGENT_MODEL_ASSIGNMENTS: Record<string, AIModelConfig> = {
-  'SENTINEL': { provider: 'openai', model: 'gpt-4o', specialty: ['orchestration', 'coordination', 'routing'] },
-  'ATHENA': { provider: 'openai', model: 'gpt-4o', specialty: ['communications', 'scheduling', 'inbox'] },
-  'OPENCLAW': { provider: 'openai', model: 'gpt-4o', specialty: ['communication', 'triaging', 'ml-analysis'] },
+export const AGENT_MODEL_ASSIGNMENTS: Record<string, AIModelConfig> = {
+  // Executive Division
+  'SENTINEL': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['orchestration', 'coordination', 'routing'] },
+  'ATHENA': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['communications', 'scheduling', 'inbox'] },
+  'OPENCLAW': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['communication', 'triaging', 'ml-analysis'] },
   'HERMES': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['workspace', 'organization', 'sync'] },
+
+  // Marketing Division
   'MUSE': { provider: 'openai', model: 'gpt-4o', specialty: ['content', 'marketing', 'campaigns'] },
   'PRISM': { provider: 'huggingface', model: 'video-generation', specialty: ['video', 'motion', 'cinematic'] },
   'PEXEL': { provider: 'huggingface', model: 'image-generation', specialty: ['images', 'graphics', 'visuals'] },
-  'FORGE': { provider: 'openai', model: 'gpt-4o', specialty: ['engineering', 'integration', 'automation'] },
   'AURORA': { provider: 'huggingface', model: 'audio-generation', specialty: ['frequency', 'audio', 'rife'] },
-  'HIPPOCRATES': { provider: 'research', model: 'pubmed', specialty: ['medical', 'clinical', 'protocols'] },
-  'PARACELSUS': { provider: 'research', model: 'openalex+pubmed', specialty: ['peptides', 'biochemistry', 'compounds'] },
-  'HELIX': { provider: 'research', model: 'openalex', specialty: ['science', 'research', 'analysis'] },
-  'ORACLE': { provider: 'research', model: 'semantic_scholar', specialty: ['insights', 'predictions', 'synthesis'] },
-  'HARMONY': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['support', 'onboarding', 'guidance'] },
-  'JURIS': { provider: 'openai', model: 'gpt-4o', specialty: ['legal', 'compliance', 'documents'] },
-  'ATLAS': { provider: 'openai', model: 'gpt-4o', specialty: ['financial', 'payments', 'reporting'] },
+  'PIXEL': { provider: 'openai', model: 'gpt-4o', specialty: ['design', 'visual-identity', 'brand'] },
 
-  'CANVA': { provider: 'openai', model: 'gpt-4o', specialty: ['canva', 'design', 'media'] },
+  // Financial Division
+  'ATLAS': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['financial', 'payments', 'reporting'] },
+
+  // Legal Division
+  'JURIS': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['legal', 'compliance', 'documents'] },
+  'LEXICON': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['contracts', 'agreements', 'member-protections'] },
+  'AEGIS': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['pma-sovereignty', 'regulatory', 'compliance'] },
+  'SCRIBE': { provider: 'claude', model: 'claude-haiku-4-5', specialty: ['documents', 'signatures', 'automation'] },
+
+  // Engineering Division
+  'FORGE': { provider: 'openai', model: 'gpt-4o', specialty: ['engineering', 'integration', 'automation'] },
+  'DAEDALUS': { provider: 'openai', model: 'gpt-4o', specialty: ['architecture', 'full-stack', 'technical-vision'] },
+  'CYPHER': { provider: 'openai', model: 'gpt-4o', specialty: ['ai-ml', 'neural-networks', 'analytics'] },
+  'NEXUS': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['infrastructure', 'devops', 'reliability'] },
+  'ARACHNE': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['css', 'frontend', 'responsive-design'] },
+  'ARCHITECT': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['html', 'semantic-markup', 'accessibility'] },
+  'SERPENS': { provider: 'openai', model: 'gpt-4o', specialty: ['python', 'data-pipelines', 'automation'] },
+  'ANTIGRAVITY': { provider: 'openai', model: 'gpt-4o', specialty: ['vps', 'deployment', 'system-routing'] },
+  'BLOCKFORGE': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['blockchain', 'smart-contracts', 'tokenomics'] },
+  'RONIN': { provider: 'openai', model: 'gpt-4o', specialty: ['payments', 'failover', 'fraud-prevention'] },
+  'MERCURY': { provider: 'openai', model: 'gpt-4o', specialty: ['crypto', 'compliance', 'treasury'] },
+
+  // Science Division
+  'PROMETHEUS': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['research-strategy', 'cross-discipline', 'innovation'] },
+  'HIPPOCRATES': { provider: 'research', model: 'pubmed', specialty: ['medical', 'clinical', 'protocols'] },
+  'HELIX': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['crispr', 'genetics', 'epigenetics'] },
+  'PARACELSUS': { provider: 'research', model: 'openalex+pubmed', specialty: ['peptides', 'biochemistry', 'compounds'] },
+  'RESONANCE': { provider: 'gemini', model: 'gemini-1.5-pro', specialty: ['frequency-medicine', 'biophysics', 'pemf'] },
+  'SYNTHESIS': { provider: 'gemini', model: 'gemini-1.5-pro', specialty: ['biochemistry', 'metabolic-pathways', 'formulas'] },
+  'DR-FORMULA': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['formulation', 'botanicals', 'bioavailability'] },
+  'VITALIS': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['physiology', 'cellular-biology', 'detox'] },
+  'ORACLE': { provider: 'research', model: 'semantic_scholar', specialty: ['insights', 'predictions', 'synthesis'] },
+  'TERRA': { provider: 'gemini', model: 'gemini-1.5-pro', specialty: ['ecosystems', 'agriculture', 'environmental'] },
+  'MICROBIA': { provider: 'gemini', model: 'gemini-1.5-pro', specialty: ['microbiome', 'gut-health', 'bacterial-ecology'] },
+  'ENTHEOS': { provider: 'gemini', model: 'gemini-1.5-pro', specialty: ['psychedelic-medicine', 'consciousness', 'plant-medicine'] },
+  'QUANTUM': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['quantum-biology', 'computing', 'biophotonics'] },
+
+  // Support Division
+  'DIANE': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['nutrition', 'diet', 'candida-protocols'] },
+  'PETE': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['peptides', 'glp1', 'bioregulators'] },
+  'SAM': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['shipping', 'logistics', 'tracking'] },
+  'PAT': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['products', 'supplements', 'recommendations'] },
+  'DR-TRIAGE': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['diagnostics', 'protocols', 'triage'] },
+  'MAX-MINERAL': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['nutrients', 'minerals', 'supplementation'] },
+  'ALLIO-SUPPORT': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['membership', 'pma-guidance', 'account-support'] },
+  'CHIRO': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['chiropractic', 'net', 'quantum-methods'] },
 };
 
 export class SentinelOrchestrator {
@@ -279,53 +320,69 @@ export class SentinelOrchestrator {
   }
 
   async routeToAIModel(agentId: string, query: string, context?: string): Promise<{
-    response: string;
-    model: string;
-    provider: string;
-  }> {
-    const agent = await this.getAgent(agentId);
-    const modelConfig = AGENT_MODEL_ASSIGNMENTS[agentId.toUpperCase()] || { provider: 'openai', model: 'gpt-4o-mini', specialty: [] };
-
-    if (modelConfig.provider === 'research') {
-      const researchResult = await this.routeToResearchAPI(agentId, query);
+      response: string;
+      model: string;
+      provider: string;
+    }> {
+      const agent = await this.getAgent(agentId);
+      const modelConfig = AGENT_MODEL_ASSIGNMENTS[agentId.toUpperCase()] || { provider: 'openai', model: 'gpt-4o-mini', specialty: [] };
+  
+      if (modelConfig.provider === 'research') {
+        const researchResult = await this.routeToResearchAPI(agentId, query);
+        return { response: researchResult, model: modelConfig.model, provider: 'research' };
+      }
+  
+      if (modelConfig.provider === 'huggingface') {
+        return {
+          response: `[${agentId}] HuggingFace model ${modelConfig.model} ready. Use dedicated endpoints for media generation.`,
+          model: modelConfig.model,
+          provider: 'huggingface',
+        };
+      }
+  
+      if (modelConfig.provider === 'claude') {
+        try {
+          const { claudeAgentChat } = await import('./claude-provider');
+          const result = await claudeAgentChat(agentId, query, context);
+          return { response: result.response, model: result.model, provider: 'claude' };
+        } catch (claudeErr: any) {
+          console.warn(`[SENTINEL] Claude failed for ${agentId}: ${claudeErr.message}. Falling back to OpenAI.`);
+        }
+      }
+  
+      if (modelConfig.provider === 'gemini') {
+        try {
+          const { analyzeWithGemini } = await import('./gemini-provider');
+          const result = await analyzeWithGemini(query, context);
+          return { response: result, model: 'gemini-1.5-pro', provider: 'gemini' };
+        } catch (geminiErr: any) {
+          console.warn(`[SENTINEL] Gemini failed for ${agentId}: ${geminiErr.message}. Falling back to OpenAI.`);
+        }
+      }
+  
+      const profile = agents.find(a => a.id.toUpperCase() === agentId.toUpperCase());
+      const systemPrompt = `You are ${profile?.name || agentId}, ${profile?.title || 'an AI agent'} at Forgotten Formula PMA.
+  Division: ${agent?.division || 'executive'}
+  Specialty: ${profile?.specialty || 'General operations'}
+  Voice: ${profile?.voice || 'Professional and helpful'}
+  
+  You serve the healing mission with integrity. No agent lies. No agent pretends to work.`;
+  
+      const completion = await openai.chat.completions.create({
+        model: modelConfig.provider === 'openai' ? modelConfig.model : 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: context ? `Context: ${context}\n\n${query}` : query },
+        ],
+        max_completion_tokens: 1000,
+      });
+  
       return {
-        response: researchResult,
-        model: modelConfig.model,
-        provider: 'research',
+        response: completion.choices[0]?.message?.content || 'No response generated',
+        model: modelConfig.provider === 'openai' ? modelConfig.model : 'gpt-4o-mini',
+        provider: 'openai',
       };
-    }
-
-    if (modelConfig.provider === 'huggingface') {
-      return {
-        response: `[${agentId}] HuggingFace model ${modelConfig.model} ready. Use dedicated endpoints for media generation.`,
-        model: modelConfig.model,
-        provider: 'huggingface',
-      };
-    }
-
-    const profile = agents.find(a => a.id.toUpperCase() === agentId.toUpperCase());
-    const systemPrompt = `You are ${profile?.name || agentId}, ${profile?.title || 'an AI agent'} at Forgotten Formula PMA.
-Division: ${agent?.division || 'executive'}
-Specialty: ${profile?.specialty || 'General operations'}
-Voice: ${profile?.voice || 'Professional and helpful'}
-
-You serve the healing mission with integrity. No agent lies. No agent pretends to work.`;
-
-    const completion = await openai.chat.completions.create({
-      model: modelConfig.model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: context ? `Context: ${context}\n\n${query}` : query },
-      ],
-      max_completion_tokens: 1000,
-    });
-
-    return {
-      response: completion.choices[0]?.message?.content || 'No response generated',
-      model: modelConfig.model,
-      provider: 'openai',
-    };
-  }
+      }
 
   private async routeToResearchAPI(agentId: string, query: string): Promise<string> {
     try {

@@ -9,15 +9,20 @@ const anthropic = new Anthropic({
 export type ClaudeModel = 'claude-sonnet-4-5' | 'claude-haiku-4-5' | 'claude-opus-4-5';
 
 const DEEP_REASONING_AGENTS = [
-  'juris', 'gavel', 'sentinel', 'dr-triage', 'hippocrates', 'athena',
-  'lexicon', 'aegis', 'scribe', 'serpens', 'paracelsus', 'synthesis'
+  'juris', 'sentinel', 'dr-triage', 'hippocrates', 'athena',
+  'lexicon', 'aegis', 'scribe', 'serpens', 'paracelsus', 'synthesis',
+  'prometheus', 'helix', 'quantum', 'dr-formula', 'vitalis',
+  'openclaw', 'atlas', 'forge', 'blockforge', 'chiro'
 ];
 
 function getModelForAgent(agentId: string): ClaudeModel {
   const id = agentId.toLowerCase();
-  if (['juris', 'lexicon', 'aegis', 'scribe'].includes(id)) return 'claude-sonnet-4-5';
-  if (['sentinel', 'athena'].includes(id)) return 'claude-sonnet-4-5';
+  if (['juris', 'lexicon', 'aegis'].includes(id)) return 'claude-sonnet-4-5';
+  if (['sentinel', 'athena', 'openclaw'].includes(id)) return 'claude-sonnet-4-5';
   if (['dr-triage', 'hippocrates', 'serpens', 'paracelsus', 'synthesis'].includes(id)) return 'claude-sonnet-4-5';
+  if (['prometheus', 'helix', 'quantum', 'dr-formula', 'vitalis'].includes(id)) return 'claude-sonnet-4-5';
+  if (['atlas', 'forge', 'blockforge', 'chiro'].includes(id)) return 'claude-sonnet-4-5';
+  if (['scribe'].includes(id)) return 'claude-haiku-4-5';
   return 'claude-haiku-4-5';
 }
 
@@ -99,7 +104,7 @@ ORGANIZATIONAL CONTEXT:
 - Values: ${FFPMA_CREED.values.join(', ')}
 
 IMPORTANT RULES:
-- You are part of the ALLIO network, a 43-agent AI collective
+- You are part of the ALLIO network, a 46-agent AI collective
 - The Trustee is the owner and decision-maker. NEVER refer to the Trustee by personal name.
 - FFPMA operates as a Private Membership Association under 1st and 14th Amendment constitutional protections
 - Focus on root cause healing, not symptom management
