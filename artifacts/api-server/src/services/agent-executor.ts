@@ -1123,14 +1123,11 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
       }
 
       await storage.updateAgentTask(taskId, {
-        status: 'completed',
+        status: 'in_progress',
         progress: 100,
         outputUrl: result.outputUrl,
         outputDriveFileId: uploadResult?.id,
-        completedAt: new Date(),
       });
-
-      await sentinel.notifyTaskCompleted(agentId, division, task.title, result.outputUrl || '', taskId);
 
       return {
         success: true,
@@ -1160,14 +1157,11 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
       console.log(`[Agent Executor] Uploaded to Drive: ${uploadResult.webViewLink}`);
 
       await storage.updateAgentTask(taskId, {
-        status: 'completed',
+        status: 'in_progress',
         progress: 100,
         outputUrl: uploadResult.webViewLink,
         outputDriveFileId: uploadResult.id,
-        completedAt: new Date(),
       });
-
-      await sentinel.notifyTaskCompleted(agentId, division, task.title, uploadResult.webViewLink, taskId);
 
       return {
         success: true,
@@ -1206,14 +1200,11 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
     console.log(`[Agent Executor] Uploaded to Drive: ${uploadResult.webViewLink}`);
 
     await storage.updateAgentTask(taskId, {
-      status: 'completed',
+      status: 'in_progress',
       progress: 100,
       outputUrl: uploadResult.webViewLink,
       outputDriveFileId: uploadResult.id,
-      completedAt: new Date(),
     });
-
-    await sentinel.notifyTaskCompleted(agentId, division, task.title, uploadResult.webViewLink, taskId);
 
     return {
       success: true,

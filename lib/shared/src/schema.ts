@@ -854,7 +854,7 @@ export const contractsRelations = relations(contracts, ({ one }) => ({
 }));
 
 // Agent Tasks - Track work assignments for AI divisions
-export const agentTaskStatusEnum = pgEnum("agent_task_status", ["pending", "in_progress", "completed", "blocked", "failed"]);
+export const agentTaskStatusEnum = pgEnum("agent_task_status", ["pending", "in_progress", "completed", "blocked", "failed", "needs_retry"]);
 export const agentDivisionEnum = pgEnum("agent_division", ["executive", "marketing", "financial", "legal", "engineering", "science", "support"]);
 
 export const agentTasks = pgTable("agent_tasks", {

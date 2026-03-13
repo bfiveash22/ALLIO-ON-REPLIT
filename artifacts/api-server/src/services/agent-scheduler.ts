@@ -680,12 +680,25 @@ export async function startAgentScheduler(): Promise<void> {
     }
   }, ECOSYSTEM_ENHANCEMENT_INTERVAL);
 
-  // Auto-Implementation Backlog Loop - DISABLED PER USER
+  // Auto-Implementation Backlog Loop - Re-enabled with OAuth check
+  const oauthCheck = autoImplementer.checkGoogleOAuthSecrets();
+  if (!oauthCheck.valid) {
+    log(`[AUTO-IMPLEMENTER] Pipeline DISABLED - missing Google OAuth secrets: ${oauthCheck.missing.join(", ")}`, "agent-scheduler");
+    try {
+      const { sendToTrustee: notifyTrustee } = await import("./openclaw");
+      await notifyTrustee("SENTINEL", `Auto-Implementer pipeline cannot start. Missing Google OAuth secrets: ${oauthCheck.missing.join(", ")}. Please configure these environment variables.`, "urgent");
+    } catch (e) {}
+  } else {
+    log("[AUTO-IMPLEMENTER] Google OAuth secrets verified. Pipeline enabled.", "agent-scheduler");
+  }
+
   autoImplementInterval = setInterval(async () => {
     try {
-      // await autoImplementer.runRetroactiveProcessing();
+      if (oauthCheck.valid) {
+        await autoImplementer.runRetroactiveProcessing();
+      }
     } catch (err: any) {
-      log(`[AUTO-IMPLEMENTER] Scheduled processing error: ${err.message}`, 'agent-scheduler');
+      log(`[AUTO-IMPLEMENTER] Scheduled processing error: ${err.message}`, "agent-scheduler");
     }
   }, AUTO_IMPLEMENT_INTERVAL);
 
@@ -718,9 +731,11 @@ export async function startAgentScheduler(): Promise<void> {
     scheduleWeeklyMedicalEnhancement().catch(e => console.error(e));
   }, 60000); // 60 seconds after boot
 
-  // Kick off first Auto-Implementation Retroactive Backlog process (DISABLED)
+  // Kick off first Auto-Implementation Retroactive Backlog process
   setTimeout(() => {
-    // autoImplementer.runRetroactiveProcessing().catch(e => console.error(e));
+    if (oauthCheck.valid) {
+      autoImplementer.runRetroactiveProcessing().catch(e => console.error(e));
+    }
   }, 70000); // 70 seconds after boot
 
   log('[SENTINEL] Agent scheduler started successfully', 'agent-scheduler');

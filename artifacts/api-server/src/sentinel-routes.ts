@@ -424,5 +424,79 @@ export function registerSentinelRoutes(app: Express): void {
     }
   });
 
+
+  app.get('/api/sentinel/implementation-status', adminOnly, async (_req: Request, res: Response) => {
+    try {
+      const { implementedOutputs } = await import('@shared/schema');
+      const { desc } = await import('drizzle-orm');
+      const { db } = await import('./db');
+      const outputs = await db.select().from(implementedOutputs)
+        .orderBy(desc(implementedOutputs.createdAt))
+        .limit(100);
+
+      const statusCounts = {
+        pending_review: 0,
+        deployed_successfully: 0,
+        deployment_failed: 0,
+        rolled_back: 0,
+        ignored: 0,
+      };
+      for (const o of outputs) {
+        if (o.status && statusCounts.hasOwnProperty(o.status)) {
+          statusCounts[o.status as keyof typeof statusCounts]++;
+        }
+      }
+
+      res.json({
+        outputs,
+        count: outputs.length,
+        statusCounts,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/sentinel/auto-implementer/run', adminOnly, async (_req: Request, res: Response) => {
+    try {
+      const { autoImplementer } = await import('./services/auto-implementer');
+      const oauthCheck = autoImplementer.checkGoogleOAuthSecrets();
+      if (!oauthCheck.valid) {
+        return res.status(400).json({
+          error: `Missing Google OAuth secrets: ${oauthCheck.missing.join(', ')}`,
+          missing: oauthCheck.missing,
+        });
+      }
+      autoImplementer.runRetroactiveProcessing().catch(e => console.error('[AUTO-IMPLEMENTER] Manual trigger error:', e));
+      res.json({ status: 'initiated', message: 'Auto-Implementer pipeline triggered. Check notifications for results.' });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get('/api/sentinel/auto-implementer/health', adminOnly, async (_req: Request, res: Response) => {
+    try {
+      const { autoImplementer } = await import('./services/auto-implementer');
+      const oauthCheck = autoImplementer.checkGoogleOAuthSecrets();
+      if (!oauthCheck.valid) {
+        return res.json({
+          healthy: false,
+          oauthConfigured: false,
+          missingSecrets: oauthCheck.missing,
+          driveHealth: null,
+        });
+      }
+      const driveHealth = await autoImplementer.runDriveFolderHealthCheck();
+      res.json({
+        healthy: driveHealth.healthy,
+        oauthConfigured: true,
+        missingSecrets: [],
+        driveHealth,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   console.log('[SENTINEL] Orchestrator routes registered (admin-protected)');
 }
