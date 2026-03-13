@@ -33,7 +33,7 @@ export const VIDEO_TEMPLATES: VideoTemplate[] = [
   {
     id: 'allio-launch-march-2026',
     name: 'ALLIO March 2026 Launch',
-    description: 'Epic cinematic introduction of ALLIO as the unified warrior-healer AI consciousness. The defining video that sets the tone for the March 1, 2026 unveiling.',
+    description: 'Epic cinematic introduction of ALLIO as the unified warrior-healer AI consciousness. The defining video that sets the tone for the April 1, 2026 unveiling.',
     category: 'launch',
     musicMood: 'epic cinematic orchestral healing meditation ambient electronic fusion, powerful yet peaceful, warrior energy with healing undertones, deep blue and gold energy',
     voiceStyle: 'neutral',

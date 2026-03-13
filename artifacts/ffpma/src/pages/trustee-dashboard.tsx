@@ -104,6 +104,7 @@ import {
   BookOpen,
   Printer,
   Share,
+  Rocket,
 } from "lucide-react";
 
 interface EmailSummary {
@@ -761,6 +762,117 @@ function SecurityTab() {
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
+
+interface ChecklistItem {
+  name: string;
+  category: string;
+  status: "pass" | "fail" | "warning";
+  details: string;
+}
+
+interface ChecklistData {
+  launchDate: string;
+  checklist: ChecklistItem[];
+  summary: { total: number; pass: number; fail: number; warning: number; readyPercent: number };
+}
+
+function LaunchReadinessWidget() {
+  const { data: checklist, isLoading, refetch } = useQuery<ChecklistData>({
+    queryKey: ["/api/launch/checklist"],
+    refetchInterval: 60000,
+  });
+
+  const statusIcon = (status: string) => {
+    if (status === "pass") return <CheckCircle2 className="w-5 h-5 text-green-400" />;
+    if (status === "warning") return <AlertTriangle className="w-5 h-5 text-amber-400" />;
+    return <AlertCircle className="w-5 h-5 text-red-400" />;
+  };
+
+  const statusBadge = (status: string) => {
+    if (status === "pass") return <Badge className="bg-green-500/20 text-green-300 border-green-500/30">Ready</Badge>;
+    if (status === "warning") return <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30">Warning</Badge>;
+    return <Badge className="bg-red-500/20 text-red-300 border-red-500/30">Action Required</Badge>;
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="bg-black/20 border-white/10">
+        <CardContent className="p-12 text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-white/40" />
+          <p className="mt-4 text-white/60">Loading launch checklist...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const summary = checklist?.summary;
+
+  return (
+    <div className="space-y-6">
+      <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-amber-100">
+                <Rocket className="w-5 h-5 text-amber-400" />
+                April 1, 2026 Launch Readiness
+              </CardTitle>
+              <CardDescription>Pre-launch checklist and system health status</CardDescription>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" className="border-white/10" onClick={() => refetch()} data-testid="button-refresh-checklist">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {summary && (
+            <div className="grid grid-cols-4 gap-4 mb-6">
+              <div className="bg-black/20 rounded-lg p-4 text-center">
+                <p className="text-3xl font-bold text-white">{summary.readyPercent}%</p>
+                <p className="text-xs text-white/60 mt-1">Overall Ready</p>
+              </div>
+              <div className="bg-green-500/10 rounded-lg p-4 text-center border border-green-500/20">
+                <p className="text-3xl font-bold text-green-400">{summary.pass}</p>
+                <p className="text-xs text-green-300/60 mt-1">Passing</p>
+              </div>
+              <div className="bg-amber-500/10 rounded-lg p-4 text-center border border-amber-500/20">
+                <p className="text-3xl font-bold text-amber-400">{summary.warning}</p>
+                <p className="text-xs text-amber-300/60 mt-1">Warnings</p>
+              </div>
+              <div className="bg-red-500/10 rounded-lg p-4 text-center border border-red-500/20">
+                <p className="text-3xl font-bold text-red-400">{summary.fail}</p>
+                <p className="text-xs text-red-300/60 mt-1">Failing</p>
+              </div>
+            </div>
+          )}
+
+          <Progress value={summary?.readyPercent || 0} className="h-3 mb-6" />
+
+          <div className="space-y-3">
+            {checklist?.checklist.map((item, i) => (
+              <div key={i} className="flex items-center justify-between p-4 rounded-lg bg-black/20 border border-white/5">
+                <div className="flex items-center gap-3">
+                  {statusIcon(item.status)}
+                  <div>
+                    <p className="font-medium text-white">{item.name}</p>
+                    <p className="text-sm text-white/50">{item.details}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="outline" className="text-xs text-white/40 border-white/10">{item.category}</Badge>
+                  {statusBadge(item.status)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -1808,6 +1920,10 @@ export default function TrusteeDashboard() {
                 <TabsTrigger value="pma-contracts" className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-teal-400 data-[state=active]:bg-teal-950/20 data-[state=active]:text-white text-white/60 hover:text-white/80 transition-all whitespace-nowrap" data-testid="tab-pma-contracts">
                   <Gavel className="w-4 h-4 mr-2" />
                   PMA & Contracts
+                </TabsTrigger>
+                <TabsTrigger value="launch-readiness" className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-amber-400 data-[state=active]:bg-amber-950/20 data-[state=active]:text-white text-white/60 hover:text-white/80 transition-all whitespace-nowrap" data-testid="tab-launch-readiness">
+                  <Rocket className="w-4 h-4 mr-2" />
+                  Launch Readiness
                 </TabsTrigger>
               </TabsList>
             </ScrollArea>
@@ -3888,6 +4004,10 @@ export default function TrusteeDashboard() {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="launch-readiness" className="space-y-6">
+              <LaunchReadinessWidget />
             </TabsContent>
           </Tabs>
         </main>

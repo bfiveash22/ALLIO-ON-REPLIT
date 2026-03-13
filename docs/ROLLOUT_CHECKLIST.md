@@ -1,5 +1,5 @@
 # ALLIO v1 Rollout Checklist
-## Target Launch: March 1, 2026
+## Target Launch: April 1, 2026
 
 ---
 
@@ -163,13 +163,13 @@ These must be complete before launch:
 
 ## LAUNCH DAY PROTOCOL
 
-### Pre-Launch (Feb 28)
+### Pre-Launch (March 31)
 - [ ] Final Trustee walkthrough
 - [ ] All integrations verified functional
 - [ ] Backup procedures tested
 - [ ] Support team briefed
 
-### Launch Day (March 1)
+### Launch Day (April 1)
 - [ ] Production deployment
 - [ ] DNS and SSL verification
 - [ ] Real-time monitoring active

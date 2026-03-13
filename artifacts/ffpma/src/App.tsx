@@ -81,6 +81,7 @@ import ContractReviewPage from "@/pages/contract-review";
 import BloodAnalysisPage from "@/pages/blood-analysis";
 import FrequencyLibraryPage from "@/pages/frequency-library";
 import BecomeAMemberPage from "@/pages/become-a-member";
+import LegalDocumentPage from "@/pages/legal-document";
 import NotFound from "@/pages/not-found";
 
 async function fetchProfile(): Promise<MemberProfile | null> {
@@ -234,6 +235,7 @@ function Router() {
       <Route path="/login" component={WPLoginPage} />
       <Route path="/wp-login" component={WPLoginPage} />
       <Route path="/intake" component={IntakeForm} />
+      <Route path="/legal/:slug" component={LegalDocumentPage} />
 
       {/* PROTECTED ROUTES NOW HIDDEN FROM PUBLIC ACCESS */}
       <Route path="/nexus" component={() => (

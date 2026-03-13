@@ -115,7 +115,7 @@ export async function seedAchievements() {
       icon: "rocket",
       color: "purple",
       points: 75,
-      criteria: { joinedBefore: "2026-03-01" },
+      criteria: { joinedBefore: "2026-04-01" },
     },
   ];
 

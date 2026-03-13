@@ -1510,7 +1510,7 @@ export default function Dashboard() {
       ? agents
       : agents.filter((a) => a.department === activeTab);
 
-  const daysUntilRollout = Math.ceil((new Date('2026-03-01').getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+  const daysUntilRollout = Math.ceil((new Date('2026-04-01').getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
 
   return (
     <div className="min-h-screen bg-[#050508] text-white overflow-x-hidden">

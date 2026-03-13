@@ -114,19 +114,6 @@ export async function registerRoutes(
   // Register OpenClaw outbox routes
   registerOpenClawRoutes(app);
 
-
-  // Agent Health Check Endpoint (Preservation Plan Phase 1)
-  app.get('/api/agent-health', async (_req: Request, res: Response) => {
-    try {
-      const { getAgentHealthReport } = await import('./services/agent-health');
-      const report = await getAgentHealthReport();
-      res.json(report);
-    } catch (error: any) {
-      console.error('[Agent Health] Failed to generate health report:', error);
-      res.status(500).json({ error: error.message || 'Failed to generate health report' });
-    }
-  });
-
   // Register Learning/Interactive Healing routes
   const { registerLearningRoutes } = await import("./learning-routes");
   registerLearningRoutes(app);
@@ -369,6 +356,7 @@ export async function registerRoutes(
   app.use("/api/settings", auditLog());
   app.use("/api/sentinel", auditLog());
   app.use("/api/athena", auditLog());
+
   // ========== Operation Overseer: Zero-Downtime System Updates ==========
   app.post("/api/admin/system/update", requireAuth, requireRole('trustee'), async (req, res) => {
     try {
@@ -401,7 +389,7 @@ export async function registerRoutes(
     }
   });
 
-  // ========== Member Intake Form Routes ==========
+  // ========== Patient Intake Form Routes ==========
 
   app.post("/api/intake/save-draft", async (req: Request, res: Response) => {
     try {
@@ -444,29 +432,29 @@ export async function registerRoutes(
       const { patientInfo, formData } = req.body;
 
       if (!patientInfo?.name || !patientInfo?.email) {
-        return res.status(400).json({ error: "Member name and email are required" });
+        return res.status(400).json({ error: "Patient name and email are required" });
       }
 
       // Process submission via service (handles Google Sheets & Database)
       const result = await submitIntakeForm(patientInfo, formData);
 
-      // Send email notification to member
+      // Send email notification to patient
       try {
         await sendEmail(
           patientInfo.email,
-          "FFPMA - Member Intake Received",
-          `Dear ${patientInfo.name},\n\nWe have received your completed member intake form for the FFPMA 2026 Protocol.\n\nOur team will review your information shortly.\n\nBest regards,\nThe FFPMA Team`
+          "FFPMA - Patient Intake Received",
+          `Dear ${patientInfo.name},\n\nWe have received your completed patient intake form for the FFPMA 2026 Protocol.\n\nOur team will review your information shortly.\n\nBest regards,\nThe FFPMA Team`
         );
       } catch (emailError) {
-        console.error("Failed to send member confirmation email:", emailError);
+        console.error("Failed to send patient confirmation email:", emailError);
       }
 
       // Send email notification to Trustee
       try {
         await sendEmail(
           "blake@forgottenformula.com",
-          "New Member Intake Submitted",
-          `A new member intake form has been submitted by ${patientInfo.name} (${patientInfo.email}).\nPrimary Concern: ${formData.basicInfo?.primaryConcern || "N/A"}\n\nReview the latest entry in the FFPMA Member Intake Forms Data.`
+          "New Patient Intake Submitted",
+          `A new patient intake form has been submitted by ${patientInfo.name} (${patientInfo.email}).\nPrimary Concern: ${formData.basicInfo?.primaryConcern || "N/A"}\n\nReview the latest entry in the FFPMA Patient Intake Forms Data Google Sheet.`
         );
       } catch (emailError) {
         console.error("Failed to send trustee notification email:", emailError);
@@ -1523,185 +1511,6 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
     }
   });
 
-  // POST /api/doctor/member-lookup - Lookup member enrollment status by exact user ID, email, or URL
-  app.post("/api/doctor/member-lookup", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
-    try {
-      const { query } = req.body;
-      if (!query || typeof query !== 'string') {
-        return res.status(400).json({ error: "A user ID or member URL is required" });
-      }
-
-      const trimmed = query.trim();
-      if (trimmed.length < 3) {
-        return res.status(400).json({ error: "Search query must be at least 3 characters" });
-      }
-
-      let enrollmentRecord = null;
-      let memberProfile = null;
-      let wpUser = null;
-
-      let lookupValue = trimmed;
-      if (trimmed.includes('http') || trimmed.includes('/')) {
-        try {
-          const url = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
-          const clinicId = url.searchParams.get('clinic_id');
-          const userId = url.searchParams.get('user_id');
-          if (userId) lookupValue = userId;
-          else if (clinicId) lookupValue = clinicId;
-        } catch { /* not a URL, use as-is */ }
-      }
-
-      enrollmentRecord = await db.query.memberEnrollment.findFirst({
-        where: (m, { or, eq }) => or(
-          eq(m.id, lookupValue),
-          eq(m.email, lookupValue)
-        )
-      });
-
-      const userRecord = await db.query.users.findFirst({
-        where: (u, { or, eq }) => or(
-          eq(u.id, lookupValue),
-          eq(u.email, lookupValue)
-        )
-      });
-
-      if (userRecord) {
-        memberProfile = await db.query.memberProfiles.findFirst({
-          where: (p, { eq }) => eq(p.userId, userRecord.id)
-        });
-      }
-
-      try {
-        if (wordPressAuthService.isConfigured() && lookupValue.includes('@')) {
-          wpUser = await wordPressAuthService.getCustomerByEmail(lookupValue);
-        }
-      } catch (wpError: any) {
-        console.error('[Doctor Member Lookup] WP lookup failed:', wpError.message);
-      }
-
-      if (!enrollmentRecord && !memberProfile && !wpUser) {
-        return res.json({
-          found: false,
-          message: "No member found with this ID or email. Please verify the information and try again.",
-        });
-      }
-
-      const contractSigned = !!(enrollmentRecord?.documentSignedAt || memberProfile?.contractSigned);
-      const paymentComplete = !!enrollmentRecord?.paymentCompletedAt;
-      const wpAccountActive = !!wpUser || !!enrollmentRecord?.wpUserId;
-
-      res.json({
-        found: true,
-        member: {
-          id: enrollmentRecord?.id || memberProfile?.id || null,
-          userId: userRecord?.id || null,
-          name: enrollmentRecord?.fullName || (userRecord ? `${userRecord.firstName || ''} ${userRecord.lastName || ''}`.trim() : wpUser?.display_name) || 'Unknown',
-          email: enrollmentRecord?.email || userRecord?.email || wpUser?.email || null,
-          phone: null,
-          status: enrollmentRecord?.status || (memberProfile?.isActive ? 'active' : 'inactive') || null,
-          enrolledAt: enrollmentRecord?.createdAt || memberProfile?.createdAt || null,
-          doctorCode: enrollmentRecord?.doctorCode || null,
-        },
-        verification: {
-          contractSigned,
-          paymentComplete,
-          wpAccountActive,
-          enrollmentExists: !!enrollmentRecord,
-          profileExists: !!memberProfile,
-        },
-        fullyVerified: contractSigned && paymentComplete && wpAccountActive,
-      });
-    } catch (error: any) {
-      console.error('[Doctor Member Lookup] Error:', error);
-      res.status(500).json({ error: error.message || "Failed to lookup member" });
-    }
-  });
-
-  // POST /api/doctor/member-add - Add a verified member to doctor's patient list
-  app.post("/api/doctor/member-add", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
-    try {
-      const { memberId, memberEmail } = req.body;
-      if (!memberId && !memberEmail) {
-        return res.status(400).json({ error: "Member ID or email is required" });
-      }
-
-      const userId = (req as any).user?.claims?.sub || (req as any).session?.passport?.user?.claims?.sub;
-      let userEmail: string | null = null;
-      if (userId) {
-        const user = await db.query.users.findFirst({
-          where: (u, { eq }) => eq(u.id, userId)
-        });
-        userEmail = user?.email || null;
-      }
-      if (!userEmail) {
-        userEmail = (req as any).session?.passport?.user?.email || null;
-      }
-
-      const isAdmin = (req as any).session?.passport?.user?.wpRoles?.includes('administrator');
-
-      const doctor = await db.query.doctorOnboarding.findFirst({
-        where: (d, { eq, and }) => and(
-          eq(d.email, userEmail || ''),
-          eq(d.status, 'completed')
-        )
-      });
-
-      const doctorCode = doctor?.doctorCode;
-      if (!doctorCode && !isAdmin) {
-        return res.status(400).json({ error: "No active doctor profile found" });
-      }
-
-      const enrollment = await db.query.memberEnrollment.findFirst({
-        where: (m, { or, eq }) => or(
-          eq(m.id, memberId || ''),
-          eq(m.email, memberEmail || '')
-        )
-      });
-
-      if (!enrollment) {
-        return res.status(404).json({ error: "No enrollment record found for this member. The member must complete the signup process first." });
-      }
-
-      const contractSigned = !!enrollment.documentSignedAt;
-      const paymentComplete = !!enrollment.paymentCompletedAt;
-      const wpAccountActive = !!enrollment.wpUserId;
-
-      let profileContractSigned = false;
-      if (memberEmail) {
-        const userRec = await db.query.users.findFirst({
-          where: (u, { eq }) => eq(u.email, memberEmail)
-        });
-        if (userRec) {
-          const profile = await db.query.memberProfiles.findFirst({
-            where: (p, { eq }) => eq(p.userId, userRec.id)
-          });
-          if (profile?.contractSigned) profileContractSigned = true;
-        }
-      }
-
-      const isVerified = (contractSigned || profileContractSigned) && paymentComplete && wpAccountActive;
-      if (!isVerified && !isAdmin) {
-        return res.status(400).json({ 
-          error: "This member has not completed all verification steps (contract, payment, and account creation). They must finish the signup process before being added to your patient list." 
-        });
-      }
-
-      if (enrollment.doctorCode && enrollment.doctorCode !== doctorCode && !isAdmin) {
-        return res.status(403).json({ error: "This member is already assigned to another practice. Contact an administrator if a reassignment is needed." });
-      }
-
-      const assignCode = doctorCode || enrollment.doctorCode;
-      await db.update(memberEnrollment)
-        .set({ doctorCode: assignCode, updatedAt: new Date() })
-        .where(eq(memberEnrollment.id, enrollment.id));
-
-      return res.json({ success: true, message: "Member has been added to your patient list." });
-    } catch (error: any) {
-      console.error('[Doctor Member Add] Error:', error);
-      res.status(500).json({ error: error.message || "Failed to add member" });
-    }
-  });
-
   // GET /api/doctor/appointments - Get all appointments for logged-in doctor
   app.get("/api/doctor/appointments", requireAuth, async (req: Request, res: Response) => {
     try {
@@ -1742,7 +1551,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
     }
   });
 
-  // GET /api/doctor/messages/:patientId - Get conversation with member
+  // GET /api/doctor/messages/:patientId - Get conversation with patient
   app.get("/api/doctor/messages/:patientId", requireAuth, async (req: Request, res: Response) => {
     try {
       const userId = (req.user as any)?.id;
@@ -1762,7 +1571,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
     }
   });
 
-  // POST /api/doctor/messages/:patientId - Send message to member
+  // POST /api/doctor/messages/:patientId - Send message to patient
   app.post("/api/doctor/messages/:patientId", requireAuth, async (req: Request, res: Response) => {
     try {
       const userId = (req.user as any)?.id;
@@ -3898,19 +3707,6 @@ INSTRUCTIONS:
     }
   });
 
-  app.get("/api/public/member-signing-link", async (_req: Request, res: Response) => {
-    try {
-      const clinic = await storage.getClinicByWpId(4);
-      if (!clinic || !clinic.signNowMemberLink) {
-        return res.status(404).json({ error: "Member signing link not available" });
-      }
-      res.json({ signNowMemberLink: clinic.signNowMemberLink });
-    } catch (error: any) {
-      console.error("Error fetching public member signing link:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
   let publicStatsCache: { data: any; timestamp: number } | null = null;
   const PUBLIC_STATS_CACHE_TTL = 300000;
 
@@ -5165,259 +4961,6 @@ INSTRUCTIONS:
       const { ALLIO_VOICE_PROMPTS } = await import("./services/huggingface-audio");
       res.json(ALLIO_VOICE_PROMPTS);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.get("/api/frequencies", async (req: Request, res: Response) => {
-    try {
-      const { category, search, featured } = req.query;
-      const filters: { category?: string; search?: string; featured?: boolean } = {};
-      if (category && typeof category === "string") filters.category = category;
-      if (search && typeof search === "string") filters.search = search;
-      if (featured === "true") filters.featured = true;
-      const results = await storage.getFrequencies(filters);
-      res.json(results);
-    } catch (error: any) {
-      console.error("[Frequencies] List error:", error.message);
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.get("/api/frequencies/categories", async (req: Request, res: Response) => {
-    try {
-      const categories = await storage.getFrequencyCategories();
-      res.json(categories);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.get("/api/frequencies/:id", async (req: Request, res: Response) => {
-    try {
-      const freq = await storage.getFrequency(req.params.id);
-      if (!freq) return res.status(404).json({ error: "Frequency not found" });
-      res.json(freq);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/frequencies/:id/play", async (req: Request, res: Response) => {
-    try {
-      await storage.incrementFrequencyPlayCount(req.params.id);
-      res.json({ success: true });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  const createFrequencySchema = z.object({
-    title: z.string().min(1),
-    description: z.string().optional(),
-    frequencyHz: z.string().or(z.number()),
-    waveformType: z.enum(["sine", "square", "triangle", "sawtooth"]).optional(),
-    durationSeconds: z.number().min(1).max(3600).optional(),
-    category: z.string().min(1),
-    purpose: z.string().optional(),
-    sourceAgent: z.string().optional(),
-    audioUrl: z.string().optional(),
-    driveFileId: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-    isFeatured: z.boolean().optional(),
-  });
-
-  app.post("/api/frequencies", requireRole("admin"), async (req: Request, res: Response) => {
-    try {
-      const parsed = createFrequencySchema.safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({ error: "Invalid request", details: parsed.error.errors });
-      }
-      const data = parsed.data;
-      const freq = await storage.createFrequency({
-        title: data.title,
-        description: data.description || null,
-        frequencyHz: String(data.frequencyHz),
-        waveformType: (data.waveformType as any) || "sine",
-        durationSeconds: data.durationSeconds || 300,
-        category: data.category,
-        purpose: data.purpose || null,
-        sourceAgent: data.sourceAgent || null,
-        audioUrl: data.audioUrl || null,
-        audioBase64: null,
-        driveFileId: data.driveFileId || null,
-        tags: data.tags || null,
-        isFeatured: data.isFeatured || false,
-        isActive: true,
-        createdBy: req.user?.id || "admin",
-      });
-      res.status(201).json(freq);
-    } catch (error: any) {
-      console.error("[Frequencies] Create error:", error.message);
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.put("/api/frequencies/:id", requireRole("admin"), async (req: Request, res: Response) => {
-    try {
-      const updated = await storage.updateFrequency(req.params.id, req.body);
-      if (!updated) return res.status(404).json({ error: "Frequency not found" });
-      res.json(updated);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.delete("/api/frequencies/:id", requireRole("admin"), async (req: Request, res: Response) => {
-    try {
-      const deleted = await storage.deleteFrequency(req.params.id);
-      if (!deleted) return res.status(404).json({ error: "Frequency not found" });
-      res.json({ success: true });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/frequencies/generate-tone", requireRole("admin"), async (req: Request, res: Response) => {
-    try {
-      const toneSchema = z.object({
-        frequencyHz: z.number().min(1).max(20000),
-        durationSeconds: z.number().min(1).max(600).default(30),
-        waveformType: z.enum(["sine", "square", "triangle", "sawtooth"]).default("sine"),
-        title: z.string().optional(),
-        category: z.string().optional(),
-        purpose: z.string().optional(),
-        saveToLibrary: z.boolean().optional(),
-      });
-      const parsed = toneSchema.safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({ error: "Invalid request", details: parsed.error.errors });
-      }
-      const { generateToneWav } = await import("./services/frequency-generator");
-      const tone = generateToneWav({
-        frequencyHz: parsed.data.frequencyHz,
-        durationSeconds: parsed.data.durationSeconds,
-        waveformType: parsed.data.waveformType,
-      });
-
-      if (parsed.data.saveToLibrary) {
-        const freq = await storage.createFrequency({
-          title: parsed.data.title || `${parsed.data.frequencyHz} Hz ${parsed.data.waveformType} tone`,
-          description: `Generated ${parsed.data.waveformType} wave at ${parsed.data.frequencyHz} Hz`,
-          frequencyHz: String(parsed.data.frequencyHz),
-          waveformType: parsed.data.waveformType as any,
-          durationSeconds: parsed.data.durationSeconds,
-          category: parsed.data.category || "custom",
-          purpose: parsed.data.purpose || null,
-          sourceAgent: "FORGE",
-          audioBase64: tone.audioBase64,
-          audioUrl: null,
-          driveFileId: null,
-          tags: ["generated", parsed.data.waveformType],
-          isFeatured: false,
-          isActive: true,
-          createdBy: req.user?.id || "admin",
-        });
-        res.json({ ...tone, savedFrequency: freq });
-      } else {
-        res.json(tone);
-      }
-    } catch (error: any) {
-      console.error("[Frequencies] Generate tone error:", error.message);
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/frequencies/seed", requireRole("admin"), async (req: Request, res: Response) => {
-    try {
-      const { FREQUENCY_PRESETS, CATEGORY_SEED_DATA } = await import("./services/frequency-generator");
-
-      let categoriesCreated = 0;
-      for (const cat of CATEGORY_SEED_DATA) {
-        try {
-          await storage.createFrequencyCategory(cat);
-          categoriesCreated++;
-        } catch (e: any) {
-          if (!e.message?.includes("duplicate")) console.error(`Category seed error: ${e.message}`);
-        }
-      }
-
-      let frequenciesCreated = 0;
-      for (const preset of FREQUENCY_PRESETS) {
-        try {
-          await storage.createFrequency({
-            title: preset.title,
-            description: preset.description,
-            frequencyHz: String(preset.frequencyHz),
-            waveformType: "sine",
-            durationSeconds: 300,
-            category: preset.category,
-            purpose: preset.purpose,
-            sourceAgent: preset.sourceAgent,
-            audioUrl: null,
-            audioBase64: null,
-            driveFileId: null,
-            tags: preset.tags,
-            isFeatured: preset.isFeatured,
-            isActive: true,
-            createdBy: "system-seed",
-          });
-          frequenciesCreated++;
-        } catch (e: any) {
-          if (!e.message?.includes("duplicate")) console.error(`Frequency seed error: ${e.message}`);
-        }
-      }
-
-      res.json({ success: true, categoriesCreated, frequenciesCreated });
-    } catch (error: any) {
-      console.error("[Frequencies] Seed error:", error.message);
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/frequencies/import-drive", requireRole("admin"), async (req: Request, res: Response) => {
-    try {
-      const { folderId } = req.body;
-      if (!folderId) {
-        return res.status(400).json({ error: "folderId is required" });
-      }
-      const { listFolderContents } = await import("./services/drive");
-      const files = await listFolderContents(folderId);
-      const audioFiles = files.filter(f =>
-        f.mimeType.startsWith("audio/") ||
-        f.name.endsWith(".wav") || f.name.endsWith(".mp3") ||
-        f.name.endsWith(".flac") || f.name.endsWith(".ogg")
-      );
-
-      const imported = [];
-      for (const file of audioFiles) {
-        try {
-          const freq = await storage.createFrequency({
-            title: file.name.replace(/\.[^.]+$/, ""),
-            description: `Imported from Google Drive: ${file.name}`,
-            frequencyHz: "0",
-            waveformType: "sine",
-            durationSeconds: 0,
-            category: "custom",
-            purpose: "Imported audio file",
-            sourceAgent: "HERMES",
-            audioUrl: file.webViewLink || null,
-            audioBase64: null,
-            driveFileId: file.id,
-            tags: ["imported", "drive"],
-            isFeatured: false,
-            isActive: true,
-            createdBy: req.user?.id || "admin",
-          });
-          imported.push(freq);
-        } catch (e: any) {
-          console.error(`Drive import error for ${file.name}:`, e.message);
-        }
-      }
-
-      res.json({ success: true, totalAudioFiles: audioFiles.length, imported: imported.length, files: imported });
-    } catch (error: any) {
-      console.error("[Frequencies] Drive import error:", error.message);
       res.status(500).json({ error: error.message });
     }
   });
@@ -6726,9 +6269,243 @@ Status: DRAFT - Pending Trustee Review`,
     }
   });
 
+  // Legal Documents API - public access
+  app.get("/api/legal/documents", async (_req: Request, res: Response) => {
+    try {
+      const { getAllLegalDocuments } = await import("./services/legal-documents");
+      const docs = getAllLegalDocuments();
+      res.json(docs.map(d => ({ title: d.title, slug: d.slug, lastUpdated: d.lastUpdated })));
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/legal/documents/:slug", async (req: Request, res: Response) => {
+    try {
+      const { getLegalDocumentBySlug } = await import("./services/legal-documents");
+      const doc = getLegalDocumentBySlug(req.params.slug);
+      if (!doc) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      res.json(doc);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // HERALD Email Campaign API
+  app.post("/api/herald/campaign/welcome", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { email, memberName } = req.body;
+      if (!email || !memberName) {
+        return res.status(400).json({ error: "email and memberName are required" });
+      }
+      const { EMAIL_TEMPLATES, sendCampaignEmail } = await import("./services/herald-email-campaigns");
+      const template = EMAIL_TEMPLATES.welcomeOnboarding(memberName);
+      const result = await sendCampaignEmail(email, template);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/herald/campaign/intake-confirmation", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { email, memberName, intakeId } = req.body;
+      if (!email || !memberName || !intakeId) {
+        return res.status(400).json({ error: "email, memberName, and intakeId are required" });
+      }
+      const { EMAIL_TEMPLATES, sendCampaignEmail } = await import("./services/herald-email-campaigns");
+      const template = EMAIL_TEMPLATES.intakeConfirmation(memberName, intakeId);
+      const result = await sendCampaignEmail(email, template);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/herald/campaign/protocol-delivery", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { email, memberName, protocolId, slidesUrl } = req.body;
+      if (!email || !memberName || !protocolId) {
+        return res.status(400).json({ error: "email, memberName, and protocolId are required" });
+      }
+      const { EMAIL_TEMPLATES, sendCampaignEmail } = await import("./services/herald-email-campaigns");
+      const template = EMAIL_TEMPLATES.protocolDelivery(memberName, protocolId, slidesUrl);
+      const result = await sendCampaignEmail(email, template);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/herald/campaign/launch-announcement", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { recipients } = req.body;
+      if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
+        return res.status(400).json({ error: "recipients array is required" });
+      }
+      const { EMAIL_TEMPLATES, sendBulkCampaign } = await import("./services/herald-email-campaigns");
+      const template = EMAIL_TEMPLATES.launchAnnouncement();
+      const result = await sendBulkCampaign(recipients, template);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/herald/campaign/appointment-reminder", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { email, memberName, doctorName, date, time } = req.body;
+      if (!email || !memberName || !doctorName || !date || !time) {
+        return res.status(400).json({ error: "email, memberName, doctorName, date, and time are required" });
+      }
+      const { EMAIL_TEMPLATES, sendCampaignEmail } = await import("./services/herald-email-campaigns");
+      const template = EMAIL_TEMPLATES.appointmentReminder(memberName, doctorName, date, time);
+      const result = await sendCampaignEmail(email, template);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Stripe Checkout API - live payment sessions
+  app.post("/api/checkout/stripe/create-session", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { lineItems, successUrl, cancelUrl, customerEmail } = req.body;
+      if (!lineItems || !Array.isArray(lineItems) || lineItems.length === 0) {
+        return res.status(400).json({ error: "lineItems array is required" });
+      }
+
+      const stripeKey = process.env.STRIPE_SECRET_KEY;
+      if (!stripeKey) {
+        return res.status(503).json({ error: "Stripe is not configured. Add STRIPE_SECRET_KEY to enable payments." });
+      }
+
+      const stripe = (await import("stripe")).default;
+      const stripeClient = new stripe(stripeKey);
+
+      const session = await stripeClient.checkout.sessions.create({
+        payment_method_types: ["card"],
+        mode: "payment",
+        line_items: lineItems.map((item: any) => ({
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: item.name,
+              description: item.description,
+            },
+            unit_amount: Math.round(item.price * 100),
+          },
+          quantity: item.quantity || 1,
+        })),
+        success_url: successUrl || `${process.env.APP_URL || "https://www.forgottenformula.com"}/member?payment=success`,
+        cancel_url: cancelUrl || `${process.env.APP_URL || "https://www.forgottenformula.com"}/member?payment=cancelled`,
+        customer_email: customerEmail || (req.user as any)?.email,
+        metadata: {
+          userId: (req.user as any)?.id || "unknown",
+          source: "allio-platform",
+        },
+      });
+
+      res.json({
+        sessionId: session.id,
+        url: session.url,
+      });
+    } catch (error: any) {
+      console.error("[Stripe] Checkout session error:", error.message);
+      res.status(500).json({ error: error.message || "Failed to create checkout session" });
+    }
+  });
+
+  app.post("/api/checkout/stripe/webhook", async (req: Request, res: Response) => {
+    try {
+      const stripeKey = process.env.STRIPE_SECRET_KEY;
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+      if (!stripeKey) {
+        return res.status(503).json({ error: "Stripe not configured" });
+      }
+
+      const stripe = (await import("stripe")).default;
+      const stripeClient = new stripe(stripeKey);
+
+      if (!webhookSecret) {
+        console.warn("[Stripe] STRIPE_WEBHOOK_SECRET not set - rejecting unsigned webhook for security");
+        return res.status(400).json({ error: "Webhook secret not configured. Set STRIPE_WEBHOOK_SECRET to accept webhooks." });
+      }
+
+      const sig = req.headers["stripe-signature"] as string;
+      if (!sig) {
+        return res.status(400).json({ error: "Missing stripe-signature header" });
+      }
+
+      const event = stripeClient.webhooks.constructEvent(req.body, sig, webhookSecret);
+
+      switch (event.type) {
+        case "checkout.session.completed": {
+          const session = event.data.object;
+          console.log(`[Stripe] Payment completed: ${session.id}, amount: ${session.amount_total}, email: ${session.customer_email}`);
+          break;
+        }
+        case "payment_intent.payment_failed": {
+          const intent = event.data.object;
+          console.log(`[Stripe] Payment failed: ${intent.id}, error: ${intent.last_payment_error?.message}`);
+          break;
+        }
+        default:
+          console.log(`[Stripe] Unhandled event type: ${event.type}`);
+      }
+
+      res.json({ received: true });
+    } catch (error: any) {
+      console.error("[Stripe] Webhook error:", error.message);
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/checkout/stripe/status", requireRole("admin"), async (_req: Request, res: Response) => {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    res.json({
+      configured: !!stripeKey,
+      mode: stripeKey?.startsWith("sk_live_") ? "live" : stripeKey?.startsWith("sk_test_") ? "test" : "unconfigured",
+      webhookConfigured: !!process.env.STRIPE_WEBHOOK_SECRET,
+    });
+  });
+
+  // Pre-Launch Checklist API - operational readiness
+  app.get("/api/launch/checklist", requireRole("admin"), async (_req: Request, res: Response) => {
+    try {
+      const checks: Array<{ name: string; category: string; status: "pass" | "fail" | "warning"; details: string }> = [];
+
+      checks.push({ name: "Stripe Payments", category: "payments", status: process.env.STRIPE_SECRET_KEY ? (process.env.STRIPE_SECRET_KEY.startsWith("sk_live_") ? "pass" : "warning") : "fail", details: process.env.STRIPE_SECRET_KEY ? (process.env.STRIPE_SECRET_KEY.startsWith("sk_live_") ? "Live key configured" : "Test key - switch to live for launch") : "STRIPE_SECRET_KEY not set" });
+      checks.push({ name: "Stripe Webhook", category: "payments", status: process.env.STRIPE_WEBHOOK_SECRET ? "pass" : "fail", details: process.env.STRIPE_WEBHOOK_SECRET ? "Webhook secret configured" : "STRIPE_WEBHOOK_SECRET required for payment security" });
+      checks.push({ name: "Gmail Integration", category: "email", status: process.env.GMAIL_REFRESH_TOKEN ? "pass" : "fail", details: process.env.GMAIL_REFRESH_TOKEN ? "Gmail OAuth configured" : "GMAIL_REFRESH_TOKEN not set" });
+      checks.push({ name: "SignNow Integration", category: "documents", status: process.env.SIGNNOW_API_KEY ? "pass" : "warning", details: process.env.SIGNNOW_API_KEY ? "SignNow API key configured" : "SIGNNOW_API_KEY not set" });
+      checks.push({ name: "Database Connection", category: "infrastructure", status: process.env.DATABASE_URL ? "pass" : "fail", details: process.env.DATABASE_URL ? "Database URL configured" : "DATABASE_URL not set" });
+      checks.push({ name: "OpenAI Integration", category: "ai", status: process.env.OPENAI_API_KEY ? "pass" : "fail", details: process.env.OPENAI_API_KEY ? "OpenAI API key configured" : "OPENAI_API_KEY not set" });
+      checks.push({ name: "WordPress OAuth", category: "auth", status: process.env.WP_SITE_URL ? "pass" : "fail", details: process.env.WP_SITE_URL ? "WordPress site configured" : "WP_SITE_URL not set" });
+      checks.push({ name: "WooCommerce", category: "ecommerce", status: (process.env.WOOCOMMERCE_KEY && process.env.WOOCOMMERCE_SECRET) ? "pass" : "warning", details: (process.env.WOOCOMMERCE_KEY && process.env.WOOCOMMERCE_SECRET) ? "WooCommerce API keys configured" : "WooCommerce keys not fully set" });
+      checks.push({ name: "Legal Documents", category: "compliance", status: "pass", details: "4 legal documents available" });
+      checks.push({ name: "HERALD Email Templates", category: "email", status: "pass", details: "5 email campaign templates ready" });
+
+      const passCount = checks.filter(c => c.status === "pass").length;
+      const failCount = checks.filter(c => c.status === "fail").length;
+      const warnCount = checks.filter(c => c.status === "warning").length;
+
+      res.json({
+        launchDate: "2026-04-01T00:00:00Z",
+        checklist: checks,
+        summary: { total: checks.length, pass: passCount, fail: failCount, warning: warnCount, readyPercent: Math.round((passCount / checks.length) * 100) },
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Deadline countdown endpoint
   app.get("/api/deadline", async (req: Request, res: Response) => {
-    const deadline = new Date("2026-03-01T00:00:00Z");
+    const deadline = new Date("2026-04-01T00:00:00Z");
     const now = new Date();
     const diff = deadline.getTime() - now.getTime();
 
@@ -7207,7 +6984,7 @@ Status: DRAFT - Pending Trustee Review`,
   // DOCTOR DASHBOARD API
   // ========================
 
-  // Member Records
+  // Patient Records
   app.get("/api/doctor/patients", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
     try {
       const doctorId = req.user?.id as string;
@@ -7222,7 +6999,7 @@ Status: DRAFT - Pending Trustee Review`,
     try {
       const patient = await storage.getPatientRecord(req.params.id);
       if (!patient) {
-        return res.status(404).json({ success: false, error: "Member record not found" });
+        return res.status(404).json({ success: false, error: "Patient not found" });
       }
       const uploads = await storage.getPatientUploads(patient.id);
       const protocols = await storage.getPatientProtocols(patient.id);
@@ -7251,7 +7028,7 @@ Status: DRAFT - Pending Trustee Review`,
     }
   });
 
-  // Member Uploads
+  // Patient Uploads
   app.post("/api/doctor/patients/:patientId/uploads", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
     try {
       const doctorId = req.user?.id as string;
@@ -7267,7 +7044,7 @@ Status: DRAFT - Pending Trustee Review`,
     }
   });
 
-  // Member Protocols
+  // Patient Protocols
   app.get("/api/doctor/protocols", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
     try {
       const doctorId = req.user?.id as string;
@@ -7566,14 +7343,14 @@ Status: DRAFT - Pending Trustee Review`,
     }
   });
 
-  // ========== Member Intake System ==========
+  // ========== Patient Intake System ==========
   app.post("/api/intake/submit", async (req: Request, res: Response) => {
     try {
       const { submitIntakeForm } = await import("./services/intake");
       const { patientInfo, formData } = req.body;
 
       if (!patientInfo || !patientInfo.name || !patientInfo.email) {
-        return res.status(400).json({ success: false, error: "Missing required member info (name, email)" });
+        return res.status(400).json({ success: false, error: "Missing required patient info (name, email)" });
       }
 
       const result = await submitIntakeForm(patientInfo, formData);

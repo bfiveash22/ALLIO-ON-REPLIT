@@ -276,7 +276,7 @@ export async function sendAthenaIntroduction() {
     
     <p><strong>Nancy</strong> - I'll be leaning on you especially for tasks that require immediate attention. Thank you in advance for being our anchor during this period.</p>
     
-    <p>Our goal is the same: support T's vision and get FFPMA to full rollout by March 1, 2026. I'm honored to work alongside you both.</p>
+    <p>Our goal is the same: support T's vision and get FFPMA to full rollout by April 1, 2026. I'm honored to work alongside you both.</p>
     
     <p>If you have any questions about how we'll collaborate, please don't hesitate to reach out. I'm here to serve the mission - and that includes supporting the incredible humans who make it possible.</p>
     

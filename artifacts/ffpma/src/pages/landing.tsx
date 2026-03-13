@@ -406,6 +406,12 @@ export default function LandingPage() {
                   {t('landing.pma')}
                 </Badge>
               </motion.div>
+              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.15, duration: 0.5 }}>
+                <Badge className="mb-4 bg-gradient-to-r from-amber-500/90 to-orange-500/90 hover:from-amber-400 hover:to-orange-400 text-white border-0 px-5 py-2 text-sm font-semibold shadow-lg shadow-amber-500/25 cursor-default">
+                  <Zap className="mr-2 h-4 w-4" />
+                  ALLIO v1 Launches April 1, 2026
+                </Badge>
+              </motion.div>
               
               <motion.h1 
                 className="mb-6 text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white drop-shadow-2xl"
@@ -1107,6 +1113,15 @@ export default function LandingPage() {
             <p className="mt-4 max-w-3xl mx-auto text-xs text-muted-foreground/70 leading-relaxed">
               PMA Disclaimer: Forgotten Formula PMA is a Private Member Association operating in the private domain under the protections of the First and Fourteenth Amendments to the United States Constitution. The information provided on this platform is for educational purposes only and is shared exclusively among private members. Nothing on this platform constitutes medical advice, a diagnosis, or a prescription. All wellness protocols, assessments, and educational materials are shared member-to-member and do not create a doctor-patient relationship. Members assume full responsibility for their own health decisions. By accessing this platform, you acknowledge that you are a private member exercising your constitutional rights.
             </p>
+            <div className="mt-4 flex flex-wrap justify-center gap-4 text-xs">
+              <Link href="/legal/pma-agreement" className="text-cyan-400 hover:text-cyan-300 transition-colors">PMA Agreement</Link>
+              <span className="text-muted-foreground">|</span>
+              <Link href="/legal/privacy-policy" className="text-cyan-400 hover:text-cyan-300 transition-colors">Privacy Policy</Link>
+              <span className="text-muted-foreground">|</span>
+              <Link href="/legal/terms" className="text-cyan-400 hover:text-cyan-300 transition-colors">Terms of Service</Link>
+              <span className="text-muted-foreground">|</span>
+              <Link href="/legal/doctor-agreement" className="text-cyan-400 hover:text-cyan-300 transition-colors">Doctor Agreement</Link>
+            </div>
           </div>
         </div>
       </footer>

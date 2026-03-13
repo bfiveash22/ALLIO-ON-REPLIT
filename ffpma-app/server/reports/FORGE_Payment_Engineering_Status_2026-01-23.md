@@ -127,7 +127,7 @@ Per specification, future token launch considerations:
 
 ## 4. Required Actions for Full Implementation
 
-### Immediate (Before March 1, 2026 Launch)
+### Immediate (Before April 1, 2026 Launch)
 
 | # | Action | Owner | Status |
 |---|--------|-------|--------|

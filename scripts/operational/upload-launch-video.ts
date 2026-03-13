@@ -86,7 +86,7 @@ async function uploadVideo(): Promise<void> {
   const fileMetadata = {
     name: fileName,
     parents: [PRISM_VIDEOS_FOLDER_ID],
-    description: "ALLIO Launch Video with professional narration explaining the 43-agent healing network, mission 'Merging humans with AI by healing', and March 1, 2026 launch date. Features 528Hz healing frequency background."
+    description: "ALLIO Launch Video with professional narration explaining the 43-agent healing network, mission 'Merging humans with AI by healing', and April 1, 2026 launch date. Features 528Hz healing frequency background."
   };
   
   const media = {

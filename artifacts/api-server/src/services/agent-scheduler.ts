@@ -867,7 +867,7 @@ export async function seedInitialTasks(): Promise<{ created: number; tasks: stri
       agentId: 'PIXEL',
       division: 'marketing' as const,
       title: 'Social Media Banner - March 2026 Launch',
-      description: 'Design a compelling social media banner announcing the March 1, 2026 full launch. Feature the Allio brand, healing ecosystem messaging, and call-to-action for new members. Optimized for Twitter/X, Facebook, and LinkedIn.',
+      description: 'Design a compelling social media banner announcing the April 1, 2026 full launch. Feature the Allio brand, healing ecosystem messaging, and call-to-action for new members. Optimized for Twitter/X, Facebook, and LinkedIn.',
       priority: 4,
     },
     {

@@ -13,7 +13,7 @@
 ### March 2026 Launch Videos
 | Asset | Duration | Format | Description |
 |-------|----------|--------|-------------|
-| `allio_march_1_2026_launch.mp4` | 8s | 16:9 | Epic March 1, 2026 launch announcement |
+| `allio_march_1_2026_launch.mp4` | 8s | 16:9 | Epic April 1, 2026 launch announcement |
 | `allio_march_2026_teaser_video.mp4` | 6s | 16:9 | Teaser trailer building anticipation |
 | `allio_complete_brand_reveal.mp4` | 8s | 16:9 | Full ALLIO brand reveal sequence |
 | `allio_final_countdown_reveal.mp4` | 8s | 16:9 | Countdown to launch moment |

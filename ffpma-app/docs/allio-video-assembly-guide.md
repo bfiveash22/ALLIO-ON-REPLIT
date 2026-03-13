@@ -7,7 +7,7 @@
 **Total Raw Footage:** 72 seconds (9 clips x 8 seconds each)  
 **Created:** January 23, 2026  
 **Target Delivery:** February 15, 2026  
-**Launch Date:** March 1, 2026
+**Launch Date:** April 1, 2026
 
 ---
 

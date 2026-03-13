@@ -6443,7 +6443,7 @@ Status: DRAFT - Pending Trustee Review`,
 
   // Deadline countdown endpoint
   app.get("/api/deadline", async (req: Request, res: Response) => {
-    const deadline = new Date("2026-03-01T00:00:00Z");
+    const deadline = new Date("2026-04-01T00:00:00Z");
     const now = new Date();
     const diff = deadline.getTime() - now.getTime();
 

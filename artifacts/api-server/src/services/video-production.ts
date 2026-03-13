@@ -459,7 +459,7 @@ export async function cleanupTempFiles() {
 }
 
 export const ALLIO_LAUNCH_SCRIPT = {
-  title: "ALLIO - March 1, 2026 Launch",
+  title: "ALLIO - April 1, 2026 Launch",
   scenes: [
     {
       name: "The Awakening",
