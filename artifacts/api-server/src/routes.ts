@@ -1,5 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
+import { cacheMiddleware, CACHE_TTL, apiCache } from "./lib/cache";
+import { asyncHandler, AppError } from "./middleware/error-handler";
 
 declare global {
   namespace Express {
@@ -26,7 +28,10 @@ import { registerOpenClawRoutes } from "./openclaw-routes";
 
 // Secure preview mode validation - requires specific token pattern
 const PORT = process.env.PORT || 5000;
-const PREVIEW_TOKEN_SECRET = process.env.PREVIEW_TOKEN_SECRET || 'ffpma_preview_2026';
+const PREVIEW_TOKEN_SECRET = process.env.PREVIEW_TOKEN_SECRET;
+if (!PREVIEW_TOKEN_SECRET) {
+  console.warn("[SECURITY] PREVIEW_TOKEN_SECRET env var is not set — preview-mode endpoints will reject all requests");
+}
 function validatePreviewMode(req: Request): boolean {
   const previewHeader = req.headers['x-preview-mode'];
   if (previewHeader !== 'trustee') return false;
@@ -126,6 +131,36 @@ export async function registerRoutes(
   const { registerProtocolBuilderRoutes } = await import("./services/protocol-builder");
   registerProtocolBuilderRoutes(app);
 
+  // Register domain route modules (modularized from monolithic routes.ts)
+  const { registerTrainingRoutes } = await import("./routes/training-routes");
+  registerTrainingRoutes(app);
+  const { registerMemberRoutes } = await import("./routes/member-routes");
+  registerMemberRoutes(app);
+  const { registerDoctorRoutes } = await import("./routes/doctor-routes");
+  registerDoctorRoutes(app);
+  const { registerSettingsRoutes } = await import("./routes/settings-routes");
+  registerSettingsRoutes(app);
+  const { registerMediaRoutes } = await import("./routes/media-routes");
+  registerMediaRoutes(app);
+  const { registerContractRoutes } = await import("./routes/contract-routes");
+  registerContractRoutes(app);
+  const { registerWooCommerceRoutes } = await import("./routes/woocommerce-routes");
+  registerWooCommerceRoutes(app);
+  const { registerOnboardingRoutes } = await import("./routes/onboarding-routes");
+  registerOnboardingRoutes(app);
+  const { registerAgentRoutes } = await import("./routes/agent-routes");
+  registerAgentRoutes(app);
+  const { registerAthenaRoutes } = await import("./routes/athena-routes");
+  registerAthenaRoutes(app);
+  const { registerDriveRoutes } = await import("./routes/drive-routes");
+  registerDriveRoutes(app);
+  const { registerBloodResearchRoutes } = await import("./routes/blood-research-routes");
+  registerBloodResearchRoutes(app);
+  const { registerAdminRoutes } = await import("./routes/admin-routes");
+  registerAdminRoutes(app);
+  const { registerMiscRoutes } = await import("./routes/misc-routes");
+  registerMiscRoutes(app);
+
   // Detox Protocols API - accessible to all authenticated members
   app.get('/api/detox-protocols', requireAuth, async (_req, res) => {
     try {
@@ -192,6 +227,47 @@ export async function registerRoutes(
       res.status(500).json({ error: 'Failed to download protocol' });
     }
   });
+  // Register Learning/Interactive Healing routes
+  const { registerLearningRoutes } = await import("./learning-routes");
+  registerLearningRoutes(app);
+
+  // Register Diane AI routes
+  const { registerDianeRoutes } = await import("./services/diane-ai");
+  registerDianeRoutes(app);
+
+  // Register Protocol Builder routes
+  const { registerProtocolBuilderRoutes } = await import("./services/protocol-builder");
+  registerProtocolBuilderRoutes(app);
+
+  // Register domain route modules (modularized from monolithic routes.ts)
+  const { registerTrainingRoutes } = await import("./routes/training-routes");
+  registerTrainingRoutes(app);
+  const { registerMemberRoutes } = await import("./routes/member-routes");
+  registerMemberRoutes(app);
+  const { registerDoctorRoutes } = await import("./routes/doctor-routes");
+  registerDoctorRoutes(app);
+  const { registerSettingsRoutes } = await import("./routes/settings-routes");
+  registerSettingsRoutes(app);
+  const { registerMediaRoutes } = await import("./routes/media-routes");
+  registerMediaRoutes(app);
+  const { registerContractRoutes } = await import("./routes/contract-routes");
+  registerContractRoutes(app);
+  const { registerWooCommerceRoutes } = await import("./routes/woocommerce-routes");
+  registerWooCommerceRoutes(app);
+  const { registerOnboardingRoutes } = await import("./routes/onboarding-routes");
+  registerOnboardingRoutes(app);
+  const { registerAgentRoutes } = await import("./routes/agent-routes");
+  registerAgentRoutes(app);
+  const { registerAthenaRoutes } = await import("./routes/athena-routes");
+  registerAthenaRoutes(app);
+  const { registerDriveRoutes } = await import("./routes/drive-routes");
+  registerDriveRoutes(app);
+  const { registerBloodResearchRoutes } = await import("./routes/blood-research-routes");
+  registerBloodResearchRoutes(app);
+  const { registerAdminRoutes } = await import("./routes/admin-routes");
+  registerAdminRoutes(app);
+  const { registerMiscRoutes } = await import("./routes/misc-routes");
+  registerMiscRoutes(app);
 
   // Register Protocol Assembly routes
   const {
@@ -286,50 +362,35 @@ export async function registerRoutes(
     }
   });
 
-  app.get('/api/protocol-assembly/protocols', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (_req, res) => {
-    try {
-      const protocols = await listProtocols();
-      res.json(protocols);
-    } catch (error: unknown) {
-      console.error('[Protocol Assembly] List error:', error);
-      res.status(500).json({ error: 'Failed to list protocols' });
-    }
-  });
+  app.get('/api/protocol-assembly/protocols', requireAuth, requireRole('admin', 'trustee', 'doctor'), asyncHandler(async (_req, res) => {
+    const protocols = await listProtocols();
+    res.json(protocols);
+  }));
 
-  app.get('/api/protocol-assembly/protocols/member/:memberId', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req, res) => {
-    try {
-      const { memberId } = req.params;
-      if (!memberId) return res.status(400).json({ error: 'memberId is required' });
-      const memberProtocols = await db.select({
-        id: generatedProtocols.id,
-        patientName: generatedProtocols.patientName,
-        patientAge: generatedProtocols.patientAge,
-        sourceType: generatedProtocols.sourceType,
-        status: generatedProtocols.status,
-        slidesWebViewLink: generatedProtocols.slidesWebViewLink,
-        generatedBy: generatedProtocols.generatedBy,
-        createdAt: generatedProtocols.createdAt,
-        updatedAt: generatedProtocols.updatedAt,
-      }).from(generatedProtocols).where(eq(generatedProtocols.memberId, memberId)).orderBy(desc(generatedProtocols.createdAt));
-      res.json(memberProtocols);
-    } catch (error: unknown) {
-      console.error('[Protocol Assembly] Member protocols error:', error);
-      res.status(500).json({ error: 'Failed to list member protocols' });
-    }
-  });
+  app.get('/api/protocol-assembly/protocols/member/:memberId', requireAuth, requireRole('admin', 'trustee', 'doctor'), asyncHandler(async (req, res) => {
+    const { memberId } = req.params;
+    if (!memberId) throw new AppError('memberId is required', 400, 'VALIDATION_ERROR');
+    const memberProtocols = await db.select({
+      id: generatedProtocols.id,
+      patientName: generatedProtocols.patientName,
+      patientAge: generatedProtocols.patientAge,
+      sourceType: generatedProtocols.sourceType,
+      status: generatedProtocols.status,
+      slidesWebViewLink: generatedProtocols.slidesWebViewLink,
+      generatedBy: generatedProtocols.generatedBy,
+      createdAt: generatedProtocols.createdAt,
+      updatedAt: generatedProtocols.updatedAt,
+    }).from(generatedProtocols).where(eq(generatedProtocols.memberId, memberId)).orderBy(desc(generatedProtocols.createdAt));
+    res.json(memberProtocols);
+  }));
 
-  app.get('/api/protocol-assembly/protocols/:id', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
-      const protocol = await getProtocol(id);
-      if (!protocol) return res.status(404).json({ error: 'Protocol not found' });
-      res.json(protocol);
-    } catch (error: unknown) {
-      console.error('[Protocol Assembly] Get error:', error);
-      res.status(500).json({ error: 'Failed to retrieve protocol' });
-    }
-  });
+  app.get('/api/protocol-assembly/protocols/:id', requireAuth, requireRole('admin', 'trustee', 'doctor'), asyncHandler(async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) throw new AppError('Invalid ID', 400, 'VALIDATION_ERROR');
+    const protocol = await getProtocol(id);
+    if (!protocol) throw new AppError('Protocol not found', 404, 'NOT_FOUND');
+    res.json(protocol);
+  }));
 
   app.post('/api/protocol-assembly/protocols/:id/slides', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req, res) => {
     try {

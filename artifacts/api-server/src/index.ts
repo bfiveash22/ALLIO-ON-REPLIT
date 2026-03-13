@@ -4,10 +4,14 @@ import { registerRoutes } from "./routes";
 import { createServer } from "http";
 import path from "path";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
 import { startScheduler, stopScheduler } from "./services/scheduler";
 import { startAgentScheduler, stopAgentScheduler, seedInitialTasks } from "./services/agent-scheduler";
 import { sentinel } from "./services/sentinel";
+import { requestIdMiddleware } from "./lib/request-id";
+import { requestLogger } from "./middleware/request-logger";
+import { errorHandler, notFoundHandler } from "./middleware/error-handler";
+import { registerHealthRoutes } from "./routes/health-routes";
+import { authRateLimiter, writeRateLimiter, readRateLimiter, agentRateLimiter, webhookRateLimiter } from "./middleware/rate-limiter";
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('UNHANDLED PROMISE REJECTION:', reason);
@@ -55,28 +59,25 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 1000,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many requests, please try again later.' },
-  skip: (req) => {
-    const excludedPrefixes = [
-      '/api/agent-network',
-      '/api/sentinel',
-      '/api/agent-tasks',
-      '/api/agents',
-      '/api/auth',
-      '/api/profile',
-      '/api/admin',
-      '/api/openclaw'
-    ];
-    return excludedPrefixes.some(prefix => req.path.startsWith(prefix));
-  }
-});
+app.use(requestIdMiddleware);
 
-app.use('/api/', apiLimiter);
+app.use('/api/auth', authRateLimiter);
+app.use('/api/woocommerce/webhook', webhookRateLimiter);
+app.use('/api/signnow/webhook', webhookRateLimiter);
+app.use('/api/agent-network', agentRateLimiter);
+app.use('/api/sentinel', agentRateLimiter);
+app.use('/api/agent-tasks', agentRateLimiter);
+app.use('/api/agents', agentRateLimiter);
+app.use('/api/intake', writeRateLimiter);
+app.use('/api/checkout', writeRateLimiter);
+app.use('/api/onboarding', writeRateLimiter);
+app.use('/api/protocol-assembly', writeRateLimiter);
+app.use('/api/admin', writeRateLimiter);
+app.use('/api/training', readRateLimiter);
+app.use('/api/catalog', readRateLimiter);
+app.use('/api/programs', readRateLimiter);
+app.use('/api/doctor', readRateLimiter);
+app.use('/api/settings', writeRateLimiter);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -89,32 +90,9 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
-app.use((req, res, next) => {
-  const start = Date.now();
-  const reqPath = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+app.use(requestLogger);
 
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (reqPath.startsWith("/api")) {
-      let logLine = `${req.method} ${reqPath} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        const jsonStr = JSON.stringify(capturedJsonResponse);
-        logLine += ` :: ${jsonStr.length > 500 ? jsonStr.substring(0, 500) + '...[truncated]' : jsonStr}`;
-      }
-
-      log(logLine);
-    }
-  });
-
-  next();
-});
+registerHealthRoutes(app);
 
 (async () => {
   try {
@@ -181,13 +159,8 @@ app.use((req, res, next) => {
     res.download(filePath, 'ALLIO_Agent_Network_Guide.pdf');
   });
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    log(`Error: ${message} (${status})`, 'error');
-    res.status(status).json({ message });
-  });
+  app.use(notFoundHandler);
+  app.use(errorHandler);
 
   const port = parseInt(process.env.PORT || "5000", 10);
   httpServer.listen(
