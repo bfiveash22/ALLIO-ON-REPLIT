@@ -23,3 +23,10 @@ expertMode = true
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
+
+[userenv]
+
+[userenv.shared]
+WP_SITE_URL = "https://forgottenformula.com"
+WP_USERNAME = "blake"
+ENABLE_SCHEDULERS = "true"
