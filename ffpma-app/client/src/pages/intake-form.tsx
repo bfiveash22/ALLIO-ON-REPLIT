@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, User, Activity, Brain, FileText, CheckCircle2, ChevronRight, ChevronLeft, Save } from "lucide-react";
@@ -76,12 +77,7 @@ export default function IntakeForm() {
 
   const saveDraftMutation = useMutation({
     mutationFn: async (data: any) => {
-      const res = await fetch("/api/intake/save-draft", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      });
-      if (!res.ok) throw new Error("Failed to save draft");
+      const res = await apiRequest("POST", "/api/intake/save-draft", data);
       return res.json();
     },
     onSuccess: (data) => {
@@ -262,12 +258,7 @@ export default function IntakeForm() {
 
   const submitMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch("/api/intake/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ patientInfo: formData.basicInfo, formData })
-      });
-      if (!res.ok) throw new Error("Failed to submit intake form");
+      const res = await apiRequest("POST", "/api/intake/submit", { patientInfo: formData.basicInfo, formData });
       return res.json();
     },
     onSuccess: () => {

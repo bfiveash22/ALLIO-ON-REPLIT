@@ -7,6 +7,8 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+export { clearCsrfToken } from "./csrf";
+
 export async function apiRequest(
   method: string,
   url: string,

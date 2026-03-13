@@ -6,6 +6,7 @@ import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import pg from 'pg';
 import fetch from 'node-fetch';
+import { csrfSync } from 'csrf-sync';
 
 const { Pool } = pg;
 const PgSession = connectPgSimple(session);
@@ -34,10 +35,10 @@ export function setupWorkingAuth(app: any) {
       resave: false,
       saveUninitialized: false,
       cookie: {
-        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production behind Nginx
+        secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        sameSite: 'lax'
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        sameSite: 'strict'
       }
     })
   );
@@ -53,6 +54,31 @@ export function setupWorkingAuth(app: any) {
     }
 
     next();
+  });
+
+  // CSRF Protection: validate tokens on all state-changing requests
+  const {
+    csrfSynchronisedProtection: csrfProtection,
+    generateToken: csrfGenerateToken,
+  } = csrfSync({
+    getTokenFromRequest: (req: any) => req.headers['x-csrf-token'] || req.body?._csrf,
+    getTokenFromState: (req: any) => req.session?.csrfToken,
+    storeTokenInState: (req: any, token: string) => { if (req.session) req.session.csrfToken = token; },
+    size: 64,
+  });
+
+  app.get('/api/csrf-token', (req: any, res: any) => {
+    const token = csrfGenerateToken(req);
+    res.json({ csrfToken: token });
+  });
+
+  app.use((req: any, res: any, next: any) => {
+    const safeMethod = ['GET', 'HEAD', 'OPTIONS'].includes(req.method);
+    const isApiKey = req.headers['authorization']?.startsWith('Bearer allio_');
+    const isServiceAuth = !!(req.headers['x-node-api-key'] || req.headers['x-api-key']);
+    const isWebhook = req.path.includes('/webhook');
+    if (safeMethod || isApiKey || isServiceAuth || isWebhook) return next();
+    csrfProtection(req, res, next);
   });
 
   // Login endpoint

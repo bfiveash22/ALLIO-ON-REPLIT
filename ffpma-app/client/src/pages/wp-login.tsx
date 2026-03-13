@@ -39,7 +39,7 @@ export default function WPLoginPage() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        localStorage.removeItem("allio_preview_mode"); // Ensure any legacy ghost cache is cleared on login
+        localStorage.removeItem("allio_preview_mode");
         queryClient.setQueryData(["/api/auth/user"], data.user);
         queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
         setLocation(data.redirectTo || "/member");

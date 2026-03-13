@@ -269,7 +269,7 @@ function SentinelAlertsPanel() {
 
   const markReadMutation = useMutation({
     mutationFn: async (id: string) => {
-      await fetch(`/api/sentinel/notifications/${id}/read`, { method: "POST" });
+      await apiRequest("POST", `/api/sentinel/notifications/${id}/read`);
     },
     onSuccess: () => {
       refetchNotifications();
@@ -279,7 +279,7 @@ function SentinelAlertsPanel() {
 
   const markAllReadMutation = useMutation({
     mutationFn: async () => {
-      await fetch("/api/sentinel/notifications/read-all", { method: "POST" });
+      await apiRequest("POST", "/api/sentinel/notifications/read-all");
     },
     onSuccess: () => {
       refetchNotifications();
@@ -3564,7 +3564,7 @@ export default function TrusteeDashboard() {
                         className="bg-indigo-500 hover:bg-indigo-600"
                         onClick={async () => {
                           try {
-                            await fetch("/api/legal/initialize", { method: "POST" });
+                            await apiRequest("POST", "/api/legal/initialize");
                             refetchLegalDocs();
                             toast({ title: "Legal documents initialized", description: "JURIS has drafted the initial trademark and patent documents" });
                           } catch (e) {

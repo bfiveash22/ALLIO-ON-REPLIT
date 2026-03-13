@@ -12,7 +12,7 @@ export function registerLearningRoutes(app: Express): void {
         .where(eq(trainingQuizzes.moduleId, req.params.moduleId));
       res.json(quizzes);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -32,7 +32,7 @@ export function registerLearningRoutes(app: Express): void {
       
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -48,7 +48,7 @@ export function registerLearningRoutes(app: Express): void {
         
       res.json(progress || { progressPercentage: 0, status: 'unstarted' });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -90,7 +90,7 @@ export function registerLearningRoutes(app: Express): void {
       
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 }

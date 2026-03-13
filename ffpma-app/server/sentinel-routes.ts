@@ -21,7 +21,7 @@ export function registerSentinelRoutes(app: Express): void {
       const result = await orchestrator.initialize();
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -30,7 +30,7 @@ export function registerSentinelRoutes(app: Express): void {
       const status = await orchestrator.getNetworkStatus();
       res.json(status);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -39,7 +39,7 @@ export function registerSentinelRoutes(app: Express): void {
       const agents = await orchestrator.getAllAgents();
       res.json({ agents, count: agents.length });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -51,7 +51,7 @@ export function registerSentinelRoutes(app: Express): void {
       }
       res.json(agent);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -63,7 +63,7 @@ export function registerSentinelRoutes(app: Express): void {
       }));
       res.json({ divisions });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -76,7 +76,7 @@ export function registerSentinelRoutes(app: Express): void {
       const status = await orchestrator.getDivisionStatus(division);
       res.json(status);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -96,7 +96,7 @@ export function registerSentinelRoutes(app: Express): void {
       });
       res.json(task);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -105,7 +105,7 @@ export function registerSentinelRoutes(app: Express): void {
       const tasks = await orchestrator.getPendingTasks();
       res.json({ tasks, count: tasks.length });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -114,7 +114,7 @@ export function registerSentinelRoutes(app: Express): void {
       const tasks = await orchestrator.getTasksByAgent(req.params.agentId);
       res.json({ tasks, count: tasks.length });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -130,7 +130,7 @@ export function registerSentinelRoutes(app: Express): void {
       }
       res.json({ success: true, message: 'Task completed with verified evidence' });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -140,7 +140,7 @@ export function registerSentinelRoutes(app: Express): void {
       const verified = await orchestrator.verifyTaskEvidence(req.params.taskId, evidenceUrl, notes);
       res.json({ verified, message: verified ? 'Evidence verified' : 'Evidence verification failed' });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -159,7 +159,7 @@ export function registerSentinelRoutes(app: Express): void {
       });
       res.json(task);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -172,7 +172,7 @@ export function registerSentinelRoutes(app: Express): void {
       const result = await orchestrator.routeToAIModel(req.params.agentId, query, context);
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -186,7 +186,7 @@ export function registerSentinelRoutes(app: Express): void {
       res.json({ status: 'initiated', message: 'Contract V4 legal review initiated. SENTINEL coordinating JURIS, LEXICON, AEGIS, SCRIBE.' });
       reviewPromise.catch(err => console.error('[SENTINEL] Contract review error:', err));
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -200,7 +200,7 @@ export function registerSentinelRoutes(app: Express): void {
         available: review !== null
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -215,7 +215,7 @@ export function registerSentinelRoutes(app: Express): void {
         res.status(500).json({ error: "Failed to initiate update sequence." });
       }
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -226,7 +226,7 @@ export function registerSentinelRoutes(app: Express): void {
       const proposals = await storage.getUiRefactorProposals();
       res.json({ proposals, count: proposals.length });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -257,7 +257,7 @@ export function registerSentinelRoutes(app: Express): void {
       const updated = await storage.updateUiRefactorProposal(req.params.id, { status: 'approved' });
       res.json({ success: true, proposal: updated, message: 'File cleanly updated on host machine' });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -269,7 +269,7 @@ export function registerSentinelRoutes(app: Express): void {
       }
       res.json({ success: true, proposal: updated });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -302,7 +302,7 @@ export function registerSentinelRoutes(app: Express): void {
 
       res.json({ success: true, proposal: updated, message: 'Revision task assigned to agent.' });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -320,7 +320,7 @@ export function registerSentinelRoutes(app: Express): void {
       });
       res.json({ success: true, task: updated });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -341,7 +341,7 @@ export function registerSentinelRoutes(app: Express): void {
       });
       res.json({ success: true, task: updated });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -374,7 +374,7 @@ export function registerSentinelRoutes(app: Express): void {
       res.json({ success: true });
     } catch (error: any) {
       console.error('[OpenClaw Webhook Error]:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -384,7 +384,7 @@ export function registerSentinelRoutes(app: Express): void {
       const evaluations = await storage.getAiModelEvaluations(req.query.status as string);
       res.json({ evaluations, count: evaluations.length });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -408,7 +408,7 @@ export function registerSentinelRoutes(app: Express): void {
 
       res.json({ success: true, evaluation: updated, message: 'Model approved and Sentinel notified.' });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -420,7 +420,7 @@ export function registerSentinelRoutes(app: Express): void {
       }
       res.json({ success: true, evaluation: updated });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 

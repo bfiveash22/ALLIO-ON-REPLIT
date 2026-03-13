@@ -104,7 +104,7 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Setup authentication (Raw SQL Session strategy)
+  // Setup authentication + CSRF (session, auth middleware, CSRF middleware, auth routes)
   await setupWorkingAuth(app);
 
   // Register SENTINEL Orchestrator routes
@@ -368,7 +368,7 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("[OVERSEER] Failed to trigger update:", error);
       if (!res.headersSent) {
-        res.status(500).json({ error: error.message || "Failed to trigger update" });
+        res.status(500).json({ error: "Failed to trigger update" });
       }
     }
   });
@@ -407,7 +407,7 @@ export async function registerRoutes(
       }
     } catch (error: any) {
       console.error("[Intake API] Failed to save draft:", error);
-      res.status(500).json({ error: error.message || "Failed to save draft" });
+      res.status(500).json({ error: "Failed to save draft" });
     }
   });
 
@@ -447,7 +447,7 @@ export async function registerRoutes(
       res.json(result);
     } catch (error: any) {
       console.error("[Intake API] Failed to submit form:", error);
-      res.status(500).json({ error: error.message || "Failed to submit intake form" });
+      res.status(500).json({ error: "Failed to submit intake form" });
     }
   });
 
@@ -460,7 +460,7 @@ export async function registerRoutes(
       res.json(health);
     } catch (error: any) {
       console.error("WC health check error:", error);
-      res.status(500).json({ error: error.message || "Failed to check commerce health" });
+      res.status(500).json({ error: "Failed to check commerce health" });
     }
   });
 
@@ -583,7 +583,7 @@ export async function registerRoutes(
       });
     } catch (error: any) {
       console.error("WC checkout error:", error);
-      res.status(500).json({ error: error.message || "Failed to create order" });
+      res.status(500).json({ error: "Failed to create order" });
     }
   });
 
@@ -612,7 +612,7 @@ export async function registerRoutes(
       });
     } catch (error: any) {
       console.error("WC order fetch error:", error);
-      res.status(500).json({ error: error.message || "Failed to fetch order" });
+      res.status(500).json({ error: "Failed to fetch order" });
     }
   });
 
@@ -620,7 +620,7 @@ export async function registerRoutes(
     try {
       res.json(lockManager.getAllLocks());
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -631,7 +631,7 @@ export async function registerRoutes(
       const success = lockManager.forceReleaseLock(resourceId);
       res.json({ success });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -641,7 +641,7 @@ export async function registerRoutes(
       const statuses = await getAllIntegrationStatuses();
       res.json(statuses);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -653,7 +653,7 @@ export async function registerRoutes(
       }
       res.json(status);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -734,7 +734,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       res.send(buffer);
     } catch (error: any) {
       console.error("[TTS] Generation error:", error?.message || error);
-      res.status(500).json({ error: "Failed to generate audio", details: error?.message });
+      res.status(500).json({ error: "Failed to generate audio" });
     }
   });
 
@@ -753,7 +753,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       res.json(analysis);
     } catch (error: any) {
       console.error("[Vision API] Blood analysis error:", error);
-      res.status(500).json({ error: error.message || "Failed to analyze image" });
+      res.status(500).json({ error: "Failed to analyze image" });
     }
   });
 
@@ -777,7 +777,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       res.json({ message: "Rupa Health order initiated. This process can take several minutes. Check Rupa Health dashboard for the draft order." });
     } catch (error: any) {
       console.error("[Rupa Health API] Error triggering order:", error);
-      res.status(500).json({ error: error.message || "Failed to initiate Rupa Health order" });
+      res.status(500).json({ error: "Failed to initiate Rupa Health order" });
     }
   });
 
@@ -788,7 +788,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       res.json(events);
     } catch (error: any) {
       console.error("[Calendar API] fetch error:", error);
-      res.status(500).json({ error: error.message || "Failed to fetch calendar events" });
+      res.status(500).json({ error: "Failed to fetch calendar events" });
     }
   });
 
@@ -800,7 +800,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       const status = await signNowService.getStatus();
       res.json(status);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -810,7 +810,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       const documents = await signNowService.listDocuments();
       res.json(documents);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -820,7 +820,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       const document = await signNowService.getDocument(req.params.id);
       res.json(document);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -836,7 +836,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       );
       res.json(document);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -856,7 +856,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       );
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -874,7 +874,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       );
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -892,7 +892,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       );
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -923,7 +923,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
       res.send(buffer);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -933,7 +933,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       await signNowService.cancelInvite(req.params.id);
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -943,7 +943,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       await signNowService.deleteDocument(req.params.id);
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1089,7 +1089,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       });
     } catch (error: any) {
       console.error("Error starting doctor onboarding:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1106,7 +1106,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
 
       res.json(record);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1130,7 +1130,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
         practiceType: doctor.practiceType,
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1186,7 +1186,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       });
     } catch (error: any) {
       console.error("Error starting member enrollment:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1339,7 +1339,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       res.json({ success: true, message: 'Webhook processed' });
     } catch (error: any) {
       console.error("SignNow webhook error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1419,7 +1419,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
         wpUserId,
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1443,7 +1443,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
         doctorCode: record.doctorCode,
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1512,7 +1512,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
         practiceType: doctor.practiceType,
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1594,7 +1594,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
         total: enrolledMembers.length,
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1610,7 +1610,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       });
       res.json(appointments);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1634,7 +1634,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       
       res.json(newAppointment[0]);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1654,7 +1654,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       });
       res.json(messages.map(m => ({ ...m, messageText: m.content })));
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1679,7 +1679,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       
       res.json({...newMessage[0], messageText: newMessage[0].content});
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1704,7 +1704,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
         doctorCode: doctor.doctorCode,
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1716,7 +1716,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       const results = await sendAthenaIntroduction();
       res.json({ success: true, results });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1730,7 +1730,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       const result = await sendEmail(to, subject, body, cc);
       res.json({ success: result.success, messageId: result.messageId, error: result.error });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1745,7 +1745,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
         res.status(500).json({ error: result.error });
       }
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1759,7 +1759,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
         res.status(500).json({ error: result.error });
       }
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1773,7 +1773,7 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
       const result = await replyToMessage(req.params.id, body);
       res.json({ success: result.success, messageId: result.messageId, error: result.error });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1852,7 +1852,7 @@ Respond to the Trustee's query with helpful, actionable information. If they ask
       res.json({ success: true, response });
     } catch (error: any) {
       console.error("ATHENA chat error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1866,7 +1866,7 @@ Respond to the Trustee's query with helpful, actionable information. If they ask
       const safeConfigs = configs.map(({ trustAnswer, ...rest }) => rest);
       res.json(safeConfigs);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1886,7 +1886,7 @@ Respond to the Trustee's query with helpful, actionable information. If they ask
       const { trustAnswer, ...safeConfig } = config;
       res.json({ ...safeConfig, needsInitialization: false });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -1939,7 +1939,7 @@ Respond to the Trustee's query with helpful, actionable information. If they ask
         needsVerification: true
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2041,7 +2041,7 @@ Respond to the Trustee's query with helpful, actionable information. If they ask
         });
       }
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2058,7 +2058,7 @@ Respond to the Trustee's query with helpful, actionable information. If they ask
       const { trustAnswer: _, ...safeConfig } = config || {};
       res.json(safeConfig);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2068,7 +2068,7 @@ Respond to the Trustee's query with helpful, actionable information. If they ask
       const approvals = await storage.getAthenaEmailApprovals("pending");
       res.json(approvals);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2088,7 +2088,7 @@ Respond to the Trustee's query with helpful, actionable information. If they ask
 
       res.json({ success: true, approval: updated });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2098,7 +2098,7 @@ Respond to the Trustee's query with helpful, actionable information. If they ask
       const reviews = await storage.getTaskReviews();
       res.json(reviews);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2107,7 +2107,7 @@ Respond to the Trustee's query with helpful, actionable information. If they ask
       const reviews = await storage.getPendingReviews();
       res.json(reviews);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2120,7 +2120,7 @@ Respond to the Trustee's query with helpful, actionable information. If they ask
       const review = await storage.createTaskReview(parseResult.data);
       res.json(review);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2136,7 +2136,7 @@ Respond to the Trustee's query with helpful, actionable information. If they ask
       }
       res.json(updated);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2146,7 +2146,7 @@ Respond to the Trustee's query with helpful, actionable information. If they ask
       const leads = await storage.getDivisionLeads();
       res.json(leads);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2158,7 +2158,7 @@ Respond to the Trustee's query with helpful, actionable information. If they ask
       }
       res.json(lead);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2174,7 +2174,7 @@ Respond to the Trustee's query with helpful, actionable information. If they ask
       }
       res.json(updated);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2283,7 +2283,7 @@ You have full authority to coordinate agents, assign tasks, and make operational
       res.json({ success: true, response });
     } catch (error: any) {
       console.error("SENTINEL chat error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2447,7 +2447,7 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error("Agent chat error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2459,7 +2459,7 @@ INSTRUCTIONS:
       const status = await checkDriveConnection();
       res.json(status);
     } catch (error: any) {
-      res.status(500).json({ error: error.message, connected: false });
+      res.status(500).json({ error: "An internal error occurred", connected: false });
     }
   });
 
@@ -2469,7 +2469,7 @@ INSTRUCTIONS:
       const structure = await getAllioStructure();
       res.json(structure);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2479,7 +2479,7 @@ INSTRUCTIONS:
       const structure = await getAllioStructure();
       res.json(structure);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2489,7 +2489,7 @@ INSTRUCTIONS:
       const structure = await getMarketingStructure();
       res.json(structure);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2500,7 +2500,7 @@ INSTRUCTIONS:
       const structure = await getAllDivisionsStructure();
       res.json(structure);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2514,7 +2514,7 @@ INSTRUCTIONS:
       const result = await setupAgentFolders(allioFolder.id);
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message, success: false });
+      res.status(500).json({ error: "An internal error occurred", success: false });
     }
   });
 
@@ -2524,7 +2524,7 @@ INSTRUCTIONS:
       const contents = await listFolderContents(req.params.folderId);
       res.json(contents);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2643,7 +2643,7 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error("[Drive Audit] Error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2656,7 +2656,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Drive] Upload error:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -2669,7 +2669,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Drive] Legal upload error:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -2721,7 +2721,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Blood Analysis] Upload error:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -2731,7 +2731,7 @@ INSTRUCTIONS:
       res.json({ success: true, uploads });
     } catch (error: any) {
       console.error("[Blood Analysis] Error fetching uploads:", error);
-      res.status(500).json({ success: false, error: error.message, uploads: [] });
+      res.status(500).json({ success: false, error: "Failed to fetch uploads", uploads: [] });
     }
   });
 
@@ -2763,7 +2763,7 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error("[Blood Analysis] Analysis error:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -2792,7 +2792,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Drive] Error creating Baker folder:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -2810,7 +2810,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Drive] Error uploading Baker protocol:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -2822,7 +2822,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Admin] Error seeding ECS training:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -2834,7 +2834,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Admin] Error seeding Gerson Therapy:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -2846,7 +2846,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Admin] Error seeding PMA Law Training:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -2859,7 +2859,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Admin] Error seeding Peptide Training:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -2872,7 +2872,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Admin] Error seeding Diet and Cancer Training:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -2885,7 +2885,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Admin] Error seeding Candida Cookbook:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -2898,7 +2898,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Admin] Error seeding Ozone Training:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -2913,7 +2913,7 @@ INSTRUCTIONS:
       res.json({ success: true, ...result });
     } catch (error: any) {
       console.error("[Asset Catalog] Error indexing assets:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -2930,7 +2930,7 @@ INSTRUCTIONS:
       res.json(results);
     } catch (error: any) {
       console.error("[Asset Catalog] Error searching assets:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2944,7 +2944,7 @@ INSTRUCTIONS:
       res.json({ exists: !!existing, asset: existing });
     } catch (error: any) {
       console.error("[Asset Catalog] Error checking existing asset:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2954,7 +2954,7 @@ INSTRUCTIONS:
       res.json(stats);
     } catch (error: any) {
       console.error("[Asset Catalog] Error getting stats:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -2972,7 +2972,7 @@ INSTRUCTIONS:
       }
     } catch (error: any) {
       console.error("[Admin] Error connecting sources:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -2984,7 +2984,7 @@ INSTRUCTIONS:
       res.json({ success: true, ...result });
     } catch (error: any) {
       console.error("[Admin] Error generating interactive content:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -2996,7 +2996,7 @@ INSTRUCTIONS:
       res.json({ success: result.status === "success", ...result });
     } catch (error: any) {
       console.error("[Admin] Error generating module content:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -3008,7 +3008,7 @@ INSTRUCTIONS:
       res.json({ success: true, ...result });
     } catch (error: any) {
       console.error("[Admin] Error seeding Ivermectin training:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -3020,7 +3020,7 @@ INSTRUCTIONS:
       res.json({ success: true, ...result });
     } catch (error: any) {
       console.error("[Admin] Error seeding remaining modules:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -3032,7 +3032,7 @@ INSTRUCTIONS:
       res.json({ success: true, ...result });
     } catch (error: any) {
       console.error("[Admin] Error enhancing modules:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -3043,7 +3043,7 @@ INSTRUCTIONS:
       res.json({ success: true, ...assets });
     } catch (error: any) {
       console.error("[Admin] Error fetching media:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -3055,7 +3055,7 @@ INSTRUCTIONS:
       res.json({ success: true, ...result });
     } catch (error: any) {
       console.error("[Admin] Error seeding achievements:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -3068,7 +3068,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Admin] Error adding quizzes:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -3085,7 +3085,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Admin] Error uploading video:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -3116,7 +3116,7 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error("[Admin] Error bulk uploading videos:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -3135,7 +3135,7 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error("[Catalog] Error fetching catalog:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -3155,7 +3155,7 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error("[Catalog] Error searching catalog:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -3170,7 +3170,7 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error("[Catalog] Error getting sections:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -3185,7 +3185,7 @@ INSTRUCTIONS:
       res.json({ success: true, product: name, info });
     } catch (error: any) {
       console.error("[Catalog] Error getting product:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -3210,7 +3210,7 @@ INSTRUCTIONS:
 
       res.json(entries);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3222,7 +3222,7 @@ INSTRUCTIONS:
       const status = await getAgentTaskStatus();
       res.json(status);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3235,7 +3235,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error(`[API] Task execution error:`, error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -3248,7 +3248,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error(`[API] Batch execution error:`, error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -3258,7 +3258,7 @@ INSTRUCTIONS:
       const status = getSchedulerStatus();
       res.json(status);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3269,7 +3269,7 @@ INSTRUCTIONS:
       const result = await triggerImmediateExecution(count);
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3279,7 +3279,7 @@ INSTRUCTIONS:
       const result = await seedInitialTasks();
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3288,7 +3288,7 @@ INSTRUCTIONS:
       startAgentScheduler();
       res.json({ success: true, message: "Agent scheduler started" });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3297,7 +3297,7 @@ INSTRUCTIONS:
       stopAgentScheduler();
       res.json({ success: true, message: "Agent scheduler stopped" });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3310,7 +3310,7 @@ INSTRUCTIONS:
       const notifications = await sentinel.getNotifications(limit);
       res.json(notifications);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3320,7 +3320,7 @@ INSTRUCTIONS:
       const notifications = await sentinel.getUnreadNotifications();
       res.json({ notifications, count: notifications.length });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3330,7 +3330,7 @@ INSTRUCTIONS:
       await sentinel.markAsRead(req.params.id);
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3340,7 +3340,7 @@ INSTRUCTIONS:
       await sentinel.markAllAsRead();
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3352,7 +3352,7 @@ INSTRUCTIONS:
       const status = await wooCommerceService.getConnectionStatus();
       res.json(status);
     } catch (error: any) {
-      res.status(500).json({ error: error.message, connected: false, configured: false });
+      res.status(500).json({ error: "An internal error occurred", connected: false, configured: false });
     }
   });
 
@@ -3397,7 +3397,7 @@ INSTRUCTIONS:
         res.json(result);
       }
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3425,7 +3425,7 @@ INSTRUCTIONS:
 
       res.json(product);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3435,7 +3435,7 @@ INSTRUCTIONS:
       const categories = await wooCommerceService.getCategories();
       res.json(categories);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3445,7 +3445,7 @@ INSTRUCTIONS:
       const brands = await wooCommerceService.getBrands();
       res.json(brands);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3455,7 +3455,7 @@ INSTRUCTIONS:
       const attributes = await wooCommerceService.getProductAttributes();
       res.json(attributes);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3465,7 +3465,7 @@ INSTRUCTIONS:
       const result = await wooCommerceService.syncAllProducts();
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message, success: false });
+      res.status(500).json({ error: "An internal error occurred", success: false });
     }
   });
 
@@ -3481,7 +3481,7 @@ INSTRUCTIONS:
       const result = await wordPressAuthService.validateToken(token);
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3492,7 +3492,7 @@ INSTRUCTIONS:
       const membership = await wordPressAuthService.checkMembership(userId);
       res.json(membership);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3510,7 +3510,7 @@ INSTRUCTIONS:
         res.status(404).json({ error: "Customer not found" });
       }
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3522,7 +3522,7 @@ INSTRUCTIONS:
       const status = await wooCommerceService.getConnectionStatus();
       res.json(status);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3536,7 +3536,7 @@ INSTRUCTIONS:
         wordpress: wpStatus,
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3621,7 +3621,7 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error("Error creating doctor agreement:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3702,7 +3702,7 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error("Error creating member agreement:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3716,7 +3716,7 @@ INSTRUCTIONS:
       const contracts = await storage.getContractsByUser(userId);
       res.json(contracts);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3728,7 +3728,7 @@ INSTRUCTIONS:
       }
       res.json(contract);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3772,7 +3772,7 @@ INSTRUCTIONS:
       res.json({ signingUrl: linkResult.link });
     } catch (error: any) {
       console.error("Error refreshing signing URL:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3792,7 +3792,7 @@ INSTRUCTIONS:
       }
       res.json(contract);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3896,7 +3896,7 @@ INSTRUCTIONS:
       res.json(responseData);
     } catch (error: any) {
       console.error("Admin stats error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3909,7 +3909,7 @@ INSTRUCTIONS:
         .slice(0, 20);
       res.json(recentMembers);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3932,7 +3932,7 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error("WordPress sync initial error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3957,7 +3957,7 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error("User sync initial error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -3967,7 +3967,7 @@ INSTRUCTIONS:
       const clinics = await storage.getAllClinics();
       res.json(clinics);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4011,7 +4011,7 @@ INSTRUCTIONS:
       res.json(updatedClinic);
     } catch (error: any) {
       console.error("Error updating clinic SignNow links:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4055,7 +4055,7 @@ INSTRUCTIONS:
       res.json(updatedClinic);
     } catch (error: any) {
       console.error("Error updating clinic SignNow links:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4086,7 +4086,7 @@ INSTRUCTIONS:
       res.json({ success: true, totalClinics: allClinics.length, updated, results });
     } catch (error: any) {
       console.error("Error migrating clinic links:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4103,7 +4103,7 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error("Error listing SignNow templates:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4138,7 +4138,7 @@ INSTRUCTIONS:
       res.json({ success: true, total: entries.length, updated, notFound, results });
     } catch (error: any) {
       console.error("Error importing clinic SignNow links:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4171,7 +4171,7 @@ INSTRUCTIONS:
 
       res.json(results);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4223,7 +4223,7 @@ INSTRUCTIONS:
       }
       res.json(tasks);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4250,7 +4250,7 @@ INSTRUCTIONS:
       const task = await storage.createAgentTask(parseResult.data);
       res.status(201).json(task);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4268,7 +4268,7 @@ INSTRUCTIONS:
       }
       res.json(task);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4286,7 +4286,7 @@ INSTRUCTIONS:
       }
       res.json(task);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4295,7 +4295,7 @@ INSTRUCTIONS:
       await storage.deleteAgentTask(req.params.id);
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4377,7 +4377,7 @@ INSTRUCTIONS:
         lastUpdated: new Date().toISOString()
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4435,7 +4435,7 @@ INSTRUCTIONS:
       const samples = await storage.getBloodSamples(filters);
       res.json(samples);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4444,7 +4444,7 @@ INSTRUCTIONS:
       const tags = await storage.getAllBloodSampleTags();
       res.json(tags);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4466,7 +4466,7 @@ INSTRUCTIONS:
       );
       res.json(samples);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4480,7 +4480,7 @@ INSTRUCTIONS:
       const tags = await storage.getBloodSampleTags(sample.id);
       res.json({ ...sample, tags: tags.map(t => t.tag) });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4489,7 +4489,7 @@ INSTRUCTIONS:
       const tags = await storage.getBloodSampleTags(req.params.id);
       res.json(tags);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4513,7 +4513,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Blood Analysis] Error:", error.message);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4563,7 +4563,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Pattern Match] Error:", error.message);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4594,7 +4594,7 @@ INSTRUCTIONS:
       res.json({ ...result, success: true });
     } catch (error: any) {
       console.error("[Research] Search error:", error.message);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -4611,7 +4611,7 @@ INSTRUCTIONS:
 
       res.json({ ...result, success: true, agent: 'HIPPOCRATES' });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -4627,7 +4627,7 @@ INSTRUCTIONS:
 
       res.json({ ...result, success: true, agent: 'PARACELSUS' });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -4643,7 +4643,7 @@ INSTRUCTIONS:
 
       res.json({ ...result, success: true, agent: 'HELIX' });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -4659,7 +4659,7 @@ INSTRUCTIONS:
 
       res.json({ ...result, success: true, agent: 'ORACLE' });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -4676,7 +4676,7 @@ INSTRUCTIONS:
 
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -4692,7 +4692,7 @@ INSTRUCTIONS:
 
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -4723,7 +4723,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Agent Query] Error:", error.message);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4749,7 +4749,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Cross-Divisional Query] Error:", error.message);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4759,7 +4759,7 @@ INSTRUCTIONS:
       const status = await checkAgentStatus();
       res.json(status);
     } catch (error: any) {
-      res.status(500).json({ available: false, status: error.message });
+      res.status(500).json({ available: false, status: "Service unavailable" });
     }
   });
 
@@ -4773,7 +4773,7 @@ INSTRUCTIONS:
       const agents = await getCoreAgentStatus();
       res.json({ success: true, agents });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4783,7 +4783,7 @@ INSTRUCTIONS:
       const result = await activateCoreAgents();
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4793,7 +4793,7 @@ INSTRUCTIONS:
       const overview = await getNetworkOverview();
       res.json(overview);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4809,7 +4809,7 @@ INSTRUCTIONS:
       const result = await agentChat(agentId.toUpperCase() as any, message, context);
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4823,7 +4823,7 @@ INSTRUCTIONS:
       const result = await routeTaskToAgent(taskType, taskDescription, priority || 2);
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4838,7 +4838,7 @@ INSTRUCTIONS:
       const result = await requestCrossDivisionSupport(fromAgent, toAgent, requirement);
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4858,7 +4858,7 @@ INSTRUCTIONS:
       const result = await executeAgentWorkflow(agentId.toUpperCase() as any, workflowType, title, description);
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4869,7 +4869,7 @@ INSTRUCTIONS:
       const messages = getRecentMessages(limit);
       res.json({ messages });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4882,7 +4882,7 @@ INSTRUCTIONS:
       const { getClaudeStatus } = await import("./services/claude-provider");
       res.json(getClaudeStatus());
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4891,7 +4891,7 @@ INSTRUCTIONS:
       const { getAvailableModels } = await import("./services/claude-provider");
       res.json({ models: getAvailableModels() });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4905,7 +4905,7 @@ INSTRUCTIONS:
       const result = await claudeAgentChat(agentId, message, context, history);
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4919,7 +4919,7 @@ INSTRUCTIONS:
       const result = await claudeAnalyze(task, context, agentId);
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4933,7 +4933,7 @@ INSTRUCTIONS:
       const result = await claudeGenerateDocument(documentType, requirements, agentId);
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -4969,7 +4969,7 @@ INSTRUCTIONS:
 
       res.json({ providers, totalProviders: providers.filter(p => p.available).length });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5008,7 +5008,7 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error("[Image Generation] Error:", error.message);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5040,7 +5040,7 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error("[Marketing Asset] Error:", error.message);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5083,7 +5083,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[TTS] Error:", error.message);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5110,7 +5110,7 @@ INSTRUCTIONS:
       res.json(result);
     } catch (error: any) {
       console.error("[Music] Error:", error.message);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5133,7 +5133,7 @@ INSTRUCTIONS:
       const { ALLIO_VOICE_PROMPTS } = await import("./services/huggingface-audio");
       res.json(ALLIO_VOICE_PROMPTS);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5143,7 +5143,7 @@ INSTRUCTIONS:
       const { getVideoProductionStatus } = await import("./services/video-production");
       res.json(getVideoProductionStatus());
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5152,7 +5152,7 @@ INSTRUCTIONS:
       const { ALLIO_LAUNCH_SCRIPT } = await import("./services/video-production");
       res.json(ALLIO_LAUNCH_SCRIPT);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5223,7 +5223,7 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error("[Video Render] Error:", error.message);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5233,7 +5233,7 @@ INSTRUCTIONS:
       const modules = await storage.getTrainingModules();
       res.json(modules);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5245,7 +5245,7 @@ INSTRUCTIONS:
       }
       res.json(module);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5269,7 +5269,7 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error("[Training] Error fetching module content:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5278,7 +5278,7 @@ INSTRUCTIONS:
       const tracks = await storage.getTrainingTracks();
       res.json(tracks);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5290,7 +5290,7 @@ INSTRUCTIONS:
       }
       res.json(track);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5304,7 +5304,7 @@ INSTRUCTIONS:
         .orderBy(trainingCertifications.createdAt);
       res.json({ success: true, certifications: certs });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -5317,7 +5317,7 @@ INSTRUCTIONS:
         .orderBy(trainingCertifications.createdAt);
       res.json({ success: true, certifications: certs });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -5358,7 +5358,7 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error("[Certification] Error issuing certification:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -5386,7 +5386,7 @@ INSTRUCTIONS:
         }
       });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -5401,7 +5401,7 @@ INSTRUCTIONS:
       const progress = await storage.getUserProgressByType(userId, contentType);
       res.json(progress);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5417,7 +5417,7 @@ INSTRUCTIONS:
       }
       res.json(progress);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5444,7 +5444,7 @@ INSTRUCTIONS:
       });
       res.json(progress);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5460,7 +5460,7 @@ INSTRUCTIONS:
       }
       res.json(progress);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5521,7 +5521,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       const questions = await storage.getQuizQuestions(quiz.id);
       res.json({ quiz, questions });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5531,7 +5531,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       const documents = await storage.getDriveDocuments();
       res.json(documents);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5541,7 +5541,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       const quizzes = await storage.getQuizzes();
       res.json(quizzes);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5557,7 +5557,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       const quizWithCount = { ...quiz, questionsCount: questions.length };
       res.json({ quiz: quizWithCount, questions });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5692,7 +5692,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       const programs = await storage.getPrograms();
       res.json(programs);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5704,7 +5704,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       }
       res.json(program);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5721,7 +5721,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       }
       res.json(enrollment);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5744,7 +5744,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       });
       res.status(201).json(enrollment);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5770,7 +5770,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       }
       res.json(enrollment);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5784,7 +5784,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       const enrollments = await storage.getUserProgramEnrollments(userId);
       res.json(enrollments);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5798,7 +5798,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       const achievements = await storage.getAchievements();
       res.json(achievements);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5808,7 +5808,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       const userAchievements = await storage.getUserAchievements(userId);
       res.json(userAchievements);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5821,7 +5821,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       const userAchievement = await storage.awardAchievement(userId, req.params.achievementId, req.body.metadata);
       res.status(201).json(userAchievement);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5832,7 +5832,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       const bookmarks = await storage.getUserBookmarks(userId);
       res.json(bookmarks);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5845,7 +5845,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       const bookmark = await storage.addBookmark({ userId, moduleId: req.body.moduleId, notes: req.body.notes });
       res.status(201).json(bookmark);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5858,7 +5858,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       await storage.removeBookmark(userId, req.params.moduleId);
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5868,7 +5868,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       const isBookmarked = await storage.isBookmarked(userId, req.params.moduleId);
       res.json({ isBookmarked });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5879,7 +5879,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       const threads = await storage.getDiscussionThreads(moduleId);
       res.json(threads);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5892,7 +5892,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       const replies = await storage.getDiscussionReplies(req.params.id);
       res.json({ thread, replies });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5912,7 +5912,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       });
       res.status(201).json(thread);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5932,7 +5932,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       });
       res.status(201).json(reply);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5942,7 +5942,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       const docs = await storage.getAllLegalDocuments();
       res.json(docs);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5954,7 +5954,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       }
       res.json(doc);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5963,7 +5963,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       const doc = await storage.createLegalDocument(req.body);
       res.status(201).json(doc);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5975,7 +5975,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       }
       res.json(doc);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -5984,7 +5984,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
       await storage.deleteLegalDocument(req.params.id);
       res.status(204).send();
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6160,7 +6160,7 @@ Status: DRAFT - Pending Trustee Review`,
         documents: newDocs
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6237,7 +6237,7 @@ Status: DRAFT - Pending Trustee Review`,
       });
     } catch (error: any) {
       console.error("Drive upload error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6298,7 +6298,7 @@ Status: DRAFT - Pending Trustee Review`,
 
       res.json({ results });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6360,7 +6360,7 @@ Status: DRAFT - Pending Trustee Review`,
       res.json(results);
     } catch (error: any) {
       console.error("Full sync error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6372,7 +6372,7 @@ Status: DRAFT - Pending Trustee Review`,
       res.json(result);
     } catch (error: any) {
       console.error("Clinic sync error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6393,7 +6393,7 @@ Status: DRAFT - Pending Trustee Review`,
 
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6404,7 +6404,7 @@ Status: DRAFT - Pending Trustee Review`,
       const allClinics = await db.select().from(clinics).orderBy(clinics.name);
       res.json(allClinics);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6417,7 +6417,7 @@ Status: DRAFT - Pending Trustee Review`,
       }
       res.json(clinic);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6437,7 +6437,7 @@ Status: DRAFT - Pending Trustee Review`,
         woocommerce: await wooCommerceService.getConnectionStatus(),
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6483,7 +6483,7 @@ Status: DRAFT - Pending Trustee Review`,
       });
     } catch (error: any) {
       console.error("[Admin] Error seeding training content:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -6639,7 +6639,7 @@ Status: DRAFT - Pending Trustee Review`,
       });
     } catch (error: any) {
       console.error("[Video Assembly] Error:", error.message);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6681,7 +6681,7 @@ Status: DRAFT - Pending Trustee Review`,
       });
     } catch (error: any) {
       console.error("[Cross-Division] Handoff error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6692,7 +6692,7 @@ Status: DRAFT - Pending Trustee Review`,
       const templates = await getAvailableTemplates();
       res.json({ templates });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6742,7 +6742,7 @@ Status: DRAFT - Pending Trustee Review`,
       res.json(result);
     } catch (error: any) {
       console.error("[Auto Video] Production error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6799,7 +6799,7 @@ Status: DRAFT - Pending Trustee Review`,
       });
     } catch (error: any) {
       console.error("[Agent Video] Production error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6822,7 +6822,7 @@ Status: DRAFT - Pending Trustee Review`,
       res.json(result);
     } catch (error: any) {
       console.error("[Video Upload] Error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6859,7 +6859,7 @@ Status: DRAFT - Pending Trustee Review`,
       });
     } catch (error: any) {
       console.error("[Premium Video] Production error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6871,7 +6871,7 @@ Status: DRAFT - Pending Trustee Review`,
       res.json(doctors);
     } catch (error: any) {
       console.error("[Network Doctors] Error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6914,7 +6914,7 @@ Status: DRAFT - Pending Trustee Review`,
       res.json({ success: true, imported });
     } catch (error: any) {
       console.error("[Network Doctors Import] Error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: "An internal error occurred" });
     }
   });
 
@@ -6929,7 +6929,7 @@ Status: DRAFT - Pending Trustee Review`,
       const patients = await storage.getPatientRecords(doctorId);
       res.json({ success: true, patients });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -6943,7 +6943,7 @@ Status: DRAFT - Pending Trustee Review`,
       const protocols = await storage.getPatientProtocols(patient.id);
       res.json({ success: true, patient, uploads, protocols });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -6953,7 +6953,7 @@ Status: DRAFT - Pending Trustee Review`,
       const patient = await storage.createPatientRecord({ ...req.body, doctorId });
       res.json({ success: true, patient });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -6962,7 +6962,7 @@ Status: DRAFT - Pending Trustee Review`,
       const patient = await storage.updatePatientRecord(req.params.id, req.body);
       res.json({ success: true, patient });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -6978,7 +6978,7 @@ Status: DRAFT - Pending Trustee Review`,
       });
       res.json({ success: true, upload });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -6989,7 +6989,7 @@ Status: DRAFT - Pending Trustee Review`,
       const protocols = await storage.getDoctorProtocols(doctorId);
       res.json({ success: true, protocols });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7003,7 +7003,7 @@ Status: DRAFT - Pending Trustee Review`,
       });
       res.json({ success: true, protocol });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7012,7 +7012,7 @@ Status: DRAFT - Pending Trustee Review`,
       const protocol = await storage.updatePatientProtocol(req.params.id, req.body);
       res.json({ success: true, protocol });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7023,7 +7023,7 @@ Status: DRAFT - Pending Trustee Review`,
       const conversationList = await storage.getConversations(userId);
       res.json({ success: true, conversations: conversationList });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7032,7 +7032,7 @@ Status: DRAFT - Pending Trustee Review`,
       const messages = await storage.getMessages(req.params.id);
       res.json({ success: true, messages });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7041,7 +7041,7 @@ Status: DRAFT - Pending Trustee Review`,
       const conversation = await storage.createConversation(req.body);
       res.json({ success: true, conversation });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7050,7 +7050,7 @@ Status: DRAFT - Pending Trustee Review`,
       const message = await storage.createMessage(req.body);
       res.json({ success: true, message });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7059,7 +7059,7 @@ Status: DRAFT - Pending Trustee Review`,
       const message = await storage.markMessageRead(req.params.id);
       res.json({ success: true, message });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7099,7 +7099,7 @@ Status: DRAFT - Pending Trustee Review`,
 
       res.json(analysisResult);
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7119,7 +7119,7 @@ Status: DRAFT - Pending Trustee Review`,
       }).from(apiKeys).orderBy(apiKeys.createdAt);
       res.json({ success: true, keys });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7146,7 +7146,7 @@ Status: DRAFT - Pending Trustee Review`,
 
       res.json({ success: true, key: { ...created, rawKey } });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7158,7 +7158,7 @@ Status: DRAFT - Pending Trustee Review`,
         .where(eq(apiKeys.id, req.params.id));
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7177,7 +7177,7 @@ Status: DRAFT - Pending Trustee Review`,
 
       res.json({ success: true, logs, limit, offset });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7196,7 +7196,7 @@ Status: DRAFT - Pending Trustee Review`,
       }).from(webhookEndpoints).orderBy(webhookEndpoints.createdAt);
       res.json({ success: true, endpoints });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7224,7 +7224,7 @@ Status: DRAFT - Pending Trustee Review`,
 
       res.json({ success: true, endpoint: { ...created, secret } });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7234,7 +7234,7 @@ Status: DRAFT - Pending Trustee Review`,
       await db.delete(webhookEndpoints).where(eq(webhookEndpoints.id, req.params.id));
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7244,7 +7244,7 @@ Status: DRAFT - Pending Trustee Review`,
       const result = await testWebhook(req.params.id);
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7255,7 +7255,7 @@ Status: DRAFT - Pending Trustee Review`,
       const briefings = await getLatestBriefings();
       res.json({ success: true, ...briefings });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7277,7 +7277,7 @@ Status: DRAFT - Pending Trustee Review`,
 
       res.json({ success: true, analytics });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7295,7 +7295,7 @@ Status: DRAFT - Pending Trustee Review`,
       res.json(result);
     } catch (error: any) {
       console.error("[Intake] Submit error:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7327,7 +7327,7 @@ Status: DRAFT - Pending Trustee Review`,
 
       res.json({ success: true, draftId: existingId });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7342,7 +7342,7 @@ Status: DRAFT - Pending Trustee Review`,
 
       res.json({ success: true, draft });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7352,7 +7352,7 @@ Status: DRAFT - Pending Trustee Review`,
       const sheetId = await getOrCreateIntakeSheetId();
       res.json({ success: true, sheetId });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: "An internal error occurred" });
     }
   });
 
@@ -7398,7 +7398,7 @@ Status: DRAFT - Pending Trustee Review`,
       });
     } catch (error: any) {
       console.error("[Sync API] Node sync error:", error);
-      res.status(500).json({ error: error.message || "Failed to sync node data" });
+      res.status(500).json({ error: "Failed to sync node data" });
     }
   });
 

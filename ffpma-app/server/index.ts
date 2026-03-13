@@ -5,6 +5,7 @@ import { createServer } from "http";
 import path from "path";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import { pool as dbPool } from "./db";
 import { startScheduler, stopScheduler } from "./services/scheduler";
 import { startAgentScheduler, stopAgentScheduler, seedInitialTasks } from "./services/agent-scheduler";
 import { sentinel } from "./services/sentinel";
@@ -41,9 +42,34 @@ const app = express();
 
 // Security Middleware: Helmet sets various HTTP headers to secure the app
 app.use(helmet({
-  contentSecurityPolicy: false, // Disabling CSP for now to prevent breaking React/Vite inline scripts
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+      connectSrc: ["'self'", "https:", "ws:", "wss:"],
+      frameSrc: ["'none'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+    },
+  },
   crossOriginEmbedderPolicy: false,
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true,
+  },
 }));
+
+app.use((_req, res, next) => {
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'no-referrer-when-downgrade');
+  next();
+});
 
 app.set("trust proxy", 1);
 const httpServer = createServer(app);
@@ -64,31 +90,39 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
-// Rate Limiting: Apply a general rate limit to all /api/ requests
+// Rate Limiting
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Increased limit from 150 to 1000 for heavy ecosystem usage
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' },
-  skip: (req) => {
-    // Exclude high-frequency dashboard polling endpoints and core authentication from strict rate limits
-    const excludedPrefixes = [
-      '/api/agent-network',
-      '/api/sentinel',
-      '/api/agent-tasks',
-      '/api/agents',
-      '/api/auth',
-      '/api/profile',
-      '/api/admin'
-    ];
-    // If path starts with any of these prefixes, completely bypass the rate limiter
-    return excludedPrefixes.some(prefix => req.path.startsWith(prefix));
-  }
 });
 
-// Apply the rate limiting middleware to API calls
+const pollingLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' },
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  message: { error: 'Too many login attempts. Please try again in 15 minutes.' },
+});
+
+app.use('/api/agent-network', pollingLimiter);
+app.use('/api/sentinel', pollingLimiter);
+app.use('/api/agent-tasks', pollingLimiter);
+app.use('/api/agents', pollingLimiter);
+app.use('/api/profile', pollingLimiter);
 app.use('/api/', apiLimiter);
+app.use('/api/auth/login', authLimiter);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -154,6 +188,24 @@ app.use((req, res, next) => {
 
   await registerRoutes(httpServer, app);
 
+  // Health check endpoint
+  app.get('/api/health', async (_req: Request, res: Response) => {
+    try {
+      const result = await dbPool.query('SELECT 1 AS ok');
+      res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        database: result.rows?.[0]?.ok === 1 ? 'connected' : 'error',
+      });
+    } catch (err: any) {
+      res.status(503).json({
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        database: 'disconnected',
+        error: process.env.NODE_ENV === 'production' ? 'Database connection failed' : err.message,
+      });
+    }
+  });
 
   // Serve generated images from attached_assets/generated_images
   app.use('/generated', express.static(path.join(process.cwd(), 'attached_assets', 'generated_images')));
@@ -171,14 +223,6 @@ app.use((req, res, next) => {
     res.download(filePath, 'ALLIO_Agent_Network_Guide.pdf');
   });
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
-
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
@@ -188,6 +232,15 @@ app.use((req, res, next) => {
     const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
   }
+
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    const status = err.status || err.statusCode || 500;
+    const timestamp = new Date().toISOString();
+    log(`[${timestamp}] ERROR ${status}: ${err.message}\n${err.stack || ''}`, 'error-handler');
+    if (res.headersSent) return;
+    const safeMessage = status < 500 ? (err.message || 'Request error') : 'Internal Server Error';
+    res.status(status).json({ message: safeMessage, timestamp });
+  });
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.
