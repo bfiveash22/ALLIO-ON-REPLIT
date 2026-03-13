@@ -1533,9 +1533,27 @@ export async function createWordPressUser(userData: WPUserCreateData): Promise<W
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
       
-      // Check if user already exists (email or username)
       if (errorData?.code === "existing_user_email") {
-        console.log(`WordPress user already exists with email: ${userData.email}`);
+        console.log(`WordPress user already exists with email: ${userData.email} - fetching WP user ID`);
+        try {
+          const lookupRes = await fetch(`${wpApiUrl}/wp/v2/users?search=${encodeURIComponent(userData.email)}`, {
+            headers: { Authorization: `Basic ${auth}` },
+          });
+          if (lookupRes.ok) {
+            const wpUsers = await lookupRes.json() as any[];
+            const match = wpUsers.find((u: any) => u.email === userData.email);
+            if (match) {
+              return {
+                success: true,
+                message: `Linked to existing WordPress user (ID: ${match.id})`,
+                wpUserId: match.id,
+                wpUsername: match.username,
+              };
+            }
+          }
+        } catch (lookupErr) {
+          console.error("Failed to look up existing WP user:", lookupErr);
+        }
         return { 
           success: false, 
           message: "User already exists in WordPress with this email",
@@ -1618,24 +1636,65 @@ async function createWordPressUserWithUniqueUsername(
 
 // Create WordPress user and update local user record with WP ID
 export async function pushUserToWordPress(userId: string): Promise<WPUserCreateResult> {
-  // Get user from database
   const [user] = await db.select().from(users).where(eq(users.id, userId));
   
   if (!user) {
     return { success: false, message: "User not found" };
   }
   
-  // Skip if user already has a WordPress ID
-  if (user.wpUserId) {
-    return { success: false, message: "User already synced to WordPress" };
-  }
-  
-  // Get member profile for role
   const [profile] = await db.select().from(memberProfiles).where(eq(memberProfiles.userId, userId));
   const appRole = (profile?.role || "member") as "admin" | "doctor" | "clinic" | "member";
   const wpRole = mapAppRoleToWpRole(appRole);
+
+  const localData = {
+    email: user.email, firstName: user.firstName, lastName: user.lastName, role: wpRole,
+  };
+
+  if (user.wpUserId) {
+    const wpApiUrl = process.env.WP_API_URL || process.env.WORDPRESS_API_URL || "";
+    const wpKey = process.env.WP_CONSUMER_KEY || process.env.WORDPRESS_CONSUMER_KEY || "";
+    const wpSecret = process.env.WP_CONSUMER_SECRET || process.env.WORDPRESS_CONSUMER_SECRET || "";
+
+    if (!wpApiUrl || !wpKey || !wpSecret) {
+      return { success: false, message: "WordPress API credentials not configured" };
+    }
+
+    try {
+      const auth = Buffer.from(`${wpKey}:${wpSecret}`).toString("base64");
+      const response = await fetch(`${wpApiUrl}/wp/v2/users/${user.wpUserId}`, {
+        method: "PUT",
+        headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          first_name: user.firstName || "",
+          last_name: user.lastName || "",
+          roles: [wpRole],
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        return { success: false, message: `WP API error: ${response.status} - ${errorText}` };
+      }
+
+      const wpUser = await response.json() as any;
+      await db.update(users).set({
+        wpRoles: wpRole,
+        updatedAt: new Date(),
+      }).where(eq(users.id, userId));
+
+      if (profile) {
+        await db.update(memberProfiles).set({ lastSyncedAt: new Date() }).where(eq(memberProfiles.userId, userId));
+      }
+
+      const remoteData = { email: wpUser.email, firstName: wpUser.first_name, lastName: wpUser.last_name, role: wpUser.roles?.[0] };
+      await updateSyncTracking("user", userId, String(user.wpUserId), "push", localData, remoteData);
+
+      return { success: true, message: `Updated existing WP user ${user.wpUserId}`, wpUserId: Number(user.wpUserId), wpUsername: wpUser.username };
+    } catch (err: any) {
+      return { success: false, message: `Failed to update WP user: ${err.message}` };
+    }
+  }
   
-  // Create user in WordPress
   const result = await createWordPressUser({
     email: user.email || "",
     firstName: user.firstName || "",
@@ -1643,7 +1702,6 @@ export async function pushUserToWordPress(userId: string): Promise<WPUserCreateR
     role: wpRole,
   });
   
-  // Update local user with WordPress ID if successful
   if (result.success && result.wpUserId) {
     await db.update(users).set({
       wpUserId: String(result.wpUserId),
@@ -1652,12 +1710,11 @@ export async function pushUserToWordPress(userId: string): Promise<WPUserCreateR
       updatedAt: new Date(),
     }).where(eq(users.id, userId));
     
-    // Update profile lastSyncedAt
     if (profile) {
-      await db.update(memberProfiles).set({
-        lastSyncedAt: new Date(),
-      }).where(eq(memberProfiles.userId, userId));
+      await db.update(memberProfiles).set({ lastSyncedAt: new Date() }).where(eq(memberProfiles.userId, userId));
     }
+
+    await updateSyncTracking("user", userId, String(result.wpUserId), "push", localData);
   }
   
   return result;
@@ -1944,4 +2001,517 @@ export async function updateClinicSignNowLinks(
   } catch (error: any) {
     return { success: false, message: error.message };
   }
+}
+
+// ===== PUSH FUNCTIONS: Push data back to WordPress/WooCommerce =====
+
+export async function pushProductToWordPress(productId: string): Promise<{ success: boolean; message: string }> {
+  const [product] = await db.select().from(products).where(eq(products.id, productId));
+  if (!product) {
+    return { success: false, message: "Product not found" };
+  }
+
+  if (!WC_CONSUMER_KEY || !WC_CONSUMER_SECRET) {
+    return { success: false, message: "WooCommerce API credentials not configured" };
+  }
+
+  const wcProductId = product.wcProductId;
+  if (!wcProductId) {
+    return { success: false, message: "Product has no WooCommerce ID - cannot push" };
+  }
+
+  const auth = Buffer.from(`${WC_CONSUMER_KEY}:${WC_CONSUMER_SECRET}`).toString("base64");
+
+  try {
+    const response = await fetch(`${WP_SITE_URL}/wp-json/wc/v3/products/${wcProductId}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: product.name,
+        regular_price: String(product.retailPrice || ""),
+        sale_price: String(product.wholesalePrice || ""),
+        description: product.description || "",
+        short_description: product.shortDescription || "",
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { success: false, message: `WooCommerce API error: ${response.status} - ${errorText}` };
+    }
+
+    const wcData = await response.json() as any;
+    const localData = { name: product.name, retailPrice: String(product.retailPrice), description: product.description };
+    const remoteData = { name: wcData.name, retailPrice: wcData.regular_price, description: wcData.description };
+    await updateSyncTracking("product", productId, String(wcProductId), "push", localData, remoteData);
+    return { success: true, message: `Product "${product.name}" pushed to WooCommerce` };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
+export async function pushAllProductsToWordPress(): Promise<{
+  success: number;
+  failed: number;
+  skipped: number;
+  details: Array<{ name: string; status: string; message: string }>;
+}> {
+  const result = {
+    success: 0,
+    failed: 0,
+    skipped: 0,
+    details: [] as Array<{ name: string; status: string; message: string }>,
+  };
+
+  const allProducts = await db.select().from(products);
+
+  for (const product of allProducts) {
+    if (!product.wcProductId) {
+      result.skipped++;
+      result.details.push({ name: product.name, status: "skipped", message: "No WooCommerce ID" });
+      continue;
+    }
+
+    const pushResult = await pushProductToWordPress(product.id);
+    if (pushResult.success) {
+      result.success++;
+      result.details.push({ name: product.name, status: "success", message: pushResult.message });
+    } else {
+      result.failed++;
+      result.details.push({ name: product.name, status: "failed", message: pushResult.message });
+    }
+  }
+
+  return result;
+}
+
+export async function pushClinicToWordPress(clinicId: string): Promise<{ success: boolean; message: string }> {
+  const [clinic] = await db.select().from(clinics).where(eq(clinics.id, clinicId));
+  if (!clinic) {
+    return { success: false, message: "Clinic not found" };
+  }
+
+  const wpApiUrl = process.env.WP_API_URL || process.env.WORDPRESS_API_URL || "";
+  const wpKey = process.env.WP_CONSUMER_KEY || process.env.WORDPRESS_CONSUMER_KEY || "";
+  const wpSecret = process.env.WP_CONSUMER_SECRET || process.env.WORDPRESS_CONSUMER_SECRET || "";
+
+  if (!wpApiUrl || !wpKey || !wpSecret) {
+    return { success: false, message: "WordPress API credentials not configured" };
+  }
+
+  const auth = Buffer.from(`${wpKey}:${wpSecret}`).toString("base64");
+  const clinicData = {
+    title: clinic.name,
+    content: clinic.description || "",
+    status: clinic.isActive ? "publish" : "draft",
+    meta: {
+      clinic_address: clinic.address || "",
+      clinic_city: clinic.city || "",
+      clinic_state: clinic.state || "",
+      clinic_zip: clinic.zipCode || "",
+      clinic_phone: clinic.phone || "",
+      clinic_email: clinic.email || "",
+      clinic_doctor: clinic.doctorName || "",
+      clinic_practice_type: clinic.practiceType || "",
+    },
+  };
+
+  try {
+    const wpClinicId = clinic.wpClinicId;
+    const endpoint = wpClinicId
+      ? `${wpApiUrl}/wp/v2/clinics/${wpClinicId}`
+      : `${wpApiUrl}/wp/v2/clinics`;
+    const method = wpClinicId ? "PUT" : "POST";
+
+    const response = await fetch(endpoint, {
+      method,
+      headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
+      body: JSON.stringify(clinicData),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { success: false, message: `WP API error: ${response.status} - ${errorText}` };
+    }
+
+    const wpData = await response.json() as any;
+    if (!wpClinicId && wpData.id) {
+      await db.update(clinics).set({ wpClinicId: wpData.id }).where(eq(clinics.id, clinicId));
+    }
+
+    const localData = { name: clinic.name, city: clinic.city, state: clinic.state, doctor: clinic.doctorName };
+    await updateSyncTracking("clinic", clinicId, String(wpData.id || wpClinicId), "push", localData);
+    return { success: true, message: `Clinic "${clinic.name}" pushed to WordPress` };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
+export async function pushAllClinicsToWordPress(): Promise<{
+  success: number;
+  failed: number;
+  skipped: number;
+  details: Array<{ name: string; status: string; message: string }>;
+}> {
+  const result = {
+    success: 0,
+    failed: 0,
+    skipped: 0,
+    details: [] as Array<{ name: string; status: string; message: string }>,
+  };
+
+  const allClinics = await db.select().from(clinics).where(eq(clinics.isActive, true));
+
+  for (const clinic of allClinics) {
+    const pushResult = await pushClinicToWordPress(clinic.id);
+    if (pushResult.success) {
+      result.success++;
+      result.details.push({ name: clinic.name, status: "success", message: pushResult.message });
+    } else {
+      result.failed++;
+      result.details.push({ name: clinic.name, status: "failed", message: pushResult.message });
+    }
+  }
+
+  return result;
+}
+
+export async function pushContentToWordPress(
+  title: string,
+  content: string,
+  wpPostId?: number
+): Promise<{ success: boolean; message: string; wpPostId?: number }> {
+  const wpApiUrl = process.env.WP_API_URL || process.env.WORDPRESS_API_URL || "";
+  const wpKey = process.env.WP_CONSUMER_KEY || process.env.WORDPRESS_CONSUMER_KEY || "";
+  const wpSecret = process.env.WP_CONSUMER_SECRET || process.env.WORDPRESS_CONSUMER_SECRET || "";
+
+  if (!wpApiUrl || !wpKey || !wpSecret) {
+    return { success: false, message: "WordPress API credentials not configured" };
+  }
+
+  const auth = Buffer.from(`${wpKey}:${wpSecret}`).toString("base64");
+
+  try {
+    const endpoint = wpPostId
+      ? `${wpApiUrl}/wp/v2/posts/${wpPostId}`
+      : `${wpApiUrl}/wp/v2/posts`;
+    const method = wpPostId ? "PUT" : "POST";
+
+    const response = await fetch(endpoint, {
+      method,
+      headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ title, content, status: "publish" }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { success: false, message: `WP API error: ${response.status} - ${errorText}` };
+    }
+
+    const wpData = await response.json() as any;
+    const localData = { title, contentLength: content.length };
+    await updateSyncTracking("content", String(wpData.id), String(wpData.id), "push", localData);
+    return { success: true, message: `Content "${title}" pushed to WordPress`, wpPostId: wpData.id };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
+// ===== SYNC TRACKING =====
+
+async function updateSyncTracking(
+  entityType: string,
+  entityId: string,
+  wpEntityId: string,
+  direction: "pull" | "push",
+  localData?: Record<string, any>,
+  remoteData?: Record<string, any>
+): Promise<void> {
+  try {
+    const { wpSyncTracking } = await import("@shared/schema");
+
+    const existing = await db
+      .select()
+      .from(wpSyncTracking)
+      .where(sql`entity_type = ${entityType} AND entity_id = ${entityId}`)
+      .limit(1);
+
+    const now = new Date();
+    const localChecksum = localData ? computeChecksum(localData) : null;
+    const remoteChecksum = remoteData ? computeChecksum(remoteData) : null;
+
+    let isConflict = false;
+    let conflictDetails: string | null = null;
+
+    if (existing.length > 0 && localChecksum && remoteChecksum) {
+      const prev = existing[0];
+      if (prev.localChecksum && prev.remoteChecksum &&
+          localChecksum !== prev.localChecksum && remoteChecksum !== prev.remoteChecksum &&
+          localChecksum !== remoteChecksum) {
+        isConflict = true;
+        conflictDetails = JSON.stringify({
+          reason: "Both local and remote data changed since last sync",
+          localPrevChecksum: prev.localChecksum,
+          localNewChecksum: localChecksum,
+          remotePrevChecksum: prev.remoteChecksum,
+          remoteNewChecksum: remoteChecksum,
+          detectedAt: now.toISOString(),
+        });
+      }
+    }
+
+    if (existing.length > 0) {
+      const updateData: Record<string, any> = {
+        wpEntityId,
+        updatedAt: now,
+        syncDirection: direction,
+      };
+      if (direction === "pull") {
+        updateData.lastPulledAt = now;
+      } else {
+        updateData.lastPushedAt = now;
+      }
+      if (localChecksum) updateData.localChecksum = localChecksum;
+      if (remoteChecksum) updateData.remoteChecksum = remoteChecksum;
+
+      if (isConflict) {
+        updateData.isConflict = true;
+        updateData.conflictDetails = conflictDetails;
+      } else {
+        updateData.isConflict = false;
+        updateData.conflictDetails = null;
+        updateData.resolvedAt = null;
+      }
+
+      await db
+        .update(wpSyncTracking)
+        .set(updateData)
+        .where(eq(wpSyncTracking.id, existing[0].id));
+    } else {
+      await db.insert(wpSyncTracking).values({
+        entityType,
+        entityId,
+        wpEntityId,
+        syncDirection: direction,
+        lastPulledAt: direction === "pull" ? now : null,
+        lastPushedAt: direction === "push" ? now : null,
+        localChecksum,
+        remoteChecksum,
+        isConflict,
+        conflictDetails,
+      });
+    }
+  } catch (error) {
+    console.error("[SyncTracking] Error updating sync tracking:", error);
+  }
+}
+
+export async function getSyncTrackingSummary(): Promise<{
+  users: { lastPulled: string | null; lastPushed: string | null; conflicts: number; total: number };
+  products: { lastPulled: string | null; lastPushed: string | null; conflicts: number; total: number };
+  categories: { lastPulled: string | null; lastPushed: string | null; conflicts: number; total: number };
+  clinics: { lastPulled: string | null; lastPushed: string | null; conflicts: number; total: number };
+  content: { lastPulled: string | null; lastPushed: string | null; conflicts: number; total: number };
+}> {
+  const { wpSyncTracking } = await import("@shared/schema");
+
+  const summaryForType = async (entityType: string) => {
+    const records = await db
+      .select()
+      .from(wpSyncTracking)
+      .where(eq(wpSyncTracking.entityType, entityType));
+
+    const conflicts = records.filter(r => r.isConflict).length;
+    const lastPulled = records
+      .filter(r => r.lastPulledAt)
+      .sort((a, b) => (b.lastPulledAt!.getTime() - a.lastPulledAt!.getTime()))[0]?.lastPulledAt;
+    const lastPushed = records
+      .filter(r => r.lastPushedAt)
+      .sort((a, b) => (b.lastPushedAt!.getTime() - a.lastPushedAt!.getTime()))[0]?.lastPushedAt;
+
+    return {
+      lastPulled: lastPulled?.toISOString() || null,
+      lastPushed: lastPushed?.toISOString() || null,
+      conflicts,
+      total: records.length,
+    };
+  };
+
+  return {
+    users: await summaryForType("user"),
+    products: await summaryForType("product"),
+    categories: await summaryForType("category"),
+    clinics: await summaryForType("clinic"),
+    content: await summaryForType("content"),
+  };
+}
+
+export async function getSyncConflicts(): Promise<Array<{
+  id: string;
+  entityType: string;
+  entityId: string | null;
+  wpEntityId: string | null;
+  conflictDetails: string | null;
+  createdAt: Date | null;
+}>> {
+  const { wpSyncTracking } = await import("@shared/schema");
+
+  return db
+    .select()
+    .from(wpSyncTracking)
+    .where(eq(wpSyncTracking.isConflict, true));
+}
+
+export async function resolveConflict(trackingId: string, resolvedBy: string): Promise<{ success: boolean; message: string }> {
+  const { wpSyncTracking } = await import("@shared/schema");
+
+  const [record] = await db.select().from(wpSyncTracking).where(eq(wpSyncTracking.id, trackingId));
+  if (!record) {
+    return { success: false, message: "Sync tracking record not found" };
+  }
+
+  await db
+    .update(wpSyncTracking)
+    .set({
+      isConflict: false,
+      resolvedAt: new Date(),
+      resolvedBy,
+      updatedAt: new Date(),
+    })
+    .where(eq(wpSyncTracking.id, trackingId));
+
+  return { success: true, message: "Conflict resolved" };
+}
+
+// ===== WEBHOOK HANDLER =====
+
+export async function handleWordPressWebhook(
+  topic: string,
+  payload: any,
+  signature?: string
+): Promise<{ success: boolean; message: string; action?: string }> {
+  console.log(`[WP Webhook] Received webhook: ${topic}`);
+
+  try {
+    switch (topic) {
+      case "customer.created":
+      case "customer.updated": {
+        const wpUserId = payload.id;
+        const email = payload.email;
+        if (!email) {
+          return { success: false, message: "No email in payload" };
+        }
+
+        const existingUser = await db
+          .select()
+          .from(users)
+          .where(eq(users.email, email))
+          .limit(1);
+
+        if (existingUser.length > 0) {
+          const localData = { email: existingUser[0].email, firstName: existingUser[0].firstName, lastName: existingUser[0].lastName };
+          const remoteData = { email: payload.email, firstName: payload.first_name, lastName: payload.last_name };
+
+          await db
+            .update(users)
+            .set({
+              wpUserId: String(wpUserId),
+              firstName: payload.first_name || existingUser[0].firstName,
+              lastName: payload.last_name || existingUser[0].lastName,
+              updatedAt: new Date(),
+            })
+            .where(eq(users.id, existingUser[0].id));
+
+          await updateSyncTracking("user", existingUser[0].id, String(wpUserId), "pull", localData, remoteData);
+          return { success: true, message: `Updated existing user ${email}`, action: "updated" };
+        } else {
+          return { success: true, message: `User ${email} not in local DB - will be included in next full sync pull`, action: "skipped" };
+        }
+      }
+
+      case "product.created":
+      case "product.updated": {
+        const wcProductId = payload.id;
+        if (!wcProductId) {
+          return { success: false, message: "No product ID in payload" };
+        }
+
+        const existingProduct = await db
+          .select()
+          .from(products)
+          .where(eq(products.wcProductId, wcProductId))
+          .limit(1);
+
+        if (existingProduct.length > 0) {
+          const localData = { name: existingProduct[0].name, retailPrice: String(existingProduct[0].retailPrice), description: existingProduct[0].description };
+          const remoteData = { name: payload.name, retailPrice: payload.regular_price, description: payload.description };
+
+          await db
+            .update(products)
+            .set({
+              name: payload.name || existingProduct[0].name,
+              retailPrice: payload.regular_price || String(existingProduct[0].retailPrice),
+              description: payload.description || existingProduct[0].description,
+            })
+            .where(eq(products.id, existingProduct[0].id));
+
+          await updateSyncTracking("product", existingProduct[0].id, String(wcProductId), "pull", localData, remoteData);
+          return { success: true, message: `Updated product ${payload.name}`, action: "updated" };
+        }
+
+        return { success: true, message: `Product ${wcProductId} not in local DB - will be included in next full sync pull`, action: "skipped" };
+      }
+
+      case "order.created":
+      case "order.updated": {
+        await updateSyncTracking("order", String(payload.id), String(payload.id), "pull");
+        return { success: true, message: `Order webhook received - order ${payload.id}`, action: "logged" };
+      }
+
+      case "post.created":
+      case "post.updated":
+      case "post.published": {
+        const postId = payload.id || payload.ID;
+        const title = payload.title?.rendered || payload.post_title || payload.title || "";
+        console.log(`[WP Webhook] Content update received: post ${postId} - "${title}"`);
+        await updateSyncTracking("content", String(postId), String(postId), "pull",
+          undefined,
+          { id: postId, title, status: payload.status, modified: payload.modified }
+        );
+        return { success: true, message: `Content webhook received - post ${postId}: "${title}"`, action: "logged" };
+      }
+
+      default:
+        console.log(`[WP Webhook] Unhandled topic: ${topic}`);
+        return { success: true, message: `Unhandled topic: ${topic}`, action: "ignored" };
+    }
+  } catch (error: any) {
+    console.error(`[WP Webhook] Error processing ${topic}:`, error);
+    return { success: false, message: error.message };
+  }
+}
+
+export function verifyWebhookSignature(payload: string, signature: string, secret: string): boolean {
+  try {
+    const computed = crypto
+      .createHmac("sha256", secret)
+      .update(payload)
+      .digest("base64");
+    const computedBuf = Buffer.from(computed);
+    const signatureBuf = Buffer.from(signature);
+    if (computedBuf.length !== signatureBuf.length) {
+      return false;
+    }
+    return crypto.timingSafeEqual(computedBuf, signatureBuf);
+  } catch {
+    return false;
+  }
+}
+
+function computeChecksum(data: Record<string, any>): string {
+  const normalized = JSON.stringify(data, Object.keys(data).sort());
+  return crypto.createHash("sha256").update(normalized).digest("hex").slice(0, 16);
 }

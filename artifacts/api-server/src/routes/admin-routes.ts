@@ -524,4 +524,198 @@ export function registerAdminRoutes(app: Express): void {
       res.status(500).json({ error: error.message });
     }
   });
+
+  app.post("/api/admin/push-user-to-wordpress/:userId", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { pushUserToWordPress } = await import("../services/wordpress-sync");
+      const result = await pushUserToWordPress(req.params.userId);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Push user error:", error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  app.post("/api/admin/push-all-users-to-wordpress", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      import("../services/wordpress-sync").then(({ pushAllUsersToWordPress: pushAll }) => {
+        console.log("[WP Push] Starting background push of all users to WordPress...");
+        pushAll()
+          .then(result => console.log(`[WP Push] Push complete: ${result.success} success, ${result.failed} failed, ${result.skipped} skipped`))
+          .catch(err => console.error("[WP Push] Push error:", err));
+      });
+
+      res.status(202).json({
+        success: true,
+        message: "Push all users to WordPress started in the background.",
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  app.post("/api/admin/push-product-to-wordpress/:productId", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { pushProductToWordPress } = await import("../services/wordpress-sync");
+      const result = await pushProductToWordPress(req.params.productId);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Push product error:", error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  app.post("/api/admin/push-all-products-to-wordpress", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      import("../services/wordpress-sync").then(({ pushAllProductsToWordPress }) => {
+        console.log("[WP Push] Starting background push of all products to WooCommerce...");
+        pushAllProductsToWordPress()
+          .then(result => console.log(`[WP Push] Product push complete: ${result.success} success, ${result.failed} failed, ${result.skipped} skipped`))
+          .catch(err => console.error("[WP Push] Product push error:", err));
+      });
+
+      res.status(202).json({
+        success: true,
+        message: "Push all products to WooCommerce started in the background.",
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  app.post("/api/admin/push-clinic-to-wordpress/:clinicId", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { pushClinicToWordPress } = await import("../services/wordpress-sync");
+      const result = await pushClinicToWordPress(req.params.clinicId);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  app.post("/api/admin/push-all-clinics-to-wordpress", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      import("../services/wordpress-sync").then(({ pushAllClinicsToWordPress }) => {
+        console.log("[WP Push] Starting background push of all clinics to WordPress...");
+        pushAllClinicsToWordPress()
+          .then(result => console.log(`[WP Push] Clinic push complete: ${result.success} success, ${result.failed} failed, ${result.skipped} skipped`))
+          .catch(err => console.error("[WP Push] Clinic push error:", err));
+      });
+
+      res.status(202).json({
+        success: true,
+        message: "Push all clinics to WordPress started in the background.",
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  app.post("/api/admin/push-content-to-wordpress", requireRole("admin"), async (req: Request, res: Response): Promise<any> => {
+    try {
+      const { title, content, wpPostId } = req.body;
+      if (!title || !content) {
+        return res.status(400).json({ success: false, message: "Title and content are required" });
+      }
+      const { pushContentToWordPress } = await import("../services/wordpress-sync");
+      const result = await pushContentToWordPress(title, content, wpPostId);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  app.get("/api/admin/sync-tracking", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { getSyncTrackingSummary } = await import("../services/wordpress-sync");
+      const summary = await getSyncTrackingSummary();
+      res.json(summary);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/sync-conflicts", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { getSyncConflicts } = await import("../services/wordpress-sync");
+      const conflicts = await getSyncConflicts();
+      res.json(conflicts);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/sync-conflicts/:id/resolve", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user?.claims?.sub || "admin";
+      const { resolveConflict } = await import("../services/wordpress-sync");
+      const result = await resolveConflict(req.params.id, userId);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/wp-mirror-stats", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { products, categories, memberProfiles, clinics } = await import("@shared/schema");
+      const { wordPressAuthService } = await import("../services/wordpress-auth");
+
+      const [localProducts, localCategories, localMembers, localClinics] = await Promise.all([
+        db.select().from(products),
+        db.select().from(categories),
+        db.select().from(memberProfiles),
+        db.select().from(clinics),
+      ]);
+
+      let wpUserCounts = { total: 0, doctors: 0, clinics: 0, members: 0, admins: 0 };
+      try {
+        const wpResult = await wordPressAuthService.getAllUsers();
+        wpUserCounts = wpResult.counts;
+      } catch (e) {
+        console.log("[Mirror Stats] WordPress user fetch failed, using cached data");
+      }
+
+      let wcProductCount = 0;
+      let wcOrderCount = 0;
+      try {
+        const wcStatus = await wooCommerceService.getConnectionStatus();
+        if (wcStatus.connected) {
+          const prodResult = await wooCommerceService.getProducts(1, 1);
+          wcProductCount = prodResult.total || 0;
+          const orderStats = await wooCommerceService.getOrderStats();
+          wcOrderCount = orderStats.totalOrders || 0;
+        }
+      } catch (e) {
+        console.log("[Mirror Stats] WooCommerce fetch failed");
+      }
+
+      let syncSummary = null;
+      try {
+        const { getSyncTrackingSummary } = await import("../services/wordpress-sync");
+        syncSummary = await getSyncTrackingSummary();
+      } catch (e) {
+        console.log("[Mirror Stats] Sync tracking fetch failed");
+      }
+
+      res.json({
+        local: {
+          users: localMembers.length,
+          products: localProducts.length,
+          categories: localCategories.length,
+          clinics: localClinics.length,
+        },
+        wordpress: {
+          users: wpUserCounts,
+          products: wcProductCount,
+          orders: wcOrderCount,
+        },
+        syncStatus: syncSummary,
+        lastChecked: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error("Mirror stats error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
 }

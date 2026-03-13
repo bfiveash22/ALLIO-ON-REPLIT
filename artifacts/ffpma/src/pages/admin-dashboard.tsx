@@ -31,7 +31,14 @@ import {
   Check,
   X,
   ExternalLink,
+  ArrowUpRight,
+  ArrowDownLeft,
+  AlertTriangle,
+  Clock,
+  ArrowLeftRight,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { User, MemberProfile, Order, TrainingModule, Quiz, UiRefactorProposal } from "@shared/schema";
 
 interface UserSyncResult {
@@ -75,6 +82,7 @@ export default function AdminDashboardPage() {
   const { toast } = useToast();
   const [syncResult, setSyncResult] = useState<UserSyncResult | null>(null);
   const [wpRoles, setWpRoles] = useState<any>(null);
+  const [pushConfirmOpen, setPushConfirmOpen] = useState<string | null>(null);
 
   const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useQuery<DashboardStats>({
     queryKey: ["/api/admin/stats"],
@@ -160,6 +168,64 @@ export default function AdminDashboardPage() {
         description: error.message || "Failed to sync from WordPress",
         variant: "destructive",
       });
+    },
+  });
+
+  const { data: mirrorStats, isLoading: mirrorLoading, refetch: refetchMirror } = useQuery<any>({
+    queryKey: ["/api/admin/wp-mirror-stats"],
+    staleTime: 60000,
+  });
+
+  const { data: syncTracking } = useQuery<any>({
+    queryKey: ["/api/admin/sync-tracking"],
+    staleTime: 30000,
+  });
+
+  const { data: syncConflicts = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/sync-conflicts"],
+    staleTime: 30000,
+  });
+
+  const pushUsersMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/admin/push-all-users-to-wordpress");
+      return response.json();
+    },
+    onSuccess: (result) => {
+      setPushConfirmOpen(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/wp-mirror-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/sync-tracking"] });
+      toast({ title: "Push Users Started", description: result.message });
+    },
+    onError: (error: any) => {
+      toast({ title: "Push Failed", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const pushProductsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/admin/push-all-products-to-wordpress");
+      return response.json();
+    },
+    onSuccess: (result) => {
+      setPushConfirmOpen(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/wp-mirror-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/sync-tracking"] });
+      toast({ title: "Push Products Started", description: result.message });
+    },
+    onError: (error: any) => {
+      toast({ title: "Push Failed", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const resolveConflictMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest("POST", `/api/admin/sync-conflicts/${id}/resolve`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/sync-conflicts"] });
+      toast({ title: "Conflict Resolved" });
     },
   });
 
@@ -844,41 +910,294 @@ export default function AdminDashboardPage() {
         </TabsContent>
         
         <TabsContent value="wordpress" className="space-y-4">
-              <Card className="border-blue-500/20 bg-blue-500/5">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <RefreshCw className="h-5 w-5 text-blue-400" />
-                    WordPress Administration Mirror
-                  </CardTitle>
-                  <CardDescription>
-                    Direct secure access to the Forgotten Formula WooCommerce and WordPress CMS.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col items-center justify-center p-8 text-center space-y-4 border-2 border-dashed border-blue-500/20 rounded-xl bg-black/20">
-                    <div className="h-16 w-16 bg-blue-500/10 rounded-full flex items-center justify-center mb-2">
-                      <ExternalLink className="h-8 w-8 text-blue-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold mb-2 text-blue-100">Access Global Store & CMS</h3>
-                      <p className="text-muted-foreground max-w-md mx-auto">
-                        For security reasons, the main WordPress backend is sandboxed on its own secure network (`167.71.225.18`).
-                        Click below to securely mirror into the WP Admin interface in a new isolated tab.
-                      </p>
-                    </div>
-                    <Button 
-                      onClick={() => window.open('https://forgottenformula.com/wp-admin', '_blank')}
-                      className="mt-4 bg-blue-600 hover:bg-blue-700 text-white gap-2 px-8"
-                      data-testid="button-open-wp-admin"
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                      Open WP Admin Console
-                      <ExternalLink className="h-3 w-3 ml-1 opacity-50" />
-                    </Button>
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h2 className="text-xl font-bold">WordPress Mirror Dashboard</h2>
+              <p className="text-sm text-muted-foreground">Bidirectional sync between App and forgottenformula.com</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { refetchMirror(); queryClient.invalidateQueries({ queryKey: ["/api/admin/sync-tracking"] }); queryClient.invalidateQueries({ queryKey: ["/api/admin/sync-conflicts"] }); }}
+                disabled={mirrorLoading}
+              >
+                {mirrorLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+                Refresh
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open('https://forgottenformula.com/wp-admin', '_blank')}
+              >
+                <ExternalLink className="h-4 w-4 mr-1" />
+                WP Admin
+              </Button>
+            </div>
+          </div>
+
+          {syncConflicts.length > 0 && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Sync Conflicts Detected</AlertTitle>
+              <AlertDescription>
+                {syncConflicts.length} record(s) were modified in both systems since last sync. Review and resolve below.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card className="border-blue-500/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Users className="h-4 w-4 text-blue-400" />
+                  Users
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between items-center mb-3">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold">{mirrorStats?.local?.users ?? "—"}</p>
+                    <p className="text-xs text-muted-foreground">App</p>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                  <ArrowLeftRight className="h-4 w-4 text-muted-foreground" />
+                  <div className="text-center">
+                    <p className="text-2xl font-bold">{mirrorStats?.wordpress?.users?.total ?? "—"}</p>
+                    <p className="text-xs text-muted-foreground">WordPress</p>
+                  </div>
+                </div>
+                {syncTracking?.users && (
+                  <div className="text-xs text-muted-foreground space-y-1 border-t pt-2">
+                    {syncTracking.users.lastPulled && (
+                      <div className="flex items-center gap-1"><ArrowDownLeft className="h-3 w-3 text-green-400" /> Pulled: {new Date(syncTracking.users.lastPulled).toLocaleDateString()}</div>
+                    )}
+                    {syncTracking.users.lastPushed && (
+                      <div className="flex items-center gap-1"><ArrowUpRight className="h-3 w-3 text-blue-400" /> Pushed: {new Date(syncTracking.users.lastPushed).toLocaleDateString()}</div>
+                    )}
+                    {syncTracking.users.conflicts > 0 && (
+                      <div className="flex items-center gap-1 text-red-400"><AlertTriangle className="h-3 w-3" /> {syncTracking.users.conflicts} conflicts</div>
+                    )}
+                  </div>
+                )}
+                <div className="flex gap-2 mt-3">
+                  <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => syncUsersMutation.mutate()} disabled={syncUsersMutation.isPending}>
+                    <ArrowDownLeft className="h-3 w-3 mr-1" /> Pull
+                  </Button>
+                  <Dialog open={pushConfirmOpen === 'users'} onOpenChange={(open) => setPushConfirmOpen(open ? 'users' : null)}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline" className="flex-1 text-xs">
+                        <ArrowUpRight className="h-3 w-3 mr-1" /> Push
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Push Users to WordPress</DialogTitle>
+                        <DialogDescription>This will push all unsynced local users to WordPress. Users already synced will be skipped.</DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setPushConfirmOpen(null)}>Cancel</Button>
+                        <Button onClick={() => pushUsersMutation.mutate()} disabled={pushUsersMutation.isPending}>
+                          {pushUsersMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                          Confirm Push
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-blue-500/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Package className="h-4 w-4 text-blue-400" />
+                  Products
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between items-center mb-3">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold">{mirrorStats?.local?.products ?? "—"}</p>
+                    <p className="text-xs text-muted-foreground">App</p>
+                  </div>
+                  <ArrowLeftRight className="h-4 w-4 text-muted-foreground" />
+                  <div className="text-center">
+                    <p className="text-2xl font-bold">{mirrorStats?.wordpress?.products ?? "—"}</p>
+                    <p className="text-xs text-muted-foreground">WooCommerce</p>
+                  </div>
+                </div>
+                {syncTracking?.products && (
+                  <div className="text-xs text-muted-foreground space-y-1 border-t pt-2">
+                    {syncTracking.products.lastPulled && (
+                      <div className="flex items-center gap-1"><ArrowDownLeft className="h-3 w-3 text-green-400" /> Pulled: {new Date(syncTracking.products.lastPulled).toLocaleDateString()}</div>
+                    )}
+                    {syncTracking.products.lastPushed && (
+                      <div className="flex items-center gap-1"><ArrowUpRight className="h-3 w-3 text-blue-400" /> Pushed: {new Date(syncTracking.products.lastPushed).toLocaleDateString()}</div>
+                    )}
+                    {syncTracking.products.conflicts > 0 && (
+                      <div className="flex items-center gap-1 text-red-400"><AlertTriangle className="h-3 w-3" /> {syncTracking.products.conflicts} conflicts</div>
+                    )}
+                  </div>
+                )}
+                <div className="flex gap-2 mt-3">
+                  <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => syncProductsMutation.mutate()} disabled={syncProductsMutation.isPending}>
+                    <ArrowDownLeft className="h-3 w-3 mr-1" /> Pull
+                  </Button>
+                  <Dialog open={pushConfirmOpen === 'products'} onOpenChange={(open) => setPushConfirmOpen(open ? 'products' : null)}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline" className="flex-1 text-xs">
+                        <ArrowUpRight className="h-3 w-3 mr-1" /> Push
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Push Products to WooCommerce</DialogTitle>
+                        <DialogDescription>This will push local product changes back to WooCommerce. Only products with a WooCommerce ID will be updated.</DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setPushConfirmOpen(null)}>Cancel</Button>
+                        <Button onClick={() => pushProductsMutation.mutate()} disabled={pushProductsMutation.isPending}>
+                          {pushProductsMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                          Confirm Push
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-blue-500/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <ShoppingCart className="h-4 w-4 text-blue-400" />
+                  Orders
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between items-center mb-3">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold">{mirrorStats?.wordpress?.orders ?? "—"}</p>
+                    <p className="text-xs text-muted-foreground">WooCommerce</p>
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground border-t pt-2">
+                  <p>Orders are managed directly in WooCommerce. Use the webhook receiver to get real-time order notifications.</p>
+                </div>
+                <div className="mt-3">
+                  <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => window.open('https://forgottenformula.com/wp-admin/edit.php?post_type=shop_order', '_blank')}>
+                    <ExternalLink className="h-3 w-3 mr-1" /> View in WooCommerce
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="border-blue-500/20 bg-blue-500/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-blue-400" />
+                Sync Status Panel
+              </CardTitle>
+              <CardDescription>Per-entity synchronization status and timestamps</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                {["users", "products", "categories", "clinics", "content"].map((type) => {
+                  const tracking = syncTracking?.[type];
+                  return (
+                    <div key={type} className="rounded-lg border p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-sm capitalize">{type}</span>
+                        {tracking?.conflicts > 0 ? (
+                          <Badge variant="destructive" className="text-xs">{tracking.conflicts} conflicts</Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs bg-green-500/10 text-green-400 border-green-500/20">In Sync</Badge>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground space-y-1">
+                        <div className="flex justify-between">
+                          <span>Last Pull:</span>
+                          <span>{tracking?.lastPulled ? new Date(tracking.lastPulled).toLocaleString() : "Never"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Last Push:</span>
+                          <span>{tracking?.lastPushed ? new Date(tracking.lastPushed).toLocaleString() : "Never"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Tracked:</span>
+                          <span>{tracking?.total ?? 0} entities</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {syncConflicts.length > 0 && (
+            <Card className="border-red-500/20 bg-red-500/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-red-400" />
+                  Conflict Resolution
+                </CardTitle>
+                <CardDescription>Records modified in both systems since last sync</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {syncConflicts.map((conflict: any) => (
+                    <div key={conflict.id} className="flex items-center justify-between p-3 rounded-lg border border-red-500/20">
+                      <div>
+                        <p className="text-sm font-medium capitalize">{conflict.entityType} #{conflict.entityId || conflict.wpEntityId}</p>
+                        <p className="text-xs text-muted-foreground">{conflict.conflictDetails || "Modified in both systems"}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => resolveConflictMutation.mutate(conflict.id)}
+                        disabled={resolveConflictMutation.isPending}
+                      >
+                        <Check className="h-3 w-3 mr-1" />
+                        Resolve
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card className="border-blue-500/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <ArrowLeftRight className="h-4 w-4 text-blue-400" />
+                Quick Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                <Button variant="outline" className="h-auto py-3 flex-col gap-1" onClick={() => fullSyncMutation.mutate()} disabled={fullSyncMutation.isPending}>
+                  {fullSyncMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowDownLeft className="h-5 w-5 text-green-400" />}
+                  <span className="text-xs">Full Pull Sync</span>
+                </Button>
+                <Button variant="outline" className="h-auto py-3 flex-col gap-1" onClick={() => syncUsersMutation.mutate()} disabled={syncUsersMutation.isPending}>
+                  {syncUsersMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Users className="h-5 w-5 text-blue-400" />}
+                  <span className="text-xs">Pull Users</span>
+                </Button>
+                <Button variant="outline" className="h-auto py-3 flex-col gap-1" onClick={() => syncProductsMutation.mutate()} disabled={syncProductsMutation.isPending}>
+                  {syncProductsMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Package className="h-5 w-5 text-blue-400" />}
+                  <span className="text-xs">Pull Products</span>
+                </Button>
+                <Button variant="outline" className="h-auto py-3 flex-col gap-1" onClick={() => discoverRolesMutation.mutate()} disabled={discoverRolesMutation.isPending}>
+                  {discoverRolesMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Activity className="h-5 w-5 text-purple-400" />}
+                  <span className="text-xs">Discover WP Roles</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="ui-evolutions" className="space-y-4">
           <Card>

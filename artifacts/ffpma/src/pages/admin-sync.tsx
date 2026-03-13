@@ -34,6 +34,10 @@ import {
   ShoppingCart,
   FileText,
   Loader2,
+  ArrowUpRight,
+  ArrowDownLeft,
+  AlertTriangle,
+  Building,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { z } from "zod";
@@ -69,6 +73,9 @@ export default function AdminSyncPage() {
   const [editingMapping, setEditingMapping] = useState<WpRoleMapping | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
+  const [confirmPushUsers, setConfirmPushUsers] = useState(false);
+  const [confirmPushProducts, setConfirmPushProducts] = useState(false);
+  const [confirmPushClinics, setConfirmPushClinics] = useState(false);
 
   const { data: roleDefinitions = [], isLoading: rolesLoading, refetch: refetchRoles } = useQuery<WpRoleDefinition[]>({
     queryKey: ["/api/admin/role-definitions"],
@@ -138,6 +145,77 @@ export default function AdminSyncPage() {
         variant: "destructive",
       });
     },
+  });
+
+  const pushUsersMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/admin/push-all-users-to-wordpress");
+      return response.json() as Promise<SyncResult>;
+    },
+    onSuccess: (result) => {
+      setSyncResult({ success: true, message: result.message || "Push started in background" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/sync-jobs"] });
+      toast({
+        title: "Push Users Started",
+        description: result.message || "Background push initiated",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Push Failed",
+        description: error.message || "Failed to push users",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const pushProductsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/admin/push-all-products-to-wordpress");
+      return response.json() as Promise<SyncResult>;
+    },
+    onSuccess: (result) => {
+      setSyncResult({ success: true, message: result.message || "Push started in background" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/sync-jobs"] });
+      toast({
+        title: "Push Products Started",
+        description: result.message || "Background push initiated",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Push Failed",
+        description: error.message || "Failed to push products",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const pushClinicsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/admin/push-all-clinics-to-wordpress");
+      return response.json() as Promise<SyncResult>;
+    },
+    onSuccess: (result) => {
+      setSyncResult({ success: true, message: result.message || "Push started in background" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/sync-jobs"] });
+      toast({
+        title: "Push Clinics Started",
+        description: result.message || "Background push initiated",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Push Failed",
+        description: error.message || "Failed to push clinics",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const { data: syncTracking } = useQuery<any>({
+    queryKey: ["/api/admin/sync-tracking"],
+    staleTime: 30000,
   });
 
   const discoverRolesMutation = useMutation({
@@ -301,10 +379,14 @@ export default function AdminSyncPage() {
         </div>
 
         <Tabs defaultValue="sync" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
+          <TabsList className="grid w-full grid-cols-4 max-w-lg">
             <TabsTrigger value="sync" data-testid="tab-sync">
               <RefreshCw className="mr-2 h-4 w-4" />
               Sync
+            </TabsTrigger>
+            <TabsTrigger value="status" data-testid="tab-status">
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Status
             </TabsTrigger>
             <TabsTrigger value="mappings" data-testid="tab-mappings">
               <ArrowLeftRight className="mr-2 h-4 w-4" />
@@ -332,24 +414,47 @@ export default function AdminSyncPage() {
                   <p className="text-sm text-muted-foreground">
                     Import users from your WordPress site. This will create new accounts and update existing ones with their WordPress roles.
                   </p>
-                  <Button
-                    onClick={() => syncUsersMutation.mutate()}
-                    disabled={syncUsersMutation.isPending}
-                    className="w-full"
-                    data-testid="button-sync-users"
-                  >
-                    {syncUsersMutation.isPending ? (
-                      <>
+                  {syncTracking?.users && (
+                    <div className="text-xs text-muted-foreground space-y-1 p-2 rounded bg-muted/30">
+                      {syncTracking.users.lastPulled && (
+                        <div className="flex items-center gap-1"><ArrowDownLeft className="h-3 w-3 text-green-400" /> Last pulled: {new Date(syncTracking.users.lastPulled).toLocaleString()}</div>
+                      )}
+                      {syncTracking.users.lastPushed && (
+                        <div className="flex items-center gap-1"><ArrowUpRight className="h-3 w-3 text-blue-400" /> Last pushed: {new Date(syncTracking.users.lastPushed).toLocaleString()}</div>
+                      )}
+                      {syncTracking.users.conflicts > 0 && (
+                        <div className="flex items-center gap-1 text-red-400"><AlertTriangle className="h-3 w-3" /> {syncTracking.users.conflicts} conflicts</div>
+                      )}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      onClick={() => syncUsersMutation.mutate()}
+                      disabled={syncUsersMutation.isPending}
+                      data-testid="button-sync-users"
+                      variant="outline"
+                    >
+                      {syncUsersMutation.isPending ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Syncing Users...
-                      </>
-                    ) : (
-                      <>
-                        <Users className="mr-2 h-4 w-4" />
-                        Sync Users Now
-                      </>
-                    )}
-                  </Button>
+                      ) : (
+                        <ArrowDownLeft className="mr-2 h-4 w-4" />
+                      )}
+                      Pull from WP
+                    </Button>
+                    <Button
+                      onClick={() => setConfirmPushUsers(true)}
+                      disabled={pushUsersMutation.isPending}
+                      data-testid="button-push-users"
+                      variant="outline"
+                    >
+                      {pushUsersMutation.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <ArrowUpRight className="mr-2 h-4 w-4" />
+                      )}
+                      Push to WP
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -360,30 +465,94 @@ export default function AdminSyncPage() {
                     Product Sync
                   </CardTitle>
                   <CardDescription>
-                    Sync products and categories from WooCommerce
+                    Sync products and categories with WooCommerce
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    Import products and categories from your WooCommerce store including prices, variations, and images.
+                    Sync products and categories between your WooCommerce store and this app, including prices, variations, and images.
                   </p>
-                  <Button
-                    onClick={() => syncProductsMutation.mutate()}
-                    disabled={syncProductsMutation.isPending}
-                    className="w-full"
-                    data-testid="button-sync-products"
-                  >
-                    {syncProductsMutation.isPending ? (
-                      <>
+                  {syncTracking?.products && (
+                    <div className="text-xs text-muted-foreground space-y-1 p-2 rounded bg-muted/30">
+                      {syncTracking.products.lastPulled && (
+                        <div className="flex items-center gap-1"><ArrowDownLeft className="h-3 w-3 text-green-400" /> Last pulled: {new Date(syncTracking.products.lastPulled).toLocaleString()}</div>
+                      )}
+                      {syncTracking.products.lastPushed && (
+                        <div className="flex items-center gap-1"><ArrowUpRight className="h-3 w-3 text-blue-400" /> Last pushed: {new Date(syncTracking.products.lastPushed).toLocaleString()}</div>
+                      )}
+                      {syncTracking.products.conflicts > 0 && (
+                        <div className="flex items-center gap-1 text-red-400"><AlertTriangle className="h-3 w-3" /> {syncTracking.products.conflicts} conflicts</div>
+                      )}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      onClick={() => syncProductsMutation.mutate()}
+                      disabled={syncProductsMutation.isPending}
+                      data-testid="button-sync-products"
+                      variant="outline"
+                    >
+                      {syncProductsMutation.isPending ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Syncing Products...
-                      </>
+                      ) : (
+                        <ArrowDownLeft className="mr-2 h-4 w-4" />
+                      )}
+                      Pull from WC
+                    </Button>
+                    <Button
+                      onClick={() => setConfirmPushProducts(true)}
+                      disabled={pushProductsMutation.isPending}
+                      data-testid="button-push-products"
+                      variant="outline"
+                    >
+                      {pushProductsMutation.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <ArrowUpRight className="mr-2 h-4 w-4" />
+                      )}
+                      Push to WC
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-card-border">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building className="h-5 w-5" />
+                    Clinic Sync
+                  </CardTitle>
+                  <CardDescription>
+                    Push clinic data to WordPress
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Push clinic profiles, addresses, and contact info to your WordPress site.
+                  </p>
+                  {syncTracking?.clinics && (
+                    <div className="text-xs text-muted-foreground space-y-1 p-2 rounded bg-muted/30">
+                      {syncTracking.clinics.lastPushed && (
+                        <div className="flex items-center gap-1"><ArrowUpRight className="h-3 w-3 text-blue-400" /> Last pushed: {new Date(syncTracking.clinics.lastPushed).toLocaleString()}</div>
+                      )}
+                      {syncTracking.clinics.conflicts > 0 && (
+                        <div className="flex items-center gap-1 text-red-400"><AlertTriangle className="h-3 w-3" /> {syncTracking.clinics.conflicts} conflicts</div>
+                      )}
+                    </div>
+                  )}
+                  <Button
+                    onClick={() => setConfirmPushClinics(true)}
+                    disabled={pushClinicsMutation.isPending}
+                    data-testid="button-push-clinics"
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {pushClinicsMutation.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
-                      <>
-                        <Package className="mr-2 h-4 w-4" />
-                        Sync Products Now
-                      </>
+                      <ArrowUpRight className="mr-2 h-4 w-4" />
                     )}
+                    Push All Clinics to WP
                   </Button>
                 </CardContent>
               </Card>
@@ -472,6 +641,59 @@ export default function AdminSyncPage() {
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="status" className="space-y-6">
+            <Card className="border-card-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5" />
+                  Sync Status Overview
+                </CardTitle>
+                <CardDescription>
+                  Per-entity synchronization status with last-synced timestamps and conflict detection
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  {["users", "products", "categories", "clinics"].map((type) => {
+                    const tracking = syncTracking?.[type];
+                    return (
+                      <div key={type} className="rounded-lg border p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold capitalize">{type}</span>
+                          {tracking?.conflicts > 0 ? (
+                            <Badge variant="destructive" className="text-xs">
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              {tracking.conflicts} conflicts
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              OK
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="flex items-center gap-1"><ArrowDownLeft className="h-3 w-3 text-green-400" /> Last Pull:</span>
+                            <span className="text-xs">{tracking?.lastPulled ? new Date(tracking.lastPulled).toLocaleString() : "Never"}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="flex items-center gap-1"><ArrowUpRight className="h-3 w-3 text-blue-400" /> Last Push:</span>
+                            <span className="text-xs">{tracking?.lastPushed ? new Date(tracking.lastPushed).toLocaleString() : "Never"}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span>Tracked Entities:</span>
+                            <span className="text-xs font-medium">{tracking?.total ?? 0}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -1041,6 +1263,57 @@ export default function AdminSyncPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={confirmPushUsers} onOpenChange={setConfirmPushUsers}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Push All Users to WordPress</DialogTitle>
+            <DialogDescription>
+              This will push all local user profiles and role updates to WordPress. Users without a WP account will be created; existing users will have their roles and profiles updated. This action runs in the background.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmPushUsers(false)}>Cancel</Button>
+            <Button onClick={() => { pushUsersMutation.mutate(); setConfirmPushUsers(false); }}>
+              Confirm Push
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={confirmPushProducts} onOpenChange={setConfirmPushProducts}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Push All Products to WooCommerce</DialogTitle>
+            <DialogDescription>
+              This will update all products on your WooCommerce store with data from this app, including names, prices, and descriptions. Only products with existing WooCommerce IDs will be updated.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmPushProducts(false)}>Cancel</Button>
+            <Button onClick={() => { pushProductsMutation.mutate(); setConfirmPushProducts(false); }}>
+              Confirm Push
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={confirmPushClinics} onOpenChange={setConfirmPushClinics}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Push All Clinics to WordPress</DialogTitle>
+            <DialogDescription>
+              This will push all active clinic profiles to your WordPress site, including addresses, contact info, and doctor details. Clinics without a WP ID will be created as new posts.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmPushClinics(false)}>Cancel</Button>
+            <Button onClick={() => { pushClinicsMutation.mutate(); setConfirmPushClinics(false); }}>
+              Confirm Push
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

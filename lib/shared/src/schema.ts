@@ -2163,3 +2163,27 @@ export type Frequency = typeof frequencies.$inferSelect;
 export const insertFrequencyCategorySchema = createInsertSchema(frequencyCategories).omit({ id: true, createdAt: true });
 export type InsertFrequencyCategory = z.infer<typeof insertFrequencyCategorySchema>;
 export type FrequencyCategory = typeof frequencyCategories.$inferSelect;
+
+export const syncDirectionEnum = pgEnum("sync_direction", ["pull", "push", "bidirectional"]);
+
+export const wpSyncTracking = pgTable("wp_sync_tracking", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  entityType: varchar("entity_type").notNull(),
+  entityId: varchar("entity_id"),
+  wpEntityId: varchar("wp_entity_id"),
+  lastPulledAt: timestamp("last_pulled_at"),
+  lastPushedAt: timestamp("last_pushed_at"),
+  localChecksum: varchar("local_checksum"),
+  remoteChecksum: varchar("remote_checksum"),
+  syncDirection: syncDirectionEnum("sync_direction").default("pull"),
+  isConflict: boolean("is_conflict").default(false),
+  conflictDetails: text("conflict_details"),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: varchar("resolved_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertWpSyncTrackingSchema = createInsertSchema(wpSyncTracking).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertWpSyncTracking = z.infer<typeof insertWpSyncTrackingSchema>;
+export type WpSyncTracking = typeof wpSyncTracking.$inferSelect;

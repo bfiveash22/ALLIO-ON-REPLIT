@@ -158,6 +158,8 @@ export async function registerRoutes(
   registerBloodResearchRoutes(app);
   const { registerAdminRoutes } = await import("./routes/admin-routes");
   registerAdminRoutes(app);
+  const { registerWebhookRoutes } = await import("./routes/webhook-routes");
+  registerWebhookRoutes(app);
   const { registerMiscRoutes } = await import("./routes/misc-routes");
   registerMiscRoutes(app);
 
