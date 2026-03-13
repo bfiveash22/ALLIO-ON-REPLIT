@@ -5,14 +5,33 @@ import { sentinel } from './sentinel';
 const execAsync = promisify(exec);
 
 export class CanvaAgentService {
-    /**
-     * Executes a Canva automation task using the browser-use CLI.
-     * Assumes the presence of a pre-authenticated cloud profile session.
-     */
+    validateCredentials(): { valid: boolean; error?: string } {
+        const sessionId = process.env.CANVA_SESSION_ID;
+        if (!sessionId) {
+            return { valid: false, error: 'CANVA_SESSION_ID environment variable is not configured. Canva automation requires a pre-authenticated browser session ID.' };
+        }
+        return { valid: true };
+    }
+
+    getStatus(): { available: boolean; sessionId?: string; error?: string } {
+        const validation = this.validateCredentials();
+        return {
+            available: validation.valid,
+            sessionId: validation.valid ? process.env.CANVA_SESSION_ID?.substring(0, 10) + '...' : undefined,
+            error: validation.error,
+        };
+    }
+
     async executeCanvaTask(
         prompt: string,
         sessionId: string = process.env.CANVA_SESSION_ID || 'canva-default-session'
     ): Promise<{ success: boolean; outputUrl?: string; error?: string }> {
+        const credentialCheck = this.validateCredentials();
+        if (!credentialCheck.valid) {
+            console.error(`[CANVA-AGENT] Credential validation failed: ${credentialCheck.error}`);
+            return { success: false, error: `Canva agent unavailable: ${credentialCheck.error}` };
+        }
+
         console.log(`[CANVA-AGENT] Starting task execution with session ID: ${sessionId}`);
 
         try {

@@ -81,6 +81,83 @@ export const AGENT_MODEL_ASSIGNMENTS: Record<string, AIModelConfig> = {
   'CHIRO': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['chiropractic', 'net', 'quantum-methods'] },
 };
 
+export interface ProviderHealthStatus {
+  provider: string;
+  available: boolean;
+  credentialConfigured: boolean;
+  envVar: string;
+  error?: string;
+}
+
+export interface AgentHealthStatus {
+  agentId: string;
+  name: string;
+  division: string;
+  provider: string;
+  model: string;
+  providerAvailable: boolean;
+  credentialStatus: 'configured' | 'missing' | 'proxy_fallback';
+  operationalState: 'operational' | 'degraded' | 'offline';
+  hasSpecializedService: boolean;
+  specializedServiceStatus?: string;
+  lastSuccessfulTask?: Date | null;
+  toolAccess: string[];
+}
+
+export function validateProviderCredentials(): Record<string, ProviderHealthStatus> {
+  return {
+    openai: {
+      provider: 'openai',
+      available: !!(process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY),
+      credentialConfigured: !!(process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY),
+      envVar: 'OPENAI_API_KEY',
+    },
+    claude: {
+      provider: 'claude',
+      available: !!(process.env.ANTHROPIC_API_KEY || process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY),
+      credentialConfigured: !!(process.env.ANTHROPIC_API_KEY || process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY),
+      envVar: 'ANTHROPIC_API_KEY or AI_INTEGRATIONS_ANTHROPIC_API_KEY',
+    },
+    huggingface: {
+      provider: 'huggingface',
+      available: !!process.env.HUGGINGFACE_API_KEY,
+      credentialConfigured: !!process.env.HUGGINGFACE_API_KEY,
+      envVar: 'HUGGINGFACE_API_KEY',
+    },
+    gemini: {
+      provider: 'gemini',
+      available: !!process.env.GEMINI_API_KEY,
+      credentialConfigured: !!process.env.GEMINI_API_KEY,
+      envVar: 'GEMINI_API_KEY',
+    },
+    research: {
+      provider: 'research',
+      available: true,
+      credentialConfigured: true,
+      envVar: 'N/A (public APIs with optional keys)',
+    },
+  };
+}
+
+export const SPECIALIZED_SERVICE_AGENTS: Record<string, string> = {
+  'DIANE': 'support-agents (diane)',
+  'PETE': 'support-agents (pete)',
+  'SAM': 'support-agents (sam)',
+  'PAT': 'support-agents (pat)',
+  'DR-TRIAGE': 'support-agents (diagnostics)',
+  'MAX-MINERAL': 'support-agents (minerals)',
+  'ALLIO-SUPPORT': 'support-agents (corporate)',
+  'CHIRO': 'support-agents',
+  'PIXEL': 'canva-agent',
+  'PRISM': 'huggingface-media (video)',
+  'PEXEL': 'huggingface-media (image)',
+  'AURORA': 'huggingface-audio',
+  'DR-FORMULA': 'protocol-builder',
+  'HIPPOCRATES': 'research-api (pubmed)',
+  'PARACELSUS': 'research-api (openalex+pubmed)',
+  'ORACLE': 'research-api (semantic_scholar)',
+};
+
 export class SentinelOrchestrator {
   private initialized = false;
 
@@ -93,6 +170,7 @@ export class SentinelOrchestrator {
     console.log('     SENTINEL ORCHESTRATOR - INITIALIZING AGENT NETWORK');
     console.log('═══════════════════════════════════════════════════════════════\n');
 
+    this.logProviderValidation();
     await this.seedAgentRegistry();
     this.initialized = true;
 
@@ -105,6 +183,96 @@ export class SentinelOrchestrator {
     );
 
     return { success: true, agentCount: count };
+  }
+
+  private logProviderValidation(): void {
+    const providers = validateProviderCredentials();
+    console.log('\n[SENTINEL] ═══ PROVIDER CREDENTIAL VALIDATION ═══');
+    const operational: string[] = [];
+    const degraded: string[] = [];
+    const offline: string[] = [];
+
+    for (const [name, status] of Object.entries(providers)) {
+      const icon = status.available ? '✓' : '✗';
+      console.log(`  ${icon} ${name.toUpperCase()}: ${status.available ? 'AVAILABLE' : 'NOT CONFIGURED'} (${status.envVar})`);
+    }
+
+    for (const [agentId, config] of Object.entries(AGENT_MODEL_ASSIGNMENTS)) {
+      const providerStatus = providers[config.provider];
+      if (!providerStatus) {
+        offline.push(agentId);
+        continue;
+      }
+      if (providerStatus.available) {
+        operational.push(agentId);
+      } else if ((config.provider === 'claude' || config.provider === 'gemini' || config.provider === 'huggingface') && providers.openai.available) {
+        degraded.push(agentId);
+      } else {
+        offline.push(agentId);
+      }
+    }
+
+    console.log(`\n[SENTINEL] Agent Operational Status:`);
+    console.log(`  ✓ Operational (${operational.length}): ${operational.join(', ')}`);
+    if (degraded.length > 0) {
+      console.log(`  ⚠ Degraded (${degraded.length}, will use OpenAI fallback): ${degraded.join(', ')}`);
+    }
+    if (offline.length > 0) {
+      console.log(`  ✗ Offline (${offline.length}): ${offline.join(', ')}`);
+    }
+    console.log('[SENTINEL] ═══════════════════════════════════════\n');
+  }
+
+  getProviderHealth(): Record<string, ProviderHealthStatus> {
+    return validateProviderCredentials();
+  }
+
+  async getAgentHealthReport(): Promise<AgentHealthStatus[]> {
+    const providers = validateProviderCredentials();
+    const allAgents = await this.getAllAgents();
+    const report: AgentHealthStatus[] = [];
+
+    for (const [agentId, config] of Object.entries(AGENT_MODEL_ASSIGNMENTS)) {
+      const providerStatus = providers[config.provider];
+      const dbAgent = allAgents.find(a => a.agentId.toUpperCase() === agentId);
+      const profile = agents.find(a => a.id.toUpperCase() === agentId);
+
+      let credentialStatus: 'configured' | 'missing' | 'proxy_fallback' = 'missing';
+      let operationalState: 'operational' | 'degraded' | 'offline' = 'offline';
+
+      if (providerStatus?.available) {
+        credentialStatus = 'configured';
+        operationalState = 'operational';
+      } else if ((config.provider === 'claude' || config.provider === 'gemini' || config.provider === 'huggingface') && providers.openai.available) {
+        credentialStatus = 'proxy_fallback';
+        operationalState = 'degraded';
+      }
+
+      const hasSpecializedService = !!SPECIALIZED_SERVICE_AGENTS[agentId];
+      const toolAccess: string[] = ['agent_chat', 'task_execution'];
+      if (hasSpecializedService) toolAccess.push('specialized_service');
+      if (['HERMES', 'ATHENA', 'SENTINEL'].includes(agentId)) toolAccess.push('google_workspace');
+      if (['JURIS', 'LEXICON', 'AEGIS', 'SCRIBE'].includes(agentId)) toolAccess.push('legal_framework');
+      if (['HIPPOCRATES', 'PARACELSUS', 'ORACLE'].includes(agentId)) toolAccess.push('research_api');
+      if (['PRISM', 'PEXEL', 'AURORA'].includes(agentId)) toolAccess.push('media_generation');
+
+      report.push({
+        agentId,
+        name: profile?.name || agentId,
+        division: profile?.division || dbAgent?.division || 'unknown',
+        provider: config.provider,
+        model: config.model,
+        providerAvailable: providerStatus?.available ?? false,
+        credentialStatus,
+        operationalState,
+        hasSpecializedService,
+        specializedServiceStatus: hasSpecializedService ? SPECIALIZED_SERVICE_AGENTS[agentId] : undefined,
+        lastSuccessfulTask: dbAgent?.lastActivityAt || null,
+        toolAccess,
+      });
+    }
+
+    return report;
   }
 
   private async seedAgentRegistry(): Promise<void> {
@@ -333,11 +501,11 @@ export class SentinelOrchestrator {
       }
   
       if (modelConfig.provider === 'huggingface') {
-        return {
-          response: `[${agentId}] HuggingFace model ${modelConfig.model} ready. Use dedicated endpoints for media generation.`,
-          model: modelConfig.model,
-          provider: 'huggingface',
-        };
+        if (!process.env.HUGGINGFACE_API_KEY) {
+          console.warn(`[SENTINEL] HuggingFace API key missing for ${agentId}. Falling back to OpenAI for text routing.`);
+        } else {
+          console.log(`[SENTINEL] ${agentId} uses HuggingFace for media generation. Text query routed to OpenAI fallback.`);
+        }
       }
   
       if (modelConfig.provider === 'claude') {

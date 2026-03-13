@@ -10,7 +10,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export const CORE_AGENTS = ['ATHENA', 'SENTINEL', 'MUSE', 'PRISM', 'PEXEL', 'FORGE'] as const;
+export const CORE_AGENTS = ['ATHENA', 'SENTINEL', 'MUSE', 'PRISM', 'PEXEL', 'FORGE', 'JURIS', 'PROMETHEUS', 'ATLAS', 'DIANE', 'DR-TRIAGE'] as const;
 export type CoreAgent = typeof CORE_AGENTS[number];
 
 export interface CoreAgentStatus {
@@ -103,7 +103,12 @@ function getAgentDivision(agentId: string): Division {
     'MUSE': 'marketing',
     'PRISM': 'marketing',
     'PEXEL': 'marketing',
-    'FORGE': 'engineering'
+    'FORGE': 'engineering',
+    'JURIS': 'legal',
+    'PROMETHEUS': 'science',
+    'ATLAS': 'financial',
+    'DIANE': 'support',
+    'DR-TRIAGE': 'support',
   };
   return divisionMap[agentId] || 'executive';
 }
@@ -130,13 +135,18 @@ export async function getCoreAgentStatus(): Promise<CoreAgentStatus[]> {
     const completedTasks = agentTasks.filter(t => t.status === 'completed').length;
     const lastTask = agentTasks.find(t => t.completedAt);
 
-    const capabilities = {
+    const capabilities: Record<string, string[]> = {
       'ATHENA': ['Strategic communications', 'Trustee inbox', 'Priority management', 'Scheduling'],
       'SENTINEL': ['Cross-division coordination', 'Task routing', 'System broadcasts', 'Agent oversight'],
       'MUSE': ['Content strategy', 'Campaign planning', 'Brand voice', 'Member engagement'],
       'PRISM': ['Video production', 'Motion graphics', 'Cinematic storytelling', 'Visual effects'],
       'PEXEL': ['Image generation', 'Visual assets', 'Marketing graphics', 'Photo curation', 'Brand imagery'],
-      'FORGE': ['Platform development', 'API integration', 'System automation', 'Infrastructure']
+      'FORGE': ['Platform development', 'API integration', 'System automation', 'Infrastructure'],
+      'JURIS': ['Legal strategy', 'PMA protection', 'Regulatory navigation', 'Compliance'],
+      'PROMETHEUS': ['Research strategy', 'Cross-discipline integration', 'Healing innovation'],
+      'ATLAS': ['Financial reporting', 'Payment processing', 'Member billing', 'Crypto treasury'],
+      'DIANE': ['Nutrition guidance', 'Candida protocols', 'Dietary healing', 'Keto optimization'],
+      'DR-TRIAGE': ['5 R\'s Protocol', 'Symptom assessment', 'Diagnostic triage', 'Healing pathways'],
     };
 
     return {
@@ -166,10 +176,10 @@ export async function activateCoreAgents(): Promise<{ success: boolean; message:
     await new Promise(r => setTimeout(r, 500));
   }
 
-  await agentSpeak('SENTINEL', 'All 6 core agents are now online and ready.', 'info');
+  await agentSpeak('SENTINEL', `All ${CORE_AGENTS.length} core agents are now online and ready.`, 'info');
 
   await sentinel.broadcastSystemStatus(
-    'Core Agent Network activated. ATHENA, SENTINEL, MUSE, PRISM, PEXEL, and FORGE are online and ready for mission operations.',
+    `Core Agent Network activated. ${CORE_AGENTS.join(', ')} are online and ready for mission operations.`,
     1
   );
 

@@ -4,25 +4,44 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 export class RupaHealthAgentService {
-    /**
-     * Executes a Rupa Health autonomous browser task using the browser-use CLI.
-     */
+    validateCredentials(): { valid: boolean; missing: string[]; error?: string } {
+        const missing: string[] = [];
+        if (!process.env.RUPA_USERNAME) missing.push('RUPA_USERNAME');
+        if (!process.env.RUPA_PASSWORD) missing.push('RUPA_PASSWORD');
+        if (missing.length > 0) {
+            return {
+                valid: false,
+                missing,
+                error: `Rupa Health credentials not configured: ${missing.join(', ')}. Lab ordering will be unavailable.`
+            };
+        }
+        return { valid: true, missing: [] };
+    }
+
+    getStatus(): { available: boolean; username?: string; error?: string } {
+        const validation = this.validateCredentials();
+        return {
+            available: validation.valid,
+            username: validation.valid ? process.env.RUPA_USERNAME : undefined,
+            error: validation.error,
+        };
+    }
+
     async placeOrder(
         patientDetails: { firstName: string; lastName: string; email: string; dob?: string; phone?: string },
         testPanels: string[],
         dryRun: boolean = true
     ): Promise<{ success: boolean; resultUrl?: string; message?: string; error?: string }> {
+        const credentialCheck = this.validateCredentials();
+        if (!credentialCheck.valid) {
+            console.error(`[RUPA-HEALTH-AGENT] Credential validation failed: ${credentialCheck.error}`);
+            return { success: false, error: `Rupa Health agent unavailable: ${credentialCheck.error}` };
+        }
+
         console.log(`[RUPA-HEALTH-AGENT] Starting task execution for patient: ${patientDetails.firstName} ${patientDetails.lastName}`);
 
         const username = process.env.RUPA_USERNAME;
         const password = process.env.RUPA_PASSWORD;
-
-        if (!username || !password) {
-            return {
-                success: false,
-                error: 'Rupa Health credentials (RUPA_USERNAME, RUPA_PASSWORD) are not configured in the environment variables.'
-            };
-        }
 
         try {
             // Formulate the comprehensive prompt for browser-use to navigate Rupa Health

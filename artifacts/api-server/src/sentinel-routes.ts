@@ -1,5 +1,5 @@
 import { Express, Request, Response } from 'express';
-import { orchestrator } from './services/sentinel-orchestrator';
+import { orchestrator, validateProviderCredentials, AGENT_MODEL_ASSIGNMENTS, SPECIALIZED_SERVICE_AGENTS } from './services/sentinel-orchestrator';
 import { AGENT_DIVISIONS, Division } from './services/sentinel';
 import { requireRole } from './working-auth';
 import { storage } from './storage';
@@ -492,6 +492,53 @@ export function registerSentinelRoutes(app: Express): void {
         oauthConfigured: true,
         missingSecrets: [],
         driveHealth,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get('/api/sentinel/network-health', adminOnly, async (_req: Request, res: Response) => {
+    try {
+      const healthReport = await orchestrator.getAgentHealthReport();
+      const providers = validateProviderCredentials();
+
+      const summary = {
+        operational: healthReport.filter(a => a.operationalState === 'operational').length,
+        degraded: healthReport.filter(a => a.operationalState === 'degraded').length,
+        offline: healthReport.filter(a => a.operationalState === 'offline').length,
+        total: healthReport.length,
+      };
+
+      const byDivision: Record<string, { operational: number; degraded: number; offline: number; agents: string[] }> = {};
+      for (const agent of healthReport) {
+        if (!byDivision[agent.division]) {
+          byDivision[agent.division] = { operational: 0, degraded: 0, offline: 0, agents: [] };
+        }
+        byDivision[agent.division][agent.operationalState]++;
+        byDivision[agent.division].agents.push(agent.agentId);
+      }
+
+      const browserUseAgents = {
+        canva: {
+          agentId: 'PIXEL',
+          sessionConfigured: !!process.env.CANVA_SESSION_ID,
+          status: process.env.CANVA_SESSION_ID ? 'ready' : 'missing CANVA_SESSION_ID',
+        },
+        rupaHealth: {
+          agentId: 'DR-TRIAGE',
+          credentialsConfigured: !!(process.env.RUPA_USERNAME && process.env.RUPA_PASSWORD),
+          status: (process.env.RUPA_USERNAME && process.env.RUPA_PASSWORD) ? 'ready' : 'missing RUPA_USERNAME/RUPA_PASSWORD',
+        },
+      };
+
+      res.json({
+        timestamp: new Date().toISOString(),
+        summary,
+        providers,
+        browserUseAgents,
+        byDivision,
+        agents: healthReport,
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });

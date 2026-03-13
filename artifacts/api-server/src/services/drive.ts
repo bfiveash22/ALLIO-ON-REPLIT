@@ -309,12 +309,8 @@ export async function uploadTextDocument(
   try {
 
     if (process.env.GOOGLE_REFRESH_TOKEN === 'dummy-local-token') {
-      console.log(`[Drive] MOCK: Uploading text document "${fileName}" to folder "${folderId}"`);
-      return {
-        id: `mock-doc-${Date.now()}`,
-        webViewLink: `https://mock.drive.local/view/${fileName}`,
-        webContentLink: `https://mock.drive.local/download/${fileName}`
-      };
+      console.error(`[Drive] ERROR: Google Drive not configured (dummy-local-token). Cannot upload "${fileName}". Set a real GOOGLE_REFRESH_TOKEN.`);
+      return null;
     }
 
     const drive = await getUncachableGoogleDriveClient();
@@ -355,12 +351,8 @@ export async function uploadPresentation(
 ): Promise<{ id: string; webViewLink: string; webContentLink: string } | null> {
   try {
     if (process.env.GOOGLE_REFRESH_TOKEN === 'dummy-local-token') {
-      console.log(`[Drive] MOCK: Uploading presentation "${fileName}" to folder "${folderId}"`);
-      return {
-        id: `mock-presentation-${Date.now()}`,
-        webViewLink: `https://mock.drive.local/view/${fileName}`,
-        webContentLink: `https://mock.drive.local/download/${fileName}`
-      };
+      console.error(`[Drive] ERROR: Google Drive not configured (dummy-local-token). Cannot upload presentation "${fileName}". Set a real GOOGLE_REFRESH_TOKEN.`);
+      return null;
     }
 
     const drive = await getUncachableGoogleDriveClient();
@@ -397,8 +389,8 @@ export async function findFolderByName(parentId: string, folderName: string): Pr
   try {
 
     if (process.env.GOOGLE_REFRESH_TOKEN === 'dummy-local-token') {
-      console.log(`[Drive] MOCK: Searching for folder "${folderName}" under "${parentId}"`);
-      return `mock-existing-folder-${folderName.replace(/\s+/g, '-')}`;
+      console.error(`[Drive] ERROR: Google Drive not configured (dummy-local-token). Cannot search for folder "${folderName}". Set a real GOOGLE_REFRESH_TOKEN.`);
+      return null;
     }
 
     const drive = await getUncachableGoogleDriveClient();
@@ -474,12 +466,8 @@ export async function uploadFileFromPath(
 
 
     if (process.env.GOOGLE_REFRESH_TOKEN === 'dummy-local-token') {
-      console.log(`[Drive] MOCK: Uploading file "${actualFileName}" from path "${filePath}" to folder "${folderId}"`);
-      return {
-        id: `mock-file-${Date.now()}`,
-        name: actualFileName,
-        webViewLink: `https://mock.drive.local/view/${actualFileName}`
-      };
+      console.error(`[Drive] ERROR: Google Drive not configured (dummy-local-token). Cannot upload file "${actualFileName}". Set a real GOOGLE_REFRESH_TOKEN.`);
+      return null;
     }
 
     const drive = await getUncachableGoogleDriveClient();

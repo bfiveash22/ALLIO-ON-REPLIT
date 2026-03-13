@@ -10,6 +10,7 @@ import { Readable } from 'stream';
 import OpenAI from 'openai';
 import { sentinel } from './sentinel';
 import { canvaAgent } from './canva-agent';
+import { rupaHealthAgent } from './rupa-health-agent';
 import { agents, FFPMA_CREED } from '@shared/agents';
 import { searchAllSources } from './research-apis';
 import { searchKnowledgeBase } from './knowledge-base';
@@ -134,7 +135,6 @@ YOUR NETWORK:
 - OPENCLAW: You have a direct line to the Trustee. You can use your 'openclaw_message' tool to send WhatsApp messages directly to the Trustee for urgent input, critical questions, or major breakthroughs.
 
 
-
 PMA LANGUAGE COMPLIANCE (MANDATORY FOR ALL OUTPUTS):
 - NEVER use: 'treatment', 'treat', 'diagnosis', 'diagnose', 'prescribe', 'prescription', 'patient', 'medical advice', 'cure'
 - ALWAYS use: 'protocol', 'wellness approach', 'address' instead of 'treat'
@@ -231,6 +231,13 @@ function spellCheckContent(content: string): string {
   return corrected;
 }
 
+const LAB_ORDER_KEYWORDS = ['lab', 'test', 'panel', 'blood work', 'bloodwork', 'order', 'rupa', 'specimen', 'draw', 'diagnostic'];
+
+function isLabOrderTask(task: { title: string; description?: string | null }): boolean {
+  const text = `${task.title} ${task.description || ''}`.toLowerCase();
+  return LAB_ORDER_KEYWORDS.some(keyword => text.includes(keyword));
+}
+
 const IMAGE_AGENTS = ['PIXEL', 'pixel', 'AURORA', 'aurora', 'PRISM', 'prism', 'PEXEL', 'pexel'];
 const DOCUMENT_AGENTS = [
   'SENTINEL', 'sentinel', 'ATHENA', 'athena', 'HERMES', 'hermes', 'OPENCLAW', 'openclaw',
@@ -244,7 +251,7 @@ const DOCUMENT_AGENTS = [
   'ENTHEOS', 'entheos', 'QUANTUM', 'quantum', 'DIANE', 'diane', 'PETE', 'pete',
   'SAM', 'sam', 'PAT', 'pat', 'DR-TRIAGE', 'dr-triage', 'MAX-MINERAL', 'max-mineral',
   'ALLIO-SUPPORT', 'allio-support', 'CHIRO', 'chiro'
-];
+];
 
 
 async function uploadImageToDrive(
@@ -480,10 +487,16 @@ async function generateDocumentViaClaudeProxy(taskTitle: string, taskDescription
     }
   
     if (provider === 'research') {
-      // Research agents: use research APIs for context, then generate via Claude or OpenAI
+      const RESEARCH_AGENT_SOURCES: Record<string, ('openalex' | 'pubmed' | 'semantic_scholar' | 'arxiv')[]> = {
+        'HIPPOCRATES': ['pubmed'],
+        'PARACELSUS': ['openalex', 'pubmed'],
+        'ORACLE': ['semantic_scholar'],
+        'HELIX': ['openalex'],
+      };
+      const agentSources = RESEARCH_AGENT_SOURCES[agentId.toUpperCase()];
       try {
-        console.log(`[Agent Executor] [1/2] Research API + Claude for ${agentId}...`);
-        const research = await searchAllSources({ query: taskTitle, limit: 5 });
+        console.log(`[Agent Executor] [1/2] Research API + Claude for ${agentId} (sources: ${agentSources ? agentSources.join(', ') : 'all'})...`);
+        const research = await searchAllSources({ query: taskTitle, limit: 5, sources: agentSources });
         let researchContext = '';
         if (research.success && research.papers.length > 0) {
           researchContext = research.papers.map((p: any, i: number) => 
@@ -1230,7 +1243,9 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
       throw new Error('Could not get/create agent folder in Drive');
     }
 
-    if (agentId.toUpperCase() === 'CANVA') {
+    const upperAgentId = agentId.toUpperCase();
+
+    if (upperAgentId === 'CANVA' || upperAgentId === 'PIXEL') {
       console.log(`[Agent Executor] Launching Canva automation for ${agentId}...`);
 
       await storage.updateAgentTask(taskId, { progress: 20 });
@@ -1282,6 +1297,51 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
       return {
         success: true,
         outputUrl: result.outputUrl,
+      };
+    } else if (upperAgentId === 'DR-TRIAGE' && isLabOrderTask(task)) {
+      console.log(`[Agent Executor] Launching Rupa Health lab ordering for ${agentId}...`);
+      await storage.updateAgentTask(taskId, { progress: 20 });
+
+      const status = rupaHealthAgent.getStatus();
+      if (!status.available) {
+        throw new Error(`Rupa Health not configured: ${status.error || 'credentials missing'}. Cannot execute lab ordering.`);
+      }
+
+      const nameParts = (task.title || 'Patient Unknown').split(' ');
+      const firstName = nameParts[0] || 'Patient';
+      const lastName = nameParts.slice(1).join(' ') || 'Unknown';
+
+      const labResult = await rupaHealthAgent.placeOrder(
+        { firstName, lastName, email: '' },
+        [task.description || task.title],
+        true
+      );
+
+      if (!labResult.success) {
+        throw new Error(labResult.error || 'Rupa Health lab ordering failed');
+      }
+
+      await storage.updateAgentTask(taskId, { progress: 90 });
+
+      const crossDivisionPrefix = getCrossDivisionFilePrefix(task);
+      const fileName = `${crossDivisionPrefix}RUPA_Lab_Order_${Date.now()}`;
+      const docContent = `Rupa Health Lab Order\n\nTask: ${task.title}\n\nDescription: ${task.description || ''}\n\nResult URL: ${labResult.resultUrl || 'N/A'}\n\nMessage: ${labResult.message || ''}\n\nAgent: ${agentId}`;
+      const uploadResult = await uploadTextDocument(folderId, fileName, docContent, 'text/plain');
+
+      if (!uploadResult) {
+        console.warn('[Agent Executor] Failed to upload Rupa lab order to Drive');
+      }
+
+      await storage.updateAgentTask(taskId, {
+        status: 'in_progress',
+        progress: 100,
+        outputUrl: labResult.resultUrl,
+        outputDriveFileId: uploadResult?.id,
+      });
+
+      return {
+        success: true,
+        outputUrl: labResult.resultUrl,
       };
     } else if (IMAGE_AGENTS.includes(agentId)) {
         const provider = getAgentProvider(agentId);
