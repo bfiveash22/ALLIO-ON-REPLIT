@@ -984,10 +984,15 @@ export default function TrusteeDashboard() {
     nextSteps: string | null;
   }
 
-  const { data: integrationStatuses = [], refetch: refetchIntegrations } = useQuery<IntegrationRegistryStatus[]>({
+  const { data: rawIntegrationData, refetch: refetchIntegrations } = useQuery<{ integrations: IntegrationRegistryStatus[] } | IntegrationRegistryStatus[]>({
     queryKey: ["/api/integrations/status"],
     refetchInterval: 30000,
   });
+  const integrationStatuses: IntegrationRegistryStatus[] = Array.isArray(rawIntegrationData)
+    ? rawIntegrationData
+    : Array.isArray((rawIntegrationData as any)?.integrations)
+      ? (rawIntegrationData as any).integrations
+      : [];
 
   interface AgentTask {
     id: string;

@@ -34,7 +34,7 @@ function resolveFromWorkspace(...segments: string[]): string {
 let catalogCache: PeptideRecord[] | null = null;
 function loadPeptideCatalog(): PeptideRecord[] {
   if (catalogCache) return catalogCache;
-  const dataPath = resolveFromWorkspace('artifacts', 'api-server', 'src', 'data', 'peptides.json');
+  const dataPath = resolveFromWorkspace('src', 'data', 'peptides.json');
   try {
     const raw = fs.readFileSync(dataPath, 'utf-8');
     catalogCache = JSON.parse(raw) as PeptideRecord[];
@@ -48,7 +48,7 @@ function loadPeptideCatalog(): PeptideRecord[] {
 let _peptideImagesDir: string | null = null;
 function getPeptideImagesDir(): string {
   if (!_peptideImagesDir) {
-    _peptideImagesDir = resolveFromWorkspace('artifacts', 'ffpma', 'public', 'assets', 'peptide-images');
+    _peptideImagesDir = resolveFromWorkspace('..', 'ffpma', 'public', 'assets', 'peptide-images');
   }
   return _peptideImagesDir;
 }
