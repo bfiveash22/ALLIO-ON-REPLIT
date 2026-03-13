@@ -55,6 +55,7 @@ function formatDate(date: Date | string | null) {
 export default function LibraryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const { data: libraryItems = [], isLoading } = useQuery<ExtendedLibraryItem[]>({
     queryKey: ["/api/library"],
@@ -66,10 +67,12 @@ export default function LibraryPage() {
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.excerpt?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = !selectedType || item.contentType === selectedType;
-    return matchesSearch && matchesType;
+    const matchesCategory = !selectedCategory || item.categorySlug === selectedCategory;
+    return matchesSearch && matchesType && matchesCategory;
   });
 
   const contentTypes = Array.from(new Set(libraryItems.map((item) => item.contentType)));
+  const categories = Array.from(new Set(libraryItems.map((item) => item.categorySlug).filter(Boolean))) as string[];
 
   return (
     <main className="flex-1 overflow-auto">
@@ -120,6 +123,30 @@ export default function LibraryPage() {
             })}
           </div>
         </div>
+
+        {categories.length > 0 && (
+          <div className="flex gap-2 flex-wrap mb-6">
+            <Button
+              variant={selectedCategory === null ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory(null)}
+              data-testid="button-category-all"
+            >
+              All Categories
+            </Button>
+            {categories.map((cat) => (
+              <Button
+                key={cat}
+                variant={selectedCategory === cat ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory(cat)}
+                data-testid={`button-category-${cat.toLowerCase().replace(/\s+/g, "-")}`}
+              >
+                {cat}
+              </Button>
+            ))}
+          </div>
+        )}
 
         {isLoading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -186,7 +213,7 @@ export default function LibraryPage() {
                           {item.authorName}
                         </span>
                       )}
-                      {item.categorySlug && item.isDriveDocument && (
+                      {item.categorySlug && (
                         <span className="flex items-center gap-1">
                           <FolderOpen className="h-3 w-3" />
                           {item.categorySlug}

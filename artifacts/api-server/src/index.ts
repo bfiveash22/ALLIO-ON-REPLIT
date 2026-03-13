@@ -182,6 +182,8 @@ registerHealthRoutes(app);
   registerPaymentRoutes(app);
   const { registerAdminRoutes } = await import("./routes/admin-routes");
   registerAdminRoutes(app);
+  const { registerLibraryRoutes } = await import("./routes/library-routes");
+  registerLibraryRoutes(app);
   const { registerMiscRoutes } = await import("./routes/misc-routes");
   registerMiscRoutes(app);
   const { registerFrequencyRoutes } = await import("./routes/frequency-routes");

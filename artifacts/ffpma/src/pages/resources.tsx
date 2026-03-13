@@ -23,6 +23,12 @@ import {
   Microscope,
   Palette,
   Image,
+  Shield,
+  Droplets,
+  FlaskConical,
+  Footprints,
+  Zap,
+  Wind,
 } from "lucide-react";
 
 const aiConsoles = [
@@ -58,6 +64,58 @@ const aiConsoles = [
     color: "bg-amber-100 dark:bg-amber-900/30",
     iconColor: "text-amber-600 dark:text-amber-400",
     agents: ["BPC-157", "TB-500", "GLP-1", "Bioregulators"],
+  },
+];
+
+const healingProtocols = [
+  {
+    title: "Gut Microbiome Restoration",
+    description: "Comprehensive protocol for restoring gut microbiome balance through nutrition and supplementation",
+    icon: Shield,
+    slug: "gut-microbiome-restoration",
+    category: "Gut Health",
+  },
+  {
+    title: "Parasite Cleansing Protocol",
+    description: "Evidence-based parasite elimination using herbal and nutritional approaches",
+    icon: Droplets,
+    slug: "parasite-protocol",
+    category: "Parasite Cleansing",
+  },
+  {
+    title: "IV Therapy Standards",
+    description: "Clinical standards for Myers' Cocktail, high-dose vitamin C, NAD+, and glutathione",
+    icon: FlaskConical,
+    slug: "iv-therapy-standards",
+    category: "IV Therapy",
+  },
+  {
+    title: "Toxicology & Detox Protocols",
+    description: "Detoxification protocols for heavy metals, mold, and environmental toxins",
+    icon: Wind,
+    slug: "toxicology-detox-protocols",
+    category: "Detox",
+  },
+  {
+    title: "Earthing & Grounding",
+    description: "Reduce inflammation and improve sleep through Earth's natural electrical balance",
+    icon: Footprints,
+    slug: "earthing-grounding-protocol",
+    category: "Earthing",
+  },
+  {
+    title: "Stem Cell Therapy FAQ",
+    description: "Guidelines for stem cell therapy and natural stem cell activation strategies",
+    icon: Dna,
+    slug: "stem-cell-faq",
+    category: "Stem Cell",
+  },
+  {
+    title: "Ozone Therapy Protocol",
+    description: "Clinical ozone therapy covering MAH, rectal insufflation, and home-use protocols",
+    icon: Zap,
+    slug: "ozone-therapy-protocol",
+    category: "Ozone Therapy",
   },
 ];
 
@@ -206,6 +264,48 @@ export default function ResourcesPage() {
                     <Link href={console.href}>
                       Open Console
                       <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-12">
+          <div className="flex items-center gap-2 mb-4">
+            <BookOpen className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">Healing Protocols</h2>
+          </div>
+          <p className="text-muted-foreground text-sm mb-4">
+            Evidence-based healing protocols covering gut health, detox, IV therapy, and regenerative medicine
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {healingProtocols.map((protocol) => (
+              <Card
+                key={protocol.slug}
+                className="hover-elevate"
+                data-testid={`card-protocol-${protocol.slug}`}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10">
+                      <protocol.icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <Badge variant="secondary">{protocol.category}</Badge>
+                  </div>
+                  <CardTitle className="text-base mt-3">{protocol.title}</CardTitle>
+                  <CardDescription className="text-sm">
+                    {protocol.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="outline" className="w-full" asChild
+                    data-testid={`button-protocol-${protocol.slug}`}
+                  >
+                    <Link href={`/library/${protocol.slug}`}>
+                      Read Protocol
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
                 </CardContent>
