@@ -141,7 +141,7 @@ export async function analyzeBloodMicroscopyVision(imageBase64: string) {
       : `data:image/jpeg;base64,${imageBase64}`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4.1-mini",
       messages: [
         {
           role: "system",

@@ -1,10 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import * as schema from "@shared/schema";
-import * as dotenv from "dotenv";
-
-dotenv.config();
-
 const { Pool } = pg;
 
 // Force local fallback if no remote DB is attached

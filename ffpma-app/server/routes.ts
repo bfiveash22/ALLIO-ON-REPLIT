@@ -1738,7 +1738,7 @@ Respond to the Trustee's query with helpful, actionable information. If they ask
       ];
 
       const completion = await openaiClient.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4.1-mini",
         messages: chatMessages,
         max_completion_tokens: 1024,
         temperature: 0.7,
@@ -2169,7 +2169,7 @@ You have full authority to coordinate agents, assign tasks, and make operational
       ];
 
       const completion = await openaiClient.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4.1-mini",
         messages: chatMessages,
         max_completion_tokens: 1024,
         temperature: 0.7,
@@ -2243,7 +2243,7 @@ INSTRUCTIONS:
 - Keep responses concise but impactful`;
 
       let response: string;
-      let provider = 'openai:gpt-4o';
+      let provider = 'openai:gpt-4.1-mini';
       let actionsExecuted: string[] = [];
 
       const { shouldUseClaude, claudeAgentChat, getClaudeStatus } = await import("./services/claude-provider");
@@ -2270,7 +2270,7 @@ INSTRUCTIONS:
             { role: "user", content: message }
           ];
           const completion = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: "gpt-4.1-mini",
             messages,
             max_completion_tokens: 1024,
             temperature: 0.8,
@@ -5289,7 +5289,7 @@ INSTRUCTIONS:
       const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-4.1-mini',
         messages: [
           {
             role: 'system',

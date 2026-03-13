@@ -132,7 +132,7 @@ export async function analyzeTranscript(
   transcript: string
 ): Promise<PatientProfile> {
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: "gpt-4.1-mini",
     messages: [
       {
         role: "system",
@@ -229,7 +229,7 @@ export async function generateProtocol(
   const detoxKnowledge = loadDetoxKnowledge();
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: "gpt-4.1-mini",
     messages: [
       {
         role: "system",
