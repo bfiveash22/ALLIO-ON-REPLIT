@@ -81,6 +81,7 @@ import PMANetworkPage from "@/pages/pma-network";
 import ContractReviewPage from "@/pages/contract-review";
 import BloodAnalysisPage from "@/pages/blood-analysis";
 import FrequencyLibraryPage from "@/pages/frequency-library";
+import ResearchViewerPage from "@/pages/research-viewer";
 import BecomeAMemberPage from "@/pages/become-a-member";
 import LegalDocumentPage from "@/pages/legal-document";
 import NotFound from "@/pages/not-found";
@@ -444,6 +445,13 @@ function Router() {
         <ProtectedRoute>
           <AppLayout>
             <AssetGalleryPage />
+          </AppLayout>
+        </ProtectedRoute>
+      )} />
+      <Route path="/resources/research/:slug" component={() => (
+        <ProtectedRoute>
+          <AppLayout>
+            <ResearchViewerPage />
           </AppLayout>
         </ProtectedRoute>
       )} />

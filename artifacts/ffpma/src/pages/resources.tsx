@@ -29,7 +29,10 @@ import {
   Footprints,
   Zap,
   Wind,
+  Atom,
+  Brain,
 } from "lucide-react";
+import { allResearchDocuments } from "./advanced-research-data";
 
 const aiConsoles = [
   {
@@ -357,6 +360,60 @@ export default function ResourcesPage() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </section>
+
+        <section className="mb-12">
+          <div className="flex items-center gap-2 mb-4">
+            <FlaskConical className="h-5 w-5 text-purple-500" />
+            <h2 className="text-xl font-semibold">Science & Research</h2>
+          </div>
+          <p className="text-muted-foreground text-sm mb-4">
+            Advanced research documents from our QUANTUM and ENTHEOS divisions
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {allResearchDocuments.map((doc) => {
+              const iconMap: Record<string, typeof Atom> = {
+                "QUANTUM (Science Division)": Atom,
+                "ENTHEOS (Consciousness Division)": Brain,
+              };
+              const DocIcon = iconMap[doc.division] || FlaskConical;
+              return (
+                <Card
+                  key={doc.slug}
+                  className="hover-elevate"
+                  data-testid={`card-research-${doc.slug}`}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-md bg-purple-100 dark:bg-purple-900/30">
+                        <DocIcon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <Badge className="bg-purple-500 text-white">
+                        Research
+                      </Badge>
+                    </div>
+                    <CardTitle className="text-base mt-3">{doc.title}</CardTitle>
+                    <CardDescription className="text-sm">
+                      {doc.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      <Badge variant="outline" className="text-xs">
+                        {doc.division}
+                      </Badge>
+                    </div>
+                    <Button variant="outline" className="w-full" asChild>
+                      <Link href={`/resources/research/${doc.slug}`}>
+                        Read Document
+                        <ExternalLink className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </section>
 
