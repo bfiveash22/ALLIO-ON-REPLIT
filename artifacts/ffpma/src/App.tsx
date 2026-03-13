@@ -34,6 +34,7 @@ import ClinicContractsPage from "@/pages/clinic-contracts";
 import ResourcesPage from "@/pages/resources";
 import PeptideConsolePage from "@/pages/peptide-console";
 import DosageCalculatorPage from "@/pages/dosage-calculator";
+import CompoundInteractionsPage from "@/pages/compound-interactions";
 import ECSToolPage from "@/pages/ecs-tool";
 import LigandCalculatorPage from "@/pages/ligand-calculator";
 import ProtocolBuilderPage from "@/pages/protocol-builder";
@@ -396,6 +397,13 @@ function Router() {
         <ProtectedRoute>
           <AppLayout>
             <DosageCalculatorPage />
+          </AppLayout>
+        </ProtectedRoute>
+      )} />
+      <Route path="/resources/compound-interactions" component={() => (
+        <ProtectedRoute>
+          <AppLayout>
+            <CompoundInteractionsPage />
           </AppLayout>
         </ProtectedRoute>
       )} />

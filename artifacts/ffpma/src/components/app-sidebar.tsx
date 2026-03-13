@@ -106,6 +106,7 @@ const resourceMenuItems = [
   { title: "Protocol Builder", url: "/resources/protocol-builder", icon: Dna },
   { title: "Protocol Assembly", url: "/protocol-assembly", icon: Sparkles },
   { title: "Dosage Calculator", url: "/resources/dosage-calculator", icon: Calculator },
+  { title: "Compound Interactions", url: "/resources/compound-interactions", icon: Droplets },
   { title: "Frequency Library", url: "/frequency-library", icon: Radio },
 ];
 
