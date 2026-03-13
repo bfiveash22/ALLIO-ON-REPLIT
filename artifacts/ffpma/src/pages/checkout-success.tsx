@@ -3,15 +3,15 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useSearch } from "wouter";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Package, ShoppingBag, Home, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle, Package, ShoppingBag, Home, Loader2, XCircle, Clock } from "lucide-react";
 
 export default function CheckoutSuccessPage() {
   const searchString = useSearch();
   const params = new URLSearchParams(searchString);
   const sessionId = params.get("session_id");
-  const wcOrderId = params.get("order_id");
 
-  const [pendingOrder, setPendingOrder] = useState<any>(null);
+  const [pendingOrder, setPendingOrder] = useState<{ orderId?: string; sessionId?: string; total?: string; items?: number } | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("ff-pending-order");
@@ -20,54 +20,40 @@ export default function CheckoutSuccessPage() {
     }
   }, []);
 
-  const { data: stripeSession, isLoading: stripeLoading } = useQuery({
-    queryKey: ["/api/checkout/session", sessionId],
+  const { data: stripeSession, isLoading } = useQuery({
+    queryKey: ["/api/payments/session", sessionId],
     queryFn: async () => {
       if (!sessionId) return null;
-      const response = await fetch(`/api/checkout/session/${sessionId}`);
+      const response = await fetch(`/api/payments/session/${sessionId}`, {
+        credentials: "include",
+      });
       if (!response.ok) throw new Error("Failed to fetch session");
       return response.json();
     },
     enabled: !!sessionId,
-  });
-
-  const orderId = wcOrderId || pendingOrder?.orderId;
-  const { data: wcOrder, isLoading: wcLoading } = useQuery({
-    queryKey: ["/api/checkout/wc-order", orderId],
-    queryFn: async () => {
-      if (!orderId) return null;
-      const response = await fetch(`/api/checkout/wc-order/${orderId}`);
-      if (!response.ok) throw new Error("Failed to fetch order");
-      return response.json();
-    },
-    enabled: !!orderId,
     refetchInterval: (query) => {
       const data = query.state.data;
-      if (data?.status === 'completed' || data?.status === 'processing') return false;
-      return 5000;
+      if (data?.payment_status === "paid") return false;
+      return 3000;
     },
   });
 
   useEffect(() => {
-    const isPaid = stripeSession?.payment_status === "paid" ||
-      wcOrder?.status === "completed" || wcOrder?.status === "processing";
-    if (isPaid) {
+    if (stripeSession?.payment_status === "paid") {
       localStorage.removeItem("ff-cart");
       localStorage.removeItem("ff-pending-order");
     }
-  }, [stripeSession, wcOrder]);
+  }, [stripeSession]);
 
-  const isLoading = stripeLoading || wcLoading;
-  const orderData = stripeSession || wcOrder;
-  const isPaid = stripeSession?.payment_status === "paid" ||
-    wcOrder?.status === "completed" || wcOrder?.status === "processing";
+  const isPaid = stripeSession?.payment_status === "paid";
+  const isFailed = stripeSession?.status === "expired";
 
   if (isLoading) {
     return (
       <div className="p-6 max-w-2xl mx-auto flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Confirming your order...</p>
+          <p className="text-muted-foreground">Confirming your payment...</p>
         </div>
       </div>
     );
@@ -78,65 +64,62 @@ export default function CheckoutSuccessPage() {
       <Card>
         <CardHeader className="text-center pb-2">
           <div className="mx-auto mb-4">
-            <CheckCircle className="h-16 w-16 text-cyan-500" />
+            {isPaid ? (
+              <CheckCircle className="h-16 w-16 text-green-500" />
+            ) : isFailed ? (
+              <XCircle className="h-16 w-16 text-red-500" />
+            ) : (
+              <Clock className="h-16 w-16 text-yellow-500" />
+            )}
           </div>
           <CardTitle className="text-2xl" data-testid="text-order-confirmed">
-            {isPaid ? "Order Confirmed!" : "Order Created"}
+            {isPaid ? "Payment Successful!" : isFailed ? "Payment Failed" : "Processing Payment..."}
           </CardTitle>
           <CardDescription>
             {isPaid
-              ? "Thank you for your purchase. Your order has been received and is being processed."
-              : "Your order has been created. Please complete payment to finalize your purchase."}
+              ? "Thank you for your purchase. Your order has been confirmed and is being processed."
+              : isFailed
+              ? "Your payment could not be completed. Please try again or contact support."
+              : "We're confirming your payment. This should only take a moment."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {orderData && (
+          {stripeSession && (
             <div className="bg-muted rounded-md p-4 space-y-2">
-              {wcOrder?.id && (
+              {pendingOrder?.orderId && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Order ID</span>
-                  <span className="font-mono text-sm">#{wcOrder.id}</span>
+                  <span className="font-mono text-sm">#{pendingOrder.orderId.slice(0, 8)}</span>
                 </div>
               )}
-              {sessionId && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Session</span>
-                  <span className="font-mono text-sm">{sessionId?.slice(0, 20)}...</span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Status</span>
-                <span className={`font-medium capitalize ${isPaid ? 'text-cyan-600' : 'text-yellow-600'}`}>
-                  {wcOrder?.status || stripeSession?.payment_status || 'pending'}
-                </span>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Payment Status</span>
+                <Badge variant={isPaid ? "default" : isFailed ? "destructive" : "secondary"}>
+                  {stripeSession.payment_status || "pending"}
+                </Badge>
               </div>
-              {(wcOrder?.total || stripeSession?.amount_total) && (
+              {stripeSession.amount_total && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total</span>
+                  <span className="text-muted-foreground">Total Charged</span>
                   <span className="font-medium">
-                    ${wcOrder?.total || (stripeSession.amount_total / 100).toFixed(2)}
+                    ${(stripeSession.amount_total / 100).toFixed(2)} {stripeSession.currency?.toUpperCase()}
                   </span>
                 </div>
               )}
-              {wcOrder?.line_items && (
-                <div className="mt-3 pt-3 border-t space-y-1">
-                  <span className="text-sm font-medium">Items:</span>
-                  {wcOrder.line_items.map((item: any) => (
-                    <div key={item.id} className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{item.name} x{item.quantity}</span>
-                      <span>${item.total}</span>
-                    </div>
-                  ))}
+              {stripeSession.customer_email && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Receipt sent to</span>
+                  <span className="text-sm">{stripeSession.customer_email}</span>
                 </div>
               )}
             </div>
           )}
 
-          {!orderData && pendingOrder && (
+          {!stripeSession && pendingOrder && (
             <div className="bg-muted rounded-md p-4 space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Order ID</span>
-                <span className="font-mono text-sm">#{pendingOrder.orderId}</span>
+                <span className="font-mono text-sm">#{pendingOrder.orderId?.slice(0, 8)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Total</span>
@@ -150,8 +133,14 @@ export default function CheckoutSuccessPage() {
           )}
 
           <div className="text-center text-sm text-muted-foreground">
-            <p>A confirmation email will be sent to your registered email address.</p>
-            <p className="mt-2">You can track your order status in your dashboard.</p>
+            {isPaid ? (
+              <>
+                <p>A confirmation email will be sent to your registered email address.</p>
+                <p className="mt-2">You can track your order and payment history in your dashboard.</p>
+              </>
+            ) : (
+              <p>If you continue to experience issues, please contact our support team.</p>
+            )}
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-2 sm:flex-row">

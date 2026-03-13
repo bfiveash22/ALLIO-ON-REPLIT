@@ -6,7 +6,8 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ShoppingCart, Trash2, Plus, Minus, Package, CreditCard, Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ShoppingCart, Trash2, Plus, Minus, Package, CreditCard, Loader2, AlertCircle, Lock } from "lucide-react";
 
 interface CartItem {
   productId: string;
@@ -15,12 +16,17 @@ interface CartItem {
   price: string;
   quantity: number;
   imageUrl?: string | null;
+  description?: string;
 }
 
 export default function CartPage() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const cancelled = new URLSearchParams(window.location.search).get("cancelled") === "true";
+  const [checkoutError, setCheckoutError] = useState<string | null>(
+    cancelled ? "Your payment was cancelled. You can try again when you're ready." : null
+  );
   const [showBillingForm, setShowBillingForm] = useState(false);
   const [billing, setBilling] = useState({
     first_name: "",
@@ -72,14 +78,20 @@ export default function CartPage() {
     }
 
     setIsCheckingOut(true);
+    setCheckoutError(null);
     try {
-      const response = await fetch("/api/checkout/wc-create-order", {
+      const response = await fetch("/api/payments/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           items: cart.map(item => ({
-            wcProductId: item.wcProductId || item.productId,
+            productId: item.productId,
+            name: item.name,
+            price: item.price,
             quantity: item.quantity,
+            description: item.description || undefined,
+            imageUrl: item.imageUrl || undefined,
           })),
           billing,
         }),
@@ -91,25 +103,25 @@ export default function CartPage() {
         throw new Error(data.error || "Checkout failed");
       }
 
-      if (data.checkoutUrl) {
+      if (data.url) {
         localStorage.setItem("ff-pending-order", JSON.stringify({
           orderId: data.orderId,
-          total: data.total,
+          sessionId: data.sessionId,
+          total: subtotal.toFixed(2),
           items: cart.length,
         }));
 
-        toast({
-          title: "Order Created",
-          description: `Order #${data.orderId} created. Redirecting to payment...`,
-        });
-
-        window.location.href = data.checkoutUrl;
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL returned");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Checkout error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Something went wrong. Please try again.";
+      setCheckoutError(errorMessage);
       toast({
         title: "Checkout Error",
-        description: error.message || "Something went wrong. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -242,6 +254,12 @@ export default function CartPage() {
                 <CardTitle className="text-base">Billing Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                {checkoutError && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{checkoutError}</AlertDescription>
+                  </Alert>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label htmlFor="first_name">First Name *</Label>
@@ -286,7 +304,7 @@ export default function CartPage() {
                   />
                 </div>
               </CardContent>
-              <CardFooter>
+              <CardFooter className="flex flex-col gap-3">
                 <Button
                   className="w-full"
                   size="lg"
@@ -297,26 +315,22 @@ export default function CartPage() {
                   {isCheckingOut ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Creating Order...
+                      Creating Secure Checkout...
                     </>
                   ) : (
                     <>
                       <CreditCard className="h-4 w-4 mr-2" />
-                      Pay ${subtotal.toFixed(2)} via Secure Checkout
+                      Pay ${subtotal.toFixed(2)} via Stripe
                     </>
                   )}
                 </Button>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Lock className="h-3 w-3" />
+                  <span>Secured by Stripe. Your card details are never stored on our servers.</span>
+                </div>
               </CardFooter>
             </Card>
           )}
-
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">
-                Your order will be created on our WooCommerce store and you'll be redirected to a secure checkout page to complete payment via Stripe.
-              </p>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

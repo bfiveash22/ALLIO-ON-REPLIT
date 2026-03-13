@@ -36,10 +36,12 @@ import {
   AlertTriangle,
   Clock,
   ArrowLeftRight,
+  CreditCard,
+  DollarSign,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import type { User, MemberProfile, Order, TrainingModule, Quiz, UiRefactorProposal } from "@shared/schema";
+import type { User, MemberProfile, Order, TrainingModule, Quiz, UiRefactorProposal, Payment } from "@shared/schema";
 
 interface UserSyncResult {
   success: boolean;
@@ -104,6 +106,23 @@ export default function AdminDashboardPage() {
     queryKey: ["/api/sentinel/ui-proposals"],
   });
   const uiProposals = (proposalData?.proposals || []).filter(p => p.status === 'pending');
+
+  const { data: adminPayments, isLoading: adminPaymentsLoading } = useQuery<{ payments: Payment[], total: number }>({
+    queryKey: ["/api/admin/payments"],
+  });
+
+  const { data: paymentSummary } = useQuery<{
+    totalRevenue: number;
+    totalTransactions: number;
+    monthlyRevenue: number;
+    monthlyTransactions: number;
+    weeklyRevenue: number;
+    weeklyTransactions: number;
+    failedTransactions: number;
+    pendingTransactions: number;
+  }>({
+    queryKey: ["/api/admin/payments/summary"],
+  });
 
   const syncUsersMutation = useMutation({
     mutationFn: async () => {
@@ -379,6 +398,10 @@ export default function AdminDashboardPage() {
           <TabsTrigger value="wordpress" data-testid="tab-wordpress" className="bg-blue-500/10 text-blue-400 data-[state=active]:bg-blue-500/30">
             <RefreshCw className="h-4 w-4 mr-2" />
             WordPress Mirror
+          </TabsTrigger>
+          <TabsTrigger value="payments" data-testid="tab-payments" className="bg-green-500/10 text-green-600 data-[state=active]:bg-green-500/30">
+            <DollarSign className="h-4 w-4 mr-2" />
+            Payments
           </TabsTrigger>
           <TabsTrigger value="ui-evolutions" data-testid="tab-ui-evolutions">
             <Palette className="h-4 w-4 mr-2" />
@@ -1279,6 +1302,107 @@ export default function AdminDashboardPage() {
                       </CardContent>
                     </Card>
                   ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="payments" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">${(paymentSummary?.totalRevenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+                <p className="text-xs text-muted-foreground mt-1">{paymentSummary?.totalTransactions || 0} transactions</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">${(paymentSummary?.monthlyRevenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+                <p className="text-xs text-muted-foreground mt-1">{paymentSummary?.monthlyTransactions || 0} this month</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Weekly Revenue</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-cyan-600">${(paymentSummary?.weeklyRevenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+                <p className="text-xs text-muted-foreground mt-1">{paymentSummary?.weeklyTransactions || 0} this week</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Failed / Pending</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-amber-600">{(paymentSummary?.failedTransactions || 0) + (paymentSummary?.pendingTransactions || 0)}</div>
+                <p className="text-xs text-muted-foreground mt-1">{paymentSummary?.failedTransactions || 0} failed, {paymentSummary?.pendingTransactions || 0} pending</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Transaction Records
+              </CardTitle>
+              <CardDescription>All Stripe payment transactions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {adminPaymentsLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="animate-pulse flex items-center gap-4 p-3">
+                      <div className="h-10 w-10 rounded-full bg-muted"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-muted rounded w-1/3"></div>
+                        <div className="h-3 bg-muted rounded w-1/4"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (adminPayments?.payments || []).length > 0 ? (
+                <div className="space-y-2">
+                  {(adminPayments?.payments || []).map((payment) => (
+                    <div key={payment.id} className="flex items-center justify-between p-3 rounded-md border" data-testid={`admin-payment-${payment.id}`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-full ${payment.status === 'succeeded' ? 'bg-green-100' : payment.status === 'failed' ? 'bg-red-100' : 'bg-yellow-100'}`}>
+                          <CreditCard className={`h-4 w-4 ${payment.status === 'succeeded' ? 'text-green-600' : payment.status === 'failed' ? 'text-red-600' : 'text-yellow-600'}`} />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{payment.description || `Payment #${payment.id.slice(0, 8)}`}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {payment.customerEmail || 'No email'} &middot; {payment.createdAt ? new Date(payment.createdAt).toLocaleString() : 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge variant={payment.status === 'succeeded' ? 'default' : payment.status === 'failed' ? 'destructive' : 'secondary'}>
+                          {payment.status || 'pending'}
+                        </Badge>
+                        <span className="font-semibold">${Number(payment.amount).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {(adminPayments?.total || 0) > (adminPayments?.payments || []).length && (
+                    <p className="text-center text-sm text-muted-foreground pt-2">
+                      Showing {(adminPayments?.payments || []).length} of {adminPayments?.total} transactions
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No transactions recorded yet</p>
+                  <p className="text-sm mt-1">Payments will appear here once members make purchases via Stripe.</p>
                 </div>
               )}
             </CardContent>

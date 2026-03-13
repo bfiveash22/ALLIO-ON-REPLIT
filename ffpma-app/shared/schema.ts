@@ -20,6 +20,7 @@ export const orderStatusEnum = pgEnum("order_status", ["pending", "processing", 
 export const programTypeEnum = pgEnum("program_type", ["iv", "peptide", "protocol"]);
 export const libraryContentTypeEnum = pgEnum("library_content_type", ["document", "protocol", "training", "video", "article"]);
 export const uiRefactorStatusEnum = pgEnum("ui_refactor_status", ["pending", "approved", "rejected", "deployed"]);
+export const paymentStatusEnum = pgEnum("payment_status", ["pending", "processing", "succeeded", "failed", "refunded", "cancelled"]);
 
 // Member profiles (extends the auth users table)
 export const memberProfiles = pgTable("member_profiles", {
@@ -252,6 +253,31 @@ export const orderItems = pgTable("order_items", {
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
 });
+
+export const payments = pgTable("payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  orderId: varchar("order_id"),
+  stripeSessionId: varchar("stripe_session_id").unique(),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  status: paymentStatusEnum("payment_status").default("pending"),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency").default("usd"),
+  description: text("description"),
+  customerEmail: varchar("customer_email"),
+  metadata: jsonb("metadata"),
+  receiptUrl: varchar("receipt_url"),
+  failureMessage: text("failure_message"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  order: one(orders, {
+    fields: [payments.orderId],
+    references: [orders.id],
+  }),
+}));
 
 // Programs (IV, Peptide, Protocol)
 export const programs = pgTable("programs", {
@@ -1043,6 +1069,7 @@ export const insertProductVariationSchema = createInsertSchema(productVariations
 export const insertProductRolePriceSchema = createInsertSchema(productRolePrices).omit({ id: true });
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
+export const insertPaymentSchema = createInsertSchema(payments).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertProgramSchema = createInsertSchema(programs).omit({ id: true, createdAt: true });
 export const insertProgramEnrollmentSchema = createInsertSchema(programEnrollments).omit({ id: true, startedAt: true });
 export const insertContractSchema = createInsertSchema(contracts).omit({ id: true, createdAt: true });
@@ -1088,6 +1115,8 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof orders.$inferSelect;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type OrderItem = typeof orderItems.$inferSelect;
+export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type Payment = typeof payments.$inferSelect;
 export type InsertProgram = z.infer<typeof insertProgramSchema>;
 export type Program = typeof programs.$inferSelect;
 export type InsertProgramEnrollment = z.infer<typeof insertProgramEnrollmentSchema>;

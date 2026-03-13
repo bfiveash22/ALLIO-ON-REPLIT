@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import type { Order, Program, TrainingModule } from "@shared/schema";
+import type { Order, Program, TrainingModule, Payment } from "@shared/schema";
 import {
   ShoppingBag,
   GraduationCap,
@@ -27,6 +27,7 @@ import {
   Headphones,
   Star,
   ArrowRight,
+  CreditCard,
   Pill,
   Syringe,
   Calendar,
@@ -136,6 +137,11 @@ export default function MemberHomePage() {
 
   const { data: orders = [], isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
+    enabled: isAuthenticated,
+  });
+
+  const { data: paymentHistory = [], isLoading: paymentsLoading } = useQuery<Payment[]>({
+    queryKey: ["/api/payments/history"],
     enabled: isAuthenticated,
   });
 
@@ -391,6 +397,60 @@ export default function MemberHomePage() {
                     <Button asChild className="mt-4" data-testid="button-shop-now">
                       <Link href="/products">Shop Now</Link>
                     </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card data-testid="card-payment-history" className="bg-white/5 border-white/10 backdrop-blur-sm">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-white">
+                      <CreditCard className="h-5 w-5 text-green-400" />
+                      Payment History
+                    </CardTitle>
+                    <CardDescription className="text-slate-400">Your recent transactions</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {paymentsLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-16" />)}
+                  </div>
+                ) : paymentHistory.length > 0 ? (
+                  <div className="space-y-3">
+                    {paymentHistory.slice(0, 5).map((payment) => (
+                      <div
+                        key={payment.id}
+                        className="flex items-center justify-between p-3 rounded-lg border border-white/10 bg-white/5"
+                        data-testid={`payment-item-${payment.id}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${payment.status === 'succeeded' ? 'bg-green-500/20' : payment.status === 'failed' ? 'bg-red-500/20' : 'bg-yellow-500/20'}`}>
+                            <CreditCard className={`h-4 w-4 ${payment.status === 'succeeded' ? 'text-green-400' : payment.status === 'failed' ? 'text-red-400' : 'text-yellow-400'}`} />
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm text-white">{payment.description || `Payment #${payment.id.slice(0, 8)}`}</p>
+                            <p className="text-xs text-slate-400">
+                              {payment.createdAt ? new Date(payment.createdAt).toLocaleDateString() : "N/A"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge className={payment.status === 'succeeded' ? 'bg-green-500/20 text-green-400 border-green-500/30' : payment.status === 'failed' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'}>
+                            {payment.status || "pending"}
+                          </Badge>
+                          <span className="font-medium text-white">${Number(payment.amount).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <CreditCard className="h-10 w-10 mx-auto text-slate-500 mb-2" />
+                    <p className="text-slate-400">No payment history yet</p>
                   </div>
                 )}
               </CardContent>

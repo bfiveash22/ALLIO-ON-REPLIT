@@ -16,7 +16,7 @@ Allio v1 (Forgotten Formula PMA) — a full-stack health/wellness platform migra
 - **Validation**: Zod v3, `drizzle-zod` v0.7
 - **Auth**: WordPress OAuth + session-based auth
 - **AI**: OpenAI, Anthropic, Google Gemini, HuggingFace
-- **Payments**: Stripe, WooCommerce
+- **Payments**: Stripe (Checkout Sessions + webhooks), WooCommerce (product sync)
 - **Build**: Vite (frontend), esbuild/tsx (backend)
 
 ## Structure
@@ -98,7 +98,8 @@ The API server requires:
 - `PORT` — Server port
 - Various API keys for AI services (OpenAI, Anthropic, Google, HuggingFace)
 - WordPress/WooCommerce credentials for auth sync
-- Stripe keys for payments
+- `STRIPE_SECRET_KEY` — Stripe API secret key (sk_test_ or sk_live_)
+- `STRIPE_WEBHOOK_SECRET` — Stripe webhook endpoint secret for signature verification
 - Google OAuth credentials
 - `ENABLE_SCHEDULERS` — Enable background agent schedulers
 
