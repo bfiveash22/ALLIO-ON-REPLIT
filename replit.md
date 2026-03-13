@@ -111,6 +111,19 @@ API Routes (all require auth + admin/trustee/doctor role):
 - `GET /api/protocol-assembly/protocols` — List protocols
 - `GET /api/protocol-assembly/protocols/:id` — Get protocol detail
 - `POST /api/protocol-assembly/protocols/:id/slides` — Generate slides for existing protocol
+- `POST /api/protocol-assembly/annette-gomer-slides` — Generate branded Annette Gomer protocol slides (20 slides with FF PMA branding, research links, product references)
+- `POST /api/protocol-assembly/automation-test` — Run full AI engine comparison test (Abacus AI vs Gemini vs OpenAI)
+- `POST /api/protocol-assembly/automation-test/abacus` — Test Abacus AI only
+- `POST /api/protocol-assembly/automation-test/gemini` — Test Gemini 1.5 Pro + RAG only
+- `POST /api/protocol-assembly/automation-test/openai` — Test OpenAI GPT-4o only
+
+### Protocol Slide Generator
+
+`ffpma-app/server/services/protocol-slide-generator.ts` generates a branded 20-slide Google Slides presentation from the Annette Gomer protocol. Slides include FF PMA / Allio branding (deep blue, teal, cyan, gold), accent bars, section dividers for each of the 5 Rs, and embedded research links (PubMed, TheCandidaDiet.com). Presentation is moved to the ALLIO/Protocols folder in Google Drive.
+
+### Protocol Automation Test Harness
+
+`ffpma-app/server/services/protocol-automation-test.ts` tests AI engines for protocol generation quality. Sends a simulated Annette Gomer transcript through Abacus AI (gpt-4.1-mini), Gemini 1.5 Pro + RAG, and OpenAI Direct (gpt-4o). Scores output on 7 criteria (therapy selection, dosing detail, research citations, daily schedule, 5 Rs adherence, personalization, completeness). Generates a comparison report saved to the knowledge base.
 
 ### `scripts` (`@workspace/scripts`)
 

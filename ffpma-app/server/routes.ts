@@ -277,6 +277,61 @@ export async function registerRoutes(
     }
   });
 
+  app.post('/api/protocol-assembly/annette-gomer-slides', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req, res) => {
+    try {
+      const { generateAnnetteGomerSlides } = await import('./services/protocol-slide-generator');
+      const result = await generateAnnetteGomerSlides();
+      res.json(result);
+    } catch (error: unknown) {
+      console.error('[Protocol Slides] Annette Gomer slides error:', error);
+      res.status(500).json({ error: 'Failed to generate Annette Gomer protocol slides.' });
+    }
+  });
+
+  app.post('/api/protocol-assembly/automation-test', requireAuth, requireRole('admin', 'trustee'), async (req, res) => {
+    try {
+      const { runFullComparisonTest } = await import('./services/protocol-automation-test');
+      const report = await runFullComparisonTest();
+      res.json(report);
+    } catch (error: unknown) {
+      console.error('[Protocol Automation Test] Error:', error);
+      res.status(500).json({ error: 'Failed to run automation test.' });
+    }
+  });
+
+  app.post('/api/protocol-assembly/automation-test/abacus', requireAuth, requireRole('admin', 'trustee'), async (req, res) => {
+    try {
+      const { testAbacusAI } = await import('./services/protocol-automation-test');
+      const result = await testAbacusAI();
+      res.json(result);
+    } catch (error: unknown) {
+      console.error('[Protocol Automation Test] Abacus error:', error);
+      res.status(500).json({ error: 'Failed to run Abacus AI test.' });
+    }
+  });
+
+  app.post('/api/protocol-assembly/automation-test/gemini', requireAuth, requireRole('admin', 'trustee'), async (req, res) => {
+    try {
+      const { testGeminiRAG } = await import('./services/protocol-automation-test');
+      const result = await testGeminiRAG();
+      res.json(result);
+    } catch (error: unknown) {
+      console.error('[Protocol Automation Test] Gemini error:', error);
+      res.status(500).json({ error: 'Failed to run Gemini test.' });
+    }
+  });
+
+  app.post('/api/protocol-assembly/automation-test/openai', requireAuth, requireRole('admin', 'trustee'), async (req, res) => {
+    try {
+      const { testOpenAIDirect } = await import('./services/protocol-automation-test');
+      const result = await testOpenAIDirect();
+      res.json(result);
+    } catch (error: unknown) {
+      console.error('[Protocol Automation Test] OpenAI error:', error);
+      res.status(500).json({ error: 'Failed to run OpenAI test.' });
+    }
+  });
+
   // Register Peptide Console routes
   const { registerPeptideConsoleRoutes } = await import("./services/peptide-console");
   registerPeptideConsoleRoutes(app);
