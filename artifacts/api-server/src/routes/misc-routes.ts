@@ -23,6 +23,9 @@ import { seedIvermectinTraining } from "../seeds/ivermectin-training-seed";
 import { seedRemainingModules } from "../seeds/complete-remaining-modules-seed";
 import { enhanceModulesWithMedia, getAvailableMediaAssets } from "../seeds/enhance-modules-with-media";
 import { seedAchievements } from "../seeds/achievements-seed";
+import { seedAncientMedicineTraining } from "../seeds/ancient-medicine-training-seed";
+import { seedPeptideProtocolMastery } from "../seeds/peptide-protocol-mastery-seed";
+import { seedFormulaAnalysisTraining } from "../seeds/formula-analysis-training-seed";
 import { wooCommerceService } from "../services/woocommerce";
 import multer from "multer";
 import OpenAI from "openai";
@@ -375,6 +378,18 @@ export function registerMiscRoutes(app: Express): void {
 
   app.post("/api/admin/seed-achievements", requireRole("admin"), async (req: Request, res: Response) => {
     try { res.json({ success: true, ...(await seedAchievements()) }); } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
+  });
+
+  app.post("/api/admin/seed-ancient-medicine-training", requireRole("admin"), async (req: Request, res: Response) => {
+    try { res.json(await seedAncientMedicineTraining()); } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
+  });
+
+  app.post("/api/admin/seed-peptide-protocol-mastery", requireRole("admin"), async (req: Request, res: Response) => {
+    try { res.json(await seedPeptideProtocolMastery()); } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
+  });
+
+  app.post("/api/admin/seed-formula-analysis-training", requireRole("admin"), async (req: Request, res: Response) => {
+    try { res.json(await seedFormulaAnalysisTraining()); } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
   });
 
   app.post("/api/admin/add-quizzes-all-modules", requireRole("admin"), async (req: Request, res: Response) => {

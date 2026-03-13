@@ -79,8 +79,10 @@ function getDifficultyColor(difficulty: string | null) {
 }
 
 function getModuleIcon(slug: string) {
-  if (slug.startsWith("peptide-")) return <Dna className="h-6 w-6" />;
+  if (slug.startsWith("peptide-") || slug.startsWith("ppm-")) return <Dna className="h-6 w-6" />;
   if (slug.startsWith("diet-") || slug.includes("nutrition") || slug.includes("cancer")) return <FlaskConical className="h-6 w-6" />;
+  if (slug.startsWith("ancient-")) return <BookOpen className="h-6 w-6" />;
+  if (slug.startsWith("fa-")) return <FlaskConical className="h-6 w-6" />;
   switch (slug) {
     case "pma-law": return <Scale className="h-6 w-6" />;
     case "constitutional-protections": return <Shield className="h-6 w-6" />;
@@ -956,6 +958,564 @@ const moduleContent: Record<string, {
       "Minimize processed meats, refined sugars, and alcohol",
       "Anti-inflammatory eating patterns (like Mediterranean diet) are protective",
       "Focus on adding protective foods rather than just restricting harmful ones"
+    ]
+  },
+  "ancient-101-hippocratic-foundations": {
+    sections: [
+      {
+        title: "The Father of Medicine",
+        content: "Hippocrates of Kos (460-370 BC) is widely regarded as the 'Father of Medicine.' He separated medicine from superstition and established it as a discipline based on observation, reason, and natural causes. His most famous dictum — 'Let food be thy medicine and medicine be thy food' — remains a cornerstone of integrative health."
+      },
+      {
+        title: "Vis Medicatrix Naturae: The Healing Power of Nature",
+        content: "Central to Hippocratic medicine is the concept of Vis Medicatrix Naturae — the body's innate ability to heal itself. The physician's role is not to fight disease directly, but to support the body's natural healing mechanisms through proper nutrition, rest, exercise, and environmental factors."
+      },
+      {
+        title: "The Four Humors Theory",
+        content: "Hippocrates theorized that health depends on the balance of four bodily humors: blood, phlegm, yellow bile, and black bile. While we no longer use humoral theory literally, the concept of biological balance (homeostasis) and constitutional types remains relevant in modern functional medicine."
+      },
+      {
+        title: "Primum Non Nocere: First, Do No Harm",
+        content: "The Hippocratic principle of 'First, do no harm' guides modern integrative practice. Before adding interventions, consider whether they might cause harm. This principle supports the use of the least invasive, most natural approaches before escalating to stronger treatments."
+      },
+      {
+        title: "Modern Applications of Hippocratic Wisdom",
+        content: "Hippocratic principles map directly to modern integrative medicine: nutrition as therapy (functional nutrition), the body's self-healing capacity (regenerative medicine), individualized treatment (personalized medicine), and the importance of the patient-practitioner relationship (therapeutic alliance)."
+      }
+    ],
+    keyPoints: [
+      "Hippocrates: Father of Medicine, 460-370 BC",
+      "Vis Medicatrix Naturae: the body's innate healing power",
+      "Four Humors: early model of biological balance (homeostasis)",
+      "Primum Non Nocere: First, do no harm",
+      "Hippocratic principles align with modern integrative medicine"
+    ]
+  },
+  "ancient-102-ayurvedic-principles": {
+    sections: [
+      {
+        title: "The Science of Life",
+        content: "Ayurveda — from Sanskrit 'Ayur' (life) and 'Veda' (knowledge) — is a 5,000-year-old healing system from India. It views health as a state of balance between body, mind, and spirit, and disease as an imbalance in these fundamental energies."
+      },
+      {
+        title: "The Three Doshas",
+        content: "Ayurveda identifies three fundamental bio-energies (doshas): Vata (air/space — governs movement and communication), Pitta (fire/water — governs transformation and metabolism), and Kapha (earth/water — governs structure and stability). Every person has a unique doshic constitution (Prakriti)."
+      },
+      {
+        title: "Constitutional Assessment",
+        content: "Ayurvedic practitioners assess constitution through pulse diagnosis (Nadi Pariksha), tongue analysis, observation of physical characteristics, and detailed questioning about digestion, sleep, and temperament. This personalized approach predates modern pharmacogenomics by millennia."
+      },
+      {
+        title: "Ayurvedic Therapeutics",
+        content: "Treatment includes dietary modifications based on dosha, herbal formulations (Rasayana), massage with medicated oils (Abhyanga), yoga and pranayama, and Panchakarma — a five-step detoxification process. Each therapy is tailored to the individual's constitution."
+      },
+      {
+        title: "Ayurveda Meets Modern Science",
+        content: "Modern research validates many Ayurvedic herbs: Ashwagandha (adaptogenic, cortisol-modulating), Turmeric/Curcumin (anti-inflammatory), Triphala (gut health), and Brahmi (neuroprotective). Integrating Ayurvedic wisdom with modern testing creates powerful personalized protocols."
+      }
+    ],
+    keyPoints: [
+      "Ayurveda: 5,000-year-old 'Science of Life' from India",
+      "Three doshas: Vata (air/space), Pitta (fire/water), Kapha (earth/water)",
+      "Prakriti: unique constitutional type determines treatment approach",
+      "Panchakarma: systematic five-step detoxification process",
+      "Modern research validates ashwagandha, turmeric, triphala, brahmi"
+    ]
+  },
+  "ancient-103-tcm-meridians": {
+    sections: [
+      {
+        title: "Foundations of TCM",
+        content: "Traditional Chinese Medicine (TCM), with over 2,500 years of history, views the body as an integrated system of energy (Qi) flowing through channels (meridians). Health exists when Qi flows freely; disease arises when flow is blocked, deficient, or excessive."
+      },
+      {
+        title: "Yin, Yang, and the Five Elements",
+        content: "TCM philosophy rests on Yin-Yang theory — complementary opposites in dynamic balance — and the Five Elements (Wu Xing): Wood, Fire, Earth, Metal, and Water. Each element corresponds to organ pairs, emotions, seasons, and therapeutic approaches."
+      },
+      {
+        title: "The Meridian System",
+        content: "Twelve primary meridians connect the body's organ systems, each with specific acupuncture points that influence Qi flow. The Lung meridian, for example, governs respiration and immunity; the Kidney meridian governs vitality and reproduction. Eight extraordinary meridians serve as reservoirs."
+      },
+      {
+        title: "Acupuncture and Herbal Medicine",
+        content: "Acupuncture stimulates specific meridian points using fine needles to restore Qi balance. TCM herbal formulas combine multiple herbs for synergistic effects — a concept remarkably similar to modern combination therapy. Classical formulas have been refined over thousands of years of clinical use."
+      },
+      {
+        title: "TCM in Modern Integrative Practice",
+        content: "TCM offers unique diagnostic insights (tongue and pulse diagnosis) and therapeutic tools that complement Western medicine. Acupuncture has strong evidence for pain management, nausea, and stress reduction. TCM herbs like astragalus and reishi have validated immune-modulating properties."
+      }
+    ],
+    keyPoints: [
+      "Qi: vital life force flowing through 12 primary meridians",
+      "Yin-Yang: complementary opposites in dynamic balance",
+      "Five Elements: Wood, Fire, Earth, Metal, Water",
+      "Acupuncture restores Qi flow at specific meridian points",
+      "TCM herbs (astragalus, reishi) have validated therapeutic properties"
+    ]
+  },
+  "ancient-104-herbal-pharmacognosy": {
+    sections: [
+      {
+        title: "From Folk Remedy to Pharmacology",
+        content: "Pharmacognosy — the study of drugs from natural sources — bridges ancient herbal traditions and modern pharmaceutical science. Many of today's most important drugs originated from traditional plant medicines: aspirin from willow bark, digoxin from foxglove, morphine from opium poppy."
+      },
+      {
+        title: "Key Adaptogenic Herbs",
+        content: "Adaptogens help the body resist physical, chemical, and biological stress. Ashwagandha (Withania somnifera) modulates cortisol and supports thyroid function. Rhodiola rosea enhances mental performance under stress. Holy basil (Tulsi) balances cortisol and supports immune function."
+      },
+      {
+        title: "Anti-Inflammatory Botanicals",
+        content: "Turmeric (Curcuma longa) contains curcumin, which inhibits NF-κB and COX-2 pathways. Boswellia serrata inhibits 5-LOX enzyme. Ginger (Zingiber officinale) blocks prostaglandin synthesis. These herbs address inflammation through multiple mechanisms simultaneously."
+      },
+      {
+        title: "Immune-Modulating Plants",
+        content: "Astragalus (Huang Qi) enhances T-cell and NK cell activity. Echinacea stimulates innate immunity. Reishi (Ganoderma lucidum) contains beta-glucans that train the immune system. Elderberry (Sambucus nigra) has demonstrated antiviral properties against influenza."
+      },
+      {
+        title: "Quality and Standardization",
+        content: "Herbal quality varies enormously. Standardized extracts guarantee minimum levels of active compounds. Third-party testing verifies identity, potency, and absence of contaminants. Understanding extraction methods (water, ethanol, supercritical CO2) helps evaluate product quality."
+      }
+    ],
+    keyPoints: [
+      "Many modern drugs originated from traditional herbal medicines",
+      "Adaptogens: ashwagandha, rhodiola, holy basil for stress resilience",
+      "Curcumin, boswellia, ginger: multi-pathway anti-inflammatory action",
+      "Astragalus, echinacea, reishi: validated immune modulation",
+      "Standardized extracts and third-party testing ensure quality"
+    ]
+  },
+  "ancient-105-detox-fasting": {
+    sections: [
+      {
+        title: "Historical Detoxification Practices",
+        content: "Every ancient healing tradition included detoxification protocols. Hippocrates prescribed fasting and purging. Ayurveda developed Panchakarma — a systematic five-therapy detox. TCM uses herbal formulas to clear 'heat toxins.' Native American traditions used sweat lodges. These practices recognized that toxic burden impairs healing."
+      },
+      {
+        title: "The Science of Fasting",
+        content: "Modern research validates ancient fasting practices. Intermittent fasting activates autophagy — the body's cellular recycling system. Extended fasting promotes stem cell regeneration. Time-restricted eating improves insulin sensitivity and reduces inflammation. The 2016 Nobel Prize in Medicine was awarded for autophagy research."
+      },
+      {
+        title: "Panchakarma: Ayurvedic Detoxification",
+        content: "Panchakarma includes five purification therapies: Vamana (therapeutic emesis), Virechana (purgation), Basti (medicated enemas), Nasya (nasal administration), and Raktamokshana (bloodletting). Modern adaptations focus on oil pulling, herbal laxatives, nasal irrigation, and gentle cleansing protocols."
+      },
+      {
+        title: "Modern Detoxification Integration",
+        content: "Modern detox protocols combine ancient wisdom with current science: infrared sauna therapy (mimics sweat lodge), coffee enemas (liver bile stimulation), chelation therapy (heavy metal removal), glutathione support, and targeted binders (activated charcoal, bentonite clay, chlorella)."
+      },
+      {
+        title: "Clinical Protocols and Safety",
+        content: "Safe detoxification requires proper preparation, adequate hydration, electrolyte support, and gradual progression. Patients with high toxic burden may experience healing crises. Pre-detox assessment should include liver function, kidney function, and baseline symptom scoring."
+      }
+    ],
+    keyPoints: [
+      "Every ancient tradition included detoxification protocols",
+      "Fasting activates autophagy — cellular recycling (Nobel Prize 2016)",
+      "Panchakarma: Ayurveda's systematic five-therapy detox",
+      "Modern equivalents: infrared sauna, binders, glutathione, chelation",
+      "Safe detox requires preparation, hydration, and clinical oversight"
+    ]
+  },
+  "ancient-106-integration-protocols": {
+    sections: [
+      {
+        title: "The Integration Framework",
+        content: "True integrative medicine combines the best of ancient and modern approaches. The framework uses ancient diagnostic insights (constitutional types, pattern recognition) alongside modern testing (labs, imaging) to create comprehensive treatment plans that address root causes."
+      },
+      {
+        title: "Combining Herbal and Peptide Therapies",
+        content: "Ancient herbal formulas can synergize with modern peptide therapy. Ashwagandha supports the HPA axis while Thymosin Alpha-1 modulates immunity. Turmeric's anti-inflammatory action complements BPC-157's tissue healing. Astragalus pairs with Epithalon for longevity support."
+      },
+      {
+        title: "IV Nutrition Meets Traditional Medicine",
+        content: "IV therapy provides modern delivery of nutrients recognized by ancient traditions. High-dose vitamin C (Linus Pauling's legacy) combines with traditional immune herbs. Myers' Cocktail delivers minerals emphasized by Ayurvedic and TCM practitioners. NAD+ therapy supports the mitochondrial function valued by all healing traditions."
+      },
+      {
+        title: "Constitutional Assessment Integration",
+        content: "Ayurvedic dosha typing and TCM pattern diagnosis can complement modern functional medicine testing. A Vata-dominant patient may need different supplement timing than Kapha-dominant. TCM blood stasis patterns may correlate with modern inflammatory markers."
+      },
+      {
+        title: "Building Comprehensive Protocols",
+        content: "The ideal protocol layers: foundational nutrition (ancient dietary wisdom + modern supplementation), detoxification (traditional methods + modern binders), regeneration (herbal adaptogens + therapeutic peptides), and maintenance (lifestyle practices from multiple traditions)."
+      }
+    ],
+    keyPoints: [
+      "Integration framework: ancient diagnostics + modern testing",
+      "Herbal-peptide synergies: ashwagandha + thymosin, turmeric + BPC-157",
+      "IV therapy delivers nutrients valued by all healing traditions",
+      "Constitutional typing adds personalization to modern protocols",
+      "Layered protocols: nutrition, detox, regeneration, maintenance"
+    ]
+  },
+  "ppm-101-pharmacokinetics": {
+    sections: [
+      {
+        title: "Peptide Absorption & Bioavailability",
+        content: "Therapeutic peptides face unique pharmacokinetic challenges. Most peptides have poor oral bioavailability (<2%) due to enzymatic degradation in the GI tract and limited membrane permeability. Subcutaneous injection is the primary delivery route, offering 50-80% bioavailability with slow, sustained absorption from the injection depot."
+      },
+      {
+        title: "Distribution and Half-Life",
+        content: "After absorption, peptides distribute through the bloodstream to target tissues. Most therapeutic peptides have short half-lives (minutes to hours) due to rapid enzymatic degradation by peptidases. Modifications like PEGylation, fatty acid conjugation (as in semaglutide), or DAC technology extend half-lives dramatically."
+      },
+      {
+        title: "Metabolism and Elimination",
+        content: "Unlike small-molecule drugs metabolized by CYP450 enzymes, peptides are broken down by ubiquitous peptidases into amino acid components that are recycled. This means peptide-drug interactions via liver metabolism are minimal — a significant safety advantage over conventional pharmaceuticals."
+      },
+      {
+        title: "Dosing Principles",
+        content: "Peptide dosing depends on half-life, target tissue concentration, and individual factors (body weight, body composition, injection site vascularity). Short half-life peptides (BPC-157, Ipamorelin) require daily dosing, while modified peptides (semaglutide) allow weekly administration."
+      },
+      {
+        title: "Factors Affecting Peptide PK",
+        content: "Injection site (abdomen vs. thigh vs. deltoid affects absorption rate), injection depth (subcutaneous vs. intramuscular), patient body composition, hydration status, and local blood flow all influence peptide pharmacokinetics. Understanding these variables enables optimized dosing."
+      }
+    ],
+    keyPoints: [
+      "Most peptides: <2% oral bioavailability, 50-80% subcutaneous",
+      "Short half-lives (minutes-hours) unless chemically modified",
+      "Degraded by peptidases, not CYP450 — minimal drug interactions",
+      "Dosing depends on half-life, body composition, injection site",
+      "PEGylation and fatty acid conjugation extend duration of action"
+    ]
+  },
+  "ppm-102-reconstitution-handling": {
+    sections: [
+      {
+        title: "Understanding Lyophilized Peptides",
+        content: "Therapeutic peptides are typically supplied as lyophilized (freeze-dried) powder for stability. Lyophilization removes water while preserving the peptide's three-dimensional structure. The resulting powder is stable at room temperature for shipping but requires proper reconstitution before use."
+      },
+      {
+        title: "Reconstitution Technique",
+        content: "Reconstitute with bacteriostatic water (BAC water) containing 0.9% benzyl alcohol as a preservative. Inject water slowly down the vial wall — never directly onto the powder. Swirl gently to dissolve; never shake, as this can denature the peptide. Allow bubbles to settle before drawing doses."
+      },
+      {
+        title: "Storage Requirements",
+        content: "Unreconstituted peptides: store at room temperature or refrigerate for extended shelf life. Once reconstituted: refrigerate at 2-8°C (35-46°F). Use within 2-4 weeks of reconstitution. Never freeze reconstituted peptides. Protect from light. Never expose to temperatures above 77°F (25°C)."
+      },
+      {
+        title: "Sterile Handling Procedures",
+        content: "Always swab vial tops with 70% isopropyl alcohol before piercing. Use new, sterile syringes and needles for each dose. Draw the correct volume using an insulin syringe with appropriate markings. Proper sharps disposal in puncture-resistant containers is essential."
+      },
+      {
+        title: "Concentration Calculations",
+        content: "Understanding concentration math is critical. Example: 5mg peptide reconstituted with 2mL BAC water = 2.5mg/mL = 2,500 mcg/mL. For a 250 mcg dose: 250/2500 = 0.1mL = 10 units on an insulin syringe. Always verify calculations before injection."
+      }
+    ],
+    keyPoints: [
+      "Lyophilized = freeze-dried for stability, requires reconstitution",
+      "Use bacteriostatic water, inject slowly down vial wall, swirl gently",
+      "Refrigerate at 2-8°C after reconstitution, use within 2-4 weeks",
+      "Sterile technique: alcohol swab, new syringe each time",
+      "Calculate concentration carefully: mg/mL to mcg per syringe unit"
+    ]
+  },
+  "ppm-103-healing-peptides": {
+    sections: [
+      {
+        title: "BPC-157: The Body Protection Compound",
+        content: "BPC-157 is a 15-amino acid peptide derived from human gastric juice. It promotes angiogenesis, modulates growth factors, and accelerates healing across tendons, ligaments, muscle, gut, and even nerve tissue. Standard dosing: 250-500 mcg subcutaneously, 1-2x daily. Inject near the injury site for local effects or abdominally for systemic effects."
+      },
+      {
+        title: "TB-500: Thymosin Beta-4",
+        content: "TB-500 promotes tissue repair by upregulating actin — a protein essential for cell migration and wound healing. It reduces inflammation, promotes blood vessel growth, and supports flexibility. Loading phase: 2-2.5mg 2x/week for 4-6 weeks. Maintenance: 2mg every 2 weeks. Excellent for chronic injuries."
+      },
+      {
+        title: "KPV: The Anti-Inflammatory Tripeptide",
+        content: "KPV (Lys-Pro-Val) is a tripeptide fragment of alpha-MSH with potent anti-inflammatory properties. Particularly effective for gut inflammation (IBD, colitis) and skin conditions. Can be administered subcutaneously (200-500 mcg daily), orally in capsule form, or topically for skin conditions."
+      },
+      {
+        title: "Stacking Strategies",
+        content: "BPC-157 + TB-500 is the classic healing stack. They work through complementary mechanisms — BPC-157 promotes angiogenesis while TB-500 supports cell migration. Add KPV when inflammation is significant. Typical healing protocol: 8-12 weeks with reassessment at 6 weeks."
+      },
+      {
+        title: "Clinical Case Applications",
+        content: "Rotator cuff tendinopathy: BPC-157 250mcg + TB-500 2mg near the shoulder. Post-surgical recovery: BPC-157 500mcg systemically. Inflammatory bowel issues: BPC-157 250mcg sub-Q + KPV 500mcg orally. Chronic tendonitis: Full BPC/TB stack for 12 weeks. Document baseline and progress imaging/symptoms."
+      }
+    ],
+    keyPoints: [
+      "BPC-157: 250-500 mcg, 1-2x daily, near injury or systemic",
+      "TB-500: 2-2.5mg 2x/week loading, 2mg bi-weekly maintenance",
+      "KPV: 200-500 mcg daily, potent anti-inflammatory for gut/skin",
+      "BPC-157 + TB-500: classic complementary healing stack",
+      "8-12 week protocols with reassessment at 6 weeks"
+    ]
+  },
+  "ppm-104-immune-longevity": {
+    sections: [
+      {
+        title: "Thymosin Alpha-1: Immune Commander",
+        content: "Thymosin Alpha-1 (TA1) is a 28-amino acid peptide naturally produced by the thymus gland. It enhances T-cell maturation, NK cell activity, and dendritic cell function. FDA-approved in 35+ countries for hepatitis B/C and as an immune adjuvant. Standard dose: 1.6mg subcutaneously, 2-3x/week."
+      },
+      {
+        title: "Epithalon: The Telomere Guardian",
+        content: "Epithalon (Epitalon) is a synthetic tetrapeptide (Ala-Glu-Asp-Gly) based on the natural pineal peptide Epithalamin. It activates telomerase, potentially slowing cellular aging. Also regulates melatonin production and circadian rhythm. Protocol: 5-10mg daily subcutaneously for 10-20 day courses, 2-3x per year."
+      },
+      {
+        title: "GHK-Cu: Copper Peptide for Regeneration",
+        content: "GHK-Cu (glycyl-L-histidyl-L-lysine copper complex) naturally occurs in human plasma. It promotes collagen synthesis, wound healing, and tissue remodeling. Declines with age from 200ng/mL at age 20 to 80ng/mL by age 60. Can be applied topically (skin) or subcutaneously (1-2mg daily) for systemic effects."
+      },
+      {
+        title: "Longevity Stack Design",
+        content: "A comprehensive longevity protocol might include: Epithalon (10-20 day course 2x/year), Thymosin Alpha-1 (ongoing immune support), GHK-Cu (topical + intermittent sub-Q), supported by NAD+ precursors, resveratrol, and targeted bioregulators for organ-specific support."
+      },
+      {
+        title: "Monitoring and Safety",
+        content: "Monitor immune markers (lymphocyte subsets, NK cell activity) for TA1. Track sleep quality and melatonin levels for Epithalon. Document skin quality metrics for GHK-Cu. These peptides have excellent safety profiles with decades of clinical use, but regular lab monitoring ensures optimal outcomes."
+      }
+    ],
+    keyPoints: [
+      "Thymosin Alpha-1: 1.6mg 2-3x/week for immune enhancement",
+      "Epithalon: 5-10mg daily x 10-20 days, 2-3 courses/year for telomere support",
+      "GHK-Cu: topical or 1-2mg sub-Q daily for tissue regeneration",
+      "Longevity stack: Epithalon + TA1 + GHK-Cu + NAD+ support",
+      "Monitor immune markers, sleep quality, and skin metrics"
+    ]
+  },
+  "ppm-105-metabolic-peptides": {
+    sections: [
+      {
+        title: "GLP-1 Receptor Agonists Overview",
+        content: "GLP-1 receptor agonists (semaglutide, tirzepatide) mimic the incretin hormone GLP-1, reducing appetite, slowing gastric emptying, and enhancing insulin secretion. They've revolutionized weight management and metabolic health. Tirzepatide additionally targets GIP receptors for enhanced effects."
+      },
+      {
+        title: "Semaglutide Titration Protocol",
+        content: "Week 1-4: 0.25mg weekly. Week 5-8: 0.5mg weekly. Week 9-12: 1.0mg weekly. Week 13+: 1.7-2.4mg as tolerated. Never skip titration steps — rushing causes severe nausea. Compounded semaglutide follows similar titration with different concentration calculations."
+      },
+      {
+        title: "Growth Hormone Secretagogues",
+        content: "Ipamorelin: selective GH secretagogue, 200-300mcg sub-Q before bed on empty stomach. CJC-1295 (no DAC): GHRH analog, 100mcg combined with Ipamorelin for synergistic GH pulse. Tesamorelin: FDA-approved for HIV-associated lipodystrophy, 2mg daily. These stimulate natural GH release rather than replacing it."
+      },
+      {
+        title: "Managing GLP-1 Side Effects",
+        content: "Nausea: eat smaller, protein-rich meals; avoid fatty/spicy foods; ginger helps. Constipation: increase fiber and water intake. Injection site reactions: rotate sites, ensure proper technique. Fatigue: ensure adequate caloric intake despite reduced appetite. Pancreatitis (rare): discontinue and evaluate if severe abdominal pain occurs."
+      },
+      {
+        title: "Comprehensive Metabolic Protocols",
+        content: "Weight management: GLP-1 agonist + protein optimization (1g/lb lean mass) + resistance training + targeted supplements (B12, magnesium, omega-3). Body composition: add Ipamorelin/CJC-1295 for GH support. Metabolic syndrome: combine GLP-1 with berberine, chromium, and lifestyle interventions."
+      }
+    ],
+    keyPoints: [
+      "Semaglutide titration: 0.25mg → 0.5mg → 1.0mg → maintenance over 12+ weeks",
+      "Tirzepatide: dual GIP/GLP-1 for enhanced metabolic effects",
+      "Ipamorelin 200-300mcg + CJC-1295 100mcg before bed for GH support",
+      "Protein intake critical: 1g per pound of lean mass on GLP-1 therapy",
+      "Layer metabolic peptides with nutrition, exercise, and supplements"
+    ]
+  },
+  "ppm-106-patient-management": {
+    sections: [
+      {
+        title: "Patient Assessment for Peptide Therapy",
+        content: "Comprehensive assessment includes: medical history review, current medications, contraindications screening, baseline labs (CBC, CMP, hormones, inflammatory markers), body composition analysis, and treatment goals. Document everything for medical-legal protection and outcome tracking."
+      },
+      {
+        title: "Protocol Selection Framework",
+        content: "Match peptides to patient needs: Healing/recovery → BPC-157/TB-500 stack. Immune support → Thymosin Alpha-1. Anti-aging → Epithalon + GHK-Cu. Weight management → GLP-1 agonist. Gut health → BPC-157 + KPV. Consider patient comfort with injections, budget, and commitment level."
+      },
+      {
+        title: "Monitoring and Adjustments",
+        content: "Schedule follow-ups at 2, 6, and 12 weeks. Reassess symptoms, side effects, and labs. Adjust dosing based on response — some patients need lower doses (higher sensitivity) while others need maximum therapeutic doses. Document all changes and rationale."
+      },
+      {
+        title: "Managing Expectations and Compliance",
+        content: "Set realistic timelines: healing peptides show results in 2-4 weeks, GLP-1 weight loss is gradual (1-2 lbs/week), longevity peptides require consistent courses over months/years. Provide clear injection training. Consider telemedicine check-ins to support compliance."
+      },
+      {
+        title: "Documentation and Safety",
+        content: "Maintain detailed records: informed consent, protocol prescribed, doses administered, adverse events, lab results, and outcomes. Have adverse event protocols in place. Know when to discontinue (severe reactions, contraindication development). Stay current with emerging research and safety data."
+      }
+    ],
+    keyPoints: [
+      "Comprehensive assessment: history, labs, body comp, goals",
+      "Match peptide protocols to specific patient needs and preferences",
+      "Monitor at 2, 6, 12 weeks; adjust based on response",
+      "Set realistic timelines: weeks for healing, months for metabolic",
+      "Document everything: consent, protocols, adverse events, outcomes"
+    ]
+  },
+  "fa-101-formulation-principles": {
+    sections: [
+      {
+        title: "Bioavailability and Delivery Systems",
+        content: "The effectiveness of any therapeutic formula depends on bioavailability — how much of the active ingredient actually reaches its target. Delivery systems include oral (capsules, liquids, liposomal), sublingual, transdermal, injectable, and intravenous. Each has distinct advantages: IV provides 100% bioavailability while oral may deliver only 5-20% depending on the compound."
+      },
+      {
+        title: "Synergistic Formulation Design",
+        content: "Great formulations leverage synergy — combining ingredients that enhance each other's effects. Curcumin + piperine (2,000% enhanced absorption). Vitamin C + iron (enhanced iron absorption). Vitamin D + K2 (directs calcium to bones, not arteries). Understanding these relationships is the art of formulation science."
+      },
+      {
+        title: "Antagonistic Interactions to Avoid",
+        content: "Some ingredients compete or interfere with each other. Calcium inhibits iron and zinc absorption. High-dose zinc depletes copper. Fiber can bind minerals and reduce absorption. Timing strategies (separating competing nutrients by 2+ hours) can mitigate antagonism while still providing all needed nutrients."
+      },
+      {
+        title: "Stability and Shelf Life",
+        content: "Formulation stability affects potency over time. Factors include pH, temperature, light exposure, moisture, and ingredient interactions. Probiotics require careful handling. Omega-3 oils oxidize easily. Antioxidants like vitamin E can serve as stabilizers. Proper packaging (amber glass, nitrogen flushing) protects sensitive ingredients."
+      },
+      {
+        title: "Dose-Response Relationships",
+        content: "More isn't always better. Many nutrients and compounds have U-shaped or bell-shaped dose-response curves. Low-dose vitamin D supplementation helps bone health; mega-doses can cause toxicity. Understanding therapeutic windows — the range between minimum effective dose and maximum safe dose — is essential for protocol design."
+      }
+    ],
+    keyPoints: [
+      "Bioavailability varies by delivery: IV 100%, oral 5-20% for many compounds",
+      "Synergistic pairings: curcumin + piperine, vitamin C + iron, D3 + K2",
+      "Antagonistic interactions: calcium vs iron, zinc vs copper",
+      "Stability factors: pH, temperature, light, moisture, packaging",
+      "Therapeutic windows: minimum effective to maximum safe dose"
+    ]
+  },
+  "fa-102-ingredient-synergies": {
+    sections: [
+      {
+        title: "Understanding Synergy Types",
+        content: "Pharmacological synergy occurs when combined ingredients produce effects greater than additive. Pharmacokinetic synergy improves absorption, distribution, or reduces elimination. Piperine + curcumin is pharmacokinetic synergy (enhanced absorption). CBD + terpenes is pharmacological synergy (entourage effect)."
+      },
+      {
+        title: "Vitamin and Mineral Interactions",
+        content: "Vitamin C enhances non-heme iron absorption by converting Fe3+ to Fe2+. Vitamin D increases calcium absorption from 10-15% to 30-40%. Vitamin K2 directs calcium to bones and teeth, away from soft tissues. Magnesium is required to convert vitamin D to its active form. B vitamins work as a complex — deficiency in one affects all."
+      },
+      {
+        title: "Botanical Synergies",
+        content: "Traditional herbal formulas have always combined multiple plants for synergy. Turmeric + ginger: enhanced anti-inflammatory action. Ashwagandha + rhodiola: complementary stress adaptation pathways. Milk thistle + NAC: liver protection and glutathione support. Berberine + cinnamon: blood sugar regulation through different mechanisms."
+      },
+      {
+        title: "Nutrient-Drug Interactions",
+        content: "Some nutrients interact with pharmaceuticals: CoQ10 depleted by statins (supplement alongside). Magnesium affects antibiotic absorption (separate by 2 hours). Vitamin K interacts with warfarin (maintain consistent intake). Grapefruit inhibits CYP3A4. Knowledge of these interactions prevents adverse outcomes."
+      },
+      {
+        title: "Designing Synergistic Formulas",
+        content: "Start with the primary therapeutic goal. Add synergistic co-factors. Include absorption enhancers appropriate for the delivery system. Avoid antagonistic pairings. Consider timing protocols for nutrients that compete. Test combinations for stability. Document rationale for every ingredient inclusion."
+      }
+    ],
+    keyPoints: [
+      "Pharmacological synergy: enhanced combined effects (CBD + terpenes)",
+      "Pharmacokinetic synergy: improved absorption (piperine + curcumin)",
+      "Key vitamin synergies: D3+K2+magnesium, C+iron, B-complex together",
+      "Botanical combos: turmeric+ginger, ashwagandha+rhodiola, berberine+cinnamon",
+      "Design process: goal → synergists → enhancers → avoid antagonists"
+    ]
+  },
+  "fa-103-iv-formulation": {
+    sections: [
+      {
+        title: "IV Therapy Fundamentals",
+        content: "Intravenous therapy delivers nutrients directly to the bloodstream, achieving 100% bioavailability. This bypasses GI absorption barriers, making it ideal for patients with malabsorption, acute deficiencies, or conditions requiring high tissue concentrations. Understanding osmolarity, pH, and compatibility is essential for safe IV formulation."
+      },
+      {
+        title: "The Myers' Cocktail and Variations",
+        content: "Dr. John Myers' original formula: magnesium chloride, calcium gluconate, vitamin B-complex, B12, and vitamin C in sterile water. Modern variations add glutathione, zinc, selenium, or taurine. Standard infusion: 150-250mL over 30-45 minutes. Customize based on patient needs and lab values."
+      },
+      {
+        title: "High-Dose Vitamin C Protocols",
+        content: "High-dose IV vitamin C (25-100g) is used for immune support, as an adjunct in cancer care, and for viral illness. Requires G6PD screening before first infusion. Osmolarity increases with concentration — dilution and slow infusion rates prevent vein irritation. Monitor renal function with repeated high doses."
+      },
+      {
+        title: "Compatibility and Stability Considerations",
+        content: "Not all nutrients can be mixed. Calcium and phosphate can precipitate. B vitamins are light-sensitive — protect IV bags from light. Vitamin C degrades rapidly once mixed — prepare immediately before infusion. pH extremes destabilize many nutrients. Use compatibility charts and pharmaceutical references."
+      },
+      {
+        title: "NAD+ and Glutathione Infusions",
+        content: "NAD+ (nicotinamide adenine dinucleotide) infusions support cellular energy and repair. Start at 250mg over 2-4 hours; work up to 500-1000mg. Rate-limiting side effects include chest tightness and nausea — slow the drip. Glutathione (600-2000mg) is the master antioxidant; push IV or slow drip. Both should be infused separately from other nutrients."
+      }
+    ],
+    keyPoints: [
+      "IV therapy: 100% bioavailability, bypasses GI absorption barriers",
+      "Myers' Cocktail: Mg, Ca, B-complex, B12, vitamin C base formula",
+      "High-dose vitamin C: screen G6PD first, monitor renal function",
+      "Compatibility: Ca+phosphate precipitate, vitamin C degrades rapidly",
+      "NAD+: start 250mg, titrate up; glutathione: push IV or slow drip"
+    ]
+  },
+  "fa-104-supplement-optimization": {
+    sections: [
+      {
+        title: "Timing Is Everything",
+        content: "Nutrient timing significantly affects absorption. Fat-soluble vitamins (A, D, E, K) with meals containing fat. Iron on an empty stomach (or with vitamin C). Magnesium before bed for sleep support. Probiotics on an empty stomach or just before meals. B vitamins in the morning to avoid sleep disruption. Separate competing minerals by 2+ hours."
+      },
+      {
+        title: "Form Matters: Choosing the Right Forms",
+        content: "Magnesium glycinate (calming, well-absorbed) vs. oxide (laxative effect, poorly absorbed). Methylfolate vs. folic acid (bypasses MTHFR gene variants). Methylcobalamin vs. cyanocobalamin. Zinc picolinate or bisglycinate vs. zinc oxide. Choosing superior forms dramatically improves therapeutic outcomes."
+      },
+      {
+        title: "Building Condition-Specific Stacks",
+        content: "Sleep stack: magnesium glycinate + L-theanine + GABA + melatonin. Immune stack: vitamin D3 + K2 + zinc + vitamin C + quercetin. Joint health: glucosamine + MSM + collagen + vitamin C + BPC-157. Energy: B-complex + CoQ10 + iron (if deficient) + D-ribose. Always start with foundations before adding specialized supplements."
+      },
+      {
+        title: "The Foundation Protocol",
+        content: "Before condition-specific stacking, establish foundations: high-quality multivitamin/mineral, omega-3 fatty acids (EPA/DHA), vitamin D3 + K2 (dose based on blood levels), magnesium (most people need 400-600mg), and probiotics. Test, don't guess — use lab work to identify individual deficiencies."
+      },
+      {
+        title: "Absorption Enhancers and Blockers",
+        content: "Enhancers: piperine (broad spectrum), fat with fat-soluble nutrients, vitamin C with iron, lactoferrin with iron, phospholipids (liposomal delivery). Blockers: phytates (grains/legumes), oxalates (spinach/chocolate), tannins (tea/coffee), calcium with iron/zinc, antacids reducing mineral absorption."
+      }
+    ],
+    keyPoints: [
+      "Fat-soluble vitamins with meals; iron empty stomach; magnesium at bedtime",
+      "Superior forms: glycinate, methylated B vitamins, picolinate zinc",
+      "Foundation first: multi, omega-3, D3+K2, magnesium, probiotics",
+      "Condition stacks: sleep, immune, joint, energy — build on foundations",
+      "Piperine, vitamin C, fats enhance; phytates, tannins, calcium block"
+    ]
+  },
+  "fa-105-quality-assurance": {
+    sections: [
+      {
+        title: "cGMP Manufacturing Standards",
+        content: "Current Good Manufacturing Practice (cGMP) regulations ensure products are consistently produced and controlled to quality standards. Key elements: facility cleanliness and environmental controls, equipment maintenance and calibration, raw material testing, in-process quality checks, and finished product testing."
+      },
+      {
+        title: "Certificate of Analysis (COA) Interpretation",
+        content: "A proper COA should include: product identity confirmation, potency/assay results (within specification), purity testing, microbial limits (total plate count, yeast/mold, pathogens), heavy metal testing (Pb, Hg, As, Cd), and the testing laboratory's accreditation. Learn to read COAs critically — not all testing is equally rigorous."
+      },
+      {
+        title: "Third-Party Testing Programs",
+        content: "Independent verification programs include USP Verified, NSF International, ConsumerLab, and BSCG (for sports supplements). These programs test for identity, potency, purity, and contaminants. Products with third-party verification provide an additional layer of consumer confidence."
+      },
+      {
+        title: "Peptide-Specific Quality Standards",
+        content: "Therapeutic peptides require: minimum 98% purity by HPLC, mass spectrometry confirmation of molecular weight, amino acid analysis for sequence verification, endotoxin testing, sterility testing for injectable products, and stability data showing potency retention over shelf life."
+      },
+      {
+        title: "Red Flags and Due Diligence",
+        content: "Warning signs of poor quality: no COA available, proprietary blends hiding doses, unrealistic health claims, dramatically lower prices than competitors, no manufacturing facility information, and resistance to sharing testing data. Always verify supplier credentials and request documentation."
+      }
+    ],
+    keyPoints: [
+      "cGMP: facility controls, equipment calibration, raw material testing",
+      "COA must include identity, potency, purity, microbial, heavy metals",
+      "Third-party programs: USP Verified, NSF, ConsumerLab, BSCG",
+      "Peptides: 98%+ purity HPLC, mass spec, endotoxin testing",
+      "Red flags: no COA, proprietary blends, unrealistic claims, low prices"
+    ]
+  },
+  "fa-106-protocol-design": {
+    sections: [
+      {
+        title: "Assessment-Driven Protocol Design",
+        content: "Effective protocol design starts with thorough assessment: comprehensive lab panel (CBC, CMP, thyroid, hormones, nutrients, inflammatory markers), symptom questionnaire, dietary analysis, toxin exposure history, and treatment goals. Never design protocols based on symptoms alone — test to identify root causes."
+      },
+      {
+        title: "The Protocol Layering Framework",
+        content: "Layer 1: Foundation (correct deficiencies, optimize nutrition). Layer 2: Remove (detoxification, eliminate inflammatory triggers). Layer 3: Repair (gut healing, tissue regeneration with peptides). Layer 4: Optimize (hormones, immune modulation, performance). Each layer builds on the previous — don't skip ahead."
+      },
+      {
+        title: "Case Study: Chronic Fatigue Patient",
+        content: "Assessment reveals: low vitamin D (18 ng/mL), suboptimal B12, elevated inflammatory markers, poor sleep. Protocol: Foundation — D3 5000IU + K2, methylated B-complex, magnesium glycinate 400mg. Repair — BPC-157 250mcg for gut healing. Optimize — Thymosin Alpha-1 for immune regulation. Reassess at 8 weeks."
+      },
+      {
+        title: "Case Study: Post-Surgical Recovery",
+        content: "Goal: accelerate healing, reduce inflammation, prevent complications. Protocol: BPC-157 500mcg + TB-500 2.5mg near surgical site. IV vitamin C 25g + Myers' Cocktail weekly. Oral: zinc 30mg, vitamin C 2g, collagen peptides, bromelain. GHK-Cu topically around incision site. Protocol: 8 weeks post-surgery."
+      },
+      {
+        title: "Protocol Monitoring and Iteration",
+        content: "Schedule follow-ups at 2, 4, 8, and 12 weeks. Track objective markers (labs, imaging) and subjective symptoms (pain scales, energy ratings, sleep quality). Adjust protocols based on response: escalate if insufficient, de-escalate if goals are met. Document everything for continuous improvement of outcomes."
+      }
+    ],
+    keyPoints: [
+      "Assessment first: comprehensive labs, symptoms, diet, toxin history",
+      "Layer framework: Foundation → Remove → Repair → Optimize",
+      "Case-based learning reinforces clinical decision-making",
+      "Combine IV nutrition, peptides, and supplements for comprehensive care",
+      "Monitor at 2, 4, 8, 12 weeks; adjust based on objective and subjective data"
     ]
   }
 };
