@@ -1,0 +1,15 @@
+                List of relations
+ Schema |      Name      | Type  |     Owner      
+--------+----------------+-------+----------------
+ public | Conversation   | table | role_de990a2eb
+ public | IMConversation | table | role_de990a2eb
+ public | IMMessage      | table | role_de990a2eb
+ public | IMTherapy      | table | role_de990a2eb
+ public | IVConversation | table | role_de990a2eb
+ public | IVMessage      | table | role_de990a2eb
+ public | IVTherapy      | table | role_de990a2eb
+ public | Message        | table | role_de990a2eb
+ public | Peptide        | table | role_de990a2eb
+ public | User           | table | role_de990a2eb
+(10 rows)
+
