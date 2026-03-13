@@ -3,8 +3,9 @@ import { GoogleGenAI } from '@google/genai';
 // Initialize the Gemini client using the new official SDK
 let ai: GoogleGenAI | null = null;
 try {
-    if (process.env.GEMINI_API_KEY) {
-        ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
+    if (geminiKey) {
+        ai = new GoogleGenAI({ apiKey: geminiKey });
     }
 } catch (e) {
     console.error('[Gemini Provider] Failed to initialize:', e);
@@ -12,7 +13,7 @@ try {
 
 export async function analyzeWithGemini(prompt: string, context?: string): Promise<string> {
     if (!ai) {
-        throw new Error('Gemini API is not configured (missing GEMINI_API_KEY)');
+        throw new Error('Gemini API is not configured (missing GEMINI_API_KEY or GOOGLE_GEMINI_API_KEY)');
     }
 
     try {
