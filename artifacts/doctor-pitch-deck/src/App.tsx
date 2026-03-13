@@ -1,7 +1,5 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import html2canvas from "html2canvas-pro";
-import { jsPDF } from "jspdf";
 
 import { slides } from "@/slideLoader";
 
@@ -70,74 +68,86 @@ function SlideEditor() {
 
 function AllSlides() {
   return (
-    <div className="bg-black">
-      {slides.map((slide) => (
-        <div
-          key={slide.id}
-          className="slide relative aspect-video overflow-hidden"
-          style={{ width: "1920px", height: "1080px" }}
-        >
-          <div className="h-full w-full [&_.h-screen]:!h-full [&_.w-screen]:!w-full">
-            <slide.Component />
+    <>
+      <style>{`
+        @media print {
+          @page { size: 1920px 1080px landscape; margin: 0; }
+          body { margin: 0; padding: 0; }
+          .slide-page { page-break-after: always; break-after: page; }
+          .slide-page:last-child { page-break-after: avoid; break-after: avoid; }
+        }
+      `}</style>
+      <div className="bg-black">
+        {slides.map((slide) => (
+          <div
+            key={slide.id}
+            className="slide-page slide relative aspect-video overflow-hidden"
+            style={{ width: "1920px", height: "1080px" }}
+          >
+            <div className="h-full w-full [&_.h-screen]:!h-full [&_.w-screen]:!w-full">
+              <slide.Component />
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </>
   );
 }
 
 function DownloadButton() {
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState("");
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleDownload = useCallback(async () => {
     setDownloading(true);
-    setProgress("Preparing slides...");
+    setProgress("Opening print view...");
 
     try {
-      const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [1920, 1080] });
-      const container = containerRef.current;
-      if (!container) return;
-
-      container.style.display = "block";
-
-      await new Promise(r => setTimeout(r, 500));
-
-      const slideElements = container.querySelectorAll<HTMLElement>(".pdf-slide");
-
-      for (let i = 0; i < slideElements.length; i++) {
-        setProgress(`Rendering slide ${i + 1} of ${slideElements.length}...`);
-        const el = slideElements[i];
-
-        const canvas = await html2canvas(el, {
-          width: 1920,
-          height: 1080,
-          scale: 1,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: "#000000",
-          logging: false,
-        });
-
-        const imgData = canvas.toDataURL("image/jpeg", 0.92);
-
-        if (i > 0) pdf.addPage([1920, 1080], "landscape");
-        pdf.addImage(imgData, "JPEG", 0, 0, 1920, 1080);
+      const printWindow = window.open("", "_blank");
+      if (!printWindow) {
+        setProgress("Pop-up blocked. Allow pop-ups and try again.");
+        setTimeout(() => setProgress(""), 3000);
+        setDownloading(false);
+        return;
       }
 
-      container.style.display = "none";
-
-      setProgress("Saving PDF...");
-      pdf.save("ALLIO-Doctor-Pitch-Deck.pdf");
+      const baseUrl = window.location.origin + (import.meta.env.BASE_URL || "/");
+      printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <title>ALLIO Doctor Pitch Deck - Print</title>
+  <style>
+    @page { size: landscape; margin: 0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; }
+    iframe { border: none; display: block; }
+    .instructions {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      z-index: 10000; background: linear-gradient(135deg, #00D4AA, #0ea5e9);
+      color: white; padding: 16px 32px; border-radius: 12px;
+      font-family: system-ui, sans-serif; font-size: 16px; font-weight: 600;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3); text-align: center;
+    }
+    .instructions small { display: block; font-weight: 400; margin-top: 4px; opacity: 0.9; font-size: 13px; }
+    @media print { .instructions { display: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="instructions">
+    Press Ctrl+P (or Cmd+P) to save as PDF
+    <small>Set destination to "Save as PDF" &bull; Landscape &bull; No margins</small>
+  </div>
+  <iframe src="${baseUrl}allslides" style="width:1920px;height:${1080 * slides.length}px;" onload="this.style.opacity=1"></iframe>
+</body>
+</html>`);
+      printWindow.document.close();
       setProgress("");
     } catch (err) {
       console.error("PDF generation failed:", err);
-      setProgress("Download failed. Try Print to PDF instead.");
+      setProgress("Failed to open print view.");
       setTimeout(() => setProgress(""), 3000);
     } finally {
       setDownloading(false);
-      if (containerRef.current) containerRef.current.style.display = "none";
     }
   }, []);
 
@@ -185,15 +195,6 @@ function DownloadButton() {
         )}
       </button>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <div ref={containerRef} style={{ position: "fixed", left: "-9999px", top: 0, display: "none" }}>
-        {slides.map((slide) => (
-          <div key={slide.id} className="pdf-slide" style={{ width: "1920px", height: "1080px", overflow: "hidden" }}>
-            <div className="h-full w-full [&_.h-screen]:!h-full [&_.w-screen]:!w-full">
-              <slide.Component />
-            </div>
-          </div>
-        ))}
-      </div>
     </>
   );
 }
