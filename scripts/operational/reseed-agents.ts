@@ -1,6 +1,6 @@
-import { db } from '../../ffpma-app/server/db';
-import { agentRegistry } from '../../ffpma-app/shared/schema';
-import { agents } from '../../ffpma-app/shared/agents';
+import { db } from '../../artifacts/api-server/src/db';
+import { agentRegistry } from '../../lib/shared/src/schema';
+import { agents } from '../../lib/shared/src/agents';
 import { sql } from "drizzle-orm";
 
 async function run() {

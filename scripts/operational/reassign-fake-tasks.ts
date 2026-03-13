@@ -1,7 +1,7 @@
-import { db } from '../../ffpma-app/server/db';
-import { agentTasks } from '../../ffpma-app/shared/schema';
+import { db } from '../../artifacts/api-server/src/db';
+import { agentTasks } from '../../lib/shared/src/schema';
 import { eq, notInArray } from 'drizzle-orm';
-import { agents } from '../../ffpma-app/shared/agents';
+import { agents } from '../../lib/shared/src/agents';
 
 async function fixTasks() {
     const validIds = agents.map(a => a.id.toUpperCase());

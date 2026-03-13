@@ -162,7 +162,7 @@ Webhook CC notifications: On `document_complete`, emails are sent to the signer 
 
 WordPress sync: `syncClinics()` reads `signnow_link`, `signnow_member_link`, `signnow_doctor_link` ACF fields and preserves local values when WP fields are empty.
 
-Reference data: `ffpma-app/data/clinic-signnow-links.csv` contains the clinic-to-SignNow link mappings from the master spreadsheet.
+Reference data: The clinic-to-SignNow link mappings from the master spreadsheet are preserved in git history (formerly `ffpma-app/data/clinic-signnow-links.csv`).
 
 ### `scripts` (`@workspace/scripts`)
 
@@ -170,7 +170,7 @@ Operational utility scripts for managing the agent ecosystem and database. Locat
 
 Run from workspace root: `pnpm tsx scripts/operational/<name>.ts`
 
-49 scripts preserved from ffpma-app. Key categories:
+49 operational scripts. Key categories:
 
 Agent management: `register-all-agents`, `reseed-agents`, `cleanup-agents`, `cleanup-fake-agents`, `cleanup-ghosts`, `wipe-agent-registry`, `check-db-agents`, `fix-db-agents`
 

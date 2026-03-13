@@ -1,4 +1,4 @@
-import { getAllioStructure } from '../../ffpma-app/server/services/drive';
+import { getAllioStructure } from '../../artifacts/api-server/src/services/drive';
 
 async function run() {
   console.log('Fetching Google Drive ALLIO Structure...');

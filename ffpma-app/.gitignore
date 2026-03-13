@@ -1,9 +1,0 @@
-node_modules/
-.env
-.env.local
-.cache/
-dist/
-*.log
-attached_assets/
-generated/
-uploads/

@@ -1,5 +1,5 @@
-import { db } from '../../ffpma-app/server/db';
-import { agentTasks } from '../../ffpma-app/shared/schema';
+import { db } from '../../artifacts/api-server/src/db';
+import { agentTasks } from '../../lib/shared/src/schema';
 import { sql } from "drizzle-orm";
 
 async function cancelLowPriorityTasks() {

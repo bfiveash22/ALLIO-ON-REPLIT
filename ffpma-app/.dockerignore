@@ -1,9 +1,0 @@
-node_modules
-.git
-.github
-.env
-dist
-attached_assets/generated_images/*
-uploads/
-npm-debug.log
-.DS_Store

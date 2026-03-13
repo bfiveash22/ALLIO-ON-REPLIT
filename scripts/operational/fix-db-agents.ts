@@ -1,8 +1,8 @@
 try { require("dotenv/config"); } catch (_) {}
-import { db } from '../../ffpma-app/server/db';
-import { agentRegistry } from '../../ffpma-app/shared/schema';
+import { db } from '../../artifacts/api-server/src/db';
+import { agentRegistry } from '../../lib/shared/src/schema';
 import { notInArray } from "drizzle-orm";
-import { agents } from '../../ffpma-app/shared/agents';
+import { agents } from '../../lib/shared/src/agents';
 import { sql } from "drizzle-orm";
 
 async function run() {

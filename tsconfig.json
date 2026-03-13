@@ -3,9 +3,9 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["./ffpma-app/shared/*"],
-      "@server/*": ["./ffpma-app/server/*"],
-      "@db": ["./ffpma-app/server/db.ts"]
+      "@shared/*": ["./lib/shared/src/*"],
+      "@server/*": ["./artifacts/api-server/src/*"],
+      "@db": ["./artifacts/api-server/src/db.ts"]
     }
   },
   "compileOnSave": false,

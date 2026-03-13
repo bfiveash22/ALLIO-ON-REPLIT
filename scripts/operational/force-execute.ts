@@ -1,7 +1,7 @@
-import { db } from '../../ffpma-app/server/db';
-import { agentTasks } from '../../ffpma-app/shared/schema';
+import { db } from '../../artifacts/api-server/src/db';
+import { agentTasks } from '../../lib/shared/src/schema';
 import { eq, or, and, sql } from 'drizzle-orm';
-import { executeAgentTask } from '../../ffpma-app/server/services/agent-executor';
+import { executeAgentTask } from '../../artifacts/api-server/src/services/agent-executor';
 
 async function forceExecutePriorityTasks() {
     console.log("=== EMERGENCY OVERRIDE: INITIATING PRIORITY 0 TASK EXECUTION ===");

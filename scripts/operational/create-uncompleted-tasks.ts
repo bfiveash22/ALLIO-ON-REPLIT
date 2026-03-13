@@ -1,4 +1,4 @@
-import { storage } from '../../ffpma-app/server/storage';
+import { storage } from '../../artifacts/api-server/src/storage';
 
 async function createTasks() {
   const tasks = [

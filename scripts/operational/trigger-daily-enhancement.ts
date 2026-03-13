@@ -1,4 +1,4 @@
-import { scheduleDailyEcosystemEnhancement } from '../../ffpma-app/server/services/agent-scheduler';
+import { scheduleDailyEcosystemEnhancement } from '../../artifacts/api-server/src/services/agent-scheduler';
 
 async function main() {
   console.log("Triggering Daily Ecosystem Enhancement loop...");

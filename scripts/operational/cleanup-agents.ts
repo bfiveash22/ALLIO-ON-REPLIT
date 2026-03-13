@@ -1,5 +1,5 @@
-import { db } from '../../ffpma-app/server/db';
-import { agentRegistry } from '../../ffpma-app/shared/schema';
+import { db } from '../../artifacts/api-server/src/db';
+import { agentRegistry } from '../../lib/shared/src/schema';
 import { notLike } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 

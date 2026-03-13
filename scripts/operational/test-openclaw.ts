@@ -1,7 +1,7 @@
-import { agentChat } from '../../ffpma-app/server/services/core-agents';
-import type { AgentProfile } from '../../ffpma-app/shared/agents';
+import { agentChat } from '../../artifacts/api-server/src/services/core-agents';
+import type { AgentProfile } from '../../lib/shared/src/agents';
 import OpenAI from 'openai';
-import { agents } from '../../ffpma-app/shared/agents';
+import { agents } from '../../lib/shared/src/agents';
 
 async function consultOpenClaw() {
   console.log("Consulting with OpenClaw...");
@@ -28,7 +28,7 @@ ${agent.coreBeliefs.map(b => '- ' + b).join('\\n')}`;
     console.log("Simulating chat payload...");
 
     // Simulate what the Route does exactly
-    const { shouldUseClaude, claudeAgentChat, getClaudeStatus } = await import("../../ffpma-app/server/services/claude-provider");
+    const { shouldUseClaude, claudeAgentChat, getClaudeStatus } = await import("../../artifacts/api-server/src/services/claude-provider");
     console.log("Imported Claude successfully.");
 
     const message = "Trustee requested I consult with you. Antigravity chat is generating a 502 Bad Gateway. Atlas generated one, but the root cause seemed to be missing agent registry entries. I restored you and Antigravity to shared/agents.ts but the chat endpoint still gives 502. Why is chatting with you causing a crash?";

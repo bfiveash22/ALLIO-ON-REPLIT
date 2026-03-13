@@ -1,4 +1,4 @@
-import { lockManager } from '../../ffpma-app/server/services/agent-locks';
+import { lockManager } from '../../artifacts/api-server/src/services/agent-locks';
 
 async function testLocks() {
   console.log('--- Testing Open Claw LockManager ---');

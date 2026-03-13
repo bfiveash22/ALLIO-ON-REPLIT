@@ -4,7 +4,7 @@ const pptxgen = require('pptxgenjs');
 import * as fs from 'fs';
 import * as path from 'path';
 try { require("dotenv/config"); } catch (_) {}
-import { getUncachableGoogleDriveClient, findAllioFolder, findFolderByName, createSubfolder } from '../../ffpma-app/server/services/drive';
+import { getUncachableGoogleDriveClient, findAllioFolder, findFolderByName, createSubfolder } from '../../artifacts/api-server/src/services/drive';
 
 async function createSlideDeck(title: string, text: string, filename: string): Promise<void> {
     let pres = new pptxgen();

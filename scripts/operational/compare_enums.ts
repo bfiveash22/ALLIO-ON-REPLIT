@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 
 try {
-    const schemaText = fs.readFileSync(new URL('../../ffpma-app/shared/schema.ts', import.meta.url), 'utf8');
+    const schemaText = fs.readFileSync(new URL('../../lib/shared/src/schema.ts', import.meta.url), 'utf8');
     if (!fs.existsSync('enums_clean.json')) {
         console.error('enums_clean.json not found. Run check_enums.ts first and save its output:\n  pnpm tsx scripts/operational/check_enums.ts > enums_clean.json');
         process.exit(1);

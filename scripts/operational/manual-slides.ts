@@ -1,4 +1,4 @@
-import { findAllioFolder, uploadPresentation, findFolderByName, createSubfolder } from '../../ffpma-app/server/services/drive';
+import { findAllioFolder, uploadPresentation, findFolderByName, createSubfolder } from '../../artifacts/api-server/src/services/drive';
 import * as fs from 'fs';
 import * as path from 'path';
 try { require("dotenv/config"); } catch (_) {}

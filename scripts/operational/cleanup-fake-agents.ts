@@ -1,7 +1,7 @@
-import { db } from '../../ffpma-app/server/db';
-import { agentTasks, openclawMessages } from '../../ffpma-app/shared/schema';
+import { db } from '../../artifacts/api-server/src/db';
+import { agentTasks, openclawMessages } from '../../lib/shared/src/schema';
 import { inArray } from "drizzle-orm";
-import { agents } from '../../ffpma-app/shared/agents';
+import { agents } from '../../lib/shared/src/agents';
 
 async function main() {
   const validAgentIds = agents.map(a => a.id);
