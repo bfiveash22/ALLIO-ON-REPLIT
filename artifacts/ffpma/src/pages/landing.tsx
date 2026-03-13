@@ -514,7 +514,7 @@ export default function LandingPage() {
                 The Future of Healing
               </h2>
             </div>
-            <div className="mx-auto max-w-4xl overflow-hidden rounded-xl border border-border/50 shadow-2xl">
+            <div className="mx-auto max-w-4xl overflow-hidden rounded-xl border border-border/50 shadow-2xl relative">
               <video
                 src={allioIntroVideo}
                 autoPlay
@@ -524,6 +524,17 @@ export default function LandingPage() {
                 className="w-full aspect-video object-cover"
                 data-testid="video-intro"
               />
+              <div
+                className="absolute inset-x-0 bottom-[18%] flex items-center justify-center pointer-events-none select-none"
+                aria-hidden="true"
+              >
+                <span
+                  className="text-[clamp(0.9rem,2.8vw,1.75rem)] font-bold tracking-wide bg-gradient-to-r from-cyan-400 via-teal-300 to-amber-400 bg-clip-text text-transparent drop-shadow-lg"
+                  style={{ fontFamily: "'Space Grotesk', sans-serif", textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}
+                >
+                  The All-In-One Healing Ecosystem
+                </span>
+              </div>
             </div>
           </div>
         </section>
