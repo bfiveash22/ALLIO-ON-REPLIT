@@ -635,6 +635,18 @@ export function registerAdminRoutes(app: Express): void {
     }
   });
 
+  app.post("/api/integrations/:id/test", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const status = await testIntegration(req.params.id);
+      if (!status) {
+        return res.status(404).json({ error: "Integration not found" });
+      }
+      res.json(status);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.get("/api/admin/sync-conflicts", requireRole("admin"), async (req: Request, res: Response) => {
     try {
       const { getSyncConflicts } = await import("../services/wordpress-sync");

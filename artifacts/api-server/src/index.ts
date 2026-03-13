@@ -1,6 +1,5 @@
 import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
 import { createServer } from "http";
 import path from "path";
 import helmet from "helmet";
@@ -12,6 +11,19 @@ import { requestLogger } from "./middleware/request-logger";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler";
 import { registerHealthRoutes } from "./routes/health-routes";
 import { authRateLimiter, writeRateLimiter, readRateLimiter, agentRateLimiter, webhookRateLimiter } from "./middleware/rate-limiter";
+
+declare global {
+  namespace Express {
+    interface User {
+      id: string;
+      email?: string;
+      wpRoles?: string[];
+      firstName?: string;
+      lastName?: string;
+      wpUserId?: string;
+    }
+  }
+}
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('UNHANDLED PROMISE REJECTION:', reason);
@@ -114,7 +126,62 @@ registerHealthRoutes(app);
     log(`[startup] Orphan cleanup failed (non-fatal): ${err.message}`, 'cleanup');
   }
 
-  await registerRoutes(httpServer, app);
+  const { setupWorkingAuth } = await import("./working-auth");
+  await setupWorkingAuth(app);
+
+  const { registerSentinelRoutes } = await import("./sentinel-routes");
+  registerSentinelRoutes(app);
+
+  const { registerOpenClawRoutes } = await import("./openclaw-routes");
+  registerOpenClawRoutes(app);
+
+  const { registerLearningRoutes } = await import("./learning-routes");
+  registerLearningRoutes(app);
+
+  const { registerDianeRoutes } = await import("./services/diane-ai");
+  registerDianeRoutes(app);
+
+  const { registerProtocolBuilderRoutes } = await import("./services/protocol-builder");
+  registerProtocolBuilderRoutes(app);
+
+  const { registerPeptideConsoleRoutes } = await import("./services/peptide-console");
+  registerPeptideConsoleRoutes(app);
+
+  const { auditLog } = await import("./middleware/auth");
+  app.use("/api/settings", auditLog());
+  app.use("/api/sentinel", auditLog());
+  app.use("/api/athena", auditLog());
+
+  const { registerTrainingRoutes } = await import("./routes/training-routes");
+  registerTrainingRoutes(app);
+  const { registerMemberRoutes } = await import("./routes/member-routes");
+  registerMemberRoutes(app);
+  const { registerDoctorRoutes } = await import("./routes/doctor-routes");
+  registerDoctorRoutes(app);
+  const { registerSettingsRoutes } = await import("./routes/settings-routes");
+  registerSettingsRoutes(app);
+  const { registerMediaRoutes } = await import("./routes/media-routes");
+  registerMediaRoutes(app);
+  const { registerContractRoutes } = await import("./routes/contract-routes");
+  registerContractRoutes(app);
+  const { registerWooCommerceRoutes } = await import("./routes/woocommerce-routes");
+  registerWooCommerceRoutes(app);
+  const { registerOnboardingRoutes } = await import("./routes/onboarding-routes");
+  registerOnboardingRoutes(app);
+  const { registerAgentRoutes } = await import("./routes/agent-routes");
+  registerAgentRoutes(app);
+  const { registerAthenaRoutes } = await import("./routes/athena-routes");
+  registerAthenaRoutes(app);
+  const { registerDriveRoutes } = await import("./routes/drive-routes");
+  registerDriveRoutes(app);
+  const { registerBloodResearchRoutes } = await import("./routes/blood-research-routes");
+  registerBloodResearchRoutes(app);
+  const { registerAdminRoutes } = await import("./routes/admin-routes");
+  registerAdminRoutes(app);
+  const { registerMiscRoutes } = await import("./routes/misc-routes");
+  registerMiscRoutes(app);
+  const { registerProtocolAssemblyRoutes } = await import("./routes/protocol-assembly-routes");
+  await registerProtocolAssemblyRoutes(app);
 
   try {
     const { seedDatabase } = await import('./seed');

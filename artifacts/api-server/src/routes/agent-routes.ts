@@ -581,4 +581,37 @@ export function registerAgentRoutes(app: Express): void {
       res.status(500).json({ error: error.message });
     }
   });
+
+  app.get("/api/agents/tasks/status", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const status = await getAgentTaskStatus();
+      res.json(status);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/agents/tasks/:taskId/execute", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { taskId } = req.params;
+      console.log(`[API] Executing task: ${taskId}`);
+      const result = await executeAgentTask(taskId);
+      res.json(result);
+    } catch (error: any) {
+      console.error(`[API] Task execution error:`, error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.post("/api/agents/tasks/execute-all", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 3;
+      console.log(`[API] Executing up to ${limit} pending tasks...`);
+      const result = await executePendingTasks(limit);
+      res.json(result);
+    } catch (error: any) {
+      console.error(`[API] Batch execution error:`, error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
 }

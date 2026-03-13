@@ -192,4 +192,107 @@ export function registerWooCommerceRoutes(app: Express): void {
       res.json({ totalOrders: 0, pendingOrders: 0, processingOrders: 0, completedOrders: 0, recentRevenue: 0 });
     }
   });
+
+  app.post("/api/checkout/stripe/create-session", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { lineItems, successUrl, cancelUrl, customerEmail } = req.body;
+      if (!lineItems || !Array.isArray(lineItems) || lineItems.length === 0) {
+        return res.status(400).json({ error: "lineItems array is required" });
+      }
+
+      const stripeKey = process.env.STRIPE_SECRET_KEY;
+      if (!stripeKey) {
+        return res.status(503).json({ error: "Stripe is not configured. Add STRIPE_SECRET_KEY to enable payments." });
+      }
+
+      const stripe = (await import("stripe")).default;
+      const stripeClient = new stripe(stripeKey);
+
+      const session = await stripeClient.checkout.sessions.create({
+        payment_method_types: ["card"],
+        mode: "payment",
+        line_items: lineItems.map((item: any) => ({
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: item.name,
+              description: item.description,
+            },
+            unit_amount: Math.round(item.price * 100),
+          },
+          quantity: item.quantity || 1,
+        })),
+        success_url: successUrl || `${process.env.APP_URL || "https://www.forgottenformula.com"}/member?payment=success`,
+        cancel_url: cancelUrl || `${process.env.APP_URL || "https://www.forgottenformula.com"}/member?payment=cancelled`,
+        customer_email: customerEmail || (req.user as any)?.email,
+        metadata: {
+          userId: (req.user as any)?.id || "unknown",
+          source: "allio-platform",
+        },
+      });
+
+      res.json({
+        sessionId: session.id,
+        url: session.url,
+      });
+    } catch (error: any) {
+      console.error("[Stripe] Checkout session error:", error.message);
+      res.status(500).json({ error: error.message || "Failed to create checkout session" });
+    }
+  });
+
+  app.post("/api/checkout/stripe/webhook", async (req: Request, res: Response) => {
+    try {
+      const stripeKey = process.env.STRIPE_SECRET_KEY;
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+      if (!stripeKey) {
+        return res.status(503).json({ error: "Stripe not configured" });
+      }
+
+      const stripe = (await import("stripe")).default;
+      const stripeClient = new stripe(stripeKey);
+
+      if (!webhookSecret) {
+        console.warn("[Stripe] STRIPE_WEBHOOK_SECRET not set - rejecting unsigned webhook for security");
+        return res.status(400).json({ error: "Webhook secret not configured. Set STRIPE_WEBHOOK_SECRET to accept webhooks." });
+      }
+
+      const sig = req.headers["stripe-signature"] as string;
+      if (!sig) {
+        return res.status(400).json({ error: "Missing stripe-signature header" });
+      }
+
+      const event = stripeClient.webhooks.constructEvent(req.body, sig, webhookSecret);
+
+      switch (event.type) {
+        case "checkout.session.completed": {
+          const session = event.data.object;
+          console.log(`[Stripe] Payment completed: ${session.id}, amount: ${session.amount_total}, email: ${session.customer_email}`);
+          break;
+        }
+        case "payment_intent.payment_failed": {
+          const intent = event.data.object;
+          console.log(`[Stripe] Payment failed: ${intent.id}, error: ${intent.last_payment_error?.message}`);
+          break;
+        }
+        default:
+          console.log(`[Stripe] Unhandled event type: ${event.type}`);
+      }
+
+      res.json({ received: true });
+    } catch (error: any) {
+      console.error("[Stripe] Webhook error:", error.message);
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/checkout/stripe/status", requireRole("admin"), async (_req: Request, res: Response) => {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    res.json({
+      configured: !!stripeKey,
+      mode: stripeKey?.startsWith("sk_live_") ? "live" : stripeKey?.startsWith("sk_test_") ? "test" : "unconfigured",
+      webhookConfigured: !!process.env.STRIPE_WEBHOOK_SECRET,
+    });
+  });
 }
