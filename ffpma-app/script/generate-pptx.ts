@@ -3,7 +3,7 @@ const require = createRequire(import.meta.url);
 const pptxgen = require('pptxgenjs');
 import * as fs from 'fs';
 import * as path from 'path';
-import 'dotenv/config';
+try { require("dotenv/config"); } catch (_) {}
 import { getUncachableGoogleDriveClient, findAllioFolder, findFolderByName, createSubfolder } from '../server/services/drive';
 
 async function createSlideDeck(title: string, text: string, filename: string): Promise<void> {

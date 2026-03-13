@@ -1,4 +1,4 @@
-import "dotenv/config";
+try { require("dotenv/config"); } catch (_) {}
 import { db } from "../server/db";
 import { users } from "@shared/schema";
 import { ilike } from "drizzle-orm";

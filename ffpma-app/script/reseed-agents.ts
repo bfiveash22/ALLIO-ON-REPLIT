@@ -1,4 +1,4 @@
-import "dotenv/config";
+try { require("dotenv/config"); } catch (_) {}
 import { db } from "../server/db";
 import { agentRegistry } from "../shared/schema";
 import { agents } from "../shared/agents";

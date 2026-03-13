@@ -1,3 +1,4 @@
+try { require("dotenv/config"); } catch (_) {}
 import { rupaHealthAgent } from '../services/rupa-health-agent';
 
 async function testRupaHealthAgent() {

@@ -1,4 +1,4 @@
-import "dotenv/config";
+try { require("dotenv/config"); } catch (_) {}
 import { Pool } from "pg";
 
 async function checkSessions() {

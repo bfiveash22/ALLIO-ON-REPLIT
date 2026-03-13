@@ -1,6 +1,5 @@
 import pg from 'pg';
-import * as dotenv from 'dotenv';
-dotenv.config();
+try { require("dotenv").config(); } catch (_) {}
 
 const { Pool } = pg;
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });

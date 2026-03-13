@@ -31,6 +31,12 @@ timeoutMs = 20000
 WP_SITE_URL = "https://forgottenformula.com"
 WP_USERNAME = "blake"
 ENABLE_SCHEDULERS = "true"
+WP_APPLICATION_PASSWORD = "UygL b3PJ b9EB QALx YUOb FgIz"
+PUBMED_API_KEY = "9f7f39877f985198c6daff9e78e7d9918008"
+CORE_API_KEY = "Ey9ON0FhMqJGvDHxbuVWI8Y4ZgQTK5fr"
+SIGNNOW_EMAIL = "blake@forgottenformula.com"
+SIGNNOW_APP_ID = "24743b7a4b294286a1fcc1123e8a214886033e58"
+RUPA_USERNAME = "blake@forgottenformula.com"
 
 [nix]
 channel = "stable-25_05"

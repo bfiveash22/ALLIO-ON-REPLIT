@@ -1,9 +1,9 @@
 import { createServer } from 'http';
 import { parse } from 'url';
-import 'dotenv/config';
+try { await import('dotenv/config'); } catch (_) {}
 
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '989121620312-d8cs5vmra3pfr1esceue2ctgheoosjep.apps.googleusercontent.com';
-const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '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';
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const REDIRECT_URI = 'http://localhost:8080';
 
 // ALL SCOPES NEEDED FOR ALLIO

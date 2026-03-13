@@ -1,4 +1,4 @@
-import "dotenv/config";
+try { require("dotenv/config"); } catch (_) {}
 import { db } from "../server/db";
 import { agentTasks } from "../shared/schema";
 import { eq, like, or } from "drizzle-orm";

@@ -1,7 +1,7 @@
 import { findAllioFolder, uploadPresentation, findFolderByName, createSubfolder } from '../server/services/drive';
 import * as fs from 'fs';
 import * as path from 'path';
-import 'dotenv/config';
+try { require("dotenv/config"); } catch (_) {}
 
 async function generateGoogleSlides() {
     console.log("Starting script to convert manual content to Google Slides...");

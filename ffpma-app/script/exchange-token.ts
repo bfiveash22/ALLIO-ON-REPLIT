@@ -1,8 +1,8 @@
 import { google } from 'googleapis';
 
-const CLIENT_ID = '989121620312-d8cs5vmra3pfr1esceue2ctgheoosjep.apps.googleusercontent.com';
-const CLIENT_SECRET = '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';
-const CODE = '4/0AfrIepAfn_lwirMJm7rD6Q4MC305g8mf1WNPiGaPHuDDJilC1B-0CIP5VIJEnIgLyNyTiw';
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+const CODE = process.env.GOOGLE_AUTH_CODE || '';
 
 async function tryExchange(redirectUri: string) {
   const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, redirectUri);

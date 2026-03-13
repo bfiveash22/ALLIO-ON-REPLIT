@@ -1,7 +1,7 @@
 import { google } from 'googleapis';
 
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '989121620312-d8cs5vmra3pfr1esceue2ctgheoosjep.apps.googleusercontent.com';
-const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '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';
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const REDIRECT_URI = 'urn:ietf:wg:oauth:2.0:oob';
 
 const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);

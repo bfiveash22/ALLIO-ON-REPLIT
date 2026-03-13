@@ -1,7 +1,5 @@
 import { Pool } from 'pg';
-import * as dotenv from 'dotenv';
-
-dotenv.config();
+try { require("dotenv").config(); } catch (_) {}
 
 async function clearDB() {
   if (!process.env.DATABASE_URL) throw new Error('No DATABASE_URL');

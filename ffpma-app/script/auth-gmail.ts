@@ -2,8 +2,8 @@ import { google } from 'googleapis';
 import * as http from 'http';
 import * as url from 'url';
 
-const CLIENT_ID = '989121620312-d8cs5vmra3pfr1esceue2ctgheoosjep.apps.googleusercontent.com';
-const CLIENT_SECRET = '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';
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const REDIRECT_URI = 'http://localhost:8080';
 
 const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
