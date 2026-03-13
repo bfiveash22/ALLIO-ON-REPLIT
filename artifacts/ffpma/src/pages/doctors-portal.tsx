@@ -61,6 +61,7 @@ import { agents, getAgentsByDivision } from "@shared/agents";
 import { BloodAnalysisUpload } from "@/components/BloodAnalysisUpload";
 import { DoctorScheduling } from "@/components/DoctorScheduling";
 import { DoctorPatientMessaging } from "@/components/DoctorPatientMessaging";
+import { EnrollMemberModal } from "@/components/EnrollMemberModal";
 
 interface DoctorReferralInfo {
   doctorCode: string | null;
@@ -262,6 +263,9 @@ export default function DoctorsPortal() {
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
   const [selectedPatientForAnalysis, setSelectedPatientForAnalysis] = useState<string | null>(null);
 
+  // Enroll Member Modal State
+  const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
+
   // Patient Filter State
   interface FilterState {
     searchQuery: string;
@@ -369,14 +373,14 @@ export default function DoctorsPortal() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-y-auto">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-violet-500/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10">
-        <header className="border-b border-white/10 bg-black/40 backdrop-blur-xl sticky top-0 z-50">
+      <div className="relative z-10 pb-16">
+        <header className="border-b border-white/10 bg-black/40 backdrop-blur-xl sticky top-14 z-40">
           <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -709,16 +713,14 @@ export default function DoctorsPortal() {
                         <Badge className="ml-2 bg-cyan-500 text-[10px] px-1.5 py-0 border-0 text-white">Active</Badge>
                       )}
                     </Button>
-                    {referralInfo?.memberSignupUrl && (
-                      <Button 
-                        className="bg-cyan-500 hover:bg-cyan-600" 
-                        onClick={() => window.open(referralInfo.memberSignupUrl!, '_blank')}
-                        data-testid="button-add-patient"
-                      >
-                        <UserPlus className="w-4 h-4 mr-2" />
-                        Enroll New Member
-                      </Button>
-                    )}
+                    <Button 
+                      className="bg-cyan-500 hover:bg-cyan-600" 
+                      onClick={() => setIsEnrollModalOpen(true)}
+                      data-testid="button-add-patient"
+                    >
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Enroll New Member
+                    </Button>
                   </div>
                 </div>
 
@@ -1414,6 +1416,13 @@ export default function DoctorsPortal() {
             </TabsContent>
           </Tabs>
         </main>
+
+        {/* Enroll Member Modal */}
+        <EnrollMemberModal
+          open={isEnrollModalOpen}
+          onOpenChange={setIsEnrollModalOpen}
+          signupUrl={referralInfo?.memberSignupUrl || null}
+        />
 
         {/* Blood Analysis Upload Modal */}
         <AnimatePresence>

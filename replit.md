@@ -41,7 +41,7 @@ workspace/
 │   ├── api-server/               # Express API server (51 services)
 │   │   ├── src/
 │   │   │   ├── index.ts          # Server entry point with rate limiting, helmet, graceful shutdown
-│   │   │   ├── routes.ts         # 7,164-line route definitions
+│   │   │   ├── routes.ts         # 7,300+ line route definitions
 │   │   │   ├── db.ts             # Drizzle database connection
 │   │   │   ├── storage.ts        # Storage abstraction layer
 │   │   │   ├── services/         # 51 service modules (AI, payments, sync, etc.)

@@ -1440,6 +1440,185 @@ Example: ["Live blood analysis training", "Curcumin protocol", "Doctor certifica
     }
   });
 
+  // POST /api/doctor/member-lookup - Lookup member enrollment status by exact user ID, email, or URL
+  app.post("/api/doctor/member-lookup", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+    try {
+      const { query } = req.body;
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ error: "A user ID or member URL is required" });
+      }
+
+      const trimmed = query.trim();
+      if (trimmed.length < 3) {
+        return res.status(400).json({ error: "Search query must be at least 3 characters" });
+      }
+
+      let enrollmentRecord = null;
+      let memberProfile = null;
+      let wpUser = null;
+
+      let lookupValue = trimmed;
+      if (trimmed.includes('http') || trimmed.includes('/')) {
+        try {
+          const url = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+          const clinicId = url.searchParams.get('clinic_id');
+          const userId = url.searchParams.get('user_id');
+          if (userId) lookupValue = userId;
+          else if (clinicId) lookupValue = clinicId;
+        } catch { /* not a URL, use as-is */ }
+      }
+
+      enrollmentRecord = await db.query.memberEnrollment.findFirst({
+        where: (m, { or, eq }) => or(
+          eq(m.id, lookupValue),
+          eq(m.email, lookupValue)
+        )
+      });
+
+      const userRecord = await db.query.users.findFirst({
+        where: (u, { or, eq }) => or(
+          eq(u.id, lookupValue),
+          eq(u.email, lookupValue)
+        )
+      });
+
+      if (userRecord) {
+        memberProfile = await db.query.memberProfiles.findFirst({
+          where: (p, { eq }) => eq(p.userId, userRecord.id)
+        });
+      }
+
+      try {
+        if (wordPressAuthService.isConfigured() && lookupValue.includes('@')) {
+          wpUser = await wordPressAuthService.getCustomerByEmail(lookupValue);
+        }
+      } catch (wpError: any) {
+        console.error('[Doctor Member Lookup] WP lookup failed:', wpError.message);
+      }
+
+      if (!enrollmentRecord && !memberProfile && !wpUser) {
+        return res.json({
+          found: false,
+          message: "No member found with this ID or email. Please verify the information and try again.",
+        });
+      }
+
+      const contractSigned = !!(enrollmentRecord?.documentSignedAt || memberProfile?.contractSigned);
+      const paymentComplete = !!enrollmentRecord?.paymentCompletedAt;
+      const wpAccountActive = !!wpUser || !!enrollmentRecord?.wpUserId;
+
+      res.json({
+        found: true,
+        member: {
+          id: enrollmentRecord?.id || memberProfile?.id || null,
+          userId: userRecord?.id || null,
+          name: enrollmentRecord?.fullName || (userRecord ? `${userRecord.firstName || ''} ${userRecord.lastName || ''}`.trim() : wpUser?.display_name) || 'Unknown',
+          email: enrollmentRecord?.email || userRecord?.email || wpUser?.email || null,
+          phone: null,
+          status: enrollmentRecord?.status || (memberProfile?.isActive ? 'active' : 'inactive') || null,
+          enrolledAt: enrollmentRecord?.createdAt || memberProfile?.createdAt || null,
+          doctorCode: enrollmentRecord?.doctorCode || null,
+        },
+        verification: {
+          contractSigned,
+          paymentComplete,
+          wpAccountActive,
+          enrollmentExists: !!enrollmentRecord,
+          profileExists: !!memberProfile,
+        },
+        fullyVerified: contractSigned && paymentComplete && wpAccountActive,
+      });
+    } catch (error: any) {
+      console.error('[Doctor Member Lookup] Error:', error);
+      res.status(500).json({ error: error.message || "Failed to lookup member" });
+    }
+  });
+
+  // POST /api/doctor/member-add - Add a verified member to doctor's patient list
+  app.post("/api/doctor/member-add", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+    try {
+      const { memberId, memberEmail } = req.body;
+      if (!memberId && !memberEmail) {
+        return res.status(400).json({ error: "Member ID or email is required" });
+      }
+
+      const userId = (req as any).user?.claims?.sub || (req as any).session?.passport?.user?.claims?.sub;
+      let userEmail: string | null = null;
+      if (userId) {
+        const user = await db.query.users.findFirst({
+          where: (u, { eq }) => eq(u.id, userId)
+        });
+        userEmail = user?.email || null;
+      }
+      if (!userEmail) {
+        userEmail = (req as any).session?.passport?.user?.email || null;
+      }
+
+      const isAdmin = (req as any).session?.passport?.user?.wpRoles?.includes('administrator');
+
+      const doctor = await db.query.doctorOnboarding.findFirst({
+        where: (d, { eq, and }) => and(
+          eq(d.email, userEmail || ''),
+          eq(d.status, 'completed')
+        )
+      });
+
+      const doctorCode = doctor?.doctorCode;
+      if (!doctorCode && !isAdmin) {
+        return res.status(400).json({ error: "No active doctor profile found" });
+      }
+
+      const enrollment = await db.query.memberEnrollment.findFirst({
+        where: (m, { or, eq }) => or(
+          eq(m.id, memberId || ''),
+          eq(m.email, memberEmail || '')
+        )
+      });
+
+      if (!enrollment) {
+        return res.status(404).json({ error: "No enrollment record found for this member. The member must complete the signup process first." });
+      }
+
+      const contractSigned = !!enrollment.documentSignedAt;
+      const paymentComplete = !!enrollment.paymentCompletedAt;
+      const wpAccountActive = !!enrollment.wpUserId;
+
+      let profileContractSigned = false;
+      if (memberEmail) {
+        const userRec = await db.query.users.findFirst({
+          where: (u, { eq }) => eq(u.email, memberEmail)
+        });
+        if (userRec) {
+          const profile = await db.query.memberProfiles.findFirst({
+            where: (p, { eq }) => eq(p.userId, userRec.id)
+          });
+          if (profile?.contractSigned) profileContractSigned = true;
+        }
+      }
+
+      const isVerified = (contractSigned || profileContractSigned) && paymentComplete && wpAccountActive;
+      if (!isVerified && !isAdmin) {
+        return res.status(400).json({ 
+          error: "This member has not completed all verification steps (contract, payment, and account creation). They must finish the signup process before being added to your patient list." 
+        });
+      }
+
+      if (enrollment.doctorCode && enrollment.doctorCode !== doctorCode && !isAdmin) {
+        return res.status(403).json({ error: "This member is already assigned to another practice. Contact an administrator if a reassignment is needed." });
+      }
+
+      const assignCode = doctorCode || enrollment.doctorCode;
+      await db.update(memberEnrollment)
+        .set({ doctorCode: assignCode, updatedAt: new Date() })
+        .where(eq(memberEnrollment.id, enrollment.id));
+
+      return res.json({ success: true, message: "Member has been added to your patient list." });
+    } catch (error: any) {
+      console.error('[Doctor Member Add] Error:', error);
+      res.status(500).json({ error: error.message || "Failed to add member" });
+    }
+  });
+
   // GET /api/doctor/appointments - Get all appointments for logged-in doctor
   app.get("/api/doctor/appointments", requireAuth, async (req: Request, res: Response) => {
     try {
