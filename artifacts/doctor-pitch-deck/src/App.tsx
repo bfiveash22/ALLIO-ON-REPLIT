@@ -1,5 +1,7 @@
-import { useEffect, useState, useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback, useRef, createRef } from "react";
+import { useLocation, useNavigate, createMemoryRouter } from "react-router-dom";
+import html2canvas from "html2canvas-pro";
+import { jsPDF } from "jspdf";
 
 import { slides } from "@/slideLoader";
 
@@ -35,6 +37,7 @@ function SlideEditor() {
 
     const onClick = (event: MouseEvent) => {
       if (event.button !== 0 || event.metaKey || event.ctrlKey) return;
+      if ((event.target as HTMLElement).closest("[data-no-nav]")) return;
       const fraction = event.clientX / window.innerWidth;
       if (fraction < 0.4 && currentIndex > 0) {
         navigate(`/slide${slides[currentIndex - 1].position}`);
@@ -97,104 +100,148 @@ function AllSlides() {
 function DownloadButton() {
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState("");
+  const [activeSlideIndex, setActiveSlideIndex] = useState(-1);
 
   const handleDownload = useCallback(async () => {
     setDownloading(true);
-    setProgress("Opening print view...");
 
     try {
-      const printWindow = window.open("", "_blank");
-      if (!printWindow) {
-        setProgress("Pop-up blocked. Allow pop-ups and try again.");
-        setTimeout(() => setProgress(""), 3000);
-        setDownloading(false);
-        return;
+      const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [1920, 1080] });
+
+      for (let i = 0; i < slides.length; i++) {
+        setProgress(`Rendering slide ${i + 1} of ${slides.length}...`);
+        setActiveSlideIndex(i);
+
+        await new Promise(r => setTimeout(r, 800));
+
+        const el = document.getElementById(`pdf-render-slide-${i}`);
+        if (!el) continue;
+
+        const canvas = await html2canvas(el, {
+          width: 1920,
+          height: 1080,
+          scale: 1,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: "#000000",
+          logging: false,
+          windowWidth: 1920,
+          windowHeight: 1080,
+        });
+
+        const imgData = canvas.toDataURL("image/jpeg", 0.95);
+        if (i > 0) pdf.addPage([1920, 1080], "landscape");
+        pdf.addImage(imgData, "JPEG", 0, 0, 1920, 1080);
       }
 
-      const baseUrl = window.location.origin + (import.meta.env.BASE_URL || "/");
-      printWindow.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <title>ALLIO Doctor Pitch Deck - Print</title>
-  <style>
-    @page { size: landscape; margin: 0; }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #000; }
-    iframe { border: none; display: block; }
-    .instructions {
-      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-      z-index: 10000; background: linear-gradient(135deg, #00D4AA, #0ea5e9);
-      color: white; padding: 16px 32px; border-radius: 12px;
-      font-family: system-ui, sans-serif; font-size: 16px; font-weight: 600;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3); text-align: center;
-    }
-    .instructions small { display: block; font-weight: 400; margin-top: 4px; opacity: 0.9; font-size: 13px; }
-    @media print { .instructions { display: none !important; } }
-  </style>
-</head>
-<body>
-  <div class="instructions">
-    Press Ctrl+P (or Cmd+P) to save as PDF
-    <small>Set destination to "Save as PDF" &bull; Landscape &bull; No margins</small>
-  </div>
-  <iframe src="${baseUrl}allslides" style="width:1920px;height:${1080 * slides.length}px;" onload="this.style.opacity=1"></iframe>
-</body>
-</html>`);
-      printWindow.document.close();
+      setActiveSlideIndex(-1);
+      setProgress("Saving PDF...");
+      pdf.save("ALLIO-Doctor-Pitch-Deck.pdf");
       setProgress("");
     } catch (err) {
       console.error("PDF generation failed:", err);
-      setProgress("Failed to open print view.");
+      setProgress("Download failed.");
       setTimeout(() => setProgress(""), 3000);
     } finally {
       setDownloading(false);
+      setActiveSlideIndex(-1);
     }
   }, []);
 
   return (
     <>
-      <button
-        onClick={handleDownload}
-        disabled={downloading}
-        style={{
-          position: "fixed",
-          bottom: "24px",
-          right: "24px",
-          zIndex: 9999,
-          padding: "12px 24px",
-          borderRadius: "12px",
-          border: "none",
-          background: downloading ? "#374151" : "linear-gradient(135deg, #00D4AA, #0ea5e9)",
-          color: "white",
-          fontSize: "14px",
-          fontWeight: 600,
-          cursor: downloading ? "not-allowed" : "pointer",
-          boxShadow: "0 4px 20px rgba(0,212,170,0.3)",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          transition: "all 0.2s",
-        }}
-      >
-        {downloading ? (
-          <>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: "spin 1s linear infinite" }}>
-              <path d="M21 12a9 9 0 11-6.219-8.56" />
-            </svg>
-            {progress}
-          </>
-        ) : (
-          <>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Download PDF
-          </>
-        )}
-      </button>
+      <div data-no-nav>
+        <button
+          onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+          disabled={downloading}
+          style={{
+            position: "fixed",
+            bottom: "24px",
+            right: "24px",
+            zIndex: 9999,
+            padding: "12px 24px",
+            borderRadius: "12px",
+            border: "none",
+            background: downloading ? "#374151" : "linear-gradient(135deg, #00D4AA, #0ea5e9)",
+            color: "white",
+            fontSize: "14px",
+            fontWeight: 600,
+            cursor: downloading ? "not-allowed" : "pointer",
+            boxShadow: "0 4px 20px rgba(0,212,170,0.3)",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            transition: "all 0.2s",
+          }}
+        >
+          {downloading ? (
+            <>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: "spin 1s linear infinite" }}>
+                <path d="M21 12a9 9 0 11-6.219-8.56" />
+              </svg>
+              {progress}
+            </>
+          ) : (
+            <>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Download PDF
+            </>
+          )}
+        </button>
+      </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+      {activeSlideIndex >= 0 && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 10000,
+          background: "#000",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          overflow: "hidden",
+        }}>
+          <div style={{
+            position: "absolute",
+            top: "16px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(0,212,170,0.9)",
+            color: "white",
+            padding: "10px 28px",
+            borderRadius: "8px",
+            fontFamily: "system-ui, sans-serif",
+            fontSize: "14px",
+            fontWeight: 600,
+            zIndex: 10001,
+          }}>
+            {progress}
+          </div>
+          <div
+            id={`pdf-render-slide-${activeSlideIndex}`}
+            style={{
+              width: "1920px",
+              height: "1080px",
+              overflow: "hidden",
+              transformOrigin: "top left",
+              transform: `scale(${Math.min(window.innerWidth / 1920, window.innerHeight / 1080)})`,
+            }}
+          >
+            <div className="h-full w-full [&_.h-screen]:!h-full [&_.w-screen]:!w-full" style={{ width: "1920px", height: "1080px" }}>
+              {(() => {
+                const Comp = slides[activeSlideIndex].Component;
+                return <Comp />;
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
