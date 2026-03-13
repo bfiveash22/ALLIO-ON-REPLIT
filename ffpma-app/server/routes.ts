@@ -5317,7 +5317,7 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
 
       const answer = completion.choices[0]?.message?.content || 'I apologize, but I was unable to formulate a response. Please try asking your question in a different way.';
 
-      res.json({ answer, modelUsed: 'ALLIO (GPT-4o)' });
+      res.json({ answer, modelUsed: 'ALLIO (GPT-4.1-mini)' });
     } catch (error: any) {
       console.error('[AI Tutor] Error:', error.message);
       res.status(500).json({ error: "Failed to get AI response. Please try again." });

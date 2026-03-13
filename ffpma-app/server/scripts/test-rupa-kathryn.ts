@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { rupaHealthAgent } from '../services/rupa-health-agent';
 
 async function testRupaHealthKathryn() {
