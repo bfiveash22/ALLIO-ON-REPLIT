@@ -4,25 +4,29 @@ import * as path from 'path';
 const ssh = new NodeSSH();
 
 async function deploy() {
-  console.log('🚀 Starting automated VPS deployment...');
+  console.log('Starting automated VPS deployment...');
+
+  const host = process.env.VPS_HOST;
+  const username = process.env.VPS_USERNAME || 'root';
+  const password = process.env.VPS_PASSWORD;
+
+  if (!host || !password) {
+    console.error('Missing required environment variables: VPS_HOST, VPS_PASSWORD');
+    process.exit(1);
+  }
   
   try {
-    await ssh.connect({
-      host: '130.49.160.73',
-      username: 'root',
-      password: 'cF1o5S44w11b',
-      port: 22
-    });
+    await ssh.connect({ host, username, password, port: 22 });
     
-    console.log('✅ Connected to VPS via SSH');
+    console.log('Connected to VPS via SSH');
     
     const localFile = path.resolve('allio-deploy-slides.zip');
     const remoteFile = '/root/allio-deploy-slides.zip';
     const targetDir = '/root/allio-v1';
     
-    console.log('📤 Uploading zip file...');
+    console.log('Uploading zip file...');
     await ssh.putFile(localFile, remoteFile);
-    console.log('✅ Upload complete');
+    console.log('Upload complete');
     
     const commands = [
       `mkdir -p ${targetDir}`,
@@ -34,7 +38,7 @@ async function deploy() {
       `rm ${remoteFile}`
     ];
     
-    console.log('⚙️ Executing deployment commands on VPS...');
+    console.log('Executing deployment commands on VPS...');
     
     for (const cmd of commands) {
         console.log(`> ${cmd}`);
@@ -43,10 +47,10 @@ async function deploy() {
         if (result.stderr) console.error(result.stderr);
     }
     
-    console.log('🎉 Deployment complete! Server is restarting.');
+    console.log('Deployment complete! Server is restarting.');
     
   } catch (error) {
-    console.error('❌ Deployment failed:', error);
+    console.error('Deployment failed:', error);
   } finally {
     ssh.dispose();
   }

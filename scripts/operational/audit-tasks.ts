@@ -1,5 +1,5 @@
-import { db } from '../server/db.ts';
-import { agentTasks } from '../shared/schema.ts';
+import { db } from '../../ffpma-app/server/db';
+import { agentTasks } from '../../ffpma-app/shared/schema';
 import { eq, gte, and, ne } from 'drizzle-orm';
 
 async function run() {

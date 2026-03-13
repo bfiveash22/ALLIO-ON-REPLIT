@@ -1,6 +1,6 @@
 try { require("dotenv/config"); } catch (_) {}
-import { db } from "../server/db";
-import { agentRegistry, agentTasks } from "../shared/schema";
+import { db } from '../../ffpma-app/server/db';
+import { agentRegistry, agentTasks } from '../../ffpma-app/shared/schema';
 import { eq, sql } from "drizzle-orm";
 
 async function run() {

@@ -38,7 +38,7 @@ async function getGoogleDriveClient() {
 }
 
 async function listFolderRecursive(
-  drive: any, 
+  drive: ReturnType<typeof google.drive>, 
   folderId: string, 
   folderPath: string = 'ALLIO'
 ): Promise<AssetInfo[]> {

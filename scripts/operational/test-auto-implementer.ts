@@ -1,4 +1,4 @@
-import { autoImplementer } from '../server/services/auto-implementer';
+import { autoImplementer } from '../../ffpma-app/server/services/auto-implementer';
 
 async function main() {
     console.log('Testing Auto-Implementer Pipeline...');

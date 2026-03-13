@@ -1,5 +1,5 @@
-import { db } from '../server/db';
-import { agentRegistry } from '@shared/schema';
+import { db } from '../../ffpma-app/server/db';
+import { agentRegistry } from '../../ffpma-app/shared/schema';
 import { sql } from 'drizzle-orm';
 
 async function wipe() {

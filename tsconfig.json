@@ -1,5 +1,13 @@
 {
   "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["./ffpma-app/shared/*"],
+      "@server/*": ["./ffpma-app/server/*"],
+      "@db": ["./ffpma-app/server/db.ts"]
+    }
+  },
   "compileOnSave": false,
   "files": [],
   "references": [

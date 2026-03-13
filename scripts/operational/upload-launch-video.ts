@@ -39,7 +39,7 @@ async function getGoogleDriveClient() {
     throw new Error(`Failed to fetch connection settings: ${response.status}`);
   }
 
-  const data = await response.json();
+  const data = await response.json() as { items?: Array<{ settings?: { access_token?: string; oauth?: { credentials?: { access_token?: string } } } }> };
   const connectionSettings = data.items?.[0];
 
   if (!connectionSettings?.settings) {

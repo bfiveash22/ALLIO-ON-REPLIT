@@ -61,7 +61,7 @@ async function authenticate() {
   });
 }
 
-authenticate().then((tokens: any) => {
+authenticate().then((tokens: Record<string, string>) => {
   console.log('\n======================================================');
   console.log('SUCCESS! EXCHANGED CODE FOR TOKENS.');
   console.log('======================================================\n');

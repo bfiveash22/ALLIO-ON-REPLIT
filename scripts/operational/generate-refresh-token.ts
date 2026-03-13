@@ -7,7 +7,6 @@ const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const REDIRECT_URI = 'http://localhost:8080';
 
-// Define the scopes required by the application
 const SCOPES = [
   'https://www.googleapis.com/auth/drive',
   'https://www.googleapis.com/auth/gmail.modify',
@@ -20,12 +19,18 @@ const oauth2Client = new google.auth.OAuth2(
   REDIRECT_URI
 );
 
-async function authenticate() {
+interface OAuthTokens {
+  refresh_token?: string;
+  access_token?: string;
+  token_type?: string;
+  expiry_date?: number;
+}
+
+async function authenticate(): Promise<OAuthTokens> {
   return new Promise((resolve, reject) => {
-    // Generate the url that will be used for authorization
     const authorizeUrl = oauth2Client.generateAuthUrl({
-      access_type: 'offline', // Required to receive a refresh token
-      prompt: 'consent', // Force to prompt for consent to ensure a refresh token is returned
+      access_type: 'offline',
+      prompt: 'consent',
       scope: SCOPES,
     });
 
@@ -35,14 +40,13 @@ async function authenticate() {
           if (req.url!.indexOf('code=') > -1) {
             const qs = new url.URL(req.url!, 'http://localhost:8080').searchParams;
             const code = qs.get('code');
-            
             res.end('Authentication successful! Please return to the console.');
-            (server as any).destroy();
+            server.close();
 
             if (code) {
               const { tokens } = await oauth2Client.getToken(code);
               oauth2Client.credentials = tokens;
-              resolve(tokens);
+              resolve(tokens as OAuthTokens);
             } else {
               reject(new Error('No code found in URL'));
             }
@@ -59,14 +63,6 @@ async function authenticate() {
         console.log(authorizeUrl);
         console.log('======================================================\n');
       });
-      
-    // @ts-ignore
-    import('server-destroy').then((serverDestroy) => {
-      serverDestroy.default(server);
-    }).catch(() => {
-      // Stub destroy method if module not available
-      (server as any).destroy = () => { server.close(); };
-    });
   });
 }
 
@@ -75,7 +71,7 @@ async function main() {
   console.log('A browser window will open shortly. Please sign in and grant the requested permissions.');
   
   try {
-    const tokens = await authenticate() as any;
+    const tokens = await authenticate();
     console.log('\n======================================================');
     console.log('AUTHENTICATION SUCCESSFUL');
     console.log('======================================================\n');
@@ -85,7 +81,6 @@ async function main() {
       console.log('\n', tokens.refresh_token, '\n');
       console.log('Please add this to your VPS .env file along with the CLIENT_ID and CLIENT_SECRET.');
       
-      // Also write to a file for easy copying
       fs.writeFileSync('refresh_token.txt', tokens.refresh_token);
       console.log('The token has also been saved to refresh_token.txt in this folder.');
     } else {

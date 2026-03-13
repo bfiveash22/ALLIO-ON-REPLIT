@@ -63,7 +63,7 @@ async function authenticate() {
   });
 }
 
-authenticate().then((tokens: any) => {
+authenticate().then((tokens: Record<string, string>) => {
   console.log('\n======================================================');
   console.log('SUCCESS! COPY THE REFRESH TOKEN BELOW:');
   console.log('======================================================\n');

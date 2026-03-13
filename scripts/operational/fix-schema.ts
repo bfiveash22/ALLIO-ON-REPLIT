@@ -1,4 +1,4 @@
-import { db } from '../server/db';
+import { db } from '../../ffpma-app/server/db';
 import { sql } from 'drizzle-orm';
 
 async function fixSchema() {

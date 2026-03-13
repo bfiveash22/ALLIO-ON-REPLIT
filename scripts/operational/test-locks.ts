@@ -1,9 +1,9 @@
-import { lockManager } from '../server/services/agent-locks';
+import { lockManager } from '../../ffpma-app/server/services/agent-locks';
 
 async function testLocks() {
   console.log('--- Testing Open Claw LockManager ---');
 
-  const resource = 'test-file.ts';
+  const resource = 'test-file';
   console.log(`\n1. Agent FORGE requests lock on ${resource}...`);
   const lockA = lockManager.acquireLocks([resource], 'Agent-FORGE', 5000);
   console.log(`Lock FORGE Acquired: ${lockA}`);

@@ -5,24 +5,26 @@ import * as fs from 'fs';
 const ssh = new NodeSSH();
 
 async function fetchFiles() {
-  console.log('🚀 Connecting to VPS to fetch OpenClaw workspace...');
+  console.log('Connecting to VPS to fetch OpenClaw workspace...');
+
+  const host = process.env.VPS_HOST;
+  const username = process.env.VPS_USERNAME || 'root';
+  const password = process.env.VPS_PASSWORD;
+
+  if (!host || !password) {
+    console.error('Missing required environment variables: VPS_HOST, VPS_PASSWORD');
+    process.exit(1);
+  }
   
   try {
-    await ssh.connect({
-      host: '130.49.160.73',
-      username: 'root',
-      password: 'cF1o5S44w11b',
-      port: 22
-    });
+    await ssh.connect({ host, username, password, port: 22 });
     
-    console.log('✅ Connected to VPS via SSH');
+    console.log('Connected to VPS via SSH');
     
-    // Check what is in the workspace
     const lsResult = await ssh.execCommand('ls -laR /root/.openclaw/workspace/');
     console.log('\n--- Workspace Contents ---');
     console.log(lsResult.stdout);
     
-    // Download the cannabinoids directory if it exists
     const remoteDir = '/root/.openclaw/workspace/ffpma-library/cannabinoids';
     const checkDir = await ssh.execCommand(`ls ${remoteDir}`);
     
@@ -32,14 +34,14 @@ async function fetchFiles() {
         fs.mkdirSync(localKnowledgeBase, { recursive: true });
       }
       
-      console.log(`\n📥 Downloading files from ${remoteDir} to ${localKnowledgeBase}...`);
+      console.log(`\nDownloading files from ${remoteDir} to ${localKnowledgeBase}...`);
       await ssh.getDirectory(localKnowledgeBase, remoteDir);
-      console.log('✅ Download complete.');
+      console.log('Download complete.');
     } else {
-        console.log(`\n❌ Could not find ${remoteDir} or it is empty.`);
+        console.log(`\nCould not find ${remoteDir} or it is empty.`);
     }
   } catch (error) {
-    console.error('❌ Connection or fetch failed:', error);
+    console.error('Connection or fetch failed:', error);
   } finally {
     ssh.dispose();
   }

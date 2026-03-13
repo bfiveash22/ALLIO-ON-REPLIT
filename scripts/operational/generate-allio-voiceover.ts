@@ -52,8 +52,9 @@ async function generateVoiceover(): Promise<void> {
     console.log(`Voiceover saved to: ${outputPath}`);
     console.log(`File size: ${(buffer.length / 1024).toFixed(2)} KB`);
 
-  } catch (error: any) {
-    console.error("TTS generation failed:", error.message);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("TTS generation failed:", message);
     throw error;
   }
 }

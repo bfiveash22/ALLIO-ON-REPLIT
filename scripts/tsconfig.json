@@ -1,9 +1,27 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src",
-    "types": ["node"]
+    "types": ["node"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "noImplicitThis": false,
+    "strictNullChecks": false,
+    "strictBindCallApply": false,
+    "strictPropertyInitialization": false,
+    "useUnknownInCatchVariables": false,
+    "noImplicitReturns": false,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["../ffpma-app/shared/*"],
+      "@server/*": ["../ffpma-app/server/*"],
+      "@db": ["../ffpma-app/server/db.ts"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "operational"]
 }

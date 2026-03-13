@@ -158,6 +158,26 @@ Reference data: `ffpma-app/data/clinic-signnow-links.csv` contains the clinic-to
 
 ### `scripts` (`@workspace/scripts`)
 
+Operational utility scripts for managing the agent ecosystem and database. Located in `scripts/operational/`.
+
+Run from workspace root: `pnpm tsx scripts/operational/<name>.ts`
+
+49 scripts preserved from ffpma-app. Key categories:
+
+Agent management: `register-all-agents`, `reseed-agents`, `cleanup-agents`, `cleanup-fake-agents`, `cleanup-ghosts`, `wipe-agent-registry`, `check-db-agents`, `fix-db-agents`
+
+Task operations: `audit-tasks`, `cancel-tasks`, `check-and-create-tasks`, `create-uncompleted-tasks`, `force-execute`, `force-drformula`, `insert_marketing_task`, `reassign-fake-tasks`
+
+DB/Schema: `check_enums`, `compare_enums`, `check-roles`, `check-sessions`, `clear-db`, `fix-schema`
+
+Google Drive/Auth: `audit-drive`, `audit-drive-assets`, `check-drive-structure`, `auth`, `auth-gmail`, `exchange-token`, `get-auth-url`, `generate-refresh-token`
+
+Media: `assemble-launch-video`, `upload-launch-video`, `generate-allio-voiceover`, `generate-pptx`, `manual-slides`
+
+Infrastructure: `deploy-vps`, `build`, `fetch-openclaw`, `ls-openclaw`, `test-openclaw`, `test-locks`, `test-auto-implementer`, `test-ui-proposal`, `run-auto`, `trigger-daily-enhancement`, `cleanup`
+
+Convenience scripts in `scripts/package.json`: `pnpm --filter @workspace/scripts run <name>`
+
 ## Agent Network
 
 The platform includes an AI agent network with:

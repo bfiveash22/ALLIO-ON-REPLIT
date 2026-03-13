@@ -1,7 +1,7 @@
-import { db } from '../server/db';
-import { agentTasks } from '../shared/schema';
-import { eq, and } from 'drizzle-orm';
-import { executeAgentTask } from '../server/services/agent-executor';
+import { db } from '../../ffpma-app/server/db';
+import { agentTasks } from '../../ffpma-app/shared/schema';
+import { eq, and, sql } from 'drizzle-orm';
+import { executeAgentTask } from '../../ffpma-app/server/services/agent-executor';
 
 async function forceExecuteDrFormula() {
     console.log("=== EMERGENCY OVERRIDE: DR-FORMULA DEADLINE ===");
@@ -18,14 +18,18 @@ async function forceExecuteDrFormula() {
 
         for (const task of criticalTasks) {
             console.log(`[>>] Resetting task ${task.id} to ensure execution...`);
-            await db.update(agentTasks).set({ status: 'pending', progress: 0 }).where(eq(agentTasks.id, task.id));
+            await db.execute(sql`
+                UPDATE agent_tasks SET status = 'pending', progress = 0
+                WHERE id = ${task.id}
+            `);
 
-            console.log(`\\n[>>] FORCING EXECUTION: "${task.title}"`);
+            console.log(`\n[>>] FORCING EXECUTION: "${task.title}"`);
             try {
                 const result = await executeAgentTask(task.id);
                 console.log(`[<<] RESULT: ${result.success ? 'SUCCESS' : 'FAILED - ' + result.error}`);
-            } catch (err: any) {
-                console.error(`[!!] EXECUTION CRASHED: ${err.message}`);
+            } catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                console.error(`[!!] EXECUTION CRASHED: ${message}`);
             }
         }
         process.exit(0);

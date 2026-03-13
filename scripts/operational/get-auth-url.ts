@@ -22,4 +22,4 @@ console.log('===================================');
 console.log('Please authorize the ALLIO app by visiting this URL:');
 console.log(authUrl);
 console.log('===================================');
-console.log('After authorization, copy the code provided and use it in script/exchange-token.ts');
+console.log('After authorization, copy the code provided and use it in script/exchange-token');

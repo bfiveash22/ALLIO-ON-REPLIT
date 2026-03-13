@@ -1,4 +1,4 @@
-import { storage } from '../server/storage.ts';
+import { storage } from '../../ffpma-app/server/storage';
 import fs from 'fs';
 import path from 'path';
 

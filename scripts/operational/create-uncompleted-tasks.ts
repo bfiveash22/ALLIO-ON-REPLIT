@@ -1,4 +1,4 @@
-import { storage } from '../server/storage';
+import { storage } from '../../ffpma-app/server/storage';
 
 async function createTasks() {
   const tasks = [
@@ -317,8 +317,9 @@ DELIVERABLES:
       const result = await storage.createAgentTask(task);
       console.log('Created: ' + task.agentId + ' - ' + task.title);
       created++;
-    } catch (error: any) {
-      console.log('Error: ' + task.title + ' - ' + error.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.log('Error: ' + task.title + ' - ' + message);
     }
   }
   

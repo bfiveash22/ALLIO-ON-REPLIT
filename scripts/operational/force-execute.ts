@@ -1,13 +1,12 @@
-import { db } from '../server/db';
-import { agentTasks } from '../shared/schema';
-import { eq, or, and } from 'drizzle-orm';
-import { executeAgentTask } from '../server/services/agent-executor';
+import { db } from '../../ffpma-app/server/db';
+import { agentTasks } from '../../ffpma-app/shared/schema';
+import { eq, or, and, sql } from 'drizzle-orm';
+import { executeAgentTask } from '../../ffpma-app/server/services/agent-executor';
 
 async function forceExecutePriorityTasks() {
     console.log("=== EMERGENCY OVERRIDE: INITIATING PRIORITY 0 TASK EXECUTION ===");
 
     try {
-        // 1. Fetch Priority 0 Tasks (or Priority 1 if they were mislabeled before the fix)
         const criticalTasks = await db.select().from(agentTasks)
             .where(
                 and(
@@ -30,25 +29,28 @@ async function forceExecutePriorityTasks() {
             return;
         }
 
-        // 2. Iterate and Execute Immediately
         for (const task of criticalTasks) {
             if (task.status === 'in_progress') {
                 console.log(`[>>] FIXING STUCK TASK... resetting ${task.id} to pending.`);
-                await db.update(agentTasks).set({ status: 'pending', progress: 0 }).where(eq(agentTasks.id, task.id));
+                await db.execute(sql`
+                    UPDATE agent_tasks SET status = 'pending', progress = 0
+                    WHERE id = ${task.id}
+                `);
             }
-            console.log(`\\n[>>] FORCING EXECUTION: [${task.agentId}] - "${task.title}" (Priority: ${task.priority})`);
+            console.log(`\n[>>] FORCING EXECUTION: [${task.agentId}] - "${task.title}" (Priority: ${task.priority})`);
             try {
                 const result = await executeAgentTask(task.id);
                 console.log(`[<<] RESULT: ${result.success ? 'SUCCESS' : 'FAILED - ' + result.error}`);
                 if (result.outputUrl) {
                     console.log(`[++] Evidence: ${result.outputUrl}`);
                 }
-            } catch (err: any) {
-                console.error(`[!!] EXECUTION CRASHED: ${err.message}`);
+            } catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                console.error(`[!!] EXECUTION CRASHED: ${message}`);
             }
         }
 
-        console.log("\\n=== EMERGENCY OVERRIDE COMPLETE ===");
+        console.log("\n=== EMERGENCY OVERRIDE COMPLETE ===");
         process.exit(0);
     } catch (error) {
         console.error("Fatal Script Error:", error);

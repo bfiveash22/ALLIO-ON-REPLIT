@@ -1,6 +1,6 @@
 try { require("dotenv/config"); } catch (_) {}
-import { db } from "../server/db";
-import { users } from "@shared/schema";
+import { db } from '../../ffpma-app/server/db';
+import { users } from '../../ffpma-app/shared/schema';
 import { ilike } from "drizzle-orm";
 
 async function check() {

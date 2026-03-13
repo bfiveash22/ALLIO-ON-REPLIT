@@ -57,7 +57,7 @@ async function getGoogleDriveClient() {
     throw new Error(`Failed to fetch connection settings: ${response.status}`);
   }
 
-  const data = await response.json();
+  const data = await response.json() as { items?: Array<{ settings?: { access_token?: string; oauth?: { credentials?: { access_token?: string } } } }> };
   const connectionSettings = data.items?.[0];
 
   if (!connectionSettings?.settings) {
@@ -78,7 +78,7 @@ async function getGoogleDriveClient() {
   return google.drive({ version: "v3", auth: oauth2Client });
 }
 
-async function downloadVideo(drive: any, fileId: string, outputPath: string): Promise<void> {
+async function downloadVideo(drive: ReturnType<typeof google.drive>, fileId: string, outputPath: string): Promise<void> {
   console.log(`Downloading ${fileId} to ${outputPath}...`);
 
   const response = await drive.files.get(

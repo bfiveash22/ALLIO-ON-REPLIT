@@ -1,15 +1,15 @@
-import { db } from "../server/db";
-import { agentTasks, agentRegistry } from "../shared/schema";
-import { eq } from "drizzle-orm";
+import { db } from '../../ffpma-app/server/db';
+import { agentRegistry } from '../../ffpma-app/shared/schema';
+import { eq, sql } from "drizzle-orm";
 
 async function insertTask() {
     console.log("Checking for marketing agents...");
     try {
         const agents = await db.select().from(agentRegistry).where(eq(agentRegistry.division, "marketing"));
 
-        let targetAgentId = "MUSE"; // Default agent
+        let targetAgentId = "MUSE";
         if (agents.length > 0) {
-            targetAgentId = agents[0].agentId;
+            targetAgentId = String(agents[0].agentId);
             console.log(`Found marketing agent: ${targetAgentId}`);
         } else {
             console.log("No marketing agent found in registry, defaulting to 'MUSE'.");
@@ -20,17 +20,13 @@ async function insertTask() {
             "2. URGENT: Audit all early/old media files in the system, recreate them with higher quality, and dispose of the old files to clean up the system and lighten the load for scaling.";
 
         console.log("Inserting task...");
-        const [insertedTask] = await db.insert(agentTasks).values({
-            agentId: targetAgentId,
-            division: "marketing",
-            title: "Recreate Early Media & Fix Logo Reveal Video",
-            description: taskDescription,
-            status: "pending",
-            priority: 1, // High priority
-            assignedBy: "admin_request",
-        }).returning();
+        const result = await db.execute(sql`
+            INSERT INTO agent_tasks (agent_id, division, title, description, status, priority, assigned_by)
+            VALUES (${targetAgentId}, 'marketing', 'Recreate Early Media & Fix Logo Reveal Video', ${taskDescription}, 'pending', 1, 'admin_request')
+            RETURNING id
+        `);
 
-        console.log("Successfully inserted task:", insertedTask.id);
+        console.log("Successfully inserted task:", result.rows?.[0]);
     } catch (err) {
         console.error("Error inserting task:", err);
     } finally {

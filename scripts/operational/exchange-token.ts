@@ -19,8 +19,9 @@ async function tryExchange(redirectUri: string) {
     }
     console.log('===========================================\n');
     return true;
-  } catch (e: any) {
-    console.log(`Failed with ${redirectUri}:`, e.message);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    console.log(`Failed with ${redirectUri}:`, message);
     return false;
   }
 }

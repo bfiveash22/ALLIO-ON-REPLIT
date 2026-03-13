@@ -1,5 +1,5 @@
-import { db } from '../server/db';
-import { agentTasks } from '../shared/schema';
+import { db } from '../../ffpma-app/server/db';
+import { agentTasks } from '../../ffpma-app/shared/schema';
 import { inArray } from 'drizzle-orm';
 
 async function cleanupGhostTasks() {

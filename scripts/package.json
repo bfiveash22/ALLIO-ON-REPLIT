@@ -5,10 +5,38 @@
   "type": "module",
   "scripts": {
     "hello": "tsx ./src/hello.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "audit-tasks": "tsx ./operational/audit-tasks.ts",
+    "check-db-agents": "tsx ./operational/check-db-agents.ts",
+    "register-all-agents": "tsx ./operational/register-all-agents.ts",
+    "cleanup-agents": "tsx ./operational/cleanup-agents.ts",
+    "check-roles": "tsx ./operational/check-roles.ts",
+    "check-enums": "tsx ./operational/check_enums.ts",
+    "compare-enums": "tsx ./operational/compare_enums.ts",
+    "check-sessions": "tsx ./operational/check-sessions.ts",
+    "reseed-agents": "tsx ./operational/reseed-agents.ts",
+    "wipe-agent-registry": "tsx ./operational/wipe-agent-registry.ts",
+    "cancel-tasks": "tsx ./operational/cancel-tasks.ts",
+    "fix-db-agents": "tsx ./operational/fix-db-agents.ts",
+    "force-drformula": "tsx ./operational/force-drformula.ts",
+    "force-execute": "tsx ./operational/force-execute.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.39.3",
+    "drizzle-zod": "^0.7.1",
+    "esbuild": "^0.25.0",
+    "googleapis": "^144.0.0",
+    "node-ssh": "^13.2.1",
+    "openai": "^4.103.0",
+    "pdf-parse": "^1.1.1",
+    "pg": "^8.16.3",
+    "pptxgenjs": "^3.12.0",
+    "vite": "^6.3.5",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "@types/pg": "^8.11.6",
     "tsx": "catalog:"
   }
 }
