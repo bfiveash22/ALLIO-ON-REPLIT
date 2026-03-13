@@ -69,6 +69,13 @@ workspace/
 │   ├── api-client-react/         # Generated React Query hooks
 │   ├── api-zod/                  # Generated Zod schemas from OpenAPI
 │   └── db/                       # Drizzle ORM schema + DB connection (template)
+├── tests/                        # Test suite (Vitest, 89 tests)
+│   ├── helpers.ts                # Typed mock factories (Request, Response, Pool, Storage)
+│   ├── auth-middleware.test.ts   # Auth & RBAC middleware tests (22 tests)
+│   ├── schema-validation.test.ts # Zod insert schema validation tests (28 tests)
+│   ├── protocol-generation.test.ts # Protocol type contracts & schema tests (12 tests)
+│   └── doctor-member-routes.test.ts # Doctor/member route auth & data validation (27 tests)
+├── vitest.config.ts              # Vitest configuration
 ├── .alliorules.md                # Project rules and conventions
 ├── CLAUDE-HANDOFF.md             # Handoff documentation
 ├── ANNETTE-GOMER-PROTOCOL-FF-PMA-MODEL.md  # Protocol model documentation
