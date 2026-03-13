@@ -1,0 +1,98 @@
+[
+  {
+    "id": "9f61f7eb-1ace-47f3-b8d5-9d5413e1282a",
+    "position": 1,
+    "filepath": "src/pages/slides/TitleSlide.tsx",
+    "title": "Forgotten Formula PMA — The Future of Root-Cause Medicine",
+    "description": "Title slide with hero banner, combined logo, and physician recruitment tagline.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a2b3c4d5-e6f7-4890-abcd-ef0123456789",
+    "position": 2,
+    "filepath": "src/pages/slides/TheProblem.tsx",
+    "title": "The Problem",
+    "description": "Doctors are constrained by insurance-driven protocols; patients aren't healing.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "b3c4d5e6-f7a8-4901-bcde-f01234567890",
+    "position": 3,
+    "filepath": "src/pages/slides/TheVision.tsx",
+    "title": "The Vision",
+    "description": "Healing Over Profits, Nature Over Synthetic — introducing the PMA model.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "c4d5e6f7-a8b9-4012-cdef-012345678901",
+    "position": 4,
+    "filepath": "src/pages/slides/ClinicalModel.tsx",
+    "title": "The 5R Clinical Model",
+    "description": "Reduce, Rebalance, Reactivate, Restore, Revitalize — the proprietary methodology.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "d5e6f7a8-b9c0-4123-def0-123456789012",
+    "position": 5,
+    "filepath": "src/pages/slides/MeetAllio.tsx",
+    "title": "Meet ALLIO",
+    "description": "Introducing the 43-agent AI ecosystem across 7 divisions.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "e6f7a8b9-c0d1-4234-ef01-234567890123",
+    "position": 6,
+    "filepath": "src/pages/slides/AgentNetwork.tsx",
+    "title": "The Agent Network",
+    "description": "Visual breakdown of key divisions and what they do for doctors.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "f7a8b9c0-d1e2-4345-f012-345678901234",
+    "position": 7,
+    "filepath": "src/pages/slides/ProtocolArchitect.tsx",
+    "title": "AI Protocol Architect",
+    "description": "Describe a case, get a complete personalized protocol from 127+ therapeutic products.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a8b9c0d1-e2f3-4456-0123-456789012345",
+    "position": 8,
+    "filepath": "src/pages/slides/Diagnostics.tsx",
+    "title": "True Vision Blood Analysis & ECS Profiling",
+    "description": "AI-assisted diagnostics with real-time research and precision cannabinoid prescribing.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "b9c0d1e2-f3a4-4567-1234-567890123456",
+    "position": 9,
+    "filepath": "src/pages/slides/SelfEvolving.tsx",
+    "title": "Self-Evolving Intelligence",
+    "description": "Weekly auto-enhancement cycles, auto-implementer, dynamic model routing.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "c0d1e2f3-a4b5-4678-2345-678901234567",
+    "position": 10,
+    "filepath": "src/pages/slides/ClinicNetwork.tsx",
+    "title": "Nationwide Clinic Network",
+    "description": "One membership, every clinic. Portable patients, growing community.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "d1e2f3a4-b5c6-4789-3456-789012345678",
+    "position": 11,
+    "filepath": "src/pages/slides/WhyJoin.tsx",
+    "title": "Why Doctors Are Joining",
+    "description": "Practice freedom, scale expertise, turnkey infrastructure, community not franchise.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "e2f3a4b5-c6d7-4890-4567-890123456789",
+    "position": 12,
+    "filepath": "src/pages/slides/ClosingSlide.tsx",
+    "title": "Join the Network",
+    "description": "Closing slide with logo lockup and contact prompt.",
+    "speakerNotes": ""
+  }
+]

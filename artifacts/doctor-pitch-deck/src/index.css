@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+:root {
+  --deep-blue: #1E3A5F;
+  --deep-blue-dark: #0F1D30;
+  --deep-blue-light: #2A4F7A;
+  --cyan: #00D4AA;
+  --cyan-light: #33DFBD;
+  --cyan-dark: #00A888;
+  --gold: #FFD700;
+  --gold-light: #FFE44D;
+  --off-white: #F0F4F8;
+  --slate-light: #C8D6E5;
+  --slate-mid: #8395A7;
+
+  font-family: "Inter", system-ui, sans-serif;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--deep-blue-dark);
+  color: var(--off-white);
+}
+
+.slide {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.font-display {
+  font-family: "Playfair Display", Georgia, serif;
+}
+
+.font-body {
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.glass-card {
+  background: rgba(30, 58, 95, 0.45);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 212, 170, 0.2);
+  border-radius: 1vw;
+}
+
+.glass-card-gold {
+  background: rgba(30, 58, 95, 0.45);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 1vw;
+}
+
+.glow-cyan {
+  box-shadow: 0 0 30px rgba(0, 212, 170, 0.15), 0 0 60px rgba(0, 212, 170, 0.05);
+}
+
+.glow-gold {
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.15), 0 0 60px rgba(255, 215, 0, 0.05);
+}

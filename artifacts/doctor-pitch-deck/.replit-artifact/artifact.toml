@@ -1,0 +1,31 @@
+kind = "slides"
+previewPath = "/doctor-pitch-deck/"
+title = "ALLIO Doctor Recruitment Pitch Deck"
+version = "1.0.0"
+id = "artifacts/doctor-pitch-deck"
+router = "path"
+
+[[integratedSkills]]
+name = "slides"
+version = "1.0.0"
+
+[[services]]
+localPort = 18352
+name = "web"
+paths = ["/doctor-pitch-deck/"]
+
+[services.development]
+run = "pnpm --filter @workspace/doctor-pitch-deck run dev"
+
+[services.env]
+PORT = "18352"
+BASE_PATH = "/doctor-pitch-deck/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/doctor-pitch-deck", "run", "build"]
+publicDir = "artifacts/doctor-pitch-deck/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
