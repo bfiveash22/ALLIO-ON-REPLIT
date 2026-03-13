@@ -69,7 +69,8 @@ const apiLimiter = rateLimit({
       '/api/agents',
       '/api/auth',
       '/api/profile',
-      '/api/admin'
+      '/api/admin',
+      '/api/openclaw'
     ];
     return excludedPrefixes.some(prefix => req.path.startsWith(prefix));
   }

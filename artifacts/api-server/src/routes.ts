@@ -22,6 +22,7 @@ import { signNowService } from "./services/signnow";
 import { sendAthenaIntroduction, sendEmail, getInbox, getMessage, replyToMessage } from "./services/gmail";
 import crypto from "crypto";
 import { registerSentinelRoutes } from "./sentinel-routes";
+import { registerOpenClawRoutes } from "./openclaw-routes";
 
 // Secure preview mode validation - requires specific token pattern
 const PORT = process.env.PORT || 5000;
@@ -109,6 +110,9 @@ export async function registerRoutes(
 
   // Register SENTINEL Orchestrator routes
   registerSentinelRoutes(app);
+
+  // Register OpenClaw outbox routes
+  registerOpenClawRoutes(app);
 
   // Register Learning/Interactive Healing routes
   const { registerLearningRoutes } = await import("./learning-routes");
