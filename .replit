@@ -31,7 +31,7 @@ integrations = ["github:1.0.0", "google-drive:1.0.0"]
   [userenv]
 
   [userenv.shared]
-  WP_SITE_URL = "https://forgottenformula.com"
+WP_SITE_URL = "https://www.ffpma.com"
   WP_USERNAME = "blake"
   ENABLE_SCHEDULERS = "true"
   SIGNNOW_EMAIL = "blake@forgottenformula.com"

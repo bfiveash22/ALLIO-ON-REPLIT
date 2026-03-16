@@ -991,7 +991,7 @@ async function syncWordPressUsers(result: UserSyncResult): Promise<void | UserSy
   console.log("Syncing additional users from WordPress REST API...");
   
   const WP_USERNAME = process.env.WP_USERNAME;
-  const WP_PASSWORD = process.env.WP_PASSWORD;
+  const WP_PASSWORD = process.env.WP_PASSWORD || process.env.WP_APPLICATION_PASSWORD;
   
   if (!WP_USERNAME || !WP_PASSWORD) {
     console.log("WordPress credentials not configured, skipping WP user sync");
@@ -1495,7 +1495,7 @@ function mapAppRoleToWpRole(appRole: "admin" | "doctor" | "clinic" | "member"): 
 // that WordPress will hash. Users should use "Forgot Password" to set their own password.
 export async function createWordPressUser(userData: WPUserCreateData): Promise<WPUserCreateResult> {
   const WP_USERNAME = process.env.WP_USERNAME;
-  const WP_PASSWORD = process.env.WP_PASSWORD;
+  const WP_PASSWORD = process.env.WP_PASSWORD || process.env.WP_APPLICATION_PASSWORD;
   
   if (!WP_USERNAME || !WP_PASSWORD) {
     console.log("WordPress credentials not configured, cannot push user to WordPress");
@@ -1834,7 +1834,7 @@ export async function syncClinics(): Promise<ClinicSyncResult> {
   };
   
   const WP_USERNAME = process.env.WP_USERNAME;
-  const WP_PASSWORD = process.env.WP_PASSWORD;
+  const WP_PASSWORD = process.env.WP_PASSWORD || process.env.WP_APPLICATION_PASSWORD;
   
   if (!WP_USERNAME || !WP_PASSWORD) {
     console.log("WordPress credentials not configured, skipping clinic sync");
