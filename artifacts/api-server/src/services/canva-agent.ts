@@ -119,7 +119,7 @@ export class CanvaAgentService {
     const browserInstalled = await checkBrowserUseInstalled();
     if (!browserInstalled) {
       console.error('[CANVA-AGENT] browser-use CLI is not installed');
-      return { success: false, error: 'browser-use CLI is not installed. Run: pip install browser-use' };
+      return { success: false, error: 'browser-use CLI is not installed. Check post-merge setup or run the browser-use bootstrap script.' };
     }
 
     console.log(`[CANVA-AGENT] Starting task execution with session ID: ${sessionId.substring(0, 10)}...`);

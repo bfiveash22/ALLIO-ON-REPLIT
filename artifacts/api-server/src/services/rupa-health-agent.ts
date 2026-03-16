@@ -28,6 +28,20 @@ function getBrowserEnv(): Record<string, string> {
     return env;
 }
 
+let browserUseAvailable: boolean | null = null;
+
+async function checkBrowserUseInstalled(): Promise<boolean> {
+    if (browserUseAvailable !== null) return browserUseAvailable;
+    try {
+        const { stdout } = await execAsync('which browser-use', { timeout: 5000 });
+        browserUseAvailable = stdout.trim().length > 0;
+        if (browserUseAvailable) await resolveLibgbm();
+    } catch {
+        browserUseAvailable = false;
+    }
+    return browserUseAvailable;
+}
+
 export class RupaHealthAgentService {
     validateCredentials(): { valid: boolean; missing: string[]; error?: string } {
         const missing: string[] = [];
@@ -68,8 +82,13 @@ export class RupaHealthAgentService {
         const username = process.env.RUPA_USERNAME;
         const password = process.env.RUPA_PASSWORD;
 
+        const browserInstalled = await checkBrowserUseInstalled();
+        if (!browserInstalled) {
+            console.error('[RUPA-HEALTH-AGENT] browser-use CLI is not installed');
+            return { success: false, error: 'browser-use CLI is not installed. Check post-merge setup or run the browser-use bootstrap script.' };
+        }
+
         try {
-            await resolveLibgbm();
             // Formulate the comprehensive prompt for browser-use to navigate Rupa Health
             let prompt = `Navigate to https://www.rupahealth.com/ and log in using username: '${username}' and password: '${password}'. `;
             prompt += `Search for the patient named '${patientDetails.firstName} ${patientDetails.lastName}'. `;
