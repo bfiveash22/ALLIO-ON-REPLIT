@@ -71,8 +71,30 @@ export function registerDoctorRoutes(app: Express): void {
   app.post("/api/doctor/patients", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const isPrivileged = isPrivilegedUser(req);
-      const doctorId = req.body.doctorId || (isPrivileged ? null : req.user?.id as string);
-      const patient = await storage.createPatientRecord({ ...req.body, doctorId });
+      const userId = req.user?.id as string;
+      const doctorId = req.body.doctorId || userId;
+      const { name, email, phone, dateOfBirth, memberId, memberName, memberEmail, ...rest } = req.body;
+
+      const safeName = memberName || name || "Unknown";
+      const safeMemberId = memberId || safeName.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Date.now().toString(36);
+
+      let parsedDob: Date | null = null;
+      if (dateOfBirth && dateOfBirth !== "") {
+        const d = new Date(dateOfBirth);
+        if (!isNaN(d.getTime())) {
+          parsedDob = d;
+        }
+      }
+
+      const patient = await storage.createPatientRecord({
+        ...rest,
+        doctorId,
+        memberId: safeMemberId,
+        memberName: safeName,
+        memberEmail: memberEmail || email || null,
+        phone: phone || null,
+        dateOfBirth: parsedDob,
+      });
       res.json({ success: true, patient });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
@@ -81,7 +103,24 @@ export function registerDoctorRoutes(app: Express): void {
 
   app.put("/api/doctor/patients/:id", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
-      const patient = await storage.updatePatientRecord(req.params.id, req.body);
+      const updates = { ...req.body };
+      if ("dateOfBirth" in updates) {
+        if (updates.dateOfBirth && updates.dateOfBirth !== "") {
+          const d = new Date(updates.dateOfBirth);
+          updates.dateOfBirth = !isNaN(d.getTime()) ? d : null;
+        } else {
+          updates.dateOfBirth = null;
+        }
+      }
+      if ("lastVisitAt" in updates && typeof updates.lastVisitAt === "string") {
+        const d = new Date(updates.lastVisitAt);
+        updates.lastVisitAt = !isNaN(d.getTime()) ? d : null;
+      }
+      if ("nextAppointmentAt" in updates && typeof updates.nextAppointmentAt === "string") {
+        const d = new Date(updates.nextAppointmentAt);
+        updates.nextAppointmentAt = !isNaN(d.getTime()) ? d : null;
+      }
+      const patient = await storage.updatePatientRecord(req.params.id, updates);
       res.json({ success: true, patient });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
