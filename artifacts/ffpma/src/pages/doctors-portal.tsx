@@ -65,6 +65,7 @@ import { DoctorPatientMessaging } from "@/components/DoctorPatientMessaging";
 import { EnrollMemberModal } from "@/components/EnrollMemberModal";
 import { BloodworkLabs } from "@/components/BloodworkLabs";
 import { SkinAnalysisUpload } from "@/components/SkinAnalysisUpload";
+import { ConsultAITeam } from "@/components/ConsultAITeam";
 
 interface DoctorReferralInfo {
   doctorCode: string | null;
@@ -583,6 +584,10 @@ export default function DoctorsPortal() {
                 <Beaker className="w-4 h-4 mr-2" />
                 Bloodwork & Labs
               </TabsTrigger>
+              <TabsTrigger value="ai-consult" className="data-[state=active]:bg-violet-500/20 data-[state=active]:text-violet-300" data-testid="tab-ai-consult">
+                <Brain className="w-4 h-4 mr-2" />
+                AI Consult
+              </TabsTrigger>
               <TabsTrigger value="settings" className="data-[state=active]:bg-green-500/20 data-[state=active]:text-green-300" data-testid="tab-settings">
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
@@ -658,10 +663,13 @@ export default function DoctorsPortal() {
                         </div>
                       ))}
                     </div>
-                    <Button className="w-full mt-4 bg-cyan-500/10 text-cyan-300/50 cursor-not-allowed relative" disabled data-testid="button-consult-ai">
-                      <MessageSquare className="w-4 h-4 mr-2" />
+                    <Button
+                      className="w-full mt-4 bg-violet-500/20 hover:bg-violet-500/30 text-violet-300 border border-violet-500/30"
+                      onClick={() => setActiveTab("ai-consult")}
+                      data-testid="button-consult-ai"
+                    >
+                      <Brain className="w-4 h-4 mr-2" />
                       Consult AI Team
-                      <Badge className="absolute -top-2 -right-2 bg-amber-500/80 text-[10px] px-1 py-0 border-0 text-white">Coming Soon</Badge>
                     </Button>
                   </Card>
 
@@ -1560,6 +1568,10 @@ export default function DoctorsPortal() {
 
             <TabsContent value="bloodwork" className="space-y-6">
               <BloodworkLabs />
+            </TabsContent>
+
+            <TabsContent value="ai-consult" className="space-y-6">
+              <ConsultAITeam patientName={selectedPatient ? enrolledMembers.find(m => m.id === selectedPatient)?.name : undefined} />
             </TabsContent>
 
             <TabsContent value="settings" className="space-y-6">

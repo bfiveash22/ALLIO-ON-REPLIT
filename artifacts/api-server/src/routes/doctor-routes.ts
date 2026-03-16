@@ -7,6 +7,8 @@ import { doctorPatientMessages, doctorOnboarding, memberEnrollment } from "@shar
 import multer from "multer";
 import { uploadXrayFile } from "../services/drive";
 import { HfInference } from "@huggingface/inference";
+import { agents, getAgentsByDivision, FFPMA_CREED } from "@shared/agents";
+import OpenAI from "openai";
 
 const xrayUpload = multer({ storage: multer.memoryStorage() });
 
@@ -660,8 +662,122 @@ export function registerDoctorRoutes(app: Express): void {
       };
 
       res.json({ success: true, analytics });
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ success: false, error: errMsg });
+    }
+  });
+
+  const scienceAgentIds = new Set(getAgentsByDivision("science").map(a => a.id.toLowerCase()));
+
+  app.get("/api/doctor/consult/agents", requireRole("admin", "doctor"), async (_req: Request, res: Response) => {
+    const scienceAgents = getAgentsByDivision("science").map(a => ({
+      id: a.id,
+      name: a.name,
+      title: a.title,
+      specialty: a.specialty,
+      catchphrase: a.catchphrase,
+      portrait: a.portrait,
+    }));
+    res.json({ success: true, agents: scienceAgents });
+  });
+
+  app.post("/api/doctor/consult/:agentId", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+    try {
+      const { agentId } = req.params;
+      const { message, history = [], patientContext } = req.body;
+      if (!message) return res.status(400).json({ error: "message is required" });
+
+      if (!scienceAgentIds.has(agentId.toLowerCase())) {
+        return res.status(403).json({ error: "Only Science Division agents are available for doctor consultation" });
+      }
+
+      const agent = agents.find(a => a.id.toLowerCase() === agentId.toLowerCase());
+      if (!agent) return res.status(404).json({ error: "Agent not found" });
+
+      const doctorUser = await storage.getUser(req.user?.id as string);
+      const doctorName = doctorUser?.name || doctorUser?.email || "Doctor";
+
+      let patientInfo = "";
+      if (patientContext) {
+        patientInfo = `\nPATIENT CONTEXT PROVIDED BY DOCTOR:\n- Patient Name: ${patientContext.name || "Not specified"}\n- Conditions: ${patientContext.conditions || "Not specified"}\n- Notes: ${patientContext.notes || "None"}\n`;
+      }
+
+      const systemPrompt = `You are ${agent.name}, the ${agent.title} at Forgotten Formula PMA's Science Division.
+
+PERSONALITY & VOICE:
+${agent.voice}
+${agent.personality}
+
+CORE BELIEFS:
+${agent.coreBeliefs.map((b: string) => `- ${b}`).join('\n')}
+
+SPECIALTY: ${agent.specialty}
+CATCHPHRASE: "${agent.catchphrase}"
+
+CONTEXT:
+- You are consulting with Dr. ${doctorName}, a licensed practitioner affiliated with the Forgotten Formula PMA.
+- You are providing AI-assisted analysis to help inform their clinical decision-making.
+- Your role is advisory — the doctor makes all final decisions.
+${patientInfo}
+INSTRUCTIONS:
+- Stay in character as ${agent.name}
+- Provide thorough, evidence-based guidance within your specialty
+- Reference the FF PMA 5R Framework (Remove, Replace, Reinoculate, Repair, Rebalance) when relevant
+- Be collaborative and respectful — you are advising a peer practitioner
+- Include relevant citations or research references when possible
+- Always end with a brief PMA disclaimer: "This consultation is provided within the private domain of the Forgotten Formula PMA for educational purposes. Clinical decisions remain at the practitioner's discretion."`;
+
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const historyMessages = (history as Array<{ role: string; content: string }>).slice(-10).map(
+        (m) => ({ role: m.role as "user" | "assistant", content: m.content })
+      );
+      const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+        { role: "system", content: systemPrompt },
+        ...historyMessages,
+        { role: "user", content: message },
+      ];
+
+      let response: string;
+      let provider = "openai:gpt-4o";
+
+      try {
+        const { shouldUseClaude, claudeAgentChat, getClaudeStatus } = await import("../services/claude-provider");
+        const claudeStatus = getClaudeStatus();
+        if (shouldUseClaude(agentId) && claudeStatus.available) {
+          const claudeResult = await claudeAgentChat(agentId, message, systemPrompt, historyMessages);
+          response = claudeResult.response;
+          provider = `claude:${claudeResult.model}`;
+        } else {
+          const completion = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages,
+            max_completion_tokens: 2048,
+            temperature: 0.7,
+          });
+          response = completion.choices[0]?.message?.content || "I apologize, I'm unable to respond at the moment.";
+        }
+      } catch (aiError: unknown) {
+        console.warn(`[doctor-consult] AI provider error, trying fallback:`, aiError);
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages,
+          max_completion_tokens: 2048,
+          temperature: 0.7,
+        });
+        response = completion.choices[0]?.message?.content || "I apologize, I'm unable to respond at the moment.";
+      }
+
+      res.json({
+        success: true,
+        response,
+        provider,
+        agent: { id: agent.id, name: agent.name, title: agent.title, specialty: agent.specialty },
+      });
+    } catch (error: unknown) {
+      console.error("Doctor consult chat error:", error);
+      const errMsg = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ error: errMsg });
     }
   });
 }
