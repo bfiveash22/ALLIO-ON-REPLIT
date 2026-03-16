@@ -73,6 +73,12 @@ export function registerBloodworkRoutes(app: Express): void {
                 status: "submitted",
                 rupaOrderUrl: result.resultUrl || null,
               });
+            } else if (result.terminal) {
+              await storage.updateLabOrder(order.id, {
+                status: "pending",
+                notes: `Manual order required: ${result.message || result.error}`,
+              });
+              console.log("[Bloodwork] Rupa automation failed (terminal) — WhatsApp fallback sent, order marked pending for manual completion");
             }
           }
         } catch (rupaError: any) {

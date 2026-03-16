@@ -1,7 +1,33 @@
 import { chromium, type Browser, type BrowserContext } from 'playwright';
+import { sendToTrustee } from './openclaw';
 
 let playwrightAvailable: boolean | null = null;
 let browserLaunchable: boolean | null = null;
+
+async function sendWhatsAppFallback(
+  patientName: string,
+  panels: string[],
+  reason: string
+): Promise<void> {
+  const manualUrl = 'https://app.rupahealth.com/orders/new';
+  const panelList = panels.join(', ');
+  const msg = [
+    `⚠️ RUPA LAB ORDER REQUIRES MANUAL ACTION`,
+    ``,
+    `Patient: ${patientName}`,
+    `Panels: ${panelList}`,
+    `Reason: ${reason}`,
+    ``,
+    `Order here: ${manualUrl}`,
+  ].join('\n');
+
+  try {
+    await sendToTrustee('RUPA_HEALTH_AGENT', msg, 'urgent');
+    console.log('[RUPA-HEALTH-AGENT] WhatsApp/OpenClaw fallback notification sent to Trustee');
+  } catch (notifyErr) {
+    console.error('[RUPA-HEALTH-AGENT] Failed to send fallback notification:', notifyErr);
+  }
+}
 
 async function checkPlaywrightAvailable(): Promise<boolean> {
   if (playwrightAvailable !== null) return playwrightAvailable;
@@ -59,7 +85,7 @@ export class RupaHealthAgentService {
     patientDetails: { firstName: string; lastName: string; email: string; dob?: string; phone?: string },
     testPanels: string[],
     dryRun: boolean = true
-  ): Promise<{ success: boolean; resultUrl?: string; message?: string; error?: string }> {
+  ): Promise<{ success: boolean; terminal?: boolean; resultUrl?: string; message?: string; error?: string }> {
     const credentialCheck = this.validateCredentials();
     if (!credentialCheck.valid) {
       console.error(`[RUPA-HEALTH-AGENT] Credential validation failed: ${credentialCheck.error}`);
@@ -71,29 +97,32 @@ export class RupaHealthAgentService {
     const username = process.env.RUPA_USERNAME!;
     const password = process.env.RUPA_PASSWORD!;
 
+    const patientName = `${patientDetails.firstName} ${patientDetails.lastName}`;
+    const manualUrl = 'https://app.rupahealth.com/orders/new';
+
     const browserReady = await checkPlaywrightAvailable();
     if (!browserReady) {
-      const manualUrl = 'https://app.rupahealth.com/orders/new';
       console.error('[RUPA-HEALTH-AGENT] Playwright is not available — returning manual fallback');
+      await sendWhatsAppFallback(patientName, testPanels, 'Playwright browser automation is not available');
       return {
         success: false,
         terminal: true,
         error: 'Playwright is not available in this environment.',
         resultUrl: manualUrl,
-        message: `Automated ordering unavailable. Please order manually at ${manualUrl} for patient "${patientDetails.firstName} ${patientDetails.lastName}": ${testPanels.join(', ')}`,
+        message: `Automated ordering unavailable. WhatsApp notification sent. Please order manually at ${manualUrl} for patient "${patientName}": ${testPanels.join(', ')}`,
       };
     }
 
     const canLaunch = await checkBrowserLaunchable();
     if (!canLaunch) {
-      const manualUrl = 'https://app.rupahealth.com/orders/new';
       console.error('[RUPA-HEALTH-AGENT] Browser cannot launch — returning manual fallback');
+      await sendWhatsAppFallback(patientName, testPanels, 'Browser cannot launch in this environment');
       return {
         success: false,
         terminal: true,
         error: 'Browser cannot launch in this environment.',
         resultUrl: manualUrl,
-        message: `Automated ordering unavailable. Please order manually at ${manualUrl} for patient "${patientDetails.firstName} ${patientDetails.lastName}": ${testPanels.join(', ')}`,
+        message: `Automated ordering unavailable. WhatsApp notification sent. Please order manually at ${manualUrl} for patient "${patientName}": ${testPanels.join(', ')}`,
       };
     }
 
@@ -226,9 +255,9 @@ export class RupaHealthAgentService {
       const isTimeout = /timeout|timed?\s*out/i.test(errMsg);
       console.error(`[RUPA-HEALTH-AGENT] Execution failed (timeout=${isTimeout}):`, errMsg);
 
-      const manualUrl = 'https://app.rupahealth.com/orders/new';
-      const patientName = `${patientDetails.firstName} ${patientDetails.lastName}`;
       const panelList = testPanels.join(', ');
+      const reason = isTimeout ? 'Automated ordering timed out' : `Automation error: ${errMsg}`;
+      await sendWhatsAppFallback(patientName, testPanels, reason);
 
       if (isTimeout) {
         return {
@@ -236,7 +265,7 @@ export class RupaHealthAgentService {
           terminal: true,
           error: `Automated lab ordering timed out. Please place the order manually.`,
           resultUrl: manualUrl,
-          message: `Manual action required: Go to ${manualUrl}, search for patient "${patientName}", and add these panels: ${panelList}. The Rupa Health portal may be slow or have changed its interface.`,
+          message: `Manual action required. WhatsApp notification sent. Go to ${manualUrl}, search for patient "${patientName}", and add these panels: ${panelList}.`,
         };
       }
 
@@ -245,7 +274,7 @@ export class RupaHealthAgentService {
         terminal: true,
         error: errMsg,
         resultUrl: manualUrl,
-        message: `Automation failed. Manual fallback: Go to ${manualUrl} and order panels (${panelList}) for patient "${patientName}".`,
+        message: `Automation failed. WhatsApp notification sent. Manual fallback: Go to ${manualUrl} and order panels (${panelList}) for patient "${patientName}".`,
       };
     } finally {
       if (context) await context.close().catch(() => {});

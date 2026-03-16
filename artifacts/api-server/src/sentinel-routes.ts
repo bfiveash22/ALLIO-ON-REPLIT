@@ -350,9 +350,14 @@ export function registerSentinelRoutes(app: Express): void {
   // --- OpenClaw Telegram Webhooks ---
   app.post('/api/webhooks/openclaw', async (req: Request, res: Response) => {
     try {
+      const authHeader = req.headers.authorization;
+      const expectedKey = process.env.OPENCLAW_API_KEY;
+      if (!expectedKey || !authHeader || authHeader !== `Bearer ${expectedKey}`) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
       const { from, to_agent, message } = req.body;
 
-      // Basic security check to ensure it's from the Trustee via OpenClaw
       if (from !== 'trustee') {
         return res.status(400).json({ error: 'Invalid sender' });
       }

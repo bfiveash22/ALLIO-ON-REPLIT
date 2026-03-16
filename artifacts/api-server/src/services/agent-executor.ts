@@ -1382,6 +1382,15 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
       );
 
       if (!labResult.success) {
+        if (labResult.terminal) {
+          console.log(`[Agent Executor] Rupa lab order terminal failure — WhatsApp fallback sent, skipping retry`);
+          await storage.updateAgentTask(taskId, {
+            status: 'completed',
+            progress: 100,
+            result: labResult.message || labResult.error || 'Manual lab order required — WhatsApp notification sent to Trustee',
+          });
+          return;
+        }
         throw new Error(labResult.error || 'Rupa Health lab ordering failed');
       }
 

@@ -113,9 +113,13 @@ if (ENABLE_INCOMING) {
     const messageBody = agentMatch ? text.replace(/^@[A-Z_]+\s*/i, '').trim() : text;
 
     try {
+      const webhookHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (process.env.OPENCLAW_API_KEY) {
+        webhookHeaders['Authorization'] = `Bearer ${process.env.OPENCLAW_API_KEY}`;
+      }
       const res = await fetch(`${API_BASE}/api/webhooks/openclaw`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: webhookHeaders,
         body: JSON.stringify({
           from: 'trustee',
           to_agent: targetAgent,

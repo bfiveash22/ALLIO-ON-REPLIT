@@ -990,11 +990,11 @@ async function syncWooCommerceCustomers(result: UserSyncResult): Promise<boolean
 async function syncWordPressUsers(result: UserSyncResult): Promise<void | UserSyncResult> {
   console.log("Syncing additional users from WordPress REST API...");
   
-  const WP_USERNAME = process.env.WP_USERNAME;
+  const WP_USERNAME = process.env.WP_USERNAME || 'blake';
   const WP_PASSWORD = process.env.WP_PASSWORD || process.env.WP_APPLICATION_PASSWORD;
   
-  if (!WP_USERNAME || !WP_PASSWORD) {
-    console.log("WordPress credentials not configured, skipping WP user sync");
+  if (!WP_PASSWORD) {
+    console.log("WordPress password not configured, skipping WP user sync");
     return;
   }
   
@@ -1494,12 +1494,12 @@ function mapAppRoleToWpRole(appRole: "admin" | "doctor" | "clinic" | "member"): 
 // Note: WordPress handles password hashing server-side. We generate a random password
 // that WordPress will hash. Users should use "Forgot Password" to set their own password.
 export async function createWordPressUser(userData: WPUserCreateData): Promise<WPUserCreateResult> {
-  const WP_USERNAME = process.env.WP_USERNAME;
+  const WP_USERNAME = process.env.WP_USERNAME || 'blake';
   const WP_PASSWORD = process.env.WP_PASSWORD || process.env.WP_APPLICATION_PASSWORD;
   
-  if (!WP_USERNAME || !WP_PASSWORD) {
-    console.log("WordPress credentials not configured, cannot push user to WordPress");
-    return { success: false, message: "WordPress credentials not configured" };
+  if (!WP_PASSWORD) {
+    console.log("WordPress password not configured, cannot push user to WordPress");
+    return { success: false, message: "WordPress password not configured" };
   }
   
   const auth = Buffer.from(`${WP_USERNAME}:${WP_PASSWORD}`).toString("base64");
@@ -1833,12 +1833,12 @@ export async function syncClinics(): Promise<ClinicSyncResult> {
     errors: [],
   };
   
-  const WP_USERNAME = process.env.WP_USERNAME;
+  const WP_USERNAME = process.env.WP_USERNAME || 'blake';
   const WP_PASSWORD = process.env.WP_PASSWORD || process.env.WP_APPLICATION_PASSWORD;
   
-  if (!WP_USERNAME || !WP_PASSWORD) {
-    console.log("WordPress credentials not configured, skipping clinic sync");
-    result.errors.push("WordPress credentials not configured");
+  if (!WP_PASSWORD) {
+    console.log("WordPress password not configured, skipping clinic sync");
+    result.errors.push("WordPress password not configured");
     return result;
   }
   
