@@ -5,37 +5,153 @@ import type {
 } from "@shared/types/protocol-assembly";
 
 const COLORS = {
+  darkBg: "#0F1923",
+  cardBg: "#1A2A3A",
   primary: "#1B2A4A",
   secondary: "#00B4D8",
   accent: "#D4A843",
+  teal: "#00D4AA",
   text: "#222222",
   lightText: "#666666",
   headerBg: "#E8F4F8",
   white: "#FFFFFF",
   border: "#CCCCCC",
+  urgentRed: "#FF4444",
+  warningOrange: "#FF8C00",
+  successGreen: "#00C853",
+  sectionBg: "#F0F8FF",
 };
 
-function addHeader(doc: PDFKit.PDFDocument, text: string) {
+const FF_WEBSITE = "https://www.forgottenformula.com";
+const FF_SHOP = `${FF_WEBSITE}/shop`;
+
+const DRIVE_RESOURCES = [
+  { title: "FF Detox Bath Protocol", category: "Detox Guide", description: "Baking soda, bentonite clay, epsom salt, lavender — complete instructions" },
+  { title: "Liver & Gallbladder Cleanse Guide", category: "Detox Guide", description: "Step-by-step liver flush protocol with olive oil and grapefruit" },
+  { title: "5-Day Fast Protocol", category: "Detox Guide", description: "Guided fasting protocol for deep cellular repair and autophagy" },
+  { title: "Rapid Virus Recovery — Dr. Thomas Levy", category: "Recommended Reading", description: "How to rapidly recover from viral infections using high-dose vitamin C" },
+  { title: "A Cancer Therapy: Results of Fifty Cases — Dr. Max Gerson", category: "Clinical Protocol", description: "The original Gerson therapy clinical documentation and diet protocol" },
+  { title: "One Minute Cure — Madison Cavanaugh", category: "Holistic Modality", description: "Hydrogen peroxide therapy overview and applications" },
+  { title: "Cymatics: A Study of Wave Phenomena — Hans Jenny", category: "Research", description: "Foundation text for frequency-based healing modalities" },
+];
+
+const CANCER_RESOURCES = [
+  { title: "DIANE Anti-Cancer Diet Protocol", category: "Cancer Protocol", description: "Zero sugar, zero GMO, organic-only dietary framework for cancer patients" },
+  { title: "Metabolic Approach to Cancer — Dr. Nasha Winters", category: "Recommended Reading", description: "Integrative oncology nutrition and metabolic terrain assessment" },
+  { title: "Fenbendazole / Ivermectin Anti-Cancer Protocol", category: "Cancer Protocol", description: "Off-label anti-parasitic compounds with documented anti-tumor properties" },
+  { title: "ECS & Cannabinoid Cancer Therapy Guide", category: "Cancer Protocol", description: "CB2 receptor activation, CBD/CBG dosing, and suppository protocols" },
+];
+
+function isCancerPatient(protocol: HealingProtocol, profile: PatientProfile): boolean {
+  const cancerKeywords = ["cancer", "tumor", "carcinoma", "oncolog", "malignant", "metastas", "chemo", "radiation therapy", "HER2", "ER+", "PR+"];
+  const allText = [
+    ...(profile.currentDiagnoses || []),
+    ...(profile.chiefComplaints || []),
+    protocol.summary || "",
+    ...(protocol.rootCauseAnalysis?.map(r => r.details) || []),
+  ].join(" ").toLowerCase();
+  return cancerKeywords.some(kw => allText.includes(kw.toLowerCase()));
+}
+
+function drawBrandedCoverPage(doc: PDFKit.PDFDocument, title: string, subtitle: string, patientName: string, date: string, isCancer: boolean) {
+  doc.rect(0, 0, doc.page.width, doc.page.height).fill(COLORS.darkBg);
+
+  doc.rect(0, 0, doc.page.width, 4).fill(COLORS.secondary);
+  doc.rect(0, doc.page.height - 4, doc.page.width, 4).fill(COLORS.secondary);
+
+  const cx = doc.page.width / 2;
+  doc.save();
+  doc.lineWidth(1.5).strokeColor(COLORS.secondary).strokeOpacity(0.3);
+  doc.moveTo(cx - 120, 180).lineTo(cx + 120, 180).stroke();
+  doc.moveTo(cx - 80, 185).lineTo(cx + 80, 185).stroke();
+  doc.restore();
+
+  doc.fontSize(32).fillColor(COLORS.white).text("FORGOTTEN FORMULA", 0, 220, { align: "center" });
+  doc.fontSize(14).fillColor(COLORS.secondary).text("PRIVATE MEMBER ASSOCIATION", 0, 260, { align: "center" });
+
+  doc.moveDown(2);
+  doc.moveTo(cx - 100, doc.y).lineTo(cx + 100, doc.y).strokeColor(COLORS.accent).lineWidth(2).stroke();
+
+  doc.moveDown(1.5);
+  doc.fontSize(24).fillColor(COLORS.accent).text(title, 0, doc.y, { align: "center" });
+  doc.moveDown(0.4);
+  doc.fontSize(13).fillColor(COLORS.white).text(subtitle, { align: "center" });
+
+  doc.moveDown(2);
+  doc.fontSize(18).fillColor(COLORS.secondary).text(patientName, { align: "center" });
+  doc.moveDown(0.3);
+  doc.fontSize(11).fillColor("#AAAAAA").text(`Generated: ${date}`, { align: "center" });
+  doc.fontSize(11).fillColor("#AAAAAA").text("Prepared by: DR. FORMULA — Chief Medical Protocol Agent", { align: "center" });
+
+  if (isCancer) {
+    doc.moveDown(1.5);
+    doc.roundedRect(cx - 140, doc.y, 280, 30, 5).fill("#331111");
+    doc.fontSize(10).fillColor(COLORS.urgentRed).text("CANCER-SPECIFIC PROTOCOL", cx - 130, doc.y - 25, { width: 260, align: "center" });
+  }
+
+  doc.moveDown(3);
+  doc.fontSize(9).fillColor("#777777").text(
+    '"Before you heal someone, ask them if they\'re willing to give up the things that make them sick."',
+    55, doc.page.height - 120, { align: "center", width: doc.page.width - 110, oblique: true }
+  );
+  doc.moveDown(0.3);
+  doc.fontSize(9).fillColor(COLORS.secondary).text("— Hippocrates", { align: "center" });
+
   doc.moveDown(0.5);
-  doc
-    .fontSize(18)
-    .fillColor(COLORS.primary)
-    .text(text, { underline: true });
+  doc.fontSize(8).fillColor("#555555").text("This protocol is for private membership association (PMA) use only.", { align: "center" });
+  doc.text("Member sovereignty and informed consent are foundational principles.", { align: "center" });
+}
+
+function drawPageHeader(doc: PDFKit.PDFDocument, patientName: string) {
+  doc.save();
+  doc.rect(0, 0, doc.page.width, 40).fill("#F7FBFE");
+  doc.moveTo(0, 40).lineTo(doc.page.width, 40).strokeColor(COLORS.secondary).lineWidth(1).stroke();
+  doc.fontSize(8).fillColor(COLORS.primary).text("FORGOTTEN FORMULA PMA", 55, 14);
+  doc.fontSize(8).fillColor(COLORS.lightText).text(patientName, doc.page.width - 200, 14, { width: 145, align: "right" });
+  doc.restore();
+  doc.y = 55;
+}
+
+function drawSectionHeader(doc: PDFKit.PDFDocument, text: string, color?: string) {
+  checkPage(doc, 80);
+  const startY = doc.y;
+  doc.rect(55, startY, doc.page.width - 110, 28).fill(color || COLORS.primary);
+  doc.fontSize(13).fillColor(COLORS.white).text(text.toUpperCase(), 65, startY + 7, { width: doc.page.width - 130 });
+  doc.y = startY + 36;
   doc.moveDown(0.3);
 }
 
-function addSubheader(doc: PDFKit.PDFDocument, text: string) {
+function drawSubheader(doc: PDFKit.PDFDocument, text: string) {
+  checkPage(doc, 50);
   doc.moveDown(0.3);
-  doc.fontSize(14).fillColor(COLORS.secondary).text(text);
+  doc.moveTo(55, doc.y).lineTo(55 + 3, doc.y).strokeColor(COLORS.secondary).lineWidth(3).stroke();
+  doc.fontSize(12).fillColor(COLORS.secondary).text(`  ${text}`, 58, doc.y - 5);
   doc.moveDown(0.2);
 }
 
-function addBody(doc: PDFKit.PDFDocument, text: string) {
-  doc.fontSize(10).fillColor(COLORS.text).text(text);
+function drawBody(doc: PDFKit.PDFDocument, text: string) {
+  doc.fontSize(10).fillColor(COLORS.text).text(text, 55, undefined, { width: doc.page.width - 110 });
 }
 
-function addBullet(doc: PDFKit.PDFDocument, text: string) {
-  doc.fontSize(10).fillColor(COLORS.text).text(`  \u2022 ${text}`, { indent: 10 });
+function drawBullet(doc: PDFKit.PDFDocument, text: string, indent: number = 0) {
+  checkPage(doc, 20);
+  doc.fontSize(10).fillColor(COLORS.teal).text("\u2022", 60 + indent, doc.y, { continued: true });
+  doc.fillColor(COLORS.text).text(` ${text}`, { width: doc.page.width - 130 - indent });
+}
+
+function drawLabelValue(doc: PDFKit.PDFDocument, label: string, value: string) {
+  checkPage(doc, 18);
+  doc.fontSize(10).fillColor(COLORS.secondary).text(`${label}: `, 65, doc.y, { continued: true });
+  doc.fillColor(COLORS.text).text(value);
+}
+
+function drawInfoBox(doc: PDFKit.PDFDocument, text: string, bgColor: string = COLORS.sectionBg) {
+  checkPage(doc, 40);
+  const startY = doc.y;
+  doc.rect(55, startY, doc.page.width - 110, 30).fill(bgColor);
+  doc.rect(55, startY, 3, 30).fill(COLORS.secondary);
+  doc.fontSize(9).fillColor(COLORS.text).text(text, 65, startY + 9, { width: doc.page.width - 135 });
+  doc.y = startY + 36;
 }
 
 function checkPage(doc: PDFKit.PDFDocument, needed: number = 80) {
@@ -43,6 +159,61 @@ function checkPage(doc: PDFKit.PDFDocument, needed: number = 80) {
     doc.addPage();
   }
 }
+
+function newPage(doc: PDFKit.PDFDocument, patientName: string) {
+  doc.addPage();
+  drawPageHeader(doc, patientName);
+}
+
+function drawResourceLink(doc: PDFKit.PDFDocument, title: string, category: string, description: string) {
+  checkPage(doc, 45);
+  const startY = doc.y;
+  doc.rect(60, startY, doc.page.width - 120, 35).fill("#F5F9FC");
+  doc.rect(60, startY, 3, 35).fill(COLORS.accent);
+  doc.fontSize(10).fillColor(COLORS.primary).text(title, 70, startY + 5, { width: doc.page.width - 145, underline: false });
+  doc.fontSize(8).fillColor(COLORS.accent).text(category, doc.page.width - 200, startY + 5, { width: 140, align: "right" });
+  doc.fontSize(8).fillColor(COLORS.lightText).text(description, 70, startY + 20, { width: doc.page.width - 145 });
+  doc.y = startY + 40;
+}
+
+function drawProductItem(doc: PDFKit.PDFDocument, name: string, category: string, dose?: string) {
+  checkPage(doc, 22);
+  doc.fontSize(10).fillColor(COLORS.primary).text(`\u2022 ${name}`, 65, doc.y, { continued: dose ? true : false });
+  if (dose) {
+    doc.fillColor(COLORS.lightText).text(` — ${dose}`);
+  }
+}
+
+function drawDisclaimer(doc: PDFKit.PDFDocument) {
+  newPage(doc, "");
+  doc.moveDown(3);
+  doc.rect(55, doc.y, doc.page.width - 110, 1).fill(COLORS.secondary);
+  doc.moveDown(1);
+
+  doc.fontSize(12).fillColor(COLORS.primary).text("DISCLAIMER", { align: "center" });
+  doc.moveDown(0.5);
+  doc.fontSize(9).fillColor(COLORS.lightText).text(
+    "This protocol has been generated by DR. FORMULA, Chief Medical Protocol Agent of Forgotten Formula PMA. " +
+    "This document is intended solely for private membership association (PMA) use and does not constitute medical advice, " +
+    "diagnosis, or treatment in the public domain. All protocols are recommendations subject to Trustee review and refinement. " +
+    "Member sovereignty and informed consent are foundational principles of this association.",
+    55, undefined, { align: "center", width: doc.page.width - 110 }
+  );
+  doc.moveDown(1.5);
+  doc.fontSize(11).fillColor(COLORS.secondary).text(
+    '"Your body is a self-healing organism. My job is to identify what\'s blocking that healing and give you the tools to remove those blocks."',
+    55, undefined, { align: "center", width: doc.page.width - 110, oblique: true }
+  );
+  doc.moveDown(0.3);
+  doc.fontSize(11).fillColor(COLORS.primary).text("— DR. FORMULA", { align: "center" });
+
+  doc.moveDown(2);
+  doc.fontSize(10).fillColor(COLORS.secondary).text("Forgotten Formula PMA", { align: "center" });
+  doc.fontSize(9).fillColor(COLORS.lightText).text(`${FF_WEBSITE}`, { align: "center", link: FF_WEBSITE });
+  doc.moveDown(0.3);
+  doc.fontSize(9).fillColor(COLORS.lightText).text("Powered by ALLIO v1 — The All-In-One Healing Ecosystem", { align: "center" });
+}
+
 
 export function generateProtocolPDF(
   protocol: HealingProtocol,
@@ -66,350 +237,334 @@ export function generateProtocolPDF(
       doc.on("end", () => resolve(Buffer.concat(chunks)));
       doc.on("error", reject);
 
-      doc
-        .fontSize(28)
-        .fillColor(COLORS.primary)
-        .text("FORGOTTEN FORMULA PMA", { align: "center" });
-      doc.moveDown(0.3);
-      doc
-        .fontSize(20)
-        .fillColor(COLORS.secondary)
-        .text("Personalized Healing Protocol", { align: "center" });
-      doc.moveDown(0.5);
-      doc
-        .fontSize(14)
-        .fillColor(COLORS.text)
-        .text(protocol.patientName, { align: "center" });
-      doc
-        .fontSize(11)
-        .fillColor(COLORS.lightText)
-        .text(`Generated: ${protocol.generatedDate} | Duration: ${protocol.protocolDurationDays} days`, {
-          align: "center",
-        });
-      doc.moveDown(0.5);
-      doc
-        .moveTo(55, doc.y)
-        .lineTo(doc.page.width - 55, doc.y)
-        .strokeColor(COLORS.secondary)
-        .lineWidth(2)
-        .stroke();
-      doc.moveDown(0.5);
-      doc
-        .fontSize(9)
-        .fillColor(COLORS.lightText)
-        .text(
-          "This protocol is for private membership association use only. Generated by DR. FORMULA, Chief Medical Protocol Agent.",
-          { align: "center" }
-        );
+      const pn = protocol.patientName;
+      const isCancer = isCancerPatient(protocol, profile);
+      const dateStr = protocol.generatedDate || new Date().toISOString().split("T")[0];
 
-      doc.addPage();
-      addHeader(doc, "EXECUTIVE SUMMARY");
-      addBody(doc, protocol.summary || "");
+      drawBrandedCoverPage(doc, "Personalized Healing Protocol", "FF PMA 2026 Protocol — The 5R Framework", pn, dateStr, isCancer);
+
+      newPage(doc, pn);
+      drawSectionHeader(doc, "Executive Summary");
+      drawBody(doc, protocol.summary || "");
       doc.moveDown(0.5);
 
-      addSubheader(doc, "Patient Overview");
-      addBody(doc, `Name: ${protocol.patientName}`);
-      addBody(doc, `Age: ${protocol.patientAge}`);
-      addBody(doc, `Gender: ${profile.gender || "N/A"}`);
-      if (profile.location) addBody(doc, `Location: ${profile.location}`);
+      drawSubheader(doc, "Patient Overview");
+      drawLabelValue(doc, "Name", protocol.patientName);
+      drawLabelValue(doc, "Age", String(protocol.patientAge));
+      drawLabelValue(doc, "Gender", profile.gender || "N/A");
+      if (profile.location) drawLabelValue(doc, "Location", profile.location);
+      drawLabelValue(doc, "Protocol Duration", `${protocol.protocolDurationDays} days`);
       doc.moveDown(0.3);
 
       if (profile.chiefComplaints?.length > 0) {
-        addSubheader(doc, "Chief Complaints");
-        profile.chiefComplaints.forEach((c) => addBullet(doc, c));
+        drawSubheader(doc, "Chief Complaints");
+        profile.chiefComplaints.forEach(c => drawBullet(doc, c));
       }
 
       if (profile.currentDiagnoses?.length > 0) {
-        addSubheader(doc, "Current Diagnoses");
-        profile.currentDiagnoses.forEach((d) => addBullet(doc, d));
+        drawSubheader(doc, "Current Diagnoses");
+        profile.currentDiagnoses.forEach(d => drawBullet(doc, d));
       }
 
       if (profile.goals?.length > 0) {
-        addSubheader(doc, "Patient Goals");
-        profile.goals.forEach((g) => addBullet(doc, g));
+        drawSubheader(doc, "Patient Goals");
+        profile.goals.forEach(g => drawBullet(doc, g));
       }
 
-      doc.addPage();
-      addHeader(doc, "ROOT CAUSE ANALYSIS");
+      newPage(doc, pn);
+      drawSectionHeader(doc, "Root Cause Analysis");
       if (protocol.rootCauseAnalysis?.length > 0) {
-        protocol.rootCauseAnalysis.forEach((rc) => {
+        protocol.rootCauseAnalysis.forEach(rc => {
           checkPage(doc, 60);
-          doc
-            .fontSize(12)
-            .fillColor(COLORS.secondary)
-            .text(`${rc.rank}. ${rc.cause} (${rc.category.toUpperCase()})`);
-          doc.fontSize(10).fillColor(COLORS.text).text(`   ${rc.details}`);
+          doc.fontSize(12).fillColor(COLORS.secondary).text(`${rc.rank}. ${rc.cause}`, 60);
+          doc.fontSize(9).fillColor(COLORS.accent).text(`   Category: ${rc.category.toUpperCase()}`, 65);
+          doc.fontSize(10).fillColor(COLORS.text).text(`   ${rc.details}`, 65, undefined, { width: doc.page.width - 130 });
           if (rc.relatedSymptoms?.length > 0) {
-            doc
-              .fontSize(9)
-              .fillColor(COLORS.lightText)
-              .text(`   Related: ${rc.relatedSymptoms.join(", ")}`);
+            doc.fontSize(9).fillColor(COLORS.lightText).text(`   Related symptoms: ${rc.relatedSymptoms.join(", ")}`, 65, undefined, { width: doc.page.width - 130 });
           }
-          doc.moveDown(0.3);
-        });
-      }
-
-      if (protocol.phases?.length > 0) {
-        doc.addPage();
-        addHeader(doc, "THE 5 Rs — TREATMENT PHASES");
-        protocol.phases.forEach((phase) => {
-          checkPage(doc, 80);
-          doc
-            .fontSize(13)
-            .fillColor(COLORS.primary)
-            .text(`Phase ${phase.phaseNumber}: ${phase.name} (${phase.weekRange})`);
-          doc.fontSize(10).fillColor(COLORS.text).text(`Focus: ${phase.focus}`);
-          phase.keyActions?.forEach((action) => addBullet(doc, action));
           doc.moveDown(0.4);
         });
       }
 
+      if (protocol.phases?.length > 0) {
+        newPage(doc, pn);
+        drawSectionHeader(doc, "The 5 Rs — Treatment Phases");
+        const phaseColors = ["#C62828", "#EF6C00", "#F9A825", "#2E7D32", "#1565C0"];
+        protocol.phases.forEach((phase, idx) => {
+          checkPage(doc, 100);
+          const startY = doc.y;
+          doc.rect(55, startY, doc.page.width - 110, 24).fill(phaseColors[idx] || COLORS.primary);
+          doc.fontSize(11).fillColor(COLORS.white).text(
+            `Phase ${phase.phaseNumber}: ${phase.name} (${phase.weekRange})`,
+            65, startY + 6, { width: doc.page.width - 130 }
+          );
+          doc.y = startY + 30;
+          doc.fontSize(10).fillColor(COLORS.text).text(phase.focus, 65, undefined, { width: doc.page.width - 130 });
+          doc.moveDown(0.2);
+          phase.keyActions?.forEach(action => drawBullet(doc, action, 10));
+          doc.moveDown(0.5);
+        });
+      }
+
       if (protocol.injectablePeptides?.length > 0) {
-        doc.addPage();
-        addHeader(doc, "INJECTABLE PEPTIDE PROTOCOL");
-        protocol.injectablePeptides.forEach((p) => {
-          checkPage(doc, 90);
-          doc.fontSize(12).fillColor(COLORS.secondary).text(p.name);
-          addBody(doc, `Vial: ${p.vialSize} | Reconstitution: ${p.reconstitution}`);
-          addBody(doc, `Dose: ${p.dose} | Route: ${p.route} | Frequency: ${p.frequency}`);
-          addBody(doc, `Duration: ${p.duration} | Purpose: ${p.purpose}`);
+        newPage(doc, pn);
+        drawSectionHeader(doc, "Injectable Peptide Protocol");
+        protocol.injectablePeptides.forEach(p => {
+          checkPage(doc, 110);
+          const startY = doc.y;
+          doc.rect(55, startY, doc.page.width - 110, 22).fill("#1A2A3A");
+          doc.fontSize(12).fillColor(COLORS.teal).text(p.name, 65, startY + 5);
+          doc.y = startY + 28;
+
+          drawLabelValue(doc, "Vial Size", p.vialSize);
+          drawLabelValue(doc, "Reconstitution", p.reconstitution);
+          drawLabelValue(doc, "Dose", p.dose);
+          drawLabelValue(doc, "Route", p.route);
+          drawLabelValue(doc, "Frequency", p.frequency);
+          drawLabelValue(doc, "Duration", p.duration);
+          drawLabelValue(doc, "Purpose", p.purpose);
           if (p.notes) {
-            doc.fontSize(9).fillColor(COLORS.lightText).text(`Note: ${p.notes}`);
+            doc.fontSize(9).fillColor(COLORS.lightText).text(`Note: ${p.notes}`, 65, undefined, { width: doc.page.width - 130 });
           }
-          doc.moveDown(0.3);
+          doc.fontSize(8).fillColor(COLORS.accent).text(`Shop: ${FF_SHOP}`, 65, undefined, { link: FF_SHOP });
+          doc.moveDown(0.5);
         });
       }
 
       if (protocol.oralPeptides?.length > 0) {
         checkPage(doc, 100);
-        addHeader(doc, "ORAL PEPTIDES");
-        protocol.oralPeptides.forEach((p) => {
+        drawSectionHeader(doc, "Oral Peptides", "#2E7D32");
+        protocol.oralPeptides.forEach(p => {
           checkPage(doc, 50);
-          addBody(doc, `${p.name}: ${p.dose}, ${p.frequency} for ${p.duration} — ${p.purpose}`);
+          doc.fontSize(11).fillColor(COLORS.primary).text(p.name, 65);
+          drawLabelValue(doc, "Dose", `${p.dose} | ${p.frequency} | ${p.duration}`);
+          drawLabelValue(doc, "Purpose", p.purpose);
+          doc.moveDown(0.3);
         });
       }
 
       if (protocol.bioregulators?.length > 0) {
         checkPage(doc, 100);
-        addHeader(doc, "BIOREGULATORS");
-        protocol.bioregulators.forEach((b) => {
+        drawSectionHeader(doc, "Bioregulators (Khavinson Peptides)", "#6A1B9A");
+        protocol.bioregulators.forEach(b => {
           checkPage(doc, 50);
-          addBody(doc, `${b.name} → ${b.targetOrgan}: ${b.dose}, ${b.frequency} for ${b.duration}`);
+          doc.fontSize(11).fillColor(COLORS.primary).text(b.name, 65);
+          drawLabelValue(doc, "Target Organ", b.targetOrgan);
+          drawLabelValue(doc, "Dose & Schedule", `${b.dose} | ${b.frequency} | ${b.duration}`);
+          doc.moveDown(0.3);
         });
       }
 
       if (protocol.ivTherapies?.length > 0) {
         checkPage(doc, 100);
-        addHeader(doc, "IV THERAPY SCHEDULE");
-        protocol.ivTherapies.forEach((iv) => {
+        drawSectionHeader(doc, "IV Therapy Schedule", "#00838F");
+        protocol.ivTherapies.forEach(iv => {
           checkPage(doc, 50);
-          addBody(doc, `${iv.name}: ${iv.frequency} for ${iv.duration} — ${iv.purpose}`);
-          if (iv.notes) {
-            doc.fontSize(9).fillColor(COLORS.lightText).text(`   ${iv.notes}`);
-          }
+          doc.fontSize(11).fillColor(COLORS.primary).text(iv.name, 65);
+          drawLabelValue(doc, "Frequency", iv.frequency);
+          drawLabelValue(doc, "Duration", iv.duration);
+          drawLabelValue(doc, "Purpose", iv.purpose);
+          if (iv.notes) doc.fontSize(9).fillColor(COLORS.lightText).text(`Note: ${iv.notes}`, 65);
+          doc.moveDown(0.3);
         });
       }
 
       if (protocol.imTherapies?.length > 0) {
         checkPage(doc, 100);
-        addHeader(doc, "IM THERAPY SCHEDULE");
-        protocol.imTherapies.forEach((im) => {
-          checkPage(doc, 50);
-          addBody(doc, `${im.name}: ${im.dose}, ${im.frequency} — ${im.purpose}`);
+        drawSectionHeader(doc, "IM Therapy Schedule", "#4527A0");
+        protocol.imTherapies.forEach(im => {
+          checkPage(doc, 40);
+          doc.fontSize(11).fillColor(COLORS.primary).text(im.name, 65);
+          drawLabelValue(doc, "Dose", `${im.dose} | ${im.frequency}`);
+          drawLabelValue(doc, "Purpose", im.purpose);
+          doc.moveDown(0.3);
         });
       }
 
       if (protocol.supplements?.length > 0) {
-        doc.addPage();
-        addHeader(doc, "SUPPLEMENT STACK");
-        protocol.supplements.forEach((s) => {
-          checkPage(doc, 40);
-          addBullet(doc, `${s.name} — ${s.dose} (${s.timing}) → ${s.purpose}`);
+        newPage(doc, pn);
+        drawSectionHeader(doc, "Supplement Stack");
+        protocol.supplements.forEach(s => {
+          checkPage(doc, 35);
+          doc.fontSize(10).fillColor(COLORS.teal).text(`\u2022 ${s.name}`, 65, doc.y, { continued: true });
+          doc.fillColor(COLORS.text).text(` — ${s.dose} (${s.timing})`);
+          doc.fontSize(9).fillColor(COLORS.lightText).text(`    Purpose: ${s.purpose}`, 70);
+          doc.moveDown(0.15);
         });
       }
 
       if (protocol.detoxProtocols?.length > 0) {
-        doc.addPage();
-        addHeader(doc, "DETOX PROTOCOLS");
-        protocol.detoxProtocols.forEach((d) => {
-          checkPage(doc, 70);
-          doc.fontSize(12).fillColor(COLORS.secondary).text(d.name);
-          addBody(doc, `Method: ${d.method}`);
-          addBody(doc, `Frequency: ${d.frequency} | Duration: ${d.duration}`);
-          addBody(doc, `Instructions: ${d.instructions}`);
-          doc.moveDown(0.3);
+        newPage(doc, pn);
+        drawSectionHeader(doc, "Detox Protocols", "#E65100");
+        protocol.detoxProtocols.forEach(d => {
+          checkPage(doc, 80);
+          doc.fontSize(12).fillColor(COLORS.primary).text(d.name, 65);
+          drawLabelValue(doc, "Method", d.method);
+          drawLabelValue(doc, "Frequency", d.frequency);
+          drawLabelValue(doc, "Duration", d.duration);
+          doc.fontSize(10).fillColor(COLORS.text).text(`Instructions: ${d.instructions}`, 65, undefined, { width: doc.page.width - 130 });
+          doc.moveDown(0.4);
         });
       }
 
       if (protocol.parasiteAntiviralProtocols?.length > 0) {
         checkPage(doc, 100);
-        addHeader(doc, "PARASITE & ANTIVIRAL PROTOCOLS");
-        protocol.parasiteAntiviralProtocols.forEach((p) => {
+        drawSectionHeader(doc, "Parasite & Antiviral Protocols", "#880E4F");
+        protocol.parasiteAntiviralProtocols.forEach(p => {
           checkPage(doc, 50);
-          addBody(doc, `${p.name}: ${p.dose} — ${p.schedule} for ${p.duration}`);
-          addBody(doc, `Purpose: ${p.purpose}`);
-          doc.moveDown(0.2);
+          doc.fontSize(11).fillColor(COLORS.primary).text(p.name, 65);
+          drawLabelValue(doc, "Dose", p.dose);
+          drawLabelValue(doc, "Schedule", `${p.schedule} for ${p.duration}`);
+          drawLabelValue(doc, "Purpose", p.purpose);
+          doc.moveDown(0.3);
         });
       }
 
       if (protocol.dailySchedule) {
-        doc.addPage();
-        addHeader(doc, "DAILY SCHEDULE");
-        const periods = ["morning", "midday", "evening", "bedtime"] as const;
-        periods.forEach((period) => {
-          const items = protocol.dailySchedule[period];
+        newPage(doc, pn);
+        drawSectionHeader(doc, "Daily Schedule Overview");
+        const periods = [
+          { key: "morning" as const, label: "MORNING (6:00 AM — 10:00 AM)", color: "#FF8F00" },
+          { key: "midday" as const, label: "MIDDAY (10:00 AM — 2:00 PM)", color: "#0097A7" },
+          { key: "evening" as const, label: "EVENING (5:00 PM — 8:00 PM)", color: "#5C6BC0" },
+          { key: "bedtime" as const, label: "BEDTIME (9:00 PM — 10:00 PM)", color: "#37474F" },
+        ];
+        periods.forEach(period => {
+          const items = protocol.dailySchedule[period.key];
           if (items?.length > 0) {
             checkPage(doc, 60);
-            addSubheader(doc, period.charAt(0).toUpperCase() + period.slice(1));
-            items.forEach((item) => {
-              addBullet(
-                doc,
-                `${item.time ? `[${item.time}] ` : ""}${item.item}${item.details ? ` — ${item.details}` : ""}${item.frequency ? ` (${item.frequency})` : ""}`
-              );
+            const startY = doc.y;
+            doc.rect(60, startY, doc.page.width - 120, 20).fill(period.color);
+            doc.fontSize(10).fillColor(COLORS.white).text(period.label, 70, startY + 4);
+            doc.y = startY + 25;
+            items.forEach(item => {
+              checkPage(doc, 25);
+              const timeStr = item.time ? `[${item.time}] ` : "";
+              doc.fontSize(10).fillColor(COLORS.primary).text(`  ${timeStr}${item.item}`, 65);
+              if (item.details) {
+                doc.fontSize(9).fillColor(COLORS.lightText).text(`       ${item.details}`, 70, undefined, { width: doc.page.width - 140 });
+              }
             });
+            doc.moveDown(0.4);
           }
         });
       }
 
       if (protocol.lifestyleRecommendations?.length > 0 || protocol.dietaryGuidelines?.length > 0) {
-        doc.addPage();
-        addHeader(doc, "LIFESTYLE & DIETARY GUIDELINES");
+        newPage(doc, pn);
+        drawSectionHeader(doc, "Lifestyle & Dietary Guidelines");
 
         if (protocol.lifestyleRecommendations?.length > 0) {
-          addSubheader(doc, "Lifestyle Recommendations");
-          protocol.lifestyleRecommendations.forEach((l) => {
-            checkPage(doc, 40);
-            addBullet(doc, `${l.category}: ${l.recommendation}${l.details ? ` — ${l.details}` : ""}`);
+          drawSubheader(doc, "Lifestyle Recommendations");
+          protocol.lifestyleRecommendations.forEach(l => {
+            checkPage(doc, 30);
+            doc.fontSize(10).fillColor(COLORS.secondary).text(`${l.category}:`, 65, doc.y, { continued: true });
+            doc.fillColor(COLORS.text).text(` ${l.recommendation}${l.details ? ` — ${l.details}` : ""}`);
           });
         }
 
         if (protocol.dietaryGuidelines?.length > 0) {
-          addSubheader(doc, "Dietary Guidelines");
-          protocol.dietaryGuidelines.forEach((d) => addBullet(doc, d));
+          drawSubheader(doc, "Dietary Guidelines");
+          protocol.dietaryGuidelines.forEach(d => drawBullet(doc, d));
         }
       }
 
       if (protocol.followUpPlan?.length > 0 || protocol.labsRequired?.length > 0) {
-        doc.addPage();
-        addHeader(doc, "FOLLOW-UP PLAN & LAB ORDERS");
+        newPage(doc, pn);
+        drawSectionHeader(doc, "Follow-Up Plan & Lab Orders");
 
         if (protocol.followUpPlan?.length > 0) {
-          addSubheader(doc, "Follow-Up Schedule");
-          protocol.followUpPlan.forEach((f) => {
-            checkPage(doc, 40);
-            addBullet(doc, `Week ${f.weekNumber}: ${f.action}${f.details ? ` — ${f.details}` : ""}`);
+          drawSubheader(doc, "Follow-Up Schedule");
+          protocol.followUpPlan.forEach(f => {
+            checkPage(doc, 30);
+            doc.fontSize(10).fillColor(COLORS.secondary).text(`Week ${f.weekNumber}:`, 65, doc.y, { continued: true });
+            doc.fillColor(COLORS.text).text(` ${f.action}${f.details ? ` — ${f.details}` : ""}`);
           });
         }
 
         if (protocol.labsRequired?.length > 0) {
-          addSubheader(doc, "Required Labs");
-          protocol.labsRequired.forEach((l) => addBullet(doc, l));
+          drawSubheader(doc, "Required Laboratory Tests");
+          protocol.labsRequired.forEach(l => drawBullet(doc, l));
         }
       }
 
       if (protocol.contraindications?.length > 0) {
         checkPage(doc, 80);
-        addHeader(doc, "CONTRAINDICATIONS & WARNINGS");
-        protocol.contraindications.forEach((c) => addBullet(doc, c));
+        drawSectionHeader(doc, "Contraindications & Warnings", COLORS.urgentRed);
+        protocol.contraindications.forEach(c => drawBullet(doc, c));
       }
 
+      newPage(doc, pn);
+      drawSectionHeader(doc, "Shopping List — FFPMA Product Catalog");
+
       const allProducts: Array<{ name: string; category: string; dose?: string }> = [];
-      protocol.injectablePeptides?.forEach((p) =>
-        allProducts.push({ name: p.name, category: "Injectable Peptide", dose: p.dose })
-      );
-      protocol.oralPeptides?.forEach((p) =>
-        allProducts.push({ name: p.name, category: "Oral Peptide", dose: p.dose })
-      );
-      protocol.bioregulators?.forEach((b) =>
-        allProducts.push({ name: b.name, category: "Bioregulator", dose: b.dose })
-      );
-      protocol.supplements?.forEach((s) =>
-        allProducts.push({ name: s.name, category: "Supplement", dose: s.dose })
-      );
-      protocol.ivTherapies?.forEach((iv) =>
-        allProducts.push({ name: iv.name, category: "IV Therapy" })
-      );
-      protocol.imTherapies?.forEach((im) =>
-        allProducts.push({ name: im.name, category: "IM Therapy", dose: im.dose })
-      );
-      protocol.detoxProtocols?.forEach((d) =>
-        allProducts.push({ name: d.name, category: "Detox" })
-      );
-      protocol.parasiteAntiviralProtocols?.forEach((p) =>
-        allProducts.push({ name: p.name, category: "Antiparasitic/Antiviral", dose: p.dose })
-      );
+      protocol.injectablePeptides?.forEach(p => allProducts.push({ name: p.name, category: "Injectable Peptide", dose: p.dose }));
+      protocol.oralPeptides?.forEach(p => allProducts.push({ name: p.name, category: "Oral Peptide", dose: p.dose }));
+      protocol.bioregulators?.forEach(b => allProducts.push({ name: b.name, category: "Bioregulator", dose: b.dose }));
+      protocol.supplements?.forEach(s => allProducts.push({ name: s.name, category: "Supplement", dose: s.dose }));
+      protocol.ivTherapies?.forEach(iv => allProducts.push({ name: iv.name, category: "IV Therapy" }));
+      protocol.imTherapies?.forEach(im => allProducts.push({ name: im.name, category: "IM Therapy", dose: im.dose }));
+      protocol.detoxProtocols?.forEach(d => allProducts.push({ name: d.name, category: "Detox" }));
+      protocol.parasiteAntiviralProtocols?.forEach(p => allProducts.push({ name: p.name, category: "Antiparasitic/Antiviral", dose: p.dose }));
 
-      if (allProducts.length > 0) {
-        doc.addPage();
-        addHeader(doc, "SHOPPING LIST — FFPMA CATALOG");
-        addBody(doc, `Total items: ${allProducts.length}`);
+      drawInfoBox(doc, `Total items in protocol: ${allProducts.length} | Shop at: ${FF_SHOP}`);
+      doc.moveDown(0.3);
+
+      const grouped = new Map<string, typeof allProducts>();
+      allProducts.forEach(p => {
+        const list = grouped.get(p.category) || [];
+        list.push(p);
+        grouped.set(p.category, list);
+      });
+      grouped.forEach((items, category) => {
+        checkPage(doc, 50);
+        drawSubheader(doc, `${category} (${items.length})`);
+        items.forEach(item => drawProductItem(doc, item.name, item.category, item.dose));
         doc.moveDown(0.3);
+      });
 
-        const grouped = new Map<string, typeof allProducts>();
-        allProducts.forEach((p) => {
-          const list = grouped.get(p.category) || [];
-          list.push(p);
-          grouped.set(p.category, list);
-        });
+      doc.moveDown(0.5);
+      doc.fontSize(10).fillColor(COLORS.secondary).text("Browse & Order Products:", 65, doc.y, { continued: true });
+      doc.fillColor(COLORS.accent).text(` ${FF_SHOP}`, { link: FF_SHOP, underline: true });
+      doc.moveDown(0.2);
+      doc.fontSize(9).fillColor(COLORS.lightText).text("Healer pricing applied at checkout for PMA members.", 65);
 
-        grouped.forEach((items, category) => {
-          checkPage(doc, 50);
-          addSubheader(doc, category);
-          items.forEach((item) => {
-            addBullet(doc, `${item.name}${item.dose ? ` — ${item.dose}` : ""}`);
-          });
-        });
+      newPage(doc, pn);
+      drawSectionHeader(doc, "Additional Resources — Drive Library");
+      doc.fontSize(10).fillColor(COLORS.text).text(
+        "The following resources are available in the Forgotten Formula Google Drive Library. " +
+        "Your Trustee will share direct links upon protocol activation.",
+        65, undefined, { width: doc.page.width - 130 }
+      );
+      doc.moveDown(0.5);
+
+      DRIVE_RESOURCES.forEach(r => drawResourceLink(doc, r.title, r.category, r.description));
+
+      if (isCancer) {
+        doc.moveDown(0.5);
+        drawSubheader(doc, "Cancer-Specific Resources");
+        CANCER_RESOURCES.forEach(r => drawResourceLink(doc, r.title, r.category, r.description));
       }
 
       if (citations && citations.length > 0) {
-        doc.addPage();
-        addHeader(doc, "RESEARCH CITATIONS");
-        addBody(doc, "Peer-reviewed evidence supporting major interventions:");
+        newPage(doc, pn);
+        drawSectionHeader(doc, "Research Citations");
+        drawBody(doc, "Peer-reviewed evidence supporting major interventions in this protocol:");
         doc.moveDown(0.3);
-
         citations.forEach((cite, idx) => {
-          checkPage(doc, 60);
-          const authorStr = cite.authors?.slice(0, 3).join(", ") || "Unknown authors";
+          checkPage(doc, 40);
+          const authorStr = cite.authors?.slice(0, 3).join(", ") || "Unknown";
           const yearStr = cite.year || "n.d.";
           const journalStr = cite.journal ? ` ${cite.journal}.` : "";
-          doc
-            .fontSize(9)
-            .fillColor(COLORS.text)
-            .text(`[${idx + 1}] ${authorStr} (${yearStr}). "${cite.title}."${journalStr}`, {
-              link: cite.url || undefined,
-            });
-          doc.moveDown(0.2);
+          doc.fontSize(9).fillColor(COLORS.text).text(
+            `[${idx + 1}] ${authorStr} (${yearStr}). "${cite.title}."${journalStr}`,
+            65, undefined, { link: cite.url || undefined, width: doc.page.width - 130 }
+          );
+          doc.moveDown(0.15);
         });
       }
 
-      doc.addPage();
-      doc.moveDown(2);
-      doc
-        .fontSize(11)
-        .fillColor(COLORS.lightText)
-        .text("DISCLAIMER", { align: "center", underline: true });
-      doc.moveDown(0.5);
-      doc
-        .fontSize(9)
-        .fillColor(COLORS.lightText)
-        .text(
-          "This protocol has been generated by DR. FORMULA, Chief Medical Protocol Agent of Forgotten Formula PMA. " +
-            "This document is intended solely for private membership association (PMA) use and does not constitute medical advice, " +
-            "diagnosis, or treatment in the public domain. All protocols are recommendations subject to Trustee review and refinement. " +
-            "Member sovereignty and informed consent are foundational principles of this association.",
-          { align: "center" }
-        );
-      doc.moveDown(1);
-      doc
-        .fontSize(10)
-        .fillColor(COLORS.secondary)
-        .text(
-          '"Your body is a self-healing organism. My job is to identify what\'s blocking that healing and give you the tools to remove those blocks."',
-          { align: "center", oblique: true }
-        );
-      doc.moveDown(0.3);
-      doc.fontSize(10).fillColor(COLORS.primary).text("— DR. FORMULA", { align: "center" });
-
+      drawDisclaimer(doc);
       doc.end();
     } catch (error) {
       reject(error);
@@ -417,50 +572,6 @@ export function generateProtocolPDF(
   });
 }
 
-function addPdfTitle(doc: PDFKit.PDFDocument, title: string, patientName: string, date: string) {
-  doc
-    .fontSize(24)
-    .fillColor(COLORS.primary)
-    .text("FORGOTTEN FORMULA PMA", { align: "center" });
-  doc.moveDown(0.2);
-  doc
-    .fontSize(18)
-    .fillColor(COLORS.secondary)
-    .text(title, { align: "center" });
-  doc.moveDown(0.3);
-  doc
-    .fontSize(13)
-    .fillColor(COLORS.text)
-    .text(patientName, { align: "center" });
-  doc
-    .fontSize(10)
-    .fillColor(COLORS.lightText)
-    .text(`Generated: ${date}`, { align: "center" });
-  doc.moveDown(0.4);
-  doc
-    .moveTo(55, doc.y)
-    .lineTo(doc.page.width - 55, doc.y)
-    .strokeColor(COLORS.secondary)
-    .lineWidth(2)
-    .stroke();
-  doc.moveDown(0.5);
-}
-
-function addPdfFooter(doc: PDFKit.PDFDocument) {
-  doc.addPage();
-  doc.moveDown(2);
-  doc
-    .fontSize(9)
-    .fillColor(COLORS.lightText)
-    .text(
-      "This document is intended solely for private membership association (PMA) use. " +
-      "All protocols are recommendations subject to Trustee review. " +
-      "Member sovereignty and informed consent are foundational principles of this association.",
-      { align: "center" }
-    );
-  doc.moveDown(0.5);
-  doc.fontSize(10).fillColor(COLORS.primary).text("— FORGOTTEN FORMULA PMA", { align: "center" });
-}
 
 export function generateDailySchedulePDF(
   protocol: HealingProtocol,
@@ -472,7 +583,7 @@ export function generateDailySchedulePDF(
         size: "LETTER",
         margins: { top: 60, bottom: 60, left: 55, right: 55 },
         info: {
-          Title: `${protocol.patientName} - Daily Schedule`,
+          Title: `${protocol.patientName} - Daily Protocol Schedule`,
           Author: "Forgotten Formula PMA - DR. FORMULA",
           Subject: "Daily Protocol Schedule",
         },
@@ -483,82 +594,129 @@ export function generateDailySchedulePDF(
       doc.on("end", () => resolve(Buffer.concat(chunks)));
       doc.on("error", reject);
 
-      addPdfTitle(doc, "Daily Protocol Schedule", protocol.patientName, protocol.generatedDate || new Date().toISOString().split("T")[0]);
+      const pn = protocol.patientName;
+      const isCancer = isCancerPatient(protocol, profile);
+      const dateStr = protocol.generatedDate || new Date().toISOString().split("T")[0];
 
-      doc
-        .fontSize(9)
-        .fillColor(COLORS.lightText)
-        .text(`Protocol Duration: ${protocol.protocolDurationDays || 90} days`, { align: "center" });
+      drawBrandedCoverPage(doc, "Daily Protocol Schedule", `Complete daily routine — ${protocol.protocolDurationDays || 90} Day Protocol`, pn, dateStr, isCancer);
+
+      newPage(doc, pn);
+      drawSectionHeader(doc, "Your Daily Protocol Routine");
+      drawInfoBox(doc, `This schedule should be followed daily for the duration of your ${protocol.protocolDurationDays || 90}-day protocol. Adjust timing as needed but maintain the sequence.`);
       doc.moveDown(0.5);
 
       if (protocol.dailySchedule) {
         const periods = [
-          { key: "morning" as const, label: "MORNING", icon: "☀️" },
-          { key: "midday" as const, label: "MIDDAY", icon: "🌤️" },
-          { key: "evening" as const, label: "EVENING", icon: "🌅" },
-          { key: "bedtime" as const, label: "BEDTIME", icon: "🌙" },
+          { key: "morning" as const, label: "MORNING ROUTINE", time: "6:00 AM — 10:00 AM", color: "#FF8F00", icon: "Rise & Shine" },
+          { key: "midday" as const, label: "MIDDAY ROUTINE", time: "10:00 AM — 2:00 PM", color: "#0097A7", icon: "Midday Focus" },
+          { key: "evening" as const, label: "EVENING ROUTINE", time: "5:00 PM — 8:00 PM", color: "#5C6BC0", icon: "Wind Down" },
+          { key: "bedtime" as const, label: "BEDTIME ROUTINE", time: "9:00 PM — 10:00 PM", color: "#37474F", icon: "Restful Sleep" },
         ];
 
-        periods.forEach((period) => {
+        periods.forEach(period => {
           const items = protocol.dailySchedule[period.key];
           if (items?.length > 0) {
             checkPage(doc, 80);
-            doc
-              .fontSize(14)
-              .fillColor(COLORS.primary)
-              .text(`${period.icon}  ${period.label}`, { underline: true });
-            doc.moveDown(0.3);
+            const headerY = doc.y;
+            doc.rect(55, headerY, doc.page.width - 110, 30).fill(period.color);
+            doc.fontSize(13).fillColor(COLORS.white).text(period.label, 65, headerY + 4);
+            doc.fontSize(9).fillColor("#FFFFFF").text(period.time, doc.page.width - 220, headerY + 8, { width: 160, align: "right" });
+            doc.y = headerY + 36;
 
-            items.forEach((item) => {
-              checkPage(doc, 30);
-              const timeStr = item.time ? `[${item.time}]` : "";
-              doc
-                .fontSize(11)
-                .fillColor(COLORS.secondary)
-                .text(`  ${timeStr} ${item.item}`, { continued: false });
+            items.forEach(item => {
+              checkPage(doc, 40);
+              const itemY = doc.y;
+              doc.rect(60, itemY, doc.page.width - 120, 1).fill("#E0E0E0");
+
+              const timeStr = item.time ? `${item.time}` : "";
+              if (timeStr) {
+                doc.fontSize(9).fillColor(COLORS.accent).text(timeStr, 65, itemY + 5, { width: 60 });
+                doc.fontSize(10).fillColor(COLORS.primary).text(item.item, 130, itemY + 4, { width: doc.page.width - 200 });
+              } else {
+                doc.fontSize(10).fillColor(COLORS.primary).text(item.item, 65, itemY + 4, { width: doc.page.width - 130 });
+              }
+
+              let nextY = doc.y + 2;
               if (item.details) {
-                doc
-                  .fontSize(9)
-                  .fillColor(COLORS.lightText)
-                  .text(`       ${item.details}`);
+                doc.fontSize(9).fillColor(COLORS.lightText).text(item.details, timeStr ? 130 : 75, nextY, { width: doc.page.width - 200 });
+                nextY = doc.y + 2;
               }
-              if (item.frequency) {
-                doc
-                  .fontSize(8)
-                  .fillColor(COLORS.accent)
-                  .text(`       Frequency: ${item.frequency}`);
+              if (item.frequency && item.frequency !== "Daily") {
+                doc.fontSize(8).fillColor(COLORS.secondary).text(`Frequency: ${item.frequency}`, timeStr ? 130 : 75, nextY);
               }
-              doc.moveDown(0.2);
+              doc.moveDown(0.3);
             });
-            doc.moveDown(0.4);
+            doc.moveDown(0.5);
           }
         });
       } else {
-        addBody(doc, "No daily schedule has been defined for this protocol.");
+        drawBody(doc, "No daily schedule has been defined for this protocol. Contact your Trustee for guidance.");
       }
 
       if (protocol.lifestyleRecommendations?.length > 0) {
-        doc.addPage();
-        addHeader(doc, "LIFESTYLE RECOMMENDATIONS");
-        protocol.lifestyleRecommendations.forEach((l) => {
-          checkPage(doc, 40);
-          addBullet(doc, `${l.category}: ${l.recommendation}${l.details ? ` — ${l.details}` : ""}`);
+        newPage(doc, pn);
+        drawSectionHeader(doc, "Lifestyle Recommendations");
+        protocol.lifestyleRecommendations.forEach(l => {
+          checkPage(doc, 35);
+          doc.fontSize(10).fillColor(COLORS.secondary).text(`${l.category}`, 65, doc.y);
+          doc.fontSize(10).fillColor(COLORS.text).text(`  ${l.recommendation}${l.details ? ` — ${l.details}` : ""}`, 75, undefined, { width: doc.page.width - 140 });
+          doc.moveDown(0.2);
         });
       }
 
       if (protocol.dietaryGuidelines?.length > 0) {
         checkPage(doc, 80);
-        addHeader(doc, "DIETARY GUIDELINES");
-        protocol.dietaryGuidelines.forEach((d) => addBullet(doc, d));
+        drawSectionHeader(doc, "Dietary Guidelines");
+        protocol.dietaryGuidelines.forEach(d => drawBullet(doc, d));
       }
 
-      addPdfFooter(doc);
+      if (isCancer) {
+        newPage(doc, pn);
+        drawSectionHeader(doc, "Cancer Protocol — Daily Essentials", "#C62828");
+        drawInfoBox(doc, "CRITICAL: These items are non-negotiable for cancer patients. Follow this schedule precisely.", "#FFF3F3");
+        doc.moveDown(0.3);
+
+        const cancerDaily = [
+          { time: "Morning", item: "CBD/CBG Sublingual Tincture", details: "50mg CBD + 25mg CBG sublingual — hold 60 seconds" },
+          { time: "Morning", item: "Nascent Iodine Protocol", details: "Start 1 drop, titrate up. Take with selenium companion" },
+          { time: "With Meals", item: "Digestive Enzymes", details: "Full-spectrum enzymes with every meal" },
+          { time: "Afternoon", item: "IV Vitamin C (clinic days)", details: "25-75g high-dose IV vitamin C, 2-3x per week" },
+          { time: "Evening", item: "ECS Suppository", details: "FF PMA formulation — nightly rotation for localized CB2 activation" },
+          { time: "Evening", item: "Detox Bath", details: "Baking soda + bentonite clay + epsom salt, 3x per week minimum" },
+          { time: "Bedtime", item: "Evening CBD/CBG/CBN", details: "50mg CBD + 25mg CBG + 10mg CBN + 5mg THC for overnight immune activation" },
+          { time: "Daily", item: "DIANE Diet Compliance", details: "Zero sugar, zero GMO, organic only, cruciferous vegetables every meal" },
+        ];
+
+        cancerDaily.forEach(item => {
+          checkPage(doc, 35);
+          doc.fontSize(9).fillColor(COLORS.urgentRed).text(item.time, 65, doc.y, { width: 75 });
+          doc.fontSize(10).fillColor(COLORS.primary).text(item.item, 145, doc.y - 11, { width: doc.page.width - 210 });
+          doc.fontSize(9).fillColor(COLORS.lightText).text(item.details, 145, undefined, { width: doc.page.width - 210 });
+          doc.moveDown(0.3);
+        });
+      }
+
+      newPage(doc, pn);
+      drawSectionHeader(doc, "Resources & Guides");
+      doc.fontSize(10).fillColor(COLORS.text).text(
+        "These complementary guides are available from your Trustee via the Forgotten Formula Drive Library:",
+        65, undefined, { width: doc.page.width - 130 }
+      );
+      doc.moveDown(0.3);
+      DRIVE_RESOURCES.forEach(r => drawResourceLink(doc, r.title, r.category, r.description));
+      if (isCancer) {
+        doc.moveDown(0.3);
+        CANCER_RESOURCES.forEach(r => drawResourceLink(doc, r.title, r.category, r.description));
+      }
+
+      drawDisclaimer(doc);
       doc.end();
     } catch (error) {
       reject(error);
     }
   });
 }
+
 
 export function generatePeptideSchedulePDF(
   protocol: HealingProtocol,
@@ -570,7 +728,7 @@ export function generatePeptideSchedulePDF(
         size: "LETTER",
         margins: { top: 60, bottom: 60, left: 55, right: 55 },
         info: {
-          Title: `${protocol.patientName} - Peptide Schedule`,
+          Title: `${protocol.patientName} - Peptide & Injection Protocol`,
           Author: "Forgotten Formula PMA - DR. FORMULA",
           Subject: "Peptide Protocol Schedule",
         },
@@ -581,101 +739,143 @@ export function generatePeptideSchedulePDF(
       doc.on("end", () => resolve(Buffer.concat(chunks)));
       doc.on("error", reject);
 
-      addPdfTitle(doc, "Peptide Protocol Schedule", protocol.patientName, protocol.generatedDate || new Date().toISOString().split("T")[0]);
+      const pn = protocol.patientName;
+      const isCancer = isCancerPatient(protocol, _profile);
+      const dateStr = protocol.generatedDate || new Date().toISOString().split("T")[0];
+      const totalPeptides = (protocol.injectablePeptides?.length || 0) + (protocol.oralPeptides?.length || 0) + (protocol.bioregulators?.length || 0);
+
+      drawBrandedCoverPage(doc, "Peptide & Injection Protocol", `${totalPeptides} compounds — Complete dosing & reconstitution guide`, pn, dateStr, isCancer);
 
       if (protocol.injectablePeptides?.length > 0) {
-        addHeader(doc, "INJECTABLE PEPTIDES");
-        protocol.injectablePeptides.forEach((p) => {
-          checkPage(doc, 100);
-          doc.fontSize(13).fillColor(COLORS.primary).text(p.name);
-          doc.moveDown(0.15);
+        newPage(doc, pn);
+        drawSectionHeader(doc, "Injectable Peptides");
+        drawInfoBox(doc, `${protocol.injectablePeptides.length} injectable peptides in this protocol. All products available at ${FF_SHOP}`);
+        doc.moveDown(0.3);
 
-          const details = [
-            ["Vial Size", p.vialSize],
-            ["Reconstitution", p.reconstitution],
-            ["Dose", p.dose],
-            ["Route", p.route],
-            ["Frequency", p.frequency],
-            ["Duration", p.duration],
-            ["Purpose", p.purpose],
+        protocol.injectablePeptides.forEach(p => {
+          checkPage(doc, 140);
+          const startY = doc.y;
+
+          doc.rect(55, startY, doc.page.width - 110, 24).fill("#1A2A3A");
+          doc.fontSize(13).fillColor(COLORS.teal).text(p.name, 65, startY + 5);
+          doc.y = startY + 30;
+
+          const fields = [
+            { label: "Vial Size", value: p.vialSize },
+            { label: "Reconstitution", value: p.reconstitution },
+            { label: "Dose", value: p.dose },
+            { label: "Route", value: p.route },
+            { label: "Frequency", value: p.frequency },
+            { label: "Duration", value: p.duration },
+            { label: "Purpose", value: p.purpose },
           ];
 
-          details.forEach(([label, value]) => {
-            if (value) {
-              doc
-                .fontSize(10)
-                .fillColor(COLORS.secondary)
-                .text(`  ${label}: `, { continued: true })
-                .fillColor(COLORS.text)
-                .text(String(value));
+          fields.forEach(f => {
+            if (f.value) {
+              checkPage(doc, 18);
+              doc.rect(65, doc.y - 1, doc.page.width - 135, 16).fill(doc.y % 2 === 0 ? "#FAFAFA" : COLORS.white);
+              doc.fontSize(9).fillColor(COLORS.secondary).text(`${f.label}:`, 70, doc.y + 2, { continued: true, width: 100 });
+              doc.fillColor(COLORS.text).text(` ${f.value}`, { width: doc.page.width - 210 });
             }
           });
 
           if (p.notes) {
-            doc
-              .fontSize(9)
-              .fillColor(COLORS.lightText)
-              .text(`  Note: ${p.notes}`);
+            doc.fontSize(9).fillColor(COLORS.warningOrange).text(`\u26A0 ${p.notes}`, 70, undefined, { width: doc.page.width - 140 });
           }
-          doc.moveDown(0.5);
+
+          doc.moveDown(0.6);
+          doc.rect(55, doc.y, doc.page.width - 110, 0.5).fill("#E0E0E0");
+          doc.moveDown(0.4);
         });
       }
 
       if (protocol.bioregulators?.length > 0) {
-        doc.addPage();
-        addHeader(doc, "PCC BIOREGULATORS (Khavinson Peptides)");
-        protocol.bioregulators.forEach((b) => {
-          checkPage(doc, 70);
-          doc.fontSize(12).fillColor(COLORS.primary).text(b.name);
+        newPage(doc, pn);
+        drawSectionHeader(doc, "PCC Bioregulators (Khavinson Peptides)", "#6A1B9A");
+        drawInfoBox(doc, "Bioregulators are short-chain peptides that target specific organs for cellular regeneration. Take on empty stomach.");
+        doc.moveDown(0.3);
+
+        protocol.bioregulators.forEach(b => {
+          checkPage(doc, 80);
+          doc.fontSize(12).fillColor(COLORS.primary).text(b.name, 65);
           doc.moveDown(0.1);
-          doc
-            .fontSize(10)
-            .fillColor(COLORS.text)
-            .text(`  Target Organ: ${b.targetOrgan || "General"}`);
-          doc.text(`  Dose: ${b.dose} | Frequency: ${b.frequency} | Duration: ${b.duration}`);
+          drawLabelValue(doc, "Target Organ", b.targetOrgan || "General");
+          drawLabelValue(doc, "Dose", b.dose);
+          drawLabelValue(doc, "Frequency", b.frequency);
+          drawLabelValue(doc, "Duration", b.duration);
           doc.moveDown(0.4);
         });
       }
 
       if (protocol.oralPeptides?.length > 0) {
         checkPage(doc, 100);
-        addHeader(doc, "ORAL PEPTIDES");
-        protocol.oralPeptides.forEach((p) => {
-          checkPage(doc, 50);
-          doc.fontSize(11).fillColor(COLORS.primary).text(p.name);
-          doc
-            .fontSize(10)
-            .fillColor(COLORS.text)
-            .text(`  Dose: ${p.dose} | Frequency: ${p.frequency} | Duration: ${p.duration}`);
-          doc.text(`  Purpose: ${p.purpose}`);
-          doc.moveDown(0.3);
+        drawSectionHeader(doc, "Oral Peptides", "#2E7D32");
+        protocol.oralPeptides.forEach(p => {
+          checkPage(doc, 60);
+          doc.fontSize(12).fillColor(COLORS.primary).text(p.name, 65);
+          drawLabelValue(doc, "Dose", p.dose);
+          drawLabelValue(doc, "Frequency", p.frequency);
+          drawLabelValue(doc, "Duration", p.duration);
+          drawLabelValue(doc, "Purpose", p.purpose);
+          doc.moveDown(0.4);
         });
       }
 
       if (protocol.imTherapies?.length > 0) {
         checkPage(doc, 100);
-        addHeader(doc, "IM THERAPIES");
-        protocol.imTherapies.forEach((im) => {
-          checkPage(doc, 50);
-          doc.fontSize(11).fillColor(COLORS.primary).text(im.name);
-          doc
-            .fontSize(10)
-            .fillColor(COLORS.text)
-            .text(`  Dose: ${im.dose} | Frequency: ${im.frequency} — ${im.purpose}`);
-          doc.moveDown(0.3);
+        drawSectionHeader(doc, "IM (Intramuscular) Therapies", "#4527A0");
+        protocol.imTherapies.forEach(im => {
+          checkPage(doc, 60);
+          doc.fontSize(12).fillColor(COLORS.primary).text(im.name, 65);
+          drawLabelValue(doc, "Dose", im.dose);
+          drawLabelValue(doc, "Frequency", im.frequency);
+          drawLabelValue(doc, "Purpose", im.purpose);
+          doc.moveDown(0.4);
         });
       }
 
-      if (
-        (!protocol.injectablePeptides || protocol.injectablePeptides.length === 0) &&
-        (!protocol.bioregulators || protocol.bioregulators.length === 0) &&
-        (!protocol.oralPeptides || protocol.oralPeptides.length === 0) &&
-        (!protocol.imTherapies || protocol.imTherapies.length === 0)
-      ) {
-        addBody(doc, "No peptide or injection protocols have been defined for this protocol.");
+      if (protocol.ivTherapies?.length > 0) {
+        checkPage(doc, 100);
+        drawSectionHeader(doc, "IV Therapy Schedule", "#00838F");
+        protocol.ivTherapies.forEach(iv => {
+          checkPage(doc, 60);
+          doc.fontSize(12).fillColor(COLORS.primary).text(iv.name, 65);
+          drawLabelValue(doc, "Frequency", iv.frequency);
+          drawLabelValue(doc, "Duration", iv.duration);
+          drawLabelValue(doc, "Purpose", iv.purpose);
+          if (iv.notes) {
+            doc.fontSize(9).fillColor(COLORS.lightText).text(`Note: ${iv.notes}`, 70, undefined, { width: doc.page.width - 140 });
+          }
+          doc.moveDown(0.4);
+        });
       }
 
-      addPdfFooter(doc);
+      if (!protocol.injectablePeptides?.length && !protocol.bioregulators?.length &&
+          !protocol.oralPeptides?.length && !protocol.imTherapies?.length && !protocol.ivTherapies?.length) {
+        newPage(doc, pn);
+        drawBody(doc, "No peptide or injection protocols have been defined for this protocol. Contact your Trustee for guidance.");
+      }
+
+      newPage(doc, pn);
+      drawSectionHeader(doc, "Order Products");
+      doc.fontSize(11).fillColor(COLORS.text).text(
+        "All peptides, bioregulators, and supplements referenced in this protocol are available through the Forgotten Formula PMA product catalog. " +
+        "Healer pricing is applied at checkout for PMA members.",
+        65, undefined, { width: doc.page.width - 130 }
+      );
+      doc.moveDown(0.5);
+
+      doc.fontSize(12).fillColor(COLORS.secondary).text("Shop Now:", 65, doc.y, { continued: true });
+      doc.fillColor(COLORS.accent).text(` ${FF_SHOP}`, { link: FF_SHOP, underline: true });
+
+      doc.moveDown(1);
+      drawSubheader(doc, "Resources & Guides");
+      DRIVE_RESOURCES.slice(0, 3).forEach(r => drawResourceLink(doc, r.title, r.category, r.description));
+      if (isCancer) {
+        CANCER_RESOURCES.slice(0, 2).forEach(r => drawResourceLink(doc, r.title, r.category, r.description));
+      }
+
+      drawDisclaimer(doc);
       doc.end();
     } catch (error) {
       reject(error);

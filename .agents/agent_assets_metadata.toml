@@ -6,3 +6,21 @@ id = "0wuGxl7et0ioqd0PJ5AmO"
 uri = "file://attached_assets/FFPMA_Allio_Ecosystem_Handbook.pdf"
 type = "pdf"
 title = "FFPMA Allio Ecosystem Handbook (Branded Edition)"
+
+[[outputs]]
+id = "0IJDrJJNwfJNc4O90uJcx"
+uri = "file://public/protocols/Kathryn_Smith_Full_Protocol.pdf"
+type = "pdf"
+title = "Kathryn Smith — Full Healing Protocol"
+
+[[outputs]]
+id = "4avdn2YwrcQC0_aS2KPUq"
+uri = "file://public/protocols/Kathryn_Smith_Daily_Schedule.pdf"
+type = "pdf"
+title = "Kathryn Smith — Daily Protocol Schedule"
+
+[[outputs]]
+id = "NHxdBWLwF_Rz3wfRI15ik"
+uri = "file://public/protocols/Kathryn_Smith_Peptide_Schedule.pdf"
+type = "pdf"
+title = "Kathryn Smith — Peptide & Injection Protocol"
