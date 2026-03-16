@@ -347,44 +347,6 @@ export function registerSentinelRoutes(app: Express): void {
     }
   });
 
-  // --- OpenClaw Telegram Webhooks ---
-  app.post('/api/webhooks/openclaw', async (req: Request, res: Response) => {
-    try {
-      const authHeader = req.headers.authorization;
-      const expectedKey = process.env.OPENCLAW_API_KEY;
-      if (!expectedKey || !authHeader || authHeader !== `Bearer ${expectedKey}`) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-
-      const { from, to_agent, message } = req.body;
-
-      if (from !== 'trustee') {
-        return res.status(400).json({ error: 'Invalid sender' });
-      }
-
-      // Convert the Telegram message into a high-priority task for the designated agent
-      const description = `TRUSTEE DIRECTIVE via OPENCLAW Telegram:\n"${message}"`;
-
-      let targetAgent = (to_agent || 'SENTINEL').toUpperCase();
-      if (['DR BAKER', 'DR. BAKER', 'DR FORMULA', 'DR. FORMULA'].includes(targetAgent)) {
-        targetAgent = 'DR_FORMULA';
-      }
-
-      await orchestrator.assignTask({
-        agentId: targetAgent,
-        title: `Direct Order: Trustee via Telegram`,
-        description: description,
-        priority: 1, // Urgent priority for direct orders
-        assignedBy: 'TRUSTEE'
-      });
-
-      res.json({ success: true });
-    } catch (error: any) {
-      console.error('[OpenClaw Webhook Error]:', error);
-      res.status(500).json({ error: error.message });
-    }
-  });
-
   // --- AI Model Evaluations (HuggingFace) ---
   app.get('/api/sentinel/agent-evaluations', adminOnly, async (req: Request, res: Response) => {
     try {

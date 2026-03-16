@@ -117,13 +117,15 @@ if (ENABLE_INCOMING) {
       if (process.env.OPENCLAW_API_KEY) {
         webhookHeaders['Authorization'] = `Bearer ${process.env.OPENCLAW_API_KEY}`;
       }
-      const res = await fetch(`${API_BASE}/api/webhooks/openclaw`, {
+      const res = await fetch(`${API_BASE}/api/openclaw/webhook`, {
         method: 'POST',
         headers: webhookHeaders,
         body: JSON.stringify({
-          from: 'trustee',
-          to_agent: targetAgent,
-          message: messageBody,
+          sourceAgent: 'TRUSTEE',
+          targetAgent: targetAgent,
+          messageType: 'task_request',
+          content: messageBody,
+          priority: 'urgent',
         }),
       });
 
