@@ -8,7 +8,7 @@ import { eq } from "drizzle-orm";
 const BAD_SLIDES_ID = "1NyjPJFaTtRX1ydpWPwLbC7mZFihIuvpoU4FSho4rt6s";
 const KATHRYN_MEMBER_ID = "kathryn-smith-2026";
 const DRIVE_FOLDER_ID = "1ui5cbRdyVhIojeG44EYg17puOdt4bStH";
-const WORKSPACE_ROOT = path.resolve(__dirname, "..", "..", "..");
+const WORKSPACE_ROOT = path.resolve(process.cwd(), "..", "..");
 const PDF_PATH = path.join(WORKSPACE_ROOT, "public", "protocols", "Kathryn_Smith_Protocol_Presentation.pdf");
 const DEV_DOMAIN = process.env.REPLIT_DEV_DOMAIN || "";
 const WEB_PRESENTATION_URL = `https://${DEV_DOMAIN}/protocol-presentation/`;
@@ -97,38 +97,61 @@ export async function fixKathrynPresentation(options?: {
   console.log(`[Fix] Uploaded to Drive: ${uploadResult.webViewLink}`);
   console.log(`[Fix] File ID: ${uploadResult.fileId}`);
 
-  console.log("[Fix] Step 4: Update DB records...");
-  const records = await db
-    .select()
-    .from(generatedProtocols)
-    .where(eq(generatedProtocols.memberId, KATHRYN_MEMBER_ID));
+  console.log("[Fix] Step 4: Update DB records (id=1 and id=2)...");
+  const targetIds = [1, 2];
+  let updatedCount = 0;
 
-  console.log(`[Fix] Found ${records.length} generated_protocols records for Kathryn`);
+  for (const targetId of targetIds) {
+    const [existing] = await db
+      .select()
+      .from(generatedProtocols)
+      .where(
+        eq(generatedProtocols.id, targetId)
+      )
+      .limit(1);
 
-  for (const record of records) {
+    if (!existing || existing.memberId !== KATHRYN_MEMBER_ID) {
+      console.warn(`[Fix] Record id=${targetId} not found or not Kathryn's — skipping`);
+      continue;
+    }
+
+    const existingNotes = existing.notes || "";
+    const webUrlNote = `Interactive presentation: ${WEB_PRESENTATION_URL}`;
+    const driveNote = `Drive PDF: ${uploadResult.webViewLink}`;
+    const updatedNotes = existingNotes
+      ? `${existingNotes}\n${webUrlNote}\n${driveNote}`
+      : `${webUrlNote}\n${driveNote}`;
+
     await db
       .update(generatedProtocols)
       .set({
         slidesPresentationId: uploadResult.fileId || null,
-        slidesWebViewLink: uploadResult.webViewLink || null,
+        slidesWebViewLink: WEB_PRESENTATION_URL,
+        notes: updatedNotes,
       })
-      .where(eq(generatedProtocols.id, record.id));
-    console.log(`[Fix] Updated record id=${record.id} with presentation Drive link`);
+      .where(eq(generatedProtocols.id, targetId));
+    console.log(`[Fix] Updated record id=${targetId}: slidesPresentationId=${uploadResult.fileId}, slidesWebViewLink=${WEB_PRESENTATION_URL}`);
+    updatedCount++;
+  }
+
+  if (updatedCount === 0) {
+    throw new Error("No Kathryn records updated — expected to update id=1 and id=2");
   }
 
   const summary = {
-    presentationPdfUploaded: uploadResult.webViewLink,
+    presentationDrivePdfLink: uploadResult.webViewLink,
     presentationFileId: uploadResult.fileId,
     webPresentationUrl: WEB_PRESENTATION_URL,
-    dbRecordsUpdated: records.length,
+    dbRecordsUpdated: updatedCount,
   };
 
   console.log("\n[Fix] Summary:", JSON.stringify(summary, null, 2));
   return summary;
 }
 
-if (require.main === module) {
-  fixKathrynPresentation()
+const isMainModule = process.argv[1]?.includes("fix-kathryn-presentation");
+if (isMainModule) {
+  fixKathrynPresentation({ skipDelete: true })
     .then(() => process.exit(0))
     .catch((err) => {
       console.error("[Fix] Fatal error:", err);

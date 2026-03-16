@@ -4,7 +4,7 @@ import * as path from "path";
 
 const DEV_DOMAIN = process.env.REPLIT_DEV_DOMAIN;
 const PRESENTATION_URL = `https://${DEV_DOMAIN}/protocol-presentation/`;
-const OUTPUT_DIR = path.resolve(__dirname, "..", "..", "..", "public", "protocols");
+const OUTPUT_DIR = path.resolve(process.cwd(), "..", "..", "public", "protocols");
 const TOTAL_SLIDES = 30;
 
 export async function exportPresentationPDF(outputPath?: string): Promise<string> {
@@ -76,7 +76,8 @@ export async function exportPresentationPDF(outputPath?: string): Promise<string
   return finalOutputPath;
 }
 
-if (require.main === module) {
+const isMainModule = process.argv[1]?.includes("export-presentation-pdf");
+if (isMainModule) {
   exportPresentationPDF().catch((err) => {
     console.error("[Export] Fatal error:", err);
     process.exit(1);
