@@ -2672,26 +2672,30 @@ export default function Dashboard() {
                       <span>6 certified</span>
                     </div>
                   </div>
-                  <div className="p-3 rounded-lg bg-white/5 border border-white/10 opacity-50">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-sm">Frequency Medicine Basics</span>
-                      <Badge className="bg-amber-500/20 text-amber-300 border-0 text-xs">Coming Soon</Badge>
+                  <RouterLink href="/training">
+                    <div className="p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 cursor-pointer transition-colors">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-sm">Frequency Medicine Basics</span>
+                        <Badge className="bg-violet-500/20 text-violet-300 border-0 text-xs">New</Badge>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-white/50">
+                        <span>8 modules</span>
+                        <span>RESONANCE + AURORA</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-white/50">
-                      <span>8 modules</span>
-                      <span>RESONANCE + AURORA</span>
+                  </RouterLink>
+                  <RouterLink href="/training">
+                    <div className="p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 cursor-pointer transition-colors">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-sm">Peptide Protocols 101</span>
+                        <Badge className="bg-violet-500/20 text-violet-300 border-0 text-xs">New</Badge>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-white/50">
+                        <span>5 modules</span>
+                        <span>PARACELSUS</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-3 rounded-lg bg-white/5 border border-white/10 opacity-50">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-sm">Peptide Protocols 101</span>
-                      <Badge className="bg-amber-500/20 text-amber-300 border-0 text-xs">Coming Soon</Badge>
-                    </div>
-                    <div className="flex items-center gap-4 text-xs text-white/50">
-                      <span>5 modules</span>
-                      <span>PARACELSUS</span>
-                    </div>
-                  </div>
+                  </RouterLink>
                 </div>
               </Card>
             </div>

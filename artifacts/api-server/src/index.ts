@@ -213,6 +213,8 @@ registerHealthRoutes(app);
     { name: 'Ozone Training', fn: async () => { const { seedOzoneTraining } = await import('./seeds/ozone-training-seed'); return seedOzoneTraining(false); } },
     { name: 'Diet-Cancer Training', fn: async () => { const { seedDietCancerTraining } = await import('./seeds/diet-cancer-training-seed'); return seedDietCancerTraining(false); } },
     { name: 'Ivermectin Training', fn: async () => { const { seedIvermectinTraining } = await import('./seeds/ivermectin-training-seed'); return seedIvermectinTraining(); } },
+    { name: 'Frequency Medicine', fn: async () => { const { seedFrequencyMedicineTraining } = await import('./seeds/frequency-medicine-training-seed'); return seedFrequencyMedicineTraining(); } },
+    { name: 'Peptide Protocols 101', fn: async () => { const { seedPeptideProtocols101 } = await import('./seeds/peptide-protocols-101-seed'); return seedPeptideProtocols101(); } },
   ];
 
   let seedSuccessCount = 0;
