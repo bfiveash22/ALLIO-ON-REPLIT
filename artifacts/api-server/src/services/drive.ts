@@ -1246,3 +1246,77 @@ export async function deleteAgentLibraryFile(fileId: string, agentName: string):
   const deleted = await trashDriveFile(fileId);
   return { success: deleted };
 }
+
+export async function createPatientProtocolsFolder(): Promise<{
+  success: boolean;
+  folderId?: string;
+  error?: string;
+}> {
+  try {
+    let allioFolder = await findAllioFolder();
+    if (!allioFolder) {
+      allioFolder = await createAllioFolder();
+    }
+
+    await setupAgentFolders(allioFolder.id);
+
+    const memberContentId = await findFolderByName(allioFolder.id, 'Member Content');
+    if (!memberContentId) {
+      return { success: false, error: 'Could not find Member Content folder' };
+    }
+
+    let protocolsFolderId = await findFolderByName(memberContentId, 'Patient Protocols');
+    if (!protocolsFolderId) {
+      const newFolder = await createSubfolder(memberContentId, 'Patient Protocols');
+      protocolsFolderId = newFolder.id;
+      console.log('[Drive] Created Patient Protocols folder:', protocolsFolderId);
+    }
+
+    return { success: true, folderId: protocolsFolderId };
+  } catch (error: any) {
+    console.error('Error creating Patient Protocols folder:', error);
+    return { success: false, error: error.message || 'Failed to create folder' };
+  }
+}
+
+export async function uploadProtocolToDrive(
+  pdfBuffer: Buffer,
+  fileName: string
+): Promise<{
+  success: boolean;
+  fileId?: string;
+  webViewLink?: string;
+  error?: string;
+}> {
+  try {
+    const folderResult = await createPatientProtocolsFolder();
+    if (!folderResult.success || !folderResult.folderId) {
+      return { success: false, error: folderResult.error || 'Could not access Patient Protocols folder' };
+    }
+
+    const drive = await getUncachableGoogleDriveClient();
+    const { Readable } = await import('stream');
+
+    const file = await drive.files.create({
+      requestBody: {
+        name: fileName,
+        parents: [folderResult.folderId],
+        mimeType: 'application/pdf',
+      },
+      media: {
+        mimeType: 'application/pdf',
+        body: Readable.from(pdfBuffer),
+      },
+      fields: 'id, name, webViewLink',
+    });
+
+    return {
+      success: true,
+      fileId: file.data.id || undefined,
+      webViewLink: file.data.webViewLink || undefined,
+    };
+  } catch (error: any) {
+    console.error('Error uploading protocol to Drive:', error);
+    return { success: false, error: error.message || 'Upload failed' };
+  }
+}

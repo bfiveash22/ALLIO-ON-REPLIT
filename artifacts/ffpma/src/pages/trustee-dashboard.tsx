@@ -879,6 +879,331 @@ function LaunchReadinessWidget() {
   );
 }
 
+interface ProtocolQueueItem {
+  id: number;
+  patientName: string;
+  patientAge: number | null;
+  sourceType: string;
+  memberId: string | null;
+  doctorId: string | null;
+  status: string;
+  slidesWebViewLink: string | null;
+  pdfDriveFileId: string | null;
+  pdfDriveWebViewLink: string | null;
+  generatedBy: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reviewNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function ProtocolQueuePanel() {
+  const { toast } = useToast();
+  const [reviewNotes, setReviewNotes] = useState("");
+  const [selectedProtocol, setSelectedProtocol] = useState<number | null>(null);
+  const [assignDoctorId, setAssignDoctorId] = useState("");
+
+  const { data: allProtocols, refetch: refetchProtocols } = useQuery<ProtocolQueueItem[]>({
+    queryKey: ["/api/protocol-assembly/protocols"],
+    refetchInterval: 30000,
+  });
+
+  const pendingProtocols = allProtocols?.filter(p => p.status === 'pending_review') || [];
+  const approvedProtocols = allProtocols?.filter(p => p.status === 'approved') || [];
+  const draftProtocols = allProtocols?.filter(p => p.status === 'draft') || [];
+
+  const submitForReviewMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("PATCH", `/api/protocol-assembly/protocols/${id}/status`, { status: 'pending_review' });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Protocol submitted for review" });
+      refetchProtocols();
+    },
+    onError: () => toast({ title: "Failed to submit for review", variant: "destructive" }),
+  });
+
+  const approveProtocolMutation = useMutation({
+    mutationFn: async ({ id, notes, doctorId }: { id: number; notes: string; doctorId?: string }) => {
+      const res = await apiRequest("PATCH", `/api/protocol-assembly/protocols/${id}/status`, {
+        status: 'approved',
+        reviewNotes: notes,
+        doctorId: doctorId || undefined,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Protocol approved and uploaded to Drive" });
+      setReviewNotes("");
+      setSelectedProtocol(null);
+      setAssignDoctorId("");
+      refetchProtocols();
+    },
+    onError: (error: any) => toast({ title: error?.message || "Failed to approve protocol", variant: "destructive" }),
+  });
+
+  const rejectProtocolMutation = useMutation({
+    mutationFn: async ({ id, notes }: { id: number; notes: string }) => {
+      const res = await apiRequest("PATCH", `/api/protocol-assembly/protocols/${id}/status`, {
+        status: 'rejected',
+        reviewNotes: notes,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Protocol rejected" });
+      setReviewNotes("");
+      setSelectedProtocol(null);
+      refetchProtocols();
+    },
+    onError: () => toast({ title: "Failed to reject protocol", variant: "destructive" }),
+  });
+
+  const uploadToDriveMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("POST", `/api/protocol-assembly/protocols/${id}/upload-to-drive`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Protocol PDF uploaded to Google Drive" });
+      refetchProtocols();
+    },
+    onError: () => toast({ title: "Drive upload failed", variant: "destructive" }),
+  });
+
+  const renderProtocolCard = (protocol: ProtocolQueueItem, showActions: boolean) => (
+    <motion.div
+      key={protocol.id}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`p-4 rounded-lg border transition-colors ${
+        selectedProtocol === protocol.id
+          ? "bg-emerald-500/10 border-emerald-500/30"
+          : "bg-white/5 border-white/10 hover:border-white/20"
+      }`}
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+            <ClipboardList className="w-5 h-5 text-emerald-400" />
+          </div>
+          <div>
+            <p className="font-medium text-white">{protocol.patientName}</p>
+            <div className="flex items-center gap-2 mt-1">
+              {protocol.patientAge && (
+                <span className="text-xs text-white/50">Age: {protocol.patientAge}</span>
+              )}
+              <Badge variant="outline" className="text-xs">
+                {protocol.sourceType === 'intake_form' ? 'Intake Form' : 'Transcript'}
+              </Badge>
+              <Badge className={`text-xs ${
+                protocol.status === 'approved' ? 'bg-green-500/20 text-green-300' :
+                protocol.status === 'pending_review' ? 'bg-amber-500/20 text-amber-300' :
+                protocol.status === 'rejected' ? 'bg-red-500/20 text-red-300' :
+                'bg-gray-500/20 text-gray-300'
+              }`}>
+                {protocol.status.replace(/_/g, ' ').toUpperCase()}
+              </Badge>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {protocol.slidesWebViewLink && (
+            <a href={protocol.slidesWebViewLink} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm" className="border-white/10 text-xs">
+                <Play className="w-3 h-3 mr-1" />
+                Slides
+              </Button>
+            </a>
+          )}
+          {protocol.pdfDriveWebViewLink && (
+            <a href={protocol.pdfDriveWebViewLink} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm" className="border-white/10 text-xs">
+                <FileText className="w-3 h-3 mr-1" />
+                PDF
+              </Button>
+            </a>
+          )}
+          <a href={`/api/protocol-assembly/protocols/${protocol.id}/pdf`} target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="sm" className="border-white/10 text-xs">
+              <Download className="w-3 h-3 mr-1" />
+              Download
+            </Button>
+          </a>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 text-xs text-white/40 mb-3">
+        <span>Generated by: {protocol.generatedBy || 'system'}</span>
+        <span>{formatTimeAgo(protocol.createdAt)}</span>
+        {protocol.doctorId && <span>Doctor: {protocol.doctorId}</span>}
+        {protocol.reviewedBy && <span>Reviewed by: {protocol.reviewedBy}</span>}
+      </div>
+
+      {protocol.reviewNotes && (
+        <div className="p-2 rounded bg-white/5 text-xs text-white/60 mb-3">
+          <span className="font-medium text-white/70">Review Notes:</span> {protocol.reviewNotes}
+        </div>
+      )}
+
+      {showActions && protocol.status === 'draft' && (
+        <Button
+          size="sm"
+          className="bg-amber-500 hover:bg-amber-600"
+          onClick={() => submitForReviewMutation.mutate(protocol.id)}
+          disabled={submitForReviewMutation.isPending}
+        >
+          {submitForReviewMutation.isPending ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Send className="w-3 h-3 mr-1" />}
+          Submit for Review
+        </Button>
+      )}
+
+      {showActions && protocol.status === 'pending_review' && (
+        <div className="space-y-3 mt-2">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Assign to doctor ID (optional)"
+              value={selectedProtocol === protocol.id ? assignDoctorId : ""}
+              onChange={(e) => { setSelectedProtocol(protocol.id); setAssignDoctorId(e.target.value); }}
+              className="flex-1 bg-white/5 border-white/10 text-sm"
+            />
+          </div>
+          <Textarea
+            placeholder="Review notes (optional)..."
+            value={selectedProtocol === protocol.id ? reviewNotes : ""}
+            onChange={(e) => { setSelectedProtocol(protocol.id); setReviewNotes(e.target.value); }}
+            className="bg-white/5 border-white/10 text-sm"
+            rows={2}
+          />
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              className="bg-green-500 hover:bg-green-600"
+              onClick={() => approveProtocolMutation.mutate({ id: protocol.id, notes: reviewNotes, doctorId: assignDoctorId || protocol.doctorId || undefined })}
+              disabled={approveProtocolMutation.isPending || (!assignDoctorId && !protocol.doctorId)}
+              title={!assignDoctorId && !protocol.doctorId ? 'Assign a doctor before approving' : ''}
+            >
+              {approveProtocolMutation.isPending ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <CheckCircle2 className="w-3 h-3 mr-1" />}
+              Approve & Upload
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+              onClick={() => rejectProtocolMutation.mutate({ id: protocol.id, notes: reviewNotes })}
+              disabled={rejectProtocolMutation.isPending}
+            >
+              {rejectProtocolMutation.isPending ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Trash2 className="w-3 h-3 mr-1" />}
+              Reject
+            </Button>
+            {!protocol.pdfDriveFileId && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                onClick={() => uploadToDriveMutation.mutate(protocol.id)}
+                disabled={uploadToDriveMutation.isPending}
+              >
+                {uploadToDriveMutation.isPending ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Upload className="w-3 h-3 mr-1" />}
+                Upload to Drive
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showActions && protocol.status === 'approved' && !protocol.pdfDriveFileId && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10 mt-2"
+          onClick={() => uploadToDriveMutation.mutate(protocol.id)}
+          disabled={uploadToDriveMutation.isPending}
+        >
+          {uploadToDriveMutation.isPending ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Upload className="w-3 h-3 mr-1" />}
+          Upload to Drive
+        </Button>
+      )}
+    </motion.div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <Card className="bg-gradient-to-br from-emerald-500/5 to-green-500/5 border-emerald-500/20">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                <ClipboardList className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <CardTitle>Protocol Review Queue</CardTitle>
+                <CardDescription>Review, approve, and deliver patient protocols to doctors</CardDescription>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Badge className="bg-amber-500/20 text-amber-300">{pendingProtocols.length} Pending</Badge>
+              <Badge className="bg-green-500/20 text-green-300">{approvedProtocols.length} Approved</Badge>
+              <Badge className="bg-gray-500/20 text-gray-300">{draftProtocols.length} Draft</Badge>
+              <Button variant="outline" size="sm" className="border-white/10" onClick={() => refetchProtocols()}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {pendingProtocols.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-sm font-semibold text-amber-400 uppercase tracking-wide mb-4 flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Pending Review ({pendingProtocols.length})
+              </h3>
+              <div className="space-y-4">
+                {pendingProtocols.map(p => renderProtocolCard(p, true))}
+              </div>
+            </div>
+          )}
+
+          {draftProtocols.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4 flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Drafts ({draftProtocols.length})
+              </h3>
+              <div className="space-y-4">
+                {draftProtocols.map(p => renderProtocolCard(p, true))}
+              </div>
+            </div>
+          )}
+
+          {approvedProtocols.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-green-400 uppercase tracking-wide mb-4 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" />
+                Approved ({approvedProtocols.length})
+              </h3>
+              <div className="space-y-4">
+                {approvedProtocols.map(p => renderProtocolCard(p, true))}
+              </div>
+            </div>
+          )}
+
+          {(!allProtocols || allProtocols.length === 0) && (
+            <div className="text-center py-12">
+              <ClipboardList className="w-16 h-16 mx-auto mb-4 text-white/20" />
+              <h3 className="text-lg font-medium mb-2">No Protocols Yet</h3>
+              <p className="text-white/50">Protocols will appear here once generated from patient intake forms or transcripts</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function TrusteeDashboard() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -2022,6 +2347,10 @@ export default function TrusteeDashboard() {
                 <TabsTrigger value="launch-readiness" className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-amber-400 data-[state=active]:bg-amber-950/20 data-[state=active]:text-white text-white/60 hover:text-white/80 transition-all whitespace-nowrap" data-testid="tab-launch-readiness">
                   <Rocket className="w-4 h-4 mr-2" />
                   Launch Readiness
+                </TabsTrigger>
+                <TabsTrigger value="protocol-queue" className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-400 data-[state=active]:bg-emerald-950/20 data-[state=active]:text-white text-white/60 hover:text-white/80 transition-all whitespace-nowrap" data-testid="tab-protocol-queue">
+                  <ClipboardList className="w-4 h-4 mr-2" />
+                  Protocol Queue
                 </TabsTrigger>
               </TabsList>
             </ScrollArea>
@@ -4269,6 +4598,10 @@ export default function TrusteeDashboard() {
 
             <TabsContent value="launch-readiness" className="space-y-6">
               <LaunchReadinessWidget />
+            </TabsContent>
+
+            <TabsContent value="protocol-queue" className="space-y-6">
+              <ProtocolQueuePanel />
             </TabsContent>
           </Tabs>
         </main>

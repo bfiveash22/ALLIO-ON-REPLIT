@@ -775,7 +775,8 @@ export async function saveProtocol(
   protocol: HealingProtocol,
   sourceType: "transcript" | "intake_form",
   generatedBy?: string,
-  memberId?: string
+  memberId?: string,
+  doctorId?: string
 ): Promise<number> {
   const [result] = await db
     .insert(generatedProtocols)
@@ -785,6 +786,7 @@ export async function saveProtocol(
       sourceType,
       intakeFormId: profile.intakeFormId || null,
       memberId: memberId || null,
+      doctorId: doctorId || null,
       patientProfile: profile as Record<string, unknown>,
       protocol: protocol as Record<string, unknown>,
       status: "draft",
@@ -825,9 +827,16 @@ export async function listProtocols(limit: number = 50) {
       patientName: generatedProtocols.patientName,
       patientAge: generatedProtocols.patientAge,
       sourceType: generatedProtocols.sourceType,
+      memberId: generatedProtocols.memberId,
+      doctorId: generatedProtocols.doctorId,
       status: generatedProtocols.status,
       slidesWebViewLink: generatedProtocols.slidesWebViewLink,
+      pdfDriveFileId: generatedProtocols.pdfDriveFileId,
+      pdfDriveWebViewLink: generatedProtocols.pdfDriveWebViewLink,
       generatedBy: generatedProtocols.generatedBy,
+      reviewedBy: generatedProtocols.reviewedBy,
+      reviewedAt: generatedProtocols.reviewedAt,
+      reviewNotes: generatedProtocols.reviewNotes,
       createdAt: generatedProtocols.createdAt,
       updatedAt: generatedProtocols.updatedAt,
     })

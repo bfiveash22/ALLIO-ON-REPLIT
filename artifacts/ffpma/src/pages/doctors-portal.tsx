@@ -128,6 +128,112 @@ const protocolTemplates = [
   { id: 6, name: "Mineral Restoration", duration: "8 weeks", category: "Minerals", icon: Heart, cardBg: "bg-rose-500/10", cardBorder: "border-rose-500/20", cardHover: "hover:border-rose-500/40", iconBg: "bg-rose-500/20", iconColor: "text-rose-400" },
 ];
 
+interface AssignedProtocol {
+  id: number;
+  patientName: string;
+  patientAge: number | null;
+  sourceType: string;
+  memberId: string | null;
+  status: string;
+  slidesWebViewLink: string | null;
+  pdfDriveFileId: string | null;
+  pdfDriveWebViewLink: string | null;
+  generatedBy: string | null;
+  reviewedBy: string | null;
+  reviewNotes: string | null;
+  createdAt: string;
+}
+
+function AssignedProtocolsSection() {
+  const { data: approvedProtocols = [] } = useQuery<AssignedProtocol[]>({
+    queryKey: ["/api/protocol-assembly/protocols/approved"],
+    retry: false,
+  });
+
+  return (
+    <Card className="bg-gradient-to-br from-emerald-500/5 to-green-500/5 border-emerald-500/20 p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-bold text-lg flex items-center gap-2">
+          <FileText className="w-5 h-5 text-emerald-400" />
+          Approved Patient Protocols
+          <Badge className="bg-emerald-500/20 text-emerald-300 ml-2">{approvedProtocols.length}</Badge>
+        </h3>
+      </div>
+
+      {approvedProtocols.length === 0 ? (
+        <div className="text-center py-8">
+          <FileText className="w-12 h-12 mx-auto text-white/20 mb-3" />
+          <p className="text-white/60">No approved protocols yet</p>
+          <p className="text-sm text-white/40 mt-1">Protocols approved by the Trustee will appear here</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {approvedProtocols.map((protocol) => (
+            <div
+              key={protocol.id}
+              className="p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center font-bold text-sm">
+                    {protocol.patientName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-medium">{protocol.patientName}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      {protocol.patientAge && (
+                        <span className="text-xs text-white/50">Age: {protocol.patientAge}</span>
+                      )}
+                      <Badge className="bg-green-500/20 text-green-300 text-xs">Approved</Badge>
+                      {protocol.reviewedBy && (
+                        <span className="text-xs text-white/40">by {protocol.reviewedBy}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {protocol.pdfDriveWebViewLink && (
+                    <a href={protocol.pdfDriveWebViewLink} target="_blank" rel="noopener noreferrer">
+                      <Button variant="outline" size="sm" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 text-xs">
+                        <FileText className="w-3 h-3 mr-1" />
+                        View PDF
+                      </Button>
+                    </a>
+                  )}
+                  {protocol.slidesWebViewLink && (
+                    <a href={protocol.slidesWebViewLink} target="_blank" rel="noopener noreferrer">
+                      <Button variant="outline" size="sm" className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10 text-xs">
+                        <Video className="w-3 h-3 mr-1" />
+                        Presentation
+                      </Button>
+                    </a>
+                  )}
+                  <a href={`/api/protocol-assembly/protocols/${protocol.id}/pdf`} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" size="sm" className="border-white/10 text-xs">
+                      <Download className="w-3 h-3 mr-1" />
+                      Download
+                    </Button>
+                  </a>
+                </div>
+              </div>
+              {protocol.reviewNotes && (
+                <div className="p-2 rounded bg-white/5 text-xs text-white/60 mt-2">
+                  <span className="font-medium text-white/70">Trustee Notes:</span> {protocol.reviewNotes}
+                </div>
+              )}
+              <div className="flex items-center gap-4 text-xs text-white/40 mt-2">
+                <span>Generated: {new Date(protocol.createdAt).toLocaleDateString()}</span>
+                <span>Source: {protocol.sourceType === 'intake_form' ? 'Intake Form' : 'Transcript'}</span>
+                {protocol.generatedBy && <span>By: {protocol.generatedBy}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 function DoctorSettingsTab() {
   const { toast } = useToast();
   const [memberType, setMemberType] = useState<'member' | 'info_only'>('member');
@@ -1069,6 +1175,8 @@ export default function DoctorsPortal() {
             </TabsContent>
 
             <TabsContent value="protocols" className="space-y-6">
+              <AssignedProtocolsSection />
+
               {/* Active Patient Protocols */}
               <Card className="bg-gradient-to-br from-cyan-500/5 to-blue-500/5 border-cyan-500/20 p-5">
                 <div className="flex items-center justify-between mb-4">

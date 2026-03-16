@@ -8,7 +8,8 @@ import {
   uploadMarketingAssets, uploadLegalDocuments,
   uploadBloodAnalysisFile, getBloodAnalysisUploads,
   createBakerFilesFolder, uploadToBakerFiles,
-  uploadToAgentLibrary, listAgentLibraryFiles, deleteAgentLibraryFile
+  uploadToAgentLibrary, listAgentLibraryFiles, deleteAgentLibraryFile,
+  createPatientProtocolsFolder,
 } from "../services/drive";
 import { ingestFileToLibrary, backfillAgentLibrary, getFileIndexingStatus, deleteIndexedFile } from "../services/library-ingestion";
 
@@ -164,6 +165,11 @@ export function registerDriveRoutes(app: Express): void {
 
   app.post("/api/drive/create-baker-folder", requireRole("admin"), async (req: Request, res: Response) => {
     try { res.json(await createBakerFilesFolder()); }
+    catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
+  });
+
+  app.post("/api/drive/create-patient-protocols-folder", requireRole("admin"), async (req: Request, res: Response) => {
+    try { res.json(await createPatientProtocolsFolder()); }
     catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
   });
 
