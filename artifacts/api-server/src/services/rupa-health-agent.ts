@@ -77,6 +77,7 @@ export class RupaHealthAgentService {
       console.error('[RUPA-HEALTH-AGENT] Playwright is not available — returning manual fallback');
       return {
         success: false,
+        terminal: true,
         error: 'Playwright is not available in this environment.',
         resultUrl: manualUrl,
         message: `Automated ordering unavailable. Please order manually at ${manualUrl} for patient "${patientDetails.firstName} ${patientDetails.lastName}": ${testPanels.join(', ')}`,
@@ -89,6 +90,7 @@ export class RupaHealthAgentService {
       console.error('[RUPA-HEALTH-AGENT] Browser cannot launch — returning manual fallback');
       return {
         success: false,
+        terminal: true,
         error: 'Browser cannot launch in this environment.',
         resultUrl: manualUrl,
         message: `Automated ordering unavailable. Please order manually at ${manualUrl} for patient "${patientDetails.firstName} ${patientDetails.lastName}": ${testPanels.join(', ')}`,
@@ -231,6 +233,7 @@ export class RupaHealthAgentService {
       if (isTimeout) {
         return {
           success: false,
+          terminal: true,
           error: `Automated lab ordering timed out. Please place the order manually.`,
           resultUrl: manualUrl,
           message: `Manual action required: Go to ${manualUrl}, search for patient "${patientName}", and add these panels: ${panelList}. The Rupa Health portal may be slow or have changed its interface.`,
@@ -239,6 +242,7 @@ export class RupaHealthAgentService {
 
       return {
         success: false,
+        terminal: true,
         error: errMsg,
         resultUrl: manualUrl,
         message: `Automation failed. Manual fallback: Go to ${manualUrl} and order panels (${panelList}) for patient "${patientName}".`,
