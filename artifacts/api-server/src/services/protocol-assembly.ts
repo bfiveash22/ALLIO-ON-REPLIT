@@ -125,12 +125,12 @@ export async function runProtocolQA(protocol: HealingProtocol): Promise<{
   template: { valid: boolean; estimatedPages: number; errors: string[]; warnings: string[]; passes: string[] };
 }> {
   const { createRequire } = await import("module");
-  const require = createRequire(import.meta.url);
+  const requireFn = createRequire(typeof import.meta?.url === "string" && import.meta.url !== "" ? import.meta.url : __filename ?? "file://" + process.cwd() + "/index.js");
 
   const scriptBase = path.resolve(process.cwd(), ".agents/skills/dr-formula-assistant/scripts");
-  const validateProtocolModule = require(path.join(scriptBase, "validate-protocol.js"));
-  const catalogCheckerModule = require(path.join(scriptBase, "catalog-checker.js"));
-  const templateAuditModule = require(path.join(scriptBase, "template-audit.js"));
+  const validateProtocolModule = requireFn(path.join(scriptBase, "validate-protocol.js"));
+  const catalogCheckerModule = requireFn(path.join(scriptBase, "catalog-checker.js"));
+  const templateAuditModule = requireFn(path.join(scriptBase, "template-audit.js"));
 
   const validationResult = validateProtocolModule.validateProtocol(protocol);
   const catalogResult = catalogCheckerModule.checkCatalog(protocol);

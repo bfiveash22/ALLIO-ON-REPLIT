@@ -4,8 +4,15 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const _currentDir = (() => {
+  try {
+    if (typeof import.meta?.url === "string" && import.meta.url !== "") {
+      return path.dirname(fileURLToPath(import.meta.url));
+    }
+  } catch {}
+  if (typeof __dirname === "string") return __dirname;
+  return process.cwd();
+})();
 
 const ABACUSAI_API_KEY = process.env.ABACUSAI_API_KEY;
 
@@ -22,8 +29,8 @@ interface PeptideRecord {
 function resolveFromWorkspace(...segments: string[]): string {
   const candidates = [
     path.join(process.cwd(), ...segments),
-    path.resolve(__dirname, '..', '..', '..', ...segments),
-    path.resolve(__dirname, '..', ...segments),
+    path.resolve(_currentDir, '..', '..', '..', ...segments),
+    path.resolve(_currentDir, '..', ...segments),
   ];
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) return candidate;
