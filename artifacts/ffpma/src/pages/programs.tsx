@@ -6,12 +6,72 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import type { Program } from "@shared/schema";
-import { Syringe, Pill, Activity, ChevronRight, Clock, Users } from "lucide-react";
+import { Syringe, Pill, Activity, ChevronRight, Clock, CheckCircle2, DollarSign } from "lucide-react";
 
 const programIcons = {
   iv: Syringe,
   peptide: Pill,
   protocol: Activity,
+};
+
+const programTypeLabels: Record<string, string> = {
+  iv: "IV Therapy",
+  peptide: "Peptide Therapy",
+  protocol: "Protocol",
+};
+
+const programIncludes: Record<string, string[]> = {
+  "iv-vitamin-therapy-starter": [
+    "4 customized IV infusions",
+    "Initial health assessment",
+    "Baseline and follow-up labs",
+    "Personalized protocol design",
+    "Maintenance plan for ongoing care",
+  ],
+  "peptide-healing-protocol": [
+    "All necessary peptides (8-week supply)",
+    "Injection supplies and training",
+    "Weekly check-in calls",
+    "Protocol adjustments as needed",
+    "Comprehensive lab panel",
+  ],
+  "5-rs-to-homeostasis": [
+    "Complete supplement protocol",
+    "Functional lab testing",
+    "Bi-weekly coaching calls",
+    "Meal plans and recipes",
+    "Lifetime access to program materials",
+  ],
+  "glp-1-weight-management": [
+    "16-week peptide supply",
+    "Weekly coaching calls",
+    "Comprehensive metabolic labs",
+    "Nutrition and exercise plans",
+    "Body composition tracking",
+  ],
+  "nad-cellular-revival": [
+    "NAD+ IV infusions or subcutaneous protocol",
+    "Precursor supplements",
+    "Lifestyle optimization guide",
+    "Cognitive function testing",
+    "Maintenance protocol",
+  ],
+  "parasite-cleanse-protocol": [
+    "Complete herbal cleanse kit",
+    "Binders and drainage support",
+    "Probiotic restoration protocol",
+    "Dietary guidelines",
+    "Follow-up testing recommendations",
+  ],
+};
+
+const getPricingTier = (price: string | number | null): { label: string; color: string } => {
+  if (!price) return { label: "Contact Us", color: "bg-gray-500/20 text-gray-300" };
+  const numPrice = Number(price);
+  if (numPrice <= 1000) return { label: "Essential", color: "bg-emerald-500/20 text-emerald-300" };
+  if (numPrice <= 2500) return { label: "Standard", color: "bg-blue-500/20 text-blue-300" };
+  if (numPrice <= 3500) return { label: "Premium", color: "bg-violet-500/20 text-violet-300" };
+  return { label: "Comprehensive", color: "bg-amber-500/20 text-amber-300" };
 };
 
 export default function ProgramsPage() {
@@ -26,6 +86,8 @@ export default function ProgramsPage() {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(Number(price));
   };
 
@@ -37,11 +99,12 @@ export default function ProgramsPage() {
             Healing Programs
           </Badge>
           <h1 className="mb-2 text-3xl font-bold tracking-tight">
-            Comprehensive Programs
+            Comprehensive Healing Programs
           </h1>
           <p className="text-muted-foreground max-w-2xl">
-            Advanced protocols and programs designed by root cause doctors for
-            optimal health, healing, and regeneration.
+            Evidence-based protocols designed by root cause doctors for
+            optimal health, deep healing, and cellular regeneration. Each program
+            includes practitioner guidance and personalized support.
           </p>
         </div>
 
@@ -55,22 +118,26 @@ export default function ProgramsPage() {
                 </CardHeader>
                 <CardContent>
                   <Skeleton className="mb-4 h-20 w-full" />
+                  <Skeleton className="mb-2 h-4 w-full" />
+                  <Skeleton className="mb-2 h-4 w-3/4" />
                   <Skeleton className="h-10 w-full" />
                 </CardContent>
               </Card>
             ))}
           </div>
-        ) : programs && programs.length > 0 ? (
+        ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {programs.map((program) => {
+            {(programs || []).map((program) => {
               const IconComponent =
                 programIcons[program.type as keyof typeof programIcons] ||
                 Activity;
+              const includes = programIncludes[program.slug] || [];
+              const pricingTier = getPricingTier(program.price);
 
               return (
                 <Card
                   key={program.id}
-                  className="border-card-border hover-elevate"
+                  className="border-card-border hover-elevate flex flex-col"
                   data-testid={`card-program-${program.id}`}
                 >
                   <CardHeader>
@@ -78,18 +145,24 @@ export default function ProgramsPage() {
                       <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary/10">
                         <IconComponent className="h-6 w-6 text-primary" />
                       </div>
-                      <Badge variant="outline" className="capitalize">
-                        {program.type}
-                      </Badge>
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="capitalize text-xs">
+                          {programTypeLabels[program.type] || program.type}
+                        </Badge>
+                        <Badge className={`${pricingTier.color} border-0 text-xs`}>
+                          {pricingTier.label}
+                        </Badge>
+                      </div>
                     </div>
                     <CardTitle className="mt-4">{program.name}</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="flex-1 flex flex-col">
                     {program.shortDescription && (
                       <p className="mb-4 text-sm text-muted-foreground line-clamp-3">
                         {program.shortDescription}
                       </p>
                     )}
+
                     <div className="mb-4 flex items-center gap-4 text-sm text-muted-foreground">
                       {program.duration && (
                         <span className="flex items-center gap-1">
@@ -97,49 +170,52 @@ export default function ProgramsPage() {
                           {program.duration}
                         </span>
                       )}
+                      <span className="flex items-center gap-1">
+                        <DollarSign className="h-4 w-4" />
+                        {isAuthenticated
+                          ? formatPrice(program.price)
+                          : "Sign in for pricing"}
+                      </span>
                     </div>
-                    <div className="mb-4">
-                      {isAuthenticated ? (
-                        <p className="text-lg font-semibold text-primary">
-                          {formatPrice(program.price)}
+
+                    {includes.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                          What's Included
                         </p>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">
-                          Sign in to view pricing
-                        </p>
-                      )}
+                        <ul className="space-y-1.5">
+                          {includes.slice(0, 4).map((item, idx) => (
+                            <li key={idx} className="flex items-start gap-2 text-xs text-muted-foreground">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+                              {item}
+                            </li>
+                          ))}
+                          {includes.length > 4 && (
+                            <li className="text-xs text-primary">
+                              +{includes.length - 4} more included
+                            </li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+
+                    <div className="mt-auto">
+                      <Button
+                        className="w-full"
+                        asChild
+                        data-testid={`button-program-${program.id}`}
+                      >
+                        <Link href={`/programs/${program.slug}`}>
+                          View Program Details
+                          <ChevronRight className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
                     </div>
-                    <Button
-                      className="w-full"
-                      asChild
-                      data-testid={`button-program-${program.id}`}
-                    >
-                      <Link href={`/programs/${program.slug}`}>
-                        Learn More
-                        <ChevronRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
                   </CardContent>
                 </Card>
               );
             })}
           </div>
-        ) : (
-          <Card className="border-card-border">
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <Activity className="mb-4 h-16 w-16 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">
-                Programs Coming Soon
-              </h3>
-              <p className="mb-4 text-center text-muted-foreground max-w-md">
-                Our comprehensive IV, Peptide, and Protocol programs are being
-                developed. Check back soon for more information.
-              </p>
-              <Button asChild data-testid="button-browse-products">
-                <Link href="/products">Browse Products</Link>
-              </Button>
-            </CardContent>
-          </Card>
         )}
 
         <div className="mt-12">
@@ -152,7 +228,7 @@ export default function ProgramsPage() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-md bg-secondary/10">
                   <Syringe className="h-6 w-6 text-secondary" />
                 </div>
-                <CardTitle className="mt-4">IV Program</CardTitle>
+                <CardTitle className="mt-4">IV Therapy Programs</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="mb-4 text-sm text-muted-foreground">
@@ -189,7 +265,7 @@ export default function ProgramsPage() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-md bg-secondary/10">
                   <Pill className="h-6 w-6 text-secondary" />
                 </div>
-                <CardTitle className="mt-4">Peptide Program</CardTitle>
+                <CardTitle className="mt-4">Peptide Therapy Programs</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="mb-4 text-sm text-muted-foreground">
@@ -212,7 +288,7 @@ export default function ProgramsPage() {
                   </li>
                   <li className="flex items-center gap-2">
                     <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                    Bioregulator stacks
+                    GLP-1 weight management
                   </li>
                 </ul>
               </CardContent>
@@ -226,7 +302,7 @@ export default function ProgramsPage() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-md bg-secondary/10">
                   <Activity className="h-6 w-6 text-secondary" />
                 </div>
-                <CardTitle className="mt-4">Protocols</CardTitle>
+                <CardTitle className="mt-4">Root Cause Protocols</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="mb-4 text-sm text-muted-foreground">
@@ -237,15 +313,15 @@ export default function ProgramsPage() {
                 <ul className="mb-4 space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    FF PMA 5R Framework
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                     Anti-parasitic protocols
                   </li>
                   <li className="flex items-center gap-2">
                     <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                     Detoxification programs
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                    Hormone optimization
                   </li>
                   <li className="flex items-center gap-2">
                     <div className="h-1.5 w-1.5 rounded-full bg-primary" />
