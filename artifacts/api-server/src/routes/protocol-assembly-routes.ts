@@ -642,6 +642,108 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
     }
   });
 
+  app.post('/api/protocol-assembly/protocols/:id/finalize', requireAuth, requireRole('admin', 'trustee'), asyncHandler(async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) throw new AppError('Invalid protocol ID', 400, 'INVALID_ID');
+
+    const record = await getProtocol(id);
+    if (!record) throw new AppError('Protocol not found', 404, 'NOT_FOUND');
+
+    if (record.status !== 'approved') {
+      throw new AppError('Protocol must be approved before finalization', 400, 'NOT_APPROVED');
+    }
+
+    const protocol = record.protocol as HealingProtocol;
+    const profile = record.patientProfile as PatientProfile;
+
+    const catalogWarnings: string[] = [];
+    try {
+      const { searchCatalog } = await import('../services/catalog-service');
+      const FF_DETOX_SEQUENCE = ['EDTA', "Myers'", 'Glutathione', 'ALA', 'DMSO'];
+      for (const component of FF_DETOX_SEQUENCE) {
+        const matches = await searchCatalog(component);
+        if (matches.length === 0) {
+          catalogWarnings.push(`FF Detox component "${component}" not found in product catalog`);
+        }
+      }
+
+      const phases = protocol.phases || [];
+      for (const phase of phases) {
+        for (const action of (phase.keyActions || [])) {
+          if (/lipo.?b/i.test(action) && /\biv\b/i.test(action)) {
+            catalogWarnings.push(`Catalog violation: Lipo-B referenced in IV context in phase "${phase.name}". Lipo-B is IM ONLY.`);
+          }
+        }
+      }
+    } catch (catErr) {
+      console.warn(`[Finalize] Catalog cross-check failed (non-fatal):`, catErr);
+      catalogWarnings.push('Catalog cross-check unavailable — could not fetch catalog');
+    }
+
+    let citations;
+    try {
+      citations = await fetchProtocolCitations(protocol, profile);
+    } catch (citErr: unknown) {
+      console.warn(`[Finalize] Citations fetch failed for protocol ${id}:`, citErr instanceof Error ? citErr.message : String(citErr));
+    }
+
+    const safeName = (protocol.patientName || 'protocol').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const dateStr = protocol.generatedDate || new Date().toISOString().split('T')[0];
+
+    const [fullPdfBuffer, dailyPdfBuffer, peptidePdfBuffer] = await Promise.all([
+      generateProtocolPDFBuffer(protocol, profile, citations),
+      generateDailySchedulePDFBuffer(protocol, profile),
+      generatePeptideSchedulePDFBuffer(protocol, profile),
+    ]);
+    console.log(`[Finalize] Generated 3 PDFs for protocol ${id}: Full(${fullPdfBuffer.length}), Daily(${dailyPdfBuffer.length}), Peptide(${peptidePdfBuffer.length})`);
+
+    const { uploadProtocolToDrive } = await import('../services/drive');
+    const [fullDriveResult, dailyDriveResult, peptideDriveResult] = await Promise.all([
+      uploadProtocolToDrive(fullPdfBuffer, `${safeName}_Full_Protocol_${dateStr}.pdf`),
+      uploadProtocolToDrive(dailyPdfBuffer, `${safeName}_Daily_Schedule_${dateStr}.pdf`),
+      uploadProtocolToDrive(peptidePdfBuffer, `${safeName}_Peptide_Schedule_${dateStr}.pdf`),
+    ]);
+
+    const driveUpdateData: Record<string, unknown> = { updatedAt: new Date() };
+    const deliverables: Record<string, string | null> = {};
+
+    if (fullDriveResult.success) {
+      driveUpdateData.pdfDriveFileId = fullDriveResult.fileId;
+      driveUpdateData.pdfDriveWebViewLink = fullDriveResult.webViewLink;
+      deliverables.fullProtocolPdf = fullDriveResult.webViewLink || null;
+    }
+    if (dailyDriveResult.success) {
+      driveUpdateData.dailySchedulePdfFileId = dailyDriveResult.fileId;
+      driveUpdateData.dailySchedulePdfWebViewLink = dailyDriveResult.webViewLink;
+      deliverables.dailySchedulePdf = dailyDriveResult.webViewLink || null;
+    }
+    if (peptideDriveResult.success) {
+      driveUpdateData.peptideSchedulePdfFileId = peptideDriveResult.fileId;
+      driveUpdateData.peptideSchedulePdfWebViewLink = peptideDriveResult.webViewLink;
+      deliverables.peptideSchedulePdf = peptideDriveResult.webViewLink || null;
+    }
+
+    deliverables.presentation = record.slidesWebViewLink || null;
+
+    await db.update(generatedProtocols).set(driveUpdateData).where(eq(generatedProtocols.id, id));
+    console.log(`[Finalize] Protocol ${id} finalized with ${Object.keys(deliverables).length} deliverables`);
+
+    res.json({
+      success: true,
+      protocolId: id,
+      deliverables,
+      catalogCrossCheck: {
+        passed: catalogWarnings.length === 0,
+        warnings: catalogWarnings,
+      },
+      pdfSizes: {
+        fullProtocol: fullPdfBuffer.length,
+        dailySchedule: dailyPdfBuffer.length,
+        peptideSchedule: peptidePdfBuffer.length,
+      },
+    });
+  }));
+
   app.post('/api/protocol-assembly/protocols/:id/upload-to-drive', requireAuth, requireRole('admin', 'trustee'), async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
