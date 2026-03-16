@@ -59,6 +59,7 @@ import {
 import { Link } from "wouter";
 import { agents, getAgentsByDivision } from "@shared/agents";
 import { BloodAnalysisUpload } from "@/components/BloodAnalysisUpload";
+import { XRayAnalysisUpload } from "@/components/XRayAnalysisUpload";
 import { DoctorScheduling } from "@/components/DoctorScheduling";
 import { DoctorPatientMessaging } from "@/components/DoctorPatientMessaging";
 import { EnrollMemberModal } from "@/components/EnrollMemberModal";
@@ -1010,26 +1011,16 @@ export default function DoctorsPortal() {
                   </h3>
                   <p className="text-sm text-white/60 mb-4">AI-powered analysis for educational pattern recognition</p>
                   
-                  <div className="space-y-4">
-                    <div className="p-4 rounded-lg bg-gradient-to-r from-violet-500/10 to-purple-500/10 border border-violet-500/20">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
-                            <Dna className="w-5 h-5 text-violet-400" />
-                          </div>
-                          <div>
-                            <p className="font-medium">X-Ray Pattern Analysis</p>
-                            <p className="text-xs text-white/50">Chest & skeletal imaging</p>
-                          </div>
-                        </div>
-                        <Badge className="bg-amber-500/20 text-amber-300">Coming Soon</Badge>
-                      </div>
-                      <Button className="w-full bg-violet-500/20 hover:bg-violet-500/30 text-violet-300" disabled>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload X-Ray Image
-                      </Button>
-                    </div>
+                  <XRayAnalysisUpload
+                    onAnalysisComplete={(result) => {
+                      toast({
+                        title: "X-Ray Analysis Complete",
+                        description: "AI analysis results are ready for review",
+                      });
+                    }}
+                  />
 
+                  <div className="mt-4">
                     <div className="p-4 rounded-lg bg-gradient-to-r from-rose-500/10 to-pink-500/10 border border-rose-500/20">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
