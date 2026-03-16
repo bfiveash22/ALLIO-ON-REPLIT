@@ -8,7 +8,7 @@ import { eq, and } from "drizzle-orm";
 const BAD_SLIDES_ID = "1NyjPJFaTtRX1ydpWPwLbC7mZFihIuvpoU4FSho4rt6s";
 const KATHRYN_MEMBER_ID = "kathryn-smith-2026";
 const PRIMARY_RECORD_ID = 2;
-const DRIVE_FOLDER_ID = "1ui5cbRdyVhIojeG44EYg17puOdt4bStH";
+const ALLIO_FOLDER_ID = "1ui5cbRdyVhIojeG44EYg17puOdt4bStH";
 const WORKSPACE_ROOT = path.resolve(process.cwd(), "..", "..");
 const PDF_PATH = path.join(WORKSPACE_ROOT, "public", "protocols", "Kathryn_Smith_Protocol_Presentation.pdf");
 const PRODUCTION_PRESENTATION_URL = "https://www.ffpma.com/protocol-presentation/";
@@ -33,7 +33,7 @@ export async function fixKathrynPresentation(options?: {
     try {
       const drive = await getUncachableGoogleDriveClient();
       const listRes = await drive.files.list({
-        q: `'${DRIVE_FOLDER_ID}' in parents and trashed = false`,
+        q: `'${ALLIO_FOLDER_ID}' in parents and trashed = false`,
         fields: "files(id, name, createdTime, mimeType)",
         orderBy: "createdTime desc",
       });
@@ -86,8 +86,14 @@ export async function fixKathrynPresentation(options?: {
     throw new Error(`Upload failed: ${JSON.stringify(uploadResult)}`);
   }
 
-  console.log(`[Fix] Uploaded to Drive: ${uploadResult.webViewLink}`);
-  console.log(`[Fix] File ID: ${uploadResult.fileId}`);
+  const drive = await getUncachableGoogleDriveClient();
+  const fileInfo = await drive.files.get({
+    fileId: uploadResult.fileId,
+    fields: "id, parents",
+  });
+  const parents = fileInfo.data.parents || [];
+  console.log(`[Fix] Uploaded file ${uploadResult.fileId} to folder(s): ${parents.join(", ")}`);
+  console.log(`[Fix] Drive PDF link: ${uploadResult.webViewLink}`);
 
   console.log(`[Fix] Step 4: Update DB record id=${PRIMARY_RECORD_ID} (member_id=${KATHRYN_MEMBER_ID})...`);
 
@@ -111,6 +117,8 @@ export async function fixKathrynPresentation(options?: {
     .set({
       slidesPresentationId: uploadResult.fileId,
       slidesWebViewLink: PRODUCTION_PRESENTATION_URL,
+      pdfDriveFileId: uploadResult.fileId,
+      pdfDriveWebViewLink: uploadResult.webViewLink || null,
       notes: `Interactive presentation: ${PRODUCTION_PRESENTATION_URL}\nDrive PDF: ${uploadResult.webViewLink}`,
     })
     .where(eq(generatedProtocols.id, PRIMARY_RECORD_ID));
@@ -120,19 +128,31 @@ export async function fixKathrynPresentation(options?: {
       id: generatedProtocols.id,
       slidesPresentationId: generatedProtocols.slidesPresentationId,
       slidesWebViewLink: generatedProtocols.slidesWebViewLink,
+      pdfDriveFileId: generatedProtocols.pdfDriveFileId,
+      pdfDriveWebViewLink: generatedProtocols.pdfDriveWebViewLink,
     })
     .from(generatedProtocols)
     .where(eq(generatedProtocols.id, PRIMARY_RECORD_ID))
     .limit(1);
 
   if (verified.slidesPresentationId !== uploadResult.fileId) {
-    throw new Error(`Verification failed: slidesPresentationId mismatch (expected=${uploadResult.fileId}, got=${verified.slidesPresentationId})`);
+    throw new Error(`Verification failed: slidesPresentationId mismatch`);
   }
   if (verified.slidesWebViewLink !== PRODUCTION_PRESENTATION_URL) {
-    throw new Error(`Verification failed: slidesWebViewLink mismatch (expected=${PRODUCTION_PRESENTATION_URL}, got=${verified.slidesWebViewLink})`);
+    throw new Error(`Verification failed: slidesWebViewLink mismatch`);
+  }
+  if (verified.pdfDriveFileId !== uploadResult.fileId) {
+    throw new Error(`Verification failed: pdfDriveFileId mismatch`);
+  }
+  if (verified.pdfDriveWebViewLink !== uploadResult.webViewLink) {
+    throw new Error(`Verification failed: pdfDriveWebViewLink mismatch`);
   }
 
-  console.log(`[Fix] Verified record id=${PRIMARY_RECORD_ID}: slidesPresentationId=${verified.slidesPresentationId}, slidesWebViewLink=${verified.slidesWebViewLink}`);
+  console.log(`[Fix] Verified record id=${PRIMARY_RECORD_ID}:`);
+  console.log(`  slidesPresentationId = ${verified.slidesPresentationId}`);
+  console.log(`  slidesWebViewLink = ${verified.slidesWebViewLink}`);
+  console.log(`  pdfDriveFileId = ${verified.pdfDriveFileId}`);
+  console.log(`  pdfDriveWebViewLink = ${verified.pdfDriveWebViewLink}`);
 
   const summary = {
     badSlidesDeleted: BAD_SLIDES_ID,
