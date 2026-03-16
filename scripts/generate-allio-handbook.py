@@ -248,7 +248,7 @@ def build_toc(elements, styles):
             "Science Division (13 agents)",
             "Marketing Division (5 agents)",
             "Legal Division (4 agents)",
-            "Engineering Division (10 agents)",
+            "Engineering Division (11 agents)",
             "Support Division (8 agents)",
             "Financial Division (1 agent)",
         ]),
