@@ -198,7 +198,7 @@ function generateFullProtocol() {
   drawTable(doc,
     ["Therapy", "Frequency", "Duration", "Purpose"],
     [
-      ["FF Detox IV (Full Sequence)", "1x (Wk 1)", "Week 1 only", "EDTA Chelation + Myers' Cocktail + Glutathione + ALA + DMSO + Lipo-B"],
+      ["FF Detox IV (Full Sequence)", "1x (Wk 1)", "Week 1 only", "EDTA Chelation + Myers' Cocktail + Glutathione + ALA + DMSO"],
       ["IV Vitamin C (High Dose)", "Mon/Wed", "Wks 2-12", "Pro-oxidant cancer cell destruction"],
       ["Ozonated Glycerin IV", "Friday", "Wks 2-12", "Immune activation, pathogen elimination"],
       ["NAD+ IM", "1x/week", "Ongoing", "Mitochondrial restoration"],
@@ -407,7 +407,7 @@ function generatePeptideSchedule() {
   drawTable(doc,
     ["Therapy", "Frequency", "Duration", "Purpose"],
     [
-      ["FF Detox IV (Full Sequence)", "1x (Wk 1)", "Week 1 only", "EDTA + Myers' + Glutathione + ALA + DMSO + Lipo-B"],
+      ["FF Detox IV (Full Sequence)", "1x (Wk 1)", "Week 1 only", "EDTA + Myers' Cocktail + Glutathione + ALA + DMSO"],
       ["IV Vitamin C (High Dose)", "Mon/Wed", "Wks 2-12", "Pro-oxidant cancer cell destruction"],
       ["Ozonated Glycerin IV", "Friday", "Wks 2-12", "Immune activation, pathogen elimination"],
       ["NAD+ IM", "1x/week", "Ongoing", "Mitochondrial restoration"],

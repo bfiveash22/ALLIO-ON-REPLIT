@@ -150,7 +150,7 @@ export function buildKathrynSmithDemoData() {
         { name: "Blushwood Berry", dose: "Per label", schedule: "Daily bedtime", duration: "12 weeks", purpose: "Tumor necrosis compound" }
       ],
       ivTherapies: [
-        { name: "FF Detox IV Protocol (Full Sequence)", frequency: "1x (Week 1)", duration: "Week 1 — single session", purpose: "Full-spectrum detox: EDTA chelation (heavy metals) → Myers' Cocktail w/ extra B-vitamins & trace minerals → Glutathione (master antioxidant) → Alpha Lipoic Acid (mitochondrial support) → DMSO (cellular transport & anti-inflammatory) → Lipo-B injection (methylation support)" },
+        { name: "FF Detox IV Protocol (Full Sequence)", frequency: "1x (Week 1)", duration: "Week 1 — single session", purpose: "Full-spectrum detox: EDTA chelation (heavy metals) → Myers' Cocktail w/ extra B-vitamins & trace minerals → Glutathione (master antioxidant) → Alpha Lipoic Acid (mitochondrial support) → DMSO (cellular transport & anti-inflammatory)" },
         { name: "IV Vitamin C (High Dose)", frequency: "Mon/Wed", duration: "Weeks 2-12 (ongoing)", purpose: "Pro-oxidant cancer cell destruction at high doses" },
         { name: "Ozonated Glycerin IV", frequency: "Friday", duration: "Weeks 2-12 (ongoing)", purpose: "Immune activation and pathogen elimination" }
       ],
