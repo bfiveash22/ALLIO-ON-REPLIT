@@ -3,6 +3,7 @@ import { requireRole } from "../working-auth";
 import { storage } from "../storage";
 import { db } from "../db";
 import { eq, desc, and } from "drizzle-orm";
+import { doctorPatientMessages } from "@shared/schema";
 import multer from "multer";
 import { uploadXrayFile } from "../services/drive";
 import { HfInference } from "@huggingface/inference";
@@ -113,6 +114,11 @@ export function registerDoctorRoutes(app: Express): void {
 
   app.get("/api/doctor/conversations/:id/messages", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
     try {
+      const userId = req.user?.id as string;
+      const conversation = await storage.getConversation(req.params.id);
+      if (!conversation || !conversation.participantIds.includes(userId)) {
+        return res.status(403).json({ success: false, error: "Not a participant in this conversation" });
+      }
       const messages = await storage.getMessages(req.params.id);
       res.json({ success: true, messages });
     } catch (error: any) {
@@ -140,6 +146,14 @@ export function registerDoctorRoutes(app: Express): void {
 
   app.put("/api/doctor/messages/:id/read", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
     try {
+      const userId = req.user?.id as string;
+      const existingMessages = await db.select().from(doctorPatientMessages).where(eq(doctorPatientMessages.id, req.params.id));
+      if (existingMessages.length === 0) {
+        return res.status(404).json({ success: false, error: "Message not found" });
+      }
+      if (existingMessages[0].recipientId !== userId) {
+        return res.status(403).json({ success: false, error: "Only the recipient can mark a message as read" });
+      }
       const message = await storage.markMessageRead(req.params.id);
       res.json({ success: true, message });
     } catch (error: any) {
@@ -188,10 +202,10 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.get("/api/member/messages", requireRole("admin", "member", "doctor"), async (req: Request, res: Response) => {
+  app.get("/api/member/messages", requireRole("admin", "member"), async (req: Request, res: Response) => {
     try {
       const userId = req.user?.id as string;
-      const messages = await storage.getUnreadMessagesForUser(userId);
+      const unreadMessages = await storage.getUnreadMessagesForUser(userId);
       const allConversations = await storage.getConversations(userId);
       const allMessages: any[] = [];
       for (const convo of allConversations) {
@@ -199,17 +213,25 @@ export function registerDoctorRoutes(app: Express): void {
         allMessages.push(...msgs);
       }
       allMessages.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
-      res.json({ messages: allMessages, unreadCount: messages.length });
+      res.json({ messages: allMessages, unreadCount: unreadMessages.length });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }
   });
 
-  app.post("/api/member/messages/:doctorId", requireRole("admin", "member", "doctor"), async (req: Request, res: Response) => {
+  app.post("/api/member/messages/:doctorId", requireRole("admin", "member"), async (req: Request, res: Response) => {
     try {
       const memberId = req.user?.id as string;
       const doctorId = req.params.doctorId;
       const { messageText } = req.body;
+      const existingConversations = await storage.getConversations(memberId);
+      const hasExistingConvo = existingConversations.some(c => c.participantIds.includes(doctorId));
+      if (!hasExistingConvo) {
+        const priorMessages = await storage.getMessagesBetween(memberId, doctorId);
+        if (priorMessages.length === 0) {
+          return res.status(403).json({ success: false, error: "You can only reply to doctors who have messaged you first" });
+        }
+      }
       const memberUser = await storage.getUser(memberId);
       const doctorUser = await storage.getUser(doctorId);
       const memberName = memberUser?.firstName && memberUser?.lastName
@@ -235,8 +257,16 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.put("/api/member/messages/:id/read", requireRole("admin", "member", "doctor"), async (req: Request, res: Response) => {
+  app.put("/api/member/messages/:id/read", requireRole("admin", "member"), async (req: Request, res: Response) => {
     try {
+      const userId = req.user?.id as string;
+      const existingMessages = await db.select().from(doctorPatientMessages).where(eq(doctorPatientMessages.id, req.params.id));
+      if (existingMessages.length === 0) {
+        return res.status(404).json({ success: false, error: "Message not found" });
+      }
+      if (existingMessages[0].recipientId !== userId) {
+        return res.status(403).json({ success: false, error: "Only the recipient can mark a message as read" });
+      }
       const message = await storage.markMessageRead(req.params.id);
       res.json({ success: true, message });
     } catch (error: any) {
