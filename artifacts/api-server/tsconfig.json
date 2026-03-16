@@ -4,6 +4,7 @@
     "types": ["node"],
     "resolveJsonModule": true,
     "noEmit": true,
+    "noImplicitReturns": false,
     "paths": {
       "@shared/*": ["../../lib/shared/src/*"],
       "@shared": ["../../lib/shared/src"]

@@ -410,7 +410,7 @@ export async function seedPeptideProtocolMastery() {
     console.log(`[Peptide Protocol Mastery Seed] Linked ${trackModuleLinks.length} modules to track`);
 
     for (const quiz of peptideProtocolQuizzes) {
-      const { moduleId, trackId, ...quizData } = quiz;
+      const { moduleId, trackId, ...quizData } = quiz as typeof quiz & { trackId?: string };
       await db.insert(quizzes).values(quizData).onConflictDoNothing();
 
       if (moduleId) {

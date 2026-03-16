@@ -244,6 +244,17 @@ registerHealthRoutes(app);
     res.download(filePath, 'ALLIO_Agent_Network_Guide.pdf');
   });
 
+  if (process.env.NODE_ENV === "production") {
+    const frontendDist = path.resolve(process.cwd(), "artifacts", "ffpma", "dist", "public");
+    app.use(express.static(frontendDist));
+    app.get("*", (req, res, next) => {
+      if (req.path.startsWith("/api/")) {
+        return next();
+      }
+      res.sendFile(path.join(frontendDist, "index.html"));
+    });
+  }
+
   app.use(notFoundHandler);
   app.use(errorHandler);
 

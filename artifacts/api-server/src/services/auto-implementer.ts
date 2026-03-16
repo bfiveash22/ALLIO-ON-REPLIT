@@ -564,7 +564,7 @@ class AutoImplementer {
                             
                             if (file.name.toLowerCase().endsWith('.pdf') && ['FORGE', 'SYNTHESIS'].includes(file.agentId)) {
                                 try {
-                                    const { uiRefactorProposals } = await import('../../shared/schema');
+                                    const { uiRefactorProposals } = await import('@shared/schema');
                                     const { getUncachableGoogleDriveClient } = await import('./drive');
                                     const pdfParse = (await import('pdf-parse')).default;
                                     

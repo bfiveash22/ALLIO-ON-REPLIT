@@ -1536,7 +1536,7 @@ export async function createWordPressUser(userData: WPUserCreateData): Promise<W
       if (errorData?.code === "existing_user_email") {
         console.log(`WordPress user already exists with email: ${userData.email} - fetching WP user ID`);
         try {
-          const lookupRes = await fetch(`${wpApiUrl}/wp/v2/users?search=${encodeURIComponent(userData.email)}`, {
+          const lookupRes = await fetch(`${WP_SITE_URL}/wp-json/wp/v2/users?search=${encodeURIComponent(userData.email)}`, {
             headers: { Authorization: `Basic ${auth}` },
           });
           if (lookupRes.ok) {

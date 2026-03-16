@@ -787,8 +787,8 @@ export async function saveProtocol(
       intakeFormId: profile.intakeFormId || null,
       memberId: memberId || null,
       doctorId: doctorId || null,
-      patientProfile: profile as Record<string, unknown>,
-      protocol: protocol as Record<string, unknown>,
+      patientProfile: profile as unknown as Record<string, unknown>,
+      protocol: protocol as unknown as Record<string, unknown>,
       status: "draft",
       generatedBy: generatedBy || "system",
     })

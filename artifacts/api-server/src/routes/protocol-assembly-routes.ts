@@ -294,7 +294,7 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       enforceDoctorOwnership(req, record);
       const protocol = record.protocol as Record<string, unknown>;
       const profile = record.patientProfile as Record<string, unknown>;
-      const slides = await generateProtocolSlides(protocol, profile);
+      const slides = await generateProtocolSlides(protocol as unknown as HealingProtocol, profile as unknown as PatientProfile);
       await updateProtocolSlides(id, slides.presentationId, slides.webViewLink);
       res.json(slides);
     } catch (error: any) {

@@ -93,9 +93,12 @@ workspace/
 ## Deployment
 
 - **Target**: Autoscale (Replit deployment)
-- **Frontend**: Static build served at `/` from `artifacts/ffpma/dist/public`
-- **API Server**: Node.js process at `/api` from `artifacts/api-server/dist/index.cjs`
+- **Build**: `pnpm run build` (typecheck + build ffpma + build api-server)
+- **Run**: `node artifacts/api-server/dist/index.cjs`
+- **Frontend**: In production, API server serves the SPA static files from `artifacts/ffpma/dist/public` with a catch-all for client-side routing
+- **API Server**: Express with esbuild-bundled production server at `artifacts/api-server/dist/index.cjs`
 - **Health Check**: `/api/healthz` returns `{"status":"ok"}`
+- **SPA Fallback**: All non-`/api/` GET requests fall through to `index.html` for client-side routing (production only)
 - **Excluded from production**: mockup-sandbox, doctor-pitch-deck, protocol-presentation (dev-only artifacts)
 - **Sensitive values**: Stored in Replit Secrets (WP_APPLICATION_PASSWORD, PUBMED_API_KEY, CORE_API_KEY, SIGNNOW_APP_ID, PREVIEW_TOKEN_SECRET, DATABASE_URL, SESSION_SECRET, etc.)
 - **Custom domain**: Ready for ffpma.com — user connects via Replit deployment settings

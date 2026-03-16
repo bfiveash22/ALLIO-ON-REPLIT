@@ -1,42 +1,45 @@
 modules = ["nodejs-24", "python-3.11"]
 
-[[artifacts]]
-id = "artifacts/api-server"
+  [[artifacts]]
+  id = "artifacts/api-server"
 
-[[artifacts]]
-id = "artifacts/ffpma"
+  [[artifacts]]
+  id = "artifacts/ffpma"
 
-[deployment]
-router = "application"
-deploymentTarget = "autoscale"
+  [deployment]
+  router = "application"
+  deploymentTarget = "autoscale"
+  build = ["pnpm", "run", "build"]
+  run = ["node", "artifacts/api-server/dist/index.cjs"]
 
-[deployment.postBuild]
-args = ["pnpm", "store", "prune"]
-env = { "CI" = "true" }
+  [deployment.postBuild]
+  args = ["pnpm", "store", "prune"]
+  env = { "CI" = "true" }
 
-[workflows]
-runButton = "Project"
+  [workflows]
+  runButton = "Project"
 
-[agent]
-stack = "PNPM_WORKSPACE"
-expertMode = true
-integrations = ["github:1.0.0"]
+  [agent]
+  stack = "PNPM_WORKSPACE"
+  expertMode = true
+  integrations = ["github:1.0.0"]
 
-[postMerge]
-path = "scripts/post-merge.sh"
-timeoutMs = 60000
+  [postMerge]
+  path = "scripts/post-merge.sh"
+  timeoutMs = 60000
 
-[userenv]
+  [userenv]
 
-[userenv.shared]
-WP_SITE_URL = "https://forgottenformula.com"
-WP_USERNAME = "blake"
-ENABLE_SCHEDULERS = "true"
-SIGNNOW_EMAIL = "blake@forgottenformula.com"
-RUPA_USERNAME = "blake@forgottenformula.com"
-PREVIEW_TOKEN_SECRET = "4175182e27d318e22d3b9d91599f0cb0fb1ed2ab88099908978f4cf97f4932c5"
-TELEGRAM_CHAT_ID = ""
+  [userenv.shared]
+  WP_SITE_URL = "https://forgottenformula.com"
+  WP_USERNAME = "blake"
+  ENABLE_SCHEDULERS = "true"
+  SIGNNOW_EMAIL = "blake@forgottenformula.com"
+  RUPA_USERNAME = "blake@forgottenformula.com"
+  PREVIEW_TOKEN_SECRET = "4175182e27d318e22d3b9d91599f0cb0fb1ed2ab88099908978f4cf97f4932c5"
+  TELEGRAM_CHAT_ID = ""
 
-[nix]
-channel = "stable-25_05"
-packages = ["alsa-lib", "at-spi2-atk", "cairo", "cups", "dbus", "expat", "gitFull", "glib", "gtk3", "libdrm", "libxkbcommon", "mesa", "mesa_glu", "nspr", "nss", "pango", "playwright-driver", "xorg.libX11", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXext", "xorg.libXfixes", "xorg.libXrandr", "xorg.libxcb"]
+  [nix]
+  channel = "stable-25_05"
+  packages = ["alsa-lib", "at-spi2-atk", "cairo", "cups", "dbus", "expat", "gitFull", "glib", "gtk3", "libdrm", "libxkbcommon", "mesa", "mesa_glu", "nspr", "nss", "pango", "playwright-driver", "xorg.libX11", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXext", "xorg.libXfixes", "xorg.libXrandr", "xorg.libxcb"]
+  

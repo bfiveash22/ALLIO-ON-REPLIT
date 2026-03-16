@@ -356,7 +356,7 @@ export function registerDoctorRoutes(app: Express): void {
           const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
           classification = await hf.imageClassification({
             model: SKIN_MODEL,
-            data: imageBuffer,
+            data: new Blob([imageBuffer]),
           }) as Array<{ label: string; score: number }>;
         } catch (hfError: any) {
           console.error("[Skin Analysis] HuggingFace model error:", hfError.message);
@@ -409,7 +409,7 @@ export function registerDoctorRoutes(app: Express): void {
           const imageBuffer = Buffer.from(imageData.replace(/^data:image\/\w+;base64,/, ''), 'base64');
           const classifications = await hf.imageClassification({
             model: modelId,
-            data: imageBuffer,
+            data: new Blob([imageBuffer]),
           });
 
           findings = classifications.map((c: any) => ({
@@ -483,7 +483,7 @@ export function registerDoctorRoutes(app: Express): void {
         }
         if (patient.doctorId !== requestedBy) {
           const user = await storage.getUser(requestedBy);
-          if (!user || user.role !== "admin") {
+          if (!user || (user as Record<string, unknown>).role !== "admin") {
             return res.status(403).json({ success: false, error: "You do not have access to this patient." });
           }
         }
@@ -529,7 +529,7 @@ export function registerDoctorRoutes(app: Express): void {
         const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
         const classifications = await hf.imageClassification({
           model: modelId,
-          data: req.file.buffer,
+          data: new Blob([new Uint8Array(req.file.buffer)]),
         });
 
         findings = classifications.map((c: any, idx: number) => ({
@@ -626,7 +626,7 @@ export function registerDoctorRoutes(app: Express): void {
       }
       if (patient.doctorId !== requestedBy) {
         const user = await storage.getUser(requestedBy);
-        if (!user || user.role !== "admin") {
+        if (!user || (user as Record<string, unknown>).role !== "admin") {
           return res.status(403).json({ success: false, error: "Access denied", analyses: [] });
         }
       }
@@ -696,7 +696,7 @@ export function registerDoctorRoutes(app: Express): void {
       if (!agent) return res.status(404).json({ error: "Agent not found" });
 
       const doctorUser = await storage.getUser(req.user?.id as string);
-      const doctorName = doctorUser?.name || doctorUser?.email || "Doctor";
+      const doctorName = (doctorUser as Record<string, unknown>)?.name as string || doctorUser?.email || "Doctor";
 
       let patientInfo = "";
       if (patientContext) {

@@ -361,7 +361,7 @@ export function registerMiscRoutes(app: Express): void {
   });
 
   app.post("/api/admin/seed-ivermectin-training", requireRole("admin"), async (req: Request, res: Response) => {
-    try { res.json({ success: true, ...(await seedIvermectinTraining()) }); } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
+    try { const result = await seedIvermectinTraining(); res.json({ ...result, success: true }); } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
   });
 
   app.post("/api/admin/seed-remaining-modules", requireRole("admin"), async (req: Request, res: Response) => {

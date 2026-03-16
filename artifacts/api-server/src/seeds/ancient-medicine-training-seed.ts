@@ -410,7 +410,7 @@ export async function seedAncientMedicineTraining() {
     console.log(`[Ancient Medicine Seed] Linked ${trackModuleLinks.length} modules to track`);
 
     for (const quiz of ancientMedicineQuizzes) {
-      const { moduleId, trackId, ...quizData } = quiz;
+      const { moduleId, trackId, ...quizData } = quiz as typeof quiz & { trackId?: string };
       await db.insert(quizzes).values(quizData).onConflictDoNothing();
 
       if (moduleId) {
