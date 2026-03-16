@@ -12,10 +12,16 @@ function TitleSlide({ slide }: { slide: SlideData }) {
           <span className="text-[#FFD700] font-bold text-sm">A</span>
         </div>
       </div>
-      <div className="absolute top-8 right-8 flex gap-2">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="w-16 h-16 rounded-lg bg-white/5 border border-white/10" />
-        ))}
+      <div className="absolute top-8 right-8 flex gap-3">
+        <div className="w-16 h-16 rounded-lg bg-white/10 border border-white/15 overflow-hidden flex items-center justify-center p-1">
+          <img src={`${import.meta.env.BASE_URL}assets/ff_pma_logo.png`} alt="Forgotten Formula PMA" className="w-full h-full object-contain" />
+        </div>
+        <div className="w-16 h-16 rounded-lg bg-white/10 border border-white/15 overflow-hidden flex items-center justify-center p-1">
+          <img src={`${import.meta.env.BASE_URL}assets/forgotten_formula_brand_concept.png`} alt="Forgotten Formula Healing Concept" className="w-full h-full object-contain" />
+        </div>
+        <div className="w-16 h-16 rounded-lg bg-white/10 border border-white/15 overflow-hidden flex items-center justify-center p-1">
+          <img src={`${import.meta.env.BASE_URL}assets/ff_pma_allio_combined_logo.png`} alt="Forgotten Formula PMA & Allio Combined" className="w-full h-full object-contain" />
+        </div>
       </div>
       <h1 className="text-5xl font-bold text-white mb-4 animate-fade-in">Member Protocol 2026</h1>
       <div className="w-24 h-1 bg-[#00D4AA] mb-6 rounded-full" />
@@ -659,10 +665,16 @@ function CommitmentSlide({ slide }: { slide: SlideData }) {
       <div className="max-w-3xl bg-white/5 border border-[#FFD700]/20 rounded-2xl p-8 animate-scale-in">
         <p className="text-gray-300 text-base leading-relaxed">{slide.content.message}</p>
       </div>
-      <div className="absolute bottom-8 flex gap-2">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="w-16 h-16 rounded-lg bg-white/5 border border-white/10" />
-        ))}
+      <div className="absolute bottom-8 flex gap-3">
+        <div className="w-16 h-16 rounded-lg bg-white/10 border border-white/15 overflow-hidden flex items-center justify-center p-1">
+          <img src={`${import.meta.env.BASE_URL}assets/ff_pma_logo.png`} alt="Forgotten Formula PMA" className="w-full h-full object-contain" />
+        </div>
+        <div className="w-16 h-16 rounded-lg bg-white/10 border border-white/15 overflow-hidden flex items-center justify-center p-1">
+          <img src={`${import.meta.env.BASE_URL}assets/forgotten_formula_brand_concept.png`} alt="Forgotten Formula Healing Concept" className="w-full h-full object-contain" />
+        </div>
+        <div className="w-16 h-16 rounded-lg bg-white/10 border border-white/15 overflow-hidden flex items-center justify-center p-1">
+          <img src={`${import.meta.env.BASE_URL}assets/ff_pma_allio_combined_logo.png`} alt="Forgotten Formula PMA & Allio Combined" className="w-full h-full object-contain" />
+        </div>
       </div>
       <p className="absolute bottom-28 text-gray-500 italic text-sm">
         "Before you heal someone, ask them if they're willing to give up the things that make them sick"
