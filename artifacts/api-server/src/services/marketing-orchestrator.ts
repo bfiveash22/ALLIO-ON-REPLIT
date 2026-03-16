@@ -116,6 +116,56 @@ Write a detailed, 1-2 sentence visual description that can be fed into an AI ima
       console.error(`[MARKETING] Failed to enhance product ${product.name}:`, error.message);
     }
   }
+
+  async produceOzonatedGlycerinVideo(): Promise<{
+    success: boolean;
+    driveLink?: string;
+    driveFileId?: string;
+    steps: string[];
+    error?: string;
+  }> {
+    console.log('[MARKETING] Starting Ozonated Glycerin educational video production...');
+
+    try {
+      const { produceVideoPremium } = await import('./auto-video-producer');
+
+      const result = await produceVideoPremium({
+        templateId: 'ozonated-glycerin-educational',
+        title: 'Ozonated Glycerin - A Breakthrough in Cancer Treatment',
+        voiceStyle: 'male',
+        uploadToDrive: true
+      });
+
+      if (result.success) {
+        console.log(`[MARKETING] Ozonated Glycerin video produced successfully. Drive: ${result.driveLink}`);
+        await sentinel.notify({
+          type: 'system_alert',
+          title: 'Ozonated Glycerin Video Produced',
+          message: `Educational video assembled and uploaded to Drive: ${result.driveLink || 'local only'}`,
+          agentId: 'PRISM',
+          division: 'marketing',
+          priority: 2
+        });
+      } else {
+        console.error(`[MARKETING] Ozonated Glycerin video production failed: ${result.error}`);
+      }
+
+      return {
+        success: result.success,
+        driveLink: result.driveLink,
+        driveFileId: result.driveFileId,
+        steps: result.steps,
+        error: result.error
+      };
+    } catch (error: any) {
+      console.error('[MARKETING] Ozonated Glycerin video production error:', error.message);
+      return {
+        success: false,
+        steps: [],
+        error: error.message
+      };
+    }
+  }
 }
 
 export const marketingOrchestrator = new MarketingOrchestrator();

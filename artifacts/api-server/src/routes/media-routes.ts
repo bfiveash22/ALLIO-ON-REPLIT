@@ -511,6 +511,31 @@ export function registerMediaRoutes(app: Express): void {
     }
   });
 
+  app.post("/api/video/produce-ozonated-glycerin", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const isPreviewMode = validatePreviewMode(req);
+      const userId = req.user?.id as string;
+      if (!userId && !isPreviewMode) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      console.log(`[Video Production] Triggering Ozonated Glycerin educational video production`);
+
+      const { marketingOrchestrator } = await import("../services/marketing-orchestrator");
+      const result = await marketingOrchestrator.produceOzonatedGlycerinVideo();
+
+      res.json({
+        ...result,
+        templateId: 'ozonated-glycerin-educational',
+        productionType: 'educational-campaign',
+        producedBy: 'PRISM Video Agent via Marketing Orchestrator'
+      });
+    } catch (error: any) {
+      console.error("[Ozonated Glycerin Video] Production error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.post("/api/video/upload-local", requireRole("admin"), async (req: Request, res: Response) => {
     try {
       const isPreviewMode = validatePreviewMode(req);

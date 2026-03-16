@@ -267,6 +267,85 @@ export const VIDEO_TEMPLATES: VideoTemplate[] = [
     ]
   },
   {
+    id: 'ozonated-glycerin-educational',
+    name: 'Ozonated Glycerin: A Breakthrough in Cancer Treatment',
+    description: 'Educational marketing video covering Dr. Jim Bridge\'s ozonated glycerin research presented at the American Academy of Ozonotherapy meeting. Narrated in a Kevin Costner dramatic news broadcast style. Covers the science, animal/human results, and broader applications of ozonated glycerin therapy.',
+    category: 'educational',
+    musicMood: 'dramatic cinematic news broadcast, investigative journalism tension, powerful revelation, orchestral swells with suspenseful undertones',
+    voiceStyle: 'male',
+    resolution: { width: 1920, height: 1080 },
+    fps: 30,
+    imageKeywords: ['ozone therapy', 'medical research', 'cancer treatment', 'glycerin', 'tumor reduction', 'respiratory treatment', 'forgotten formula'],
+    scenes: [
+      {
+        id: 'scene-1-opening',
+        name: 'Opening - Breaking News',
+        narration: 'In medicine, true breakthroughs don\'t come often. When they do, they change everything we thought we knew. This is one of those moments. I\'m bringing you breaking news from Forgotten Formula PMA about a treatment so promising, yet so simple, it challenges everything we\'ve been told about fighting cancer.',
+        duration: 18,
+        imageKeywords: ['breaking news', 'medical breakthrough', 'dramatic', 'medicine', 'discovery'],
+        transitionEffect: 'fade',
+        visualDirection: 'Dramatic opening with dark background transitioning to light. News broadcast aesthetic with medical imagery. Deep blue and gold tones. Urgent and authoritative mood.',
+        allioPresence: false
+      },
+      {
+        id: 'scene-2-discovery',
+        name: 'The Discovery',
+        narration: 'The story begins at the recent American Academy of Ozonotherapy meeting in Orlando. Dr. Jim Bridge presented something that left medical professionals speechless - a treatment using ozonated glycerin that\'s showing remarkable results against tumors and infections. What makes this discovery significant isn\'t just its effectiveness. It\'s that it\'s easy, safe, and inexpensive - three words our profit-driven medical system rarely embraces.',
+        duration: 22,
+        imageKeywords: ['ozonotherapy', 'medical conference', 'Orlando', 'medical professionals', 'ozonated glycerin'],
+        transitionEffect: 'dissolve',
+        visualDirection: 'Medical conference setting, professional audience, presenter at podium. Transition to close-up of ozonated glycerin solution. Scientific credibility imagery.',
+        allioPresence: false
+      },
+      {
+        id: 'scene-3-science',
+        name: 'The Science',
+        narration: 'Let me tell you how this works. Ozone has been used in medicine since the 1800s. Even Nikola Tesla, one of history\'s greatest minds, patented an ozone generator for medical use in 1896. The breakthrough came when scientists discovered that properly ozonated glycerin has a half-life of 90 days. During that time, it slowly releases oxygen and ozone metabolites that are toxic to cancer cells while being harmless to healthy tissues. Cancer cells are hungry for glucose. Ozonated glycerin, which contains molecules similar to glucose, is preferentially absorbed by these cancer cells. Once inside, it releases its payload, destroying the cancer from within.',
+        duration: 30,
+        imageKeywords: ['ozone science', 'Nikola Tesla', 'ozone generator', 'cancer cells', 'molecular science', 'lab equipment', 'medical history', 'cellular biology'],
+        transitionEffect: 'dissolve',
+        visualDirection: 'Historical imagery of Tesla and early ozone equipment. Transition to modern molecular visualization showing ozone metabolites. Cancer cell absorption animation concept. Scientific and educational tone with blue and cyan color palette.',
+        allioPresence: false
+      },
+      {
+        id: 'scene-4-results',
+        name: 'The Results',
+        narration: 'The results speak for themselves. A 9-year-old Labrador with a massive sarcoma that filled its entire abdomen saw a 75% reduction after just one treatment. After the second, the tumor was gone completely. A 14-year-old cat with multiple fibrosarcoma tumors saw them disappear after a single treatment. In humans, the results are equally promising. A woman with squamous cell cancer of the vagina - typically resistant to therapy - saw her tumor reduced to one-fifth its original size after three treatments.',
+        duration: 25,
+        imageKeywords: ['tumor reduction', 'medical results', 'cancer treatment results', 'veterinary medicine', 'healing', 'recovery', 'clinical results'],
+        transitionEffect: 'fade',
+        visualDirection: 'Before and after treatment imagery concept. Warm hopeful tones as results are revealed. Medical charts and data visualization. Transition from veterinary cases to human cases with increasing gravitas.',
+        allioPresence: false
+      },
+      {
+        id: 'scene-5-applications',
+        name: 'The Applications',
+        narration: 'The potential applications extend beyond cancer. Respiratory conditions like asthma and sinusitis have responded to nebulized ozonated glycerin. Abscessed teeth, liver disease, and joint problems have all shown improvement with this treatment. This isn\'t just another treatment. It\'s a paradigm shift in how we approach disease.',
+        duration: 18,
+        imageKeywords: ['respiratory treatment', 'asthma', 'sinusitis', 'nebulizer', 'liver health', 'joint treatment', 'holistic medicine', 'paradigm shift'],
+        transitionEffect: 'dissolve',
+        visualDirection: 'Multiple application areas shown in sequence - lungs, joints, dental, liver. Expanding scope visualization. Bold statement typography overlay for paradigm shift moment. Inspirational and forward-looking.',
+        allioPresence: false
+      },
+      {
+        id: 'scene-6-closing',
+        name: 'Closing',
+        narration: 'At Forgotten Formula PMA, we believe in addressing the root causes of disease. We\'re a collection of like-minded individuals committed to changing healthcare and saving humanity through health. When we discover modalities like ozonated glycerin, we know it\'s our responsibility to share this information with our members and medical professionals worldwide. This is just the beginning. As more research emerges, we\'ll continue to bring you the latest developments. Because some truths are too important to keep hidden. Visit forgottenformula.com to learn more about our mission and how you can join us in transforming healthcare.',
+        duration: 25,
+        imageKeywords: ['forgotten formula', 'pma', 'community', 'healthcare transformation', 'mission', 'forgottenformula.com'],
+        transitionEffect: 'fade',
+        preferredAssets: {
+          videos: [],
+          images: ['ff_pma_allio_combined_logo.png', 'ff_pma_logo.png', 'forgotten_formula_logo.png'],
+          priority: 'image'
+        },
+        visualDirection: 'FF PMA branding with deep blue and gold. Community and mission imagery. Logo reveal with forgottenformula.com CTA. Closing with FF PMA logo prominently displayed. Music fades out gracefully.',
+        allioPresence: false,
+        useLocalAsset: 'client/src/assets/ff_pma_allio_combined_logo.png'
+      }
+    ]
+  },
+  {
     id: 'member-welcome',
     name: 'New Member Welcome',
     description: 'Welcome video for new PMA members',
