@@ -21,6 +21,7 @@ import { sendToTrustee } from './openclaw';
   import { claudeGenerateDocument, claudeAgentChat, shouldUseClaude } from './claude-provider';
 import { AGENT_MODEL_ASSIGNMENTS } from './sentinel-orchestrator';
   import { analyzeWithGemini } from './gemini-provider';
+import { mcpClientManager, getMcpToolsAsOpenAIFormat } from './mcp-client-manager';
 import { generateImage as hfGenerateImage } from './huggingface-media';
 
 const openai = new OpenAI({
@@ -878,6 +879,12 @@ Generate the full document now:`;
     },
   ];
 
+  const mcpTools = getMcpToolsAsOpenAIFormat(division);
+  if (mcpTools.length > 0) {
+    tools.push(...mcpTools);
+    console.log(`[Agent Executor] Added ${mcpTools.length} MCP tools for ${agentId} (${division})`);
+  }
+
   let rawContent = "Document generation failed.";
   const MAX_ITERATIONS = 5;
   let iterations = 0;
@@ -1208,6 +1215,36 @@ Generate the full document now:`;
               role: "tool",
               name: "search_agent_library",
               content: JSON.stringify({ error: e.message })
+            });
+          }
+        } else {
+          const mcpMatch = mcpClientManager.isToolFromMcp(toolCall.function.name);
+          if (mcpMatch) {
+            try {
+              const args = JSON.parse(toolCall.function.arguments || '{}');
+              console.log(`[Agent Executor] ${agentId} calling MCP tool: ${mcpMatch.serverId}/${mcpMatch.tool.name}`);
+              const mcpResult = await mcpClientManager.callTool(mcpMatch.serverId, mcpMatch.tool.name, args);
+              messages.push({
+                tool_call_id: toolCall.id,
+                role: "tool",
+                name: toolCall.function.name,
+                content: typeof mcpResult === 'string' ? mcpResult : JSON.stringify({ success: true, result: mcpResult })
+              });
+            } catch (e: any) {
+              messages.push({
+                tool_call_id: toolCall.id,
+                role: "tool",
+                name: toolCall.function.name,
+                content: JSON.stringify({ error: `MCP tool error: ${e.message}` })
+              });
+            }
+          } else {
+            console.warn(`[Agent Executor] ${agentId} called unknown tool: ${toolCall.function.name}`);
+            messages.push({
+              tool_call_id: toolCall.id,
+              role: "tool",
+              name: toolCall.function.name,
+              content: JSON.stringify({ error: `Unknown tool: ${toolCall.function.name}` })
             });
           }
         }

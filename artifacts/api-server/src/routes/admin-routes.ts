@@ -24,6 +24,8 @@ import { seedLBABloodSamples } from "../seeds/lba-blood-samples-seed";
 import { seedLBACertification } from "../seeds/lba-certification-seed";
 import { seedLBACertificationExam } from "../seeds/lba-certification-exam-seed";
 import { getAllIntegrationStatuses, testIntegration } from "../services/integration-registry";
+import { mcpClientManager } from "../services/mcp-client-manager";
+import { getMcpServerRegistry } from "../services/mcp-server-registry";
 
 export function registerAdminRoutes(app: Express): void {
   let publicStatsCache: { data: any; timestamp: number } | null = null;
@@ -314,6 +316,60 @@ export function registerAdminRoutes(app: Express): void {
     try {
       const result = await testIntegration(req.params.serviceName);
       res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/mcp/status", requireRole("admin"), async (_req: Request, res: Response) => {
+    try {
+      const registry = getMcpServerRegistry();
+      const health = mcpClientManager.getServerHealth();
+      const counts = mcpClientManager.getConnectionCount();
+      const allTools = mcpClientManager.getAllTools();
+
+      res.json({
+        summary: {
+          totalServers: counts.total,
+          connected: counts.connected,
+          failed: counts.failed,
+          totalTools: allTools.length,
+        },
+        servers: health.map(h => {
+          const config = registry.find(r => r.id === h.serverId);
+          return {
+            ...h,
+            description: config?.description || '',
+            transport: config?.transport || 'unknown',
+            allowedDivisions: config?.allowedDivisions || 'all',
+          };
+        }),
+        tools: allTools.map(t => ({
+          serverId: t.serverId,
+          name: t.name,
+          description: t.description,
+        })),
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/mcp/reconnect/:serverId", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { serverId } = req.params;
+      const config = getMcpServerRegistry().find(s => s.id === serverId);
+      if (!config) {
+        return res.status(404).json({ error: `MCP server '${serverId}' not found in registry` });
+      }
+      await mcpClientManager.disconnectServer(serverId);
+      const conn = await mcpClientManager.connectServer(config);
+      res.json({
+        success: !!conn && conn.status === 'connected',
+        status: conn?.status || 'failed',
+        toolCount: conn?.tools.length || 0,
+        lastError: conn?.lastError || null,
+      });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

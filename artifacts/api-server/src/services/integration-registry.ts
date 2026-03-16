@@ -1,5 +1,7 @@
 import { getInbox } from "./gmail";
 import { getUncachableGoogleDriveClient } from "./drive";
+import { mcpClientManager } from "./mcp-client-manager";
+import { getMcpServerRegistry } from "./mcp-server-registry";
 
 export type IntegrationMode = "live" | "placeholder";
 export type ConnectionState = "connected" | "disconnected" | "error" | "not_implemented";
@@ -331,6 +333,24 @@ export async function getAllIntegrationStatuses(): Promise<IntegrationStatus[]> 
         nextSteps: "Check server logs for details"
       });
     }
+  }
+
+  const mcpHealthList = mcpClientManager.getServerHealth();
+  for (const mcp of mcpHealthList) {
+    const now = new Date().toISOString();
+    statuses.push({
+      id: `mcp_${mcp.serverId}`,
+      name: `MCP: ${mcp.serverName}`,
+      mode: "live",
+      connectionState: mcp.status === 'connected' ? 'connected' 
+        : mcp.status === 'error' ? 'error' 
+        : 'disconnected',
+      lastCheckedAt: now,
+      lastSuccessAt: mcp.status === 'connected' ? (mcp.connectedAt || now) : null,
+      lastError: mcp.lastError,
+      sampleData: mcp.status === 'connected' ? `${mcp.toolCount} tools available` : null,
+      nextSteps: mcp.status !== 'connected' ? "Check MCP server configuration and connectivity" : null,
+    });
   }
   
   return statuses;

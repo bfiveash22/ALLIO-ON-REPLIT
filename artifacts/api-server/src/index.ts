@@ -256,6 +256,17 @@ registerHealthRoutes(app);
     () => {
       log(`serving on port ${port}`);
 
+      import('./services/mcp-client-manager').then(({ mcpClientManager }) => {
+        mcpClientManager.connectAllRegistered().then(() => {
+          const counts = mcpClientManager.getConnectionCount();
+          log(`MCP servers: ${counts.connected} connected, ${counts.failed} failed out of ${counts.total}`, 'mcp');
+        }).catch(err => {
+          log(`MCP initialization failed (non-fatal): ${err.message}`, 'mcp');
+        });
+      }).catch(err => {
+        log(`MCP module load failed (non-fatal): ${err.message}`, 'mcp');
+      });
+
       if (process.env.ENABLE_SCHEDULERS === "true") {
         log('Starting background schedulers...', 'startup');
         startScheduler();
@@ -276,6 +287,9 @@ registerHealthRoutes(app);
     log(`Received ${signal}. Shutting down gracefully...`, 'system');
     stopAgentScheduler();
     stopScheduler();
+    import('./services/mcp-client-manager').then(({ mcpClientManager }) => {
+      mcpClientManager.disconnectAll().catch(() => {});
+    }).catch(() => {});
     httpServer.close(() => {
       log('HTTP server closed', 'system');
       process.exit(0);
