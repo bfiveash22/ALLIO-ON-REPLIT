@@ -184,6 +184,9 @@ export function registerDoctorRoutes(app: Express): void {
         if (!conversation || !conversation.participantIds.includes(userId)) {
           return res.status(403).json({ success: false, error: "Not a participant in this conversation" });
         }
+        if (recipientId && !conversation.participantIds.includes(recipientId)) {
+          return res.status(403).json({ success: false, error: "Recipient is not a participant in this conversation" });
+        }
       }
       const message = await storage.createMessage({ ...req.body, senderId: userId, senderRole: "doctor" });
       res.json({ success: true, message });

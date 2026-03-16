@@ -57,6 +57,10 @@ export function MemberMessages() {
     return acc;
   }, {});
 
+  Object.values(doctorThreads).forEach(thread => {
+    thread.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  });
+
   const doctorList: DoctorThread[] = Object.entries(doctorThreads).map(([id, msgs]) => {
     const lastMsg = msgs[msgs.length - 1];
     const name = lastMsg.senderRole === "doctor" ? lastMsg.senderName : lastMsg.recipientName;
