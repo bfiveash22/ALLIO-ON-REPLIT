@@ -215,6 +215,7 @@ registerHealthRoutes(app);
     { name: 'Ivermectin Training', fn: async () => { const { seedIvermectinTraining } = await import('./seeds/ivermectin-training-seed'); return seedIvermectinTraining(); } },
     { name: 'Frequency Medicine', fn: async () => { const { seedFrequencyMedicineTraining } = await import('./seeds/frequency-medicine-training-seed'); return seedFrequencyMedicineTraining(); } },
     { name: 'Peptide Protocols 101', fn: async () => { const { seedPeptideProtocols101 } = await import('./seeds/peptide-protocols-101-seed'); return seedPeptideProtocols101(); } },
+    { name: 'Programs', fn: async () => { const { seedPrograms } = await import('./seeds/programs-seed'); return seedPrograms(); } },
   ];
 
   let seedSuccessCount = 0;
