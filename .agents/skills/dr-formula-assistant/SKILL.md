@@ -146,6 +146,13 @@ When building protocols involving cannabinoids, use the programmatic data export
 - `knowledge-base/openclaw-exports/ECS-COMPLETE-CLINICAL-REFERENCE.md` — Clinical prescribing, adverse effects, drug interactions
 - `knowledge-base/openclaw-exports/CANNABINOID-TARGET-PATHWAY-DISEASE-MAP.md` — Target-pathway-disease mapping
 
+## Protocol Transcript Source
+
+Protocol transcripts are sourced from the canonical Google Drive folder:
+- **URL:** https://drive.google.com/drive/folders/10BqHP7hXwBGskvoNePMuvFuTNspKy0ur?usp=sharing
+- **Folder ID:** `10BqHP7hXwBGskvoNePMuvFuTNspKy0ur`
+- **Usage:** This folder contains patient consultation transcripts used as input to the protocol generation pipeline. When generating protocols from transcripts, the system retrieves files from this folder. The folder ID is also exported as `PROTOCOL_TRANSCRIPTS_FOLDER_ID` from `artifacts/api-server/src/services/drive.ts`.
+
 ## Reference Materials
 
 **Steve Baker 2026 Protocol:**

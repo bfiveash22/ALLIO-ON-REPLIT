@@ -4,6 +4,8 @@ import * as path from "path";
 import { db } from "../db";
 import { generatedProtocols, type GeneratedProtocol } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
+// Protocol transcripts are sourced from Google Drive folder ID: 10BqHP7hXwBGskvoNePMuvFuTNspKy0ur
+// See PROTOCOL_TRANSCRIPTS_FOLDER_ID in services/drive.ts
 import {
   peptides,
   ivTherapies,

@@ -113,6 +113,14 @@ const newMembers = await client.query(`
 - Clinic network size
 - Legal document status
 
+## Protocol Transcript Source
+
+Protocol transcripts are stored in a canonical Google Drive folder for retrieval and processing:
+- **URL:** https://drive.google.com/drive/folders/10BqHP7hXwBGskvoNePMuvFuTNspKy0ur?usp=sharing
+- **Folder ID:** `10BqHP7hXwBGskvoNePMuvFuTNspKy0ur`
+- **Purpose:** Contains patient consultation transcripts used as input for protocol generation by DR_FORMULA. When tracking protocol generation, this is the upstream source for transcript-based protocols.
+- **Code Reference:** Exported as `PROTOCOL_TRANSCRIPTS_FOLDER_ID` from `artifacts/api-server/src/services/drive.ts`.
+
 ## Integration Points
 
 **With DR_FORMULA:**

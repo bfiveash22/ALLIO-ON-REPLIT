@@ -97,6 +97,7 @@ export interface IStorage {
   getDiscussionReplies(threadId: string): Promise<DiscussionReply[]>;
   createDiscussionReply(reply: InsertDiscussionReply): Promise<DiscussionReply>;
   // Doctor Dashboard - Patient Records
+  getAllPatientRecords(): Promise<PatientRecord[]>;
   getPatientRecords(doctorId: string): Promise<PatientRecord[]>;
   getPatientRecord(id: string): Promise<PatientRecord | undefined>;
   createPatientRecord(record: InsertPatientRecord): Promise<PatientRecord>;
@@ -108,10 +109,12 @@ export interface IStorage {
   updatePatientUpload(id: string, updates: Partial<PatientUpload>): Promise<PatientUpload | undefined>;
   // Doctor Dashboard - Patient Protocols
   getPatientProtocols(patientRecordId: string): Promise<PatientProtocol[]>;
+  getAllDoctorProtocols(): Promise<PatientProtocol[]>;
   getDoctorProtocols(doctorId: string): Promise<PatientProtocol[]>;
   createPatientProtocol(protocol: InsertPatientProtocol): Promise<PatientProtocol>;
   updatePatientProtocol(id: string, updates: Partial<PatientProtocol>): Promise<PatientProtocol | undefined>;
   // Doctor Dashboard - Messaging
+  getAllConversations(): Promise<Conversation[]>;
   getConversations(userId: string): Promise<Conversation[]>;
   getConversation(id: string): Promise<Conversation | undefined>;
   createConversation(conversation: InsertConversation): Promise<Conversation>;
@@ -841,6 +844,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Doctor Dashboard - Patient Records
+  async getAllPatientRecords(): Promise<PatientRecord[]> {
+    return await db.select().from(patientRecords).orderBy(desc(patientRecords.updatedAt));
+  }
+
   async getPatientRecords(doctorId: string): Promise<PatientRecord[]> {
     return await db.select().from(patientRecords).where(eq(patientRecords.doctorId, doctorId)).orderBy(desc(patientRecords.updatedAt));
   }
@@ -909,6 +916,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(patientProtocols).where(eq(patientProtocols.patientRecordId, patientRecordId)).orderBy(desc(patientProtocols.updatedAt));
   }
 
+  async getAllDoctorProtocols(): Promise<PatientProtocol[]> {
+    return await db.select().from(patientProtocols).orderBy(desc(patientProtocols.updatedAt));
+  }
+
   async getDoctorProtocols(doctorId: string): Promise<PatientProtocol[]> {
     return await db.select().from(patientProtocols).where(eq(patientProtocols.doctorId, doctorId)).orderBy(desc(patientProtocols.updatedAt));
   }
@@ -924,6 +935,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Doctor Dashboard - Messaging
+  async getAllConversations(): Promise<Conversation[]> {
+    return await db.select().from(conversations).orderBy(desc(conversations.lastMessageAt));
+  }
+
   async getConversations(userId: string): Promise<Conversation[]> {
     const allConversations = await db.select().from(conversations).orderBy(desc(conversations.lastMessageAt));
     return allConversations.filter(c => c.participantIds?.includes(userId));

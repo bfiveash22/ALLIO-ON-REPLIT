@@ -12,6 +12,14 @@ import OpenAI from "openai";
 
 const xrayUpload = multer({ storage: multer.memoryStorage() });
 
+function isPrivilegedUser(req: Request): boolean {
+  const wpRoles: string[] = (req as any).user?.wpRoles || [];
+  return wpRoles.includes("administrator") ||
+    wpRoles.includes("shop_manager") ||
+    wpRoles.includes("admin") ||
+    wpRoles.includes("trustee");
+}
+
 async function isDoctorsMember(doctorUserId: string, patientId: string): Promise<boolean> {
   const doctorUser = await storage.getUser(doctorUserId);
   if (!doctorUser) return false;
@@ -34,17 +42,19 @@ async function isDoctorsMember(doctorUserId: string, patientId: string): Promise
 }
 
 export function registerDoctorRoutes(app: Express): void {
-  app.get("/api/doctor/patients", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.get("/api/doctor/patients", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
-      const doctorId = req.user?.id as string;
-      const patients = await storage.getPatientRecords(doctorId);
+      const isPrivileged = isPrivilegedUser(req);
+      const patients = isPrivileged
+        ? await storage.getAllPatientRecords()
+        : await storage.getPatientRecords(req.user?.id as string);
       res.json({ success: true, patients });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }
   });
 
-  app.get("/api/doctor/patients/:id", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.get("/api/doctor/patients/:id", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const patient = await storage.getPatientRecord(req.params.id);
       if (!patient) {
@@ -58,9 +68,10 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/doctor/patients", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.post("/api/doctor/patients", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
-      const doctorId = req.user?.id as string;
+      const isPrivileged = isPrivilegedUser(req);
+      const doctorId = req.body.doctorId || (isPrivileged ? null : req.user?.id as string);
       const patient = await storage.createPatientRecord({ ...req.body, doctorId });
       res.json({ success: true, patient });
     } catch (error: any) {
@@ -68,7 +79,7 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.put("/api/doctor/patients/:id", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.put("/api/doctor/patients/:id", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const patient = await storage.updatePatientRecord(req.params.id, req.body);
       res.json({ success: true, patient });
@@ -77,7 +88,7 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/doctor/patients/:patientId/uploads", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.post("/api/doctor/patients/:patientId/uploads", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const doctorId = req.user?.id as string;
       const upload = await storage.createPatientUpload({
@@ -92,17 +103,19 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.get("/api/doctor/protocols", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.get("/api/doctor/protocols", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
-      const doctorId = req.user?.id as string;
-      const protocols = await storage.getDoctorProtocols(doctorId);
+      const isPrivileged = isPrivilegedUser(req);
+      const protocols = isPrivileged
+        ? await storage.getAllDoctorProtocols()
+        : await storage.getDoctorProtocols(req.user?.id as string);
       res.json({ success: true, protocols });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }
   });
 
-  app.post("/api/doctor/patients/:patientId/protocols", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.post("/api/doctor/patients/:patientId/protocols", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const doctorId = req.user?.id as string;
       const protocol = await storage.createPatientProtocol({
@@ -116,7 +129,7 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.put("/api/doctor/protocols/:id", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.put("/api/doctor/protocols/:id", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const protocol = await storage.updatePatientProtocol(req.params.id, req.body);
       res.json({ success: true, protocol });
@@ -125,21 +138,24 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.get("/api/doctor/conversations", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.get("/api/doctor/conversations", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id as string;
-      const conversationList = await storage.getConversations(userId);
+      const isPrivileged = isPrivilegedUser(req);
+      const conversationList = isPrivileged
+        ? await storage.getAllConversations()
+        : await storage.getConversations(req.user?.id as string);
       res.json({ success: true, conversations: conversationList });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }
   });
 
-  app.get("/api/doctor/conversations/:id/messages", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.get("/api/doctor/conversations/:id/messages", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const userId = req.user?.id as string;
+      const isPrivileged = isPrivilegedUser(req);
       const conversation = await storage.getConversation(req.params.id);
-      if (!conversation || !conversation.participantIds.includes(userId)) {
+      if (!conversation || (!isPrivileged && !conversation.participantIds.includes(userId))) {
         return res.status(403).json({ success: false, error: "Not a participant in this conversation" });
       }
       const messages = await storage.getMessages(req.params.id);
@@ -149,18 +165,21 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/doctor/conversations", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.post("/api/doctor/conversations", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const userId = req.user?.id as string;
       const { participantIds } = req.body;
       if (!participantIds || !Array.isArray(participantIds) || !participantIds.includes(userId)) {
         return res.status(403).json({ success: false, error: "You must be a participant in the conversation" });
       }
-      const otherParticipants = participantIds.filter((id: string) => id !== userId);
-      for (const pId of otherParticipants) {
-        const authorized = await isDoctorsMember(userId, pId);
-        if (!authorized) {
-          return res.status(403).json({ success: false, error: "One or more participants are not your enrolled members" });
+      const isPrivileged = isPrivilegedUser(req);
+      if (!isPrivileged) {
+        const otherParticipants = participantIds.filter((id: string) => id !== userId);
+        for (const pId of otherParticipants) {
+          const authorized = await isDoctorsMember(userId, pId);
+          if (!authorized) {
+            return res.status(403).json({ success: false, error: "One or more participants are not your enrolled members" });
+          }
         }
       }
       const conversation = await storage.createConversation(req.body);
@@ -171,11 +190,12 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/doctor/messages", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.post("/api/doctor/messages", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const userId = req.user?.id as string;
+      const isPrivileged = isPrivilegedUser(req);
       const { recipientId, conversationId } = req.body;
-      if (recipientId) {
+      if (recipientId && !isPrivileged) {
         const authorized = await isDoctorsMember(userId, recipientId);
         if (!authorized) {
           return res.status(403).json({ success: false, error: "Recipient is not your enrolled member" });
@@ -183,7 +203,7 @@ export function registerDoctorRoutes(app: Express): void {
       }
       if (conversationId) {
         const conversation = await storage.getConversation(conversationId);
-        if (!conversation || !conversation.participantIds.includes(userId)) {
+        if (!conversation || (!isPrivileged && !conversation.participantIds.includes(userId))) {
           return res.status(403).json({ success: false, error: "Not a participant in this conversation" });
         }
         if (recipientId && !conversation.participantIds.includes(recipientId)) {
@@ -198,7 +218,7 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.put("/api/doctor/messages/:id/read", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.put("/api/doctor/messages/:id/read", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const userId = req.user?.id as string;
       const existingMessages = await db.select().from(doctorPatientMessages).where(eq(doctorPatientMessages.id, req.params.id));
@@ -215,13 +235,16 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.get("/api/doctor/messages/:patientId", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.get("/api/doctor/messages/:patientId", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const doctorId = req.user?.id as string;
       const patientId = req.params.patientId;
-      const authorized = await isDoctorsMember(doctorId, patientId);
-      if (!authorized) {
-        return res.status(403).json({ success: false, error: "This patient is not enrolled under your practice" });
+      const isPrivileged = isPrivilegedUser(req);
+      if (!isPrivileged) {
+        const authorized = await isDoctorsMember(doctorId, patientId);
+        if (!authorized) {
+          return res.status(403).json({ success: false, error: "This patient is not enrolled under your practice" });
+        }
       }
       const messages = await storage.getMessagesBetween(doctorId, patientId);
       res.json(messages);
@@ -230,13 +253,16 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/doctor/messages/:patientId", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.post("/api/doctor/messages/:patientId", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const doctorId = req.user?.id as string;
       const patientId = req.params.patientId;
-      const authorized = await isDoctorsMember(doctorId, patientId);
-      if (!authorized) {
-        return res.status(403).json({ success: false, error: "This patient is not enrolled under your practice" });
+      const isPrivileged = isPrivilegedUser(req);
+      if (!isPrivileged) {
+        const authorized = await isDoctorsMember(doctorId, patientId);
+        if (!authorized) {
+          return res.status(403).json({ success: false, error: "This patient is not enrolled under your practice" });
+        }
       }
       const { messageText } = req.body;
       const doctorUser = await storage.getUser(doctorId);
@@ -264,7 +290,7 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.get("/api/member/messages", requireRole("admin", "member"), async (req: Request, res: Response) => {
+  app.get("/api/member/messages", requireRole("admin", "trustee", "member"), async (req: Request, res: Response) => {
     try {
       const userId = req.user?.id as string;
       const unreadMessages = await storage.getUnreadMessagesForUser(userId);
@@ -281,7 +307,7 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/member/messages/:doctorId", requireRole("admin", "member"), async (req: Request, res: Response) => {
+  app.post("/api/member/messages/:doctorId", requireRole("admin", "trustee", "member"), async (req: Request, res: Response) => {
     try {
       const memberId = req.user?.id as string;
       const doctorId = req.params.doctorId;
@@ -319,7 +345,7 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.put("/api/member/messages/:id/read", requireRole("admin", "member"), async (req: Request, res: Response) => {
+  app.put("/api/member/messages/:id/read", requireRole("admin", "trustee", "member"), async (req: Request, res: Response) => {
     try {
       const userId = req.user?.id as string;
       const existingMessages = await db.select().from(doctorPatientMessages).where(eq(doctorPatientMessages.id, req.params.id));
@@ -336,7 +362,7 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/ai/analyze-image", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.post("/api/ai/analyze-image", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const { patientUploadId, analysisType, imageData } = req.body;
       const requestedBy = req.user?.id as string;
@@ -463,7 +489,7 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/xray/upload-analyze", requireRole("admin", "doctor"), xrayUpload.single("file"), async (req: Request, res: Response) => {
+  app.post("/api/xray/upload-analyze", requireRole("admin", "trustee", "doctor"), xrayUpload.single("file"), async (req: Request, res: Response) => {
     try {
       if (!req.file) return res.status(400).json({ success: false, error: "No file uploaded" });
 
@@ -482,8 +508,8 @@ export function registerDoctorRoutes(app: Express): void {
           return res.status(404).json({ success: false, error: "Patient record not found." });
         }
         if (patient.doctorId !== requestedBy) {
-          const user = await storage.getUser(requestedBy);
-          if (!user || (user as Record<string, unknown>).role !== "admin") {
+          const isPrivileged = isPrivilegedUser(req);
+          if (!isPrivileged) {
             return res.status(403).json({ success: false, error: "You do not have access to this patient." });
           }
         }
@@ -596,7 +622,7 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.get("/api/xray/history", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.get("/api/xray/history", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const requestedBy = req.user?.id as string;
       const { aiAnalysisRequests } = await import("@shared/schema");
@@ -615,7 +641,7 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.get("/api/xray/history/:patientId", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.get("/api/xray/history/:patientId", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const requestedBy = req.user?.id as string;
       const { patientId } = req.params;
@@ -625,8 +651,8 @@ export function registerDoctorRoutes(app: Express): void {
         return res.status(404).json({ success: false, error: "Patient not found", analyses: [] });
       }
       if (patient.doctorId !== requestedBy) {
-        const user = await storage.getUser(requestedBy);
-        if (!user || (user as Record<string, unknown>).role !== "admin") {
+        const isPrivileged = isPrivilegedUser(req);
+        if (!isPrivileged) {
           return res.status(403).json({ success: false, error: "Access denied", analyses: [] });
         }
       }
@@ -646,11 +672,15 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.get("/api/doctor/analytics", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.get("/api/doctor/analytics", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
-      const doctorId = req.user?.id as string;
-      const patients = await storage.getPatientRecords(doctorId);
-      const protocols = await storage.getDoctorProtocols(doctorId);
+      const isPrivileged = isPrivilegedUser(req);
+      const patients = isPrivileged
+        ? await storage.getAllPatientRecords()
+        : await storage.getPatientRecords(req.user?.id as string);
+      const protocols = isPrivileged
+        ? await storage.getAllDoctorProtocols()
+        : await storage.getDoctorProtocols(req.user?.id as string);
 
       const analytics = {
         totalPatients: patients.length,
@@ -670,7 +700,7 @@ export function registerDoctorRoutes(app: Express): void {
 
   const scienceAgentIds = new Set(getAgentsByDivision("science").map(a => a.id.toLowerCase()));
 
-  app.get("/api/doctor/consult/agents", requireRole("admin", "doctor"), async (_req: Request, res: Response) => {
+  app.get("/api/doctor/consult/agents", requireRole("admin", "trustee", "doctor"), async (_req: Request, res: Response) => {
     const scienceAgents = getAgentsByDivision("science").map(a => ({
       id: a.id,
       name: a.name,
@@ -682,7 +712,7 @@ export function registerDoctorRoutes(app: Express): void {
     res.json({ success: true, agents: scienceAgents });
   });
 
-  app.post("/api/doctor/consult/:agentId", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+  app.post("/api/doctor/consult/:agentId", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const { agentId } = req.params;
       const { message, history = [], patientContext } = req.body;

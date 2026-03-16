@@ -38,6 +38,7 @@ import {
   ArrowLeftRight,
   CreditCard,
   DollarSign,
+  Stethoscope,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -406,6 +407,10 @@ export default function AdminDashboardPage() {
           <TabsTrigger value="ui-evolutions" data-testid="tab-ui-evolutions">
             <Palette className="h-4 w-4 mr-2" />
             UI Evolutions
+          </TabsTrigger>
+          <TabsTrigger value="patient-management" data-testid="tab-patient-management" className="bg-emerald-500/10 text-emerald-400 data-[state=active]:bg-emerald-500/30">
+            <Stethoscope className="h-4 w-4 mr-2" />
+            Patient Management
           </TabsTrigger>
         </TabsList>
 
@@ -1405,6 +1410,55 @@ export default function AdminDashboardPage() {
                   <p className="text-sm mt-1">Payments will appear here once members make purchases via Stripe.</p>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="patient-management" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Stethoscope className="w-5 h-5" />
+                    Patient Management
+                  </CardTitle>
+                  <CardDescription>Full access to patient roster, enrollment, protocols, clinical analysis, and messaging</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <a href="/doctors" className="block">
+                  <div className="p-4 rounded-xl border hover:bg-accent transition-colors cursor-pointer">
+                    <Users className="w-8 h-8 mb-2 text-emerald-500" />
+                    <h4 className="font-bold">Patient Roster</h4>
+                    <p className="text-sm text-muted-foreground mt-1">View and manage all patients, add new patients, assign doctors</p>
+                  </div>
+                </a>
+                <a href="/blood-analysis" className="block">
+                  <div className="p-4 rounded-xl border hover:bg-accent transition-colors cursor-pointer">
+                    <Activity className="w-8 h-8 mb-2 text-violet-500" />
+                    <h4 className="font-bold">Clinical Analysis</h4>
+                    <p className="text-sm text-muted-foreground mt-1">Blood analysis, X-ray, skin analysis with AI</p>
+                  </div>
+                </a>
+                <a href="/doctors" className="block">
+                  <div className="p-4 rounded-xl border hover:bg-accent transition-colors cursor-pointer">
+                    <FileText className="w-8 h-8 mb-2 text-blue-500" />
+                    <h4 className="font-bold">Protocols & Messaging</h4>
+                    <p className="text-sm text-muted-foreground mt-1">Protocol assignment, generation, and patient communication</p>
+                  </div>
+                </a>
+              </div>
+              <div className="text-center pt-4">
+                <Button asChild>
+                  <a href="/admin/backoffice">
+                    <Stethoscope className="w-4 h-4 mr-2" />
+                    Open Full Patient Tools in Backoffice
+                  </a>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

@@ -6,6 +6,10 @@ import * as path from 'path';
 // This is the correct folder as specified by Trustee: https://drive.google.com/drive/folders/1ui5cbRdyVhIojeG44EYg17puOdt4bStH
 const OFFICIAL_ALLIO_FOLDER_ID = "1ui5cbRdyVhIojeG44EYg17puOdt4bStH";
 
+// Protocol Transcripts folder - canonical source for patient protocol transcripts
+// https://drive.google.com/drive/folders/10BqHP7hXwBGskvoNePMuvFuTNspKy0ur?usp=sharing
+export const PROTOCOL_TRANSCRIPTS_FOLDER_ID = "10BqHP7hXwBGskvoNePMuvFuTNspKy0ur";
+
 const EXTERNAL_LINKS_FILE = path.join(process.cwd(), 'data', 'external-folder-links.json');
 
 const SEED_EXTERNAL_FOLDER_LINKS: Record<string, { folderId: string; label: string }[]> = {

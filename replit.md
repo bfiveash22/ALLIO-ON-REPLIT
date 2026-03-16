@@ -148,6 +148,14 @@ API Routes (all require auth + admin/trustee/doctor role):
 - `POST /api/protocol-assembly/automation-test/gemini` — Test Gemini 1.5 Pro + RAG only
 - `POST /api/protocol-assembly/automation-test/openai` — Test OpenAI GPT-4o only
 
+### Protocol Transcript Source
+
+Protocol transcripts are stored in a canonical Google Drive folder (ID: `10BqHP7hXwBGskvoNePMuvFuTNspKy0ur`). The constant `PROTOCOL_TRANSCRIPTS_FOLDER_ID` is exported from `artifacts/api-server/src/services/drive.ts`.
+
+### Trustee & Admin Patient Access
+
+Trustees and Admins have superset access to all patient management features. The `trustee` role is accepted on all doctor/clinical API endpoints in `doctor-routes.ts`. Both the trustee dashboard (`trustee-dashboard.tsx`) and admin backoffice (`admin-backoffice.tsx`) include inline patient management panels with patient roster, enrollment, protocol overview, clinical tools, and messaging. The admin dashboard (`admin-dashboard.tsx`) also includes a patient management tab linking to these tools.
+
 ### Protocol Slide Generator
 
 `artifacts/api-server/src/services/protocol-slide-generator.ts` generates a branded 20-slide Google Slides presentation from the Annette Gomer protocol. Slides include FF PMA / Allio branding (deep blue, teal, cyan, gold), accent bars, section dividers for each of the 5 Rs, and embedded research links (PubMed, TheCandidaDiet.com). Presentation is moved to the ALLIO/Protocols folder in Google Drive.

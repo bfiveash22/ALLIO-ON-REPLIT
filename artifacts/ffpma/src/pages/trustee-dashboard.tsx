@@ -879,6 +879,435 @@ function LaunchReadinessWidget() {
   );
 }
 
+interface PatientRecord {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  dateOfBirth?: string;
+  status: string;
+  doctorId?: string;
+  createdAt: string;
+}
+
+interface PatientProtocol {
+  id: string;
+  patientRecordId: string;
+  protocolName: string;
+  status: string;
+  startDate?: string;
+  endDate?: string;
+  complianceScore?: number;
+  createdAt: string;
+}
+
+interface TrusteeConversation {
+  id: string;
+  title?: string;
+  participantIds: string[];
+  lastMessageAt?: string;
+  createdAt: string;
+}
+
+function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
+  const { toast } = useToast();
+  const [patientSearch, setPatientSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [showAddPatient, setShowAddPatient] = useState(false);
+  const [newPatient, setNewPatient] = useState({ name: "", email: "", phone: "", dateOfBirth: "" });
+  const [activeSubTab, setActiveSubTab] = useState("roster");
+
+  const { data: patientsData, refetch: refetchPatients } = useQuery<{ success: boolean; patients: PatientRecord[] }>({
+    queryKey: ["/api/doctor/patients"],
+    retry: false,
+  });
+
+  const { data: protocolsData } = useQuery<{ success: boolean; protocols: PatientProtocol[] }>({
+    queryKey: ["/api/doctor/protocols"],
+    retry: false,
+  });
+
+  const { data: conversationsData } = useQuery<{ success: boolean; conversations: TrusteeConversation[] }>({
+    queryKey: ["/api/doctor/conversations"],
+    retry: false,
+  });
+
+  const patients = patientsData?.patients || [];
+  const protocols = protocolsData?.protocols || [];
+  const conversations = conversationsData?.conversations || [];
+
+  const filteredPatients = patients.filter((p) => {
+    const matchesSearch = !patientSearch ||
+      p.name?.toLowerCase().includes(patientSearch.toLowerCase()) ||
+      p.email?.toLowerCase().includes(patientSearch.toLowerCase());
+    const matchesStatus = statusFilter === "all" || p.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const addPatientMutation = useMutation({
+    mutationFn: async (data: typeof newPatient) => {
+      const res = await apiRequest("POST", "/api/doctor/patients", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Patient added successfully" });
+      setShowAddPatient(false);
+      setNewPatient({ name: "", email: "", phone: "", dateOfBirth: "" });
+      refetchPatients();
+    },
+    onError: (error: Error) => {
+      toast({ title: "Failed to add patient", description: error.message, variant: "destructive" });
+    },
+  });
+
+  return (
+    <div className="space-y-6">
+      <Card className="bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border-emerald-500/20">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-emerald-100">
+                <Stethoscope className="w-5 h-5 text-emerald-400" />
+                Patient Management
+              </CardTitle>
+              <CardDescription>Full patient access — roster, enrollment, protocols, clinical tools, and messaging</CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge className="bg-emerald-500/20 text-emerald-300">{roleLabel} Access</Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10"
+                onClick={() => setShowAddPatient(true)}
+                data-testid="button-add-patient"
+              >
+                <Plus className="w-4 h-4 mr-1" /> Add Patient
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-center">
+              <p className="text-2xl font-bold text-emerald-400">{patients.length}</p>
+              <p className="text-xs text-white/60">Total Patients</p>
+            </div>
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-center">
+              <p className="text-2xl font-bold text-cyan-400">{patients.filter(p => p.status === "active").length}</p>
+              <p className="text-xs text-white/60">Active</p>
+            </div>
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-center">
+              <p className="text-2xl font-bold text-violet-400">{protocols.length}</p>
+              <p className="text-xs text-white/60">Protocols</p>
+            </div>
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-center">
+              <p className="text-2xl font-bold text-blue-400">{conversations.length}</p>
+              <p className="text-xs text-white/60">Conversations</p>
+            </div>
+          </div>
+
+          <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
+            <TabsList className="bg-black/40 border border-white/10">
+              <TabsTrigger value="roster" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300">
+                <Users className="w-4 h-4 mr-2" /> Patient Roster
+              </TabsTrigger>
+              <TabsTrigger value="protocols" className="data-[state=active]:bg-violet-500/20 data-[state=active]:text-violet-300">
+                <FileText className="w-4 h-4 mr-2" /> Protocols
+              </TabsTrigger>
+              <TabsTrigger value="clinical" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-300">
+                <CircuitBoard className="w-4 h-4 mr-2" /> Clinical Tools
+              </TabsTrigger>
+              <TabsTrigger value="messaging" className="data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-300">
+                <MessageSquare className="w-4 h-4 mr-2" /> Messaging
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="roster" className="space-y-4 mt-4">
+              <div className="flex items-center gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                  <Input
+                    placeholder="Search patients by name or email..."
+                    value={patientSearch}
+                    onChange={(e) => setPatientSearch(e.target.value)}
+                    className="pl-10 bg-white/5 border-white/10"
+                    data-testid="input-patient-search"
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[150px] bg-white/5 border-white/10" data-testid="select-patient-status">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" size="sm" className="border-white/10" onClick={() => refetchPatients()}>
+                  <RefreshCw className="w-4 h-4" />
+                </Button>
+              </div>
+
+              <ScrollArea className="h-[400px]">
+                {filteredPatients.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Users className="w-12 h-12 mx-auto mb-3 text-white/20" />
+                    <p className="text-white/60">{patients.length === 0 ? "No patients yet. Add your first patient." : "No patients match your filters."}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {filteredPatients.map((patient) => (
+                      <div key={patient.id} className="flex items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-sm font-bold">
+                            {patient.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'}
+                          </div>
+                          <div>
+                            <p className="font-medium">{patient.name}</p>
+                            <p className="text-xs text-white/50">{patient.email || 'No email'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge className={patient.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' : patient.status === 'pending' ? 'bg-amber-500/20 text-amber-300' : 'bg-white/10 text-white/50'}>
+                            {patient.status}
+                          </Badge>
+                          <span className="text-xs text-white/40">{new Date(patient.createdAt).toLocaleDateString()}</span>
+                          <Link href="/doctors">
+                            <Button variant="ghost" size="sm" className="text-white/50 hover:text-white">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="protocols" className="space-y-4 mt-4">
+              <ScrollArea className="h-[400px]">
+                {protocols.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="w-12 h-12 mx-auto mb-3 text-white/20" />
+                    <p className="text-white/60">No protocols assigned yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {protocols.map((protocol) => (
+                      <div key={protocol.id} className="flex items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
+                            <FileText className="w-5 h-5 text-violet-400" />
+                          </div>
+                          <div>
+                            <p className="font-medium">{protocol.protocolName}</p>
+                            <p className="text-xs text-white/50">Patient: {protocol.patientRecordId}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge className={protocol.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' : protocol.status === 'completed' ? 'bg-cyan-500/20 text-cyan-300' : 'bg-amber-500/20 text-amber-300'}>
+                            {protocol.status}
+                          </Badge>
+                          {protocol.complianceScore != null && (
+                            <span className="text-xs text-white/50">{protocol.complianceScore}% compliance</span>
+                          )}
+                          <span className="text-xs text-white/40">{new Date(protocol.createdAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="clinical" className="space-y-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Link href="/doctors">
+                  <div className="p-4 rounded-xl bg-white/5 hover:bg-white/10 cursor-pointer transition-colors border border-white/10 hover:border-emerald-500/30">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-3">
+                      <Brain className="w-6 h-6 text-emerald-400" />
+                    </div>
+                    <h4 className="font-bold">Root Cause Analysis</h4>
+                    <p className="text-sm text-white/60 mt-1">Functional medicine timeline, environmental factors</p>
+                  </div>
+                </Link>
+                <Link href="/blood-analysis">
+                  <div className="p-4 rounded-xl bg-white/5 hover:bg-white/10 cursor-pointer transition-colors border border-white/10 hover:border-violet-500/30">
+                    <div className="w-12 h-12 rounded-xl bg-violet-500/20 flex items-center justify-center mb-3">
+                      <CircuitBoard className="w-6 h-6 text-violet-400" />
+                    </div>
+                    <h4 className="font-bold">AI Blood Analysis</h4>
+                    <p className="text-sm text-white/60 mt-1">Upload and analyze live blood samples</p>
+                  </div>
+                </Link>
+                <Link href="/doctors">
+                  <div className="p-4 rounded-xl bg-white/5 hover:bg-white/10 cursor-pointer transition-colors border border-white/10 hover:border-cyan-500/30">
+                    <div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center mb-3">
+                      <Upload className="w-6 h-6 text-cyan-400" />
+                    </div>
+                    <h4 className="font-bold">X-Ray Analysis</h4>
+                    <p className="text-sm text-white/60 mt-1">Upload X-ray images for AI analysis</p>
+                  </div>
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Link href="/doctors">
+                  <div className="p-4 rounded-xl bg-white/5 hover:bg-white/10 cursor-pointer transition-colors border border-white/10 hover:border-rose-500/30">
+                    <div className="w-12 h-12 rounded-xl bg-rose-500/20 flex items-center justify-center mb-3">
+                      <Heart className="w-6 h-6 text-rose-400" />
+                    </div>
+                    <h4 className="font-bold">Skin Analysis</h4>
+                    <p className="text-sm text-white/60 mt-1">AI skin lesion classification</p>
+                  </div>
+                </Link>
+                <Link href="/doctors">
+                  <div className="p-4 rounded-xl bg-white/5 hover:bg-white/10 cursor-pointer transition-colors border border-white/10 hover:border-blue-500/30">
+                    <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center mb-3">
+                      <Dna className="w-6 h-6 text-blue-400" />
+                    </div>
+                    <h4 className="font-bold">Protocol Generation</h4>
+                    <p className="text-sm text-white/60 mt-1">Generate healing protocols from transcripts</p>
+                  </div>
+                </Link>
+                <Link href="/doctors">
+                  <div className="p-4 rounded-xl bg-white/5 hover:bg-white/10 cursor-pointer transition-colors border border-white/10 hover:border-amber-500/30">
+                    <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center mb-3">
+                      <Bot className="w-6 h-6 text-amber-400" />
+                    </div>
+                    <h4 className="font-bold">Consult AI Team</h4>
+                    <p className="text-sm text-white/60 mt-1">Science Division AI agent consultations</p>
+                  </div>
+                </Link>
+              </div>
+              <div className="flex justify-center">
+                <Link href="/doctors">
+                  <Button className="bg-emerald-500 hover:bg-emerald-600">
+                    <Stethoscope className="w-4 h-4 mr-2" />
+                    Open Full Doctor Portal
+                    <ChevronRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="messaging" className="space-y-4 mt-4">
+              <ScrollArea className="h-[400px]">
+                {conversations.length === 0 ? (
+                  <div className="text-center py-12">
+                    <MessageSquare className="w-12 h-12 mx-auto mb-3 text-white/20" />
+                    <p className="text-white/60">No conversations yet</p>
+                    <p className="text-sm text-white/40 mt-1">Patient-doctor conversations will appear here</p>
+                    <Link href="/doctors">
+                      <Button variant="outline" className="mt-4 border-white/10">
+                        <MessageSquare className="w-4 h-4 mr-2" /> Open Messaging in Doctor Portal
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {conversations.map((convo) => (
+                      <div key={convo.id} className="flex items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                            <MessageSquare className="w-5 h-5 text-blue-400" />
+                          </div>
+                          <div>
+                            <p className="font-medium">{convo.title || `Conversation ${String(convo.id).slice(0, 8)}`}</p>
+                            <p className="text-xs text-white/50">{convo.participantIds?.length || 0} participants</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {convo.lastMessageAt && (
+                            <span className="text-xs text-white/40">{new Date(convo.lastMessageAt).toLocaleDateString()}</span>
+                          )}
+                          <Link href="/doctors">
+                            <Button variant="ghost" size="sm" className="text-white/50 hover:text-white">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      <Dialog open={showAddPatient} onOpenChange={setShowAddPatient}>
+        <DialogContent className="bg-slate-900 border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle>Add New Patient</DialogTitle>
+            <DialogDescription className="text-white/60">Enter patient information to add them to the system</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm text-white/70">Full Name *</label>
+              <Input
+                placeholder="John Doe"
+                value={newPatient.name}
+                onChange={(e) => setNewPatient(prev => ({ ...prev, name: e.target.value }))}
+                className="bg-white/5 border-white/10"
+                data-testid="input-patient-name"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm text-white/70">Email</label>
+              <Input
+                type="email"
+                placeholder="john@example.com"
+                value={newPatient.email}
+                onChange={(e) => setNewPatient(prev => ({ ...prev, email: e.target.value }))}
+                className="bg-white/5 border-white/10"
+                data-testid="input-patient-email"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm text-white/70">Phone</label>
+                <Input
+                  placeholder="(555) 123-4567"
+                  value={newPatient.phone}
+                  onChange={(e) => setNewPatient(prev => ({ ...prev, phone: e.target.value }))}
+                  className="bg-white/5 border-white/10"
+                  data-testid="input-patient-phone"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm text-white/70">Date of Birth</label>
+                <Input
+                  type="date"
+                  value={newPatient.dateOfBirth}
+                  onChange={(e) => setNewPatient(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                  className="bg-white/5 border-white/10"
+                  data-testid="input-patient-dob"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" className="border-white/10" onClick={() => setShowAddPatient(false)}>Cancel</Button>
+            <Button
+              className="bg-emerald-500 hover:bg-emerald-600"
+              onClick={() => addPatientMutation.mutate(newPatient)}
+              disabled={!newPatient.name || addPatientMutation.isPending}
+              data-testid="button-submit-patient"
+            >
+              {addPatientMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+              Add Patient
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 interface ProtocolQueueItem {
   id: number;
   patientName: string;
@@ -4681,105 +5110,7 @@ export default function TrusteeDashboard() {
 
             {/* Patient Management Tab - Same features as Doctors */}
             <TabsContent value="patient-management" className="space-y-6">
-              <Card className="bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border-emerald-500/20">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2 text-emerald-100">
-                        <Stethoscope className="w-5 h-5 text-emerald-400" />
-                        Patient Management Tools
-                      </CardTitle>
-                      <CardDescription>Full access to doctor-level patient tools</CardDescription>
-                    </div>
-                    <Badge className="bg-emerald-500/20 text-emerald-300">Trustee Access</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Link href="/doctors">
-                      <div className="p-4 rounded-xl bg-white/5 hover:bg-white/10 cursor-pointer transition-colors border border-white/10 hover:border-emerald-500/30">
-                        <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-3">
-                          <Brain className="w-6 h-6 text-emerald-400" />
-                        </div>
-                        <h4 className="font-bold">Root Cause Analysis</h4>
-                        <p className="text-sm text-white/60 mt-1">Functional medicine timeline, environmental factors, toxicity assessments</p>
-                      </div>
-                    </Link>
-                    <Link href="/blood-analysis">
-                      <div className="p-4 rounded-xl bg-white/5 hover:bg-white/10 cursor-pointer transition-colors border border-white/10 hover:border-violet-500/30">
-                        <div className="w-12 h-12 rounded-xl bg-violet-500/20 flex items-center justify-center mb-3">
-                          <CircuitBoard className="w-6 h-6 text-violet-400" />
-                        </div>
-                        <h4 className="font-bold">AI Blood Analysis</h4>
-                        <p className="text-sm text-white/60 mt-1">Upload and analyze live blood samples with ALLIO Vision AI</p>
-                      </div>
-                    </Link>
-                    <Link href="/doctors">
-                      <div className="p-4 rounded-xl bg-white/5 hover:bg-white/10 cursor-pointer transition-colors border border-white/10 hover:border-blue-500/30">
-                        <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center mb-3">
-                          <MessageSquare className="w-6 h-6 text-blue-400" />
-                        </div>
-                        <h4 className="font-bold">Patient Messaging</h4>
-                        <p className="text-sm text-white/60 mt-1">Secure communication with patients and protocol updates</p>
-                      </div>
-                    </Link>
-                  </div>
-
-                  <Separator className="bg-white/10" />
-
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Root Cause Framework Overview */}
-                    <div className="p-5 rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20">
-                      <h3 className="font-bold flex items-center gap-2 mb-4">
-                        <Brain className="w-5 h-5 text-emerald-400" />
-                        Root Cause Framework
-                      </h3>
-                      <p className="text-sm text-white/60 mb-4">Functional medicine approach - not pharma-based</p>
-                      <div className="grid grid-cols-2 gap-2">
-                        {["Symptom Timeline", "Environmental Toxins", "Nutritional Status", "Lifestyle Factors", "Gut Health", "Heavy Metals", "Genetic Markers", "Stress Response"].map((item) => (
-                          <div key={item} className="p-2 rounded-lg bg-white/5 text-xs text-center flex items-center gap-2 justify-center">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                            {item}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* AI Analysis Tools */}
-                    <div className="p-5 rounded-xl bg-gradient-to-br from-violet-500/10 to-purple-500/10 border border-violet-500/20">
-                      <h3 className="font-bold flex items-center gap-2 mb-4">
-                        <CircuitBoard className="w-5 h-5 text-violet-400" />
-                        AI Analysis Tools
-                      </h3>
-                      <p className="text-sm text-white/60 mb-4">Medical imaging with PMA educational disclaimers</p>
-                      <div className="space-y-2">
-                        {[
-                          { name: "Live Blood Analysis", model: "ALLIO Vision", status: "Active" },
-                          { name: "X-Ray Analysis", model: "HuggingFace", status: "Active" },
-                          { name: "Skin Analysis", model: "HuggingFace", status: "Active" }
-                        ].map((tool) => (
-                          <div key={tool.name} className="flex items-center justify-between p-2 rounded-lg bg-white/5">
-                            <span className="text-sm">{tool.name}</span>
-                            <Badge className={tool.status === "Active" ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"}>
-                              {tool.status}
-                            </Badge>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-center">
-                    <Link href="/doctors">
-                      <Button className="bg-emerald-500 hover:bg-emerald-600">
-                        <Stethoscope className="w-4 h-4 mr-2" />
-                        Open Full Doctor Portal
-                        <ChevronRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
+              <PatientManagementPanel roleLabel="Trustee" />
             </TabsContent>
 
             <TabsContent value="pma-contracts" className="space-y-6">
