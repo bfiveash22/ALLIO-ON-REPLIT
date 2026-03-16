@@ -28,7 +28,7 @@ const protocols = await client.query(`
 - 75F (recurring breast cancer)
 
 **Quality Checks:**
-- Protocol follows Steve Baker 2026 methodology ✓
+- Protocol follows FF PMA 2026 methodology ✓
 - All 5 Rs present (REDUCE/RESTORE/REACTIVATE/REGENERATE/REVITALIZE) ✓
 - Product catalog integration ✓
 - CB1/CB2 receptor targeting ✓

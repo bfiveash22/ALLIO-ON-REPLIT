@@ -18,7 +18,7 @@ export default function AgentHighlightsSlide() {
             <div className="flex-1 bg-gradient-to-r from-[#FFD700]/10 to-transparent border border-[#FFD700]/20 rounded-[1vw] p-[2vw]">
               <h3 className="font-body text-[1.6vw] font-bold text-[#FFD700] mb-[1vh]">DR. FORMULA</h3>
               <p className="font-body text-[1.2vw] text-[#F0F4F8]/80 mb-[0.5vh]">Chief Medical Protocol Agent</p>
-              <p className="font-body text-[1.2vw] text-[#C8D6E5]/55 leading-relaxed">Generates complete personalized healing protocols using the Steve Baker 2026 methodology and 127+ therapeutic products</p>
+              <p className="font-body text-[1.2vw] text-[#C8D6E5]/55 leading-relaxed">Generates complete personalized healing protocols using the FF PMA 2026 methodology and 127+ therapeutic products</p>
             </div>
 
             <div className="flex-1 bg-gradient-to-r from-[#2A4F7A]/10 to-transparent border border-[#2A4F7A]/20 rounded-[1vw] p-[2vw]">

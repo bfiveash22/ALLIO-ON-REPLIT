@@ -1,13 +1,13 @@
 ---
 name: dr-formula-assistant
-description: Steve Baker 2026 Protocol methodology enforcement, FFPMA product catalog integration, protocol template compliance, and quality assurance for patient protocols. Use when generating patient protocols, validating DR_FORMULA output, ensuring Steve Baker methodology compliance, checking product catalog integration, or performing protocol quality reviews before delivery to members.
+description: FF PMA 2026 Protocol methodology enforcement, FFPMA product catalog integration, protocol template compliance, and quality assurance for patient protocols. Use when generating patient protocols, validating DR_FORMULA output, ensuring FF PMA methodology compliance, checking product catalog integration, or performing protocol quality reviews before delivery to members.
 ---
 
 # DR_FORMULA Assistant
 
 Quality assurance and methodology enforcement for patient protocol generation.
 
-## Steve Baker 2026 Methodology Validation
+## FF PMA 2026 Methodology Validation
 
 **The 5 Rs Framework (MANDATORY ORDER):**
 1. **REMOVE** - Detox parasites/virals/heavy metals, clear pathways before rebuilding
@@ -155,7 +155,7 @@ Protocol transcripts are sourced from the canonical Google Drive folder:
 
 ## Reference Materials
 
-**Steve Baker 2026 Protocol:**
+**FF PMA 2026 Protocol:**
 Location: `/root/.openclaw/workspace/ffpma-library/reference/Steve-Baker-2026-Full-Protocol-41-Slides.md`
 
 **Protocol Template:**

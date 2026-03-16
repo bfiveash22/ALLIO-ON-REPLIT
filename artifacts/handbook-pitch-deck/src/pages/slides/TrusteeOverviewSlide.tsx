@@ -18,7 +18,7 @@ export default function TrusteeOverviewSlide() {
           <div className="w-[50%] flex flex-col justify-center gap-[3vh] pl-[2vw]">
             <div>
               <h3 className="font-body text-[1.8vw] font-bold text-[#FFD700] mb-[1vh]">Protocol Oversight</h3>
-              <p className="font-body text-[1.4vw] text-[#C8D6E5]/65 leading-relaxed">Review every AI-generated protocol before delivery. Ensure clinical accuracy, dosage safety, and alignment with the Steve Baker methodology.</p>
+              <p className="font-body text-[1.4vw] text-[#C8D6E5]/65 leading-relaxed">Review every AI-generated protocol before delivery. Ensure clinical accuracy, dosage safety, and alignment with the FF PMA methodology.</p>
             </div>
             <div>
               <h3 className="font-body text-[1.8vw] font-bold text-[#FFD700] mb-[1vh]">Member Management</h3>

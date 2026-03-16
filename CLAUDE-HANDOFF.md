@@ -95,7 +95,7 @@ Prompts 7 and 8 in ANTIGRAVITY-PROMPTS-2026-03-11.md were written targeting the 
 3. **VPS is Linux. Build on Linux logic.** All paths use `/` forward slashes. Do not bake `C:\` paths into outputs.
 4. **`shared/agents.ts` is the ONLY source for agent names.** 44 agents. Do not invent new ones.
 5. **Never hardcode agent names in `sentinel.ts` or `sentinel-orchestrator.ts`.** Read from `shared/agents.ts` dynamically.
-6. **Protocol name is `FFPMA 2026 Protocol`** — not "Steve Baker 2026 methodology" anywhere in UI.
+6. **Protocol name is `FFPMA 2026 Protocol`** — not "Trustee methodology" anywhere in UI.
 
 ---
 

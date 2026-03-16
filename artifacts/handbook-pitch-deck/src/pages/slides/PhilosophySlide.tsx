@@ -16,7 +16,7 @@ export default function PhilosophySlide() {
         <div className="mt-[4vh] h-[1px] w-[8vw] bg-gradient-to-r from-transparent via-[#FFD700]/50 to-transparent" />
 
         <p className="font-body text-[2vw] text-[#C8D6E5] mt-[3vh]">
-          — The Steve Baker 2026 Protocol
+          — The FF PMA 2026 Protocol
         </p>
 
         <div className="mt-[6vh] flex gap-[4vw]">
