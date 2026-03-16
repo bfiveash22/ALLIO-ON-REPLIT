@@ -954,7 +954,7 @@ Generate the full document now:`;
           const args = JSON.parse(toolCall.function.arguments);
           console.log(`[Agent Executor] ${agentId} called search_drive: ${args.query}`);
           try {
-            const results = await searchDriveLibrary(args.query);
+            const results = await searchDriveLibrary(args.query, agentId);
             messages.push({
               tool_call_id: toolCall.id,
               role: "tool",

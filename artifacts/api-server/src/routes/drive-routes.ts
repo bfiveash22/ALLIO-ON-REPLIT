@@ -11,6 +11,7 @@ import {
   createBakerFilesFolder, uploadToBakerFiles,
   uploadToAgentLibrary, listAgentLibraryFiles, deleteAgentLibraryFile,
   createPatientProtocolsFolder,
+  getExternalFolderLinks, addExternalFolderLink, removeExternalFolderLink
 } from "../services/drive";
 import { ingestFileToLibrary, backfillAgentLibrary, getFileIndexingStatus, deleteIndexedFile } from "../services/library-ingestion";
 
@@ -232,6 +233,31 @@ export function registerDriveRoutes(app: Express): void {
       }
 
       res.json({ success: errors.length === 0, uploaded: results, errors });
+    } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
+  });
+
+  app.get("/api/agent-library/external-folders", requireRole("admin"), async (_req: Request, res: Response) => {
+    try {
+      res.json({ success: true, links: getExternalFolderLinks() });
+    } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
+  });
+
+  app.post("/api/agent-library/external-folders", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { agentName, folderId, label } = req.body;
+      if (!agentName || !folderId || !label) {
+        return res.status(400).json({ success: false, error: 'agentName, folderId, and label are required' });
+      }
+      addExternalFolderLink(agentName, folderId, label);
+      res.json({ success: true, links: getExternalFolderLinks() });
+    } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
+  });
+
+  app.delete("/api/agent-library/external-folders/:agentName/:folderId", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { agentName, folderId } = req.params;
+      const removed = removeExternalFolderLink(agentName, folderId);
+      res.json({ success: true, removed, links: getExternalFolderLinks() });
     } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
   });
 

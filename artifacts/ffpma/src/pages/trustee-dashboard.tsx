@@ -1227,6 +1227,9 @@ export default function TrusteeDashboard() {
   const [libraryUploading, setLibraryUploading] = useState(false);
   const [libraryUploadProgress, setLibraryUploadProgress] = useState(0);
   const [libraryDragOver, setLibraryDragOver] = useState(false);
+  const [linkFolderOpen, setLinkFolderOpen] = useState(false);
+  const [linkFolderId, setLinkFolderId] = useState("");
+  const [linkFolderLabel, setLinkFolderLabel] = useState("");
 
   const handleViewChange = (value: string) => {
     setViewAs(value as any);
@@ -1693,7 +1696,7 @@ export default function TrusteeDashboard() {
     }
   });
 
-  const { data: libraryFiles, refetch: refetchLibraryFiles } = useQuery<{ success: boolean; files: Array<{ id: string; name: string; mimeType: string; size?: string; createdTime?: string; webViewLink?: string }> }>({
+  const { data: libraryFiles, refetch: refetchLibraryFiles } = useQuery<{ success: boolean; files: Array<{ id: string; name: string; mimeType: string; size?: string; createdTime?: string; webViewLink?: string; source?: string }> }>({
     queryKey: ["/api/agent-library", libraryAgent],
     queryFn: async () => {
       if (!libraryAgent) return { success: true, files: [] };
@@ -1776,6 +1779,47 @@ export default function TrusteeDashboard() {
     },
     onError: (error: any) => {
       toast({ title: "Backfill Failed", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const { data: externalFolders, refetch: refetchExternalFolders } = useQuery<{ success: boolean; links: Record<string, Array<{ folderId: string; label: string }>> }>({
+    queryKey: ["/api/agent-library/external-folders"],
+    queryFn: async () => {
+      const res = await fetch("/api/agent-library/external-folders");
+      return res.json();
+    },
+  });
+
+  const linkExternalFolderMutation = useMutation({
+    mutationFn: async ({ agentName, folderId, label }: { agentName: string; folderId: string; label: string }) => {
+      const res = await apiRequest("POST", "/api/agent-library/external-folders", { agentName, folderId, label });
+      return res.json();
+    },
+    onSuccess: () => {
+      refetchExternalFolders();
+      refetchLibraryFiles();
+      setLinkFolderOpen(false);
+      setLinkFolderId("");
+      setLinkFolderLabel("");
+      toast({ title: "Folder Linked", description: "External Drive folder linked to agent." });
+    },
+    onError: (error: any) => {
+      toast({ title: "Link Failed", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const unlinkExternalFolderMutation = useMutation({
+    mutationFn: async ({ agentName, folderId }: { agentName: string; folderId: string }) => {
+      const res = await apiRequest("DELETE", `/api/agent-library/external-folders/${encodeURIComponent(agentName)}/${encodeURIComponent(folderId)}`, {});
+      return res.json();
+    },
+    onSuccess: () => {
+      refetchExternalFolders();
+      refetchLibraryFiles();
+      toast({ title: "Folder Unlinked", description: "External folder removed from agent." });
+    },
+    onError: (error: any) => {
+      toast({ title: "Unlink Failed", description: error.message, variant: "destructive" });
     }
   });
 
@@ -2734,7 +2778,19 @@ export default function TrusteeDashboard() {
                                       )}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                      <p className="text-sm font-medium truncate text-white/90">{file.name}</p>
+                                      <div className="flex items-center gap-2">
+                                        <p className="text-sm font-medium truncate text-white/90">{file.name}</p>
+                                        {file.source && file.source !== 'uploaded' && (
+                                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 shrink-0 border-amber-500/40 text-amber-400/80 bg-amber-500/10">
+                                            {file.source}
+                                          </Badge>
+                                        )}
+                                        {file.source === 'uploaded' && (
+                                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 shrink-0 border-indigo-500/40 text-indigo-400/80 bg-indigo-500/10">
+                                            uploaded
+                                          </Badge>
+                                        )}
+                                      </div>
                                       <p className="text-xs text-white/40 flex items-center gap-1">
                                         {file.size ? `${(parseInt(file.size) / 1024).toFixed(1)} KB` : ""}
                                         {file.createdTime ? ` • ${new Date(file.createdTime).toLocaleDateString()}` : ""}
@@ -2772,15 +2828,17 @@ export default function TrusteeDashboard() {
                                         <ExternalLink className="w-3.5 h-3.5" />
                                       </Button>
                                     )}
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-7 w-7 p-0 text-white/30 hover:text-red-400"
-                                      onClick={() => deleteLibraryFileMutation.mutate(file.id)}
-                                      disabled={deleteLibraryFileMutation.isPending}
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </Button>
+                                    {(!file.source || file.source === 'uploaded') && (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 w-7 p-0 text-white/30 hover:text-red-400"
+                                        onClick={() => deleteLibraryFileMutation.mutate(file.id)}
+                                        disabled={deleteLibraryFileMutation.isPending}
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </Button>
+                                    )}
                                   </div>
                                 </div>
                               ))}
@@ -2811,6 +2869,82 @@ export default function TrusteeDashboard() {
                               <p className="text-sm">No files yet. Upload knowledge for {libraryAgent}.</p>
                             </div>
                           )}
+
+                          <Separator className="bg-white/10 my-3" />
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-medium text-white/50 uppercase tracking-wider">Linked Drive Folders</p>
+                              <Dialog open={linkFolderOpen} onOpenChange={setLinkFolderOpen}>
+                                <DialogTrigger asChild>
+                                  <Button size="sm" variant="ghost" className="h-6 px-2 text-xs text-white/40 hover:text-indigo-400">
+                                    <Plus className="w-3 h-3 mr-1" /> Link Folder
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="bg-gray-900 border-white/10">
+                                  <DialogHeader>
+                                    <DialogTitle className="text-white">Link External Drive Folder</DialogTitle>
+                                    <DialogDescription className="text-white/60">
+                                      Connect a Google Drive folder to {libraryAgent}'s library. Files in the linked folder will appear alongside uploaded files.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="space-y-3 pt-2">
+                                    <div>
+                                      <label className="text-xs text-white/50 mb-1 block">Google Drive Folder ID</label>
+                                      <Input
+                                        value={linkFolderId}
+                                        onChange={(e) => setLinkFolderId(e.target.value)}
+                                        placeholder="e.g. 1vUOmOHvweQkOXN46Hxbbx1OM8PKk24TB"
+                                        className="bg-white/5 border-white/10 text-white text-sm"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-xs text-white/50 mb-1 block">Label</label>
+                                      <Input
+                                        value={linkFolderLabel}
+                                        onChange={(e) => setLinkFolderLabel(e.target.value)}
+                                        placeholder="e.g. Chiro Books"
+                                        className="bg-white/5 border-white/10 text-white text-sm"
+                                      />
+                                    </div>
+                                    <Button
+                                      className="w-full"
+                                      disabled={!linkFolderId || !linkFolderLabel || linkExternalFolderMutation.isPending}
+                                      onClick={() => linkExternalFolderMutation.mutate({ agentName: libraryAgent, folderId: linkFolderId, label: linkFolderLabel })}
+                                    >
+                                      {linkExternalFolderMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Folder className="w-4 h-4 mr-2" />}
+                                      Link Folder
+                                    </Button>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            </div>
+                            {(() => {
+                              const agentLinks = externalFolders?.links?.[libraryAgent.toUpperCase()] || [];
+                              if (agentLinks.length === 0) {
+                                return <p className="text-xs text-white/30 text-center py-1">No linked folders</p>;
+                              }
+                              return agentLinks.map((link) => (
+                                <div key={link.folderId} className="flex items-center justify-between p-2 rounded bg-white/5 border border-white/5">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <Folder className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                    <div className="min-w-0">
+                                      <p className="text-xs font-medium text-white/80 truncate">{link.label}</p>
+                                      <p className="text-[10px] text-white/30 truncate">{link.folderId}</p>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0 text-white/30 hover:text-red-400 shrink-0"
+                                    onClick={() => unlinkExternalFolderMutation.mutate({ agentName: libraryAgent, folderId: link.folderId })}
+                                    disabled={unlinkExternalFolderMutation.isPending}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              ));
+                            })()}
+                          </div>
                         </>
                       )}
                     </CardContent>

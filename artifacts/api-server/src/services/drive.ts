@@ -6,6 +6,75 @@ import * as path from 'path';
 // This is the correct folder as specified by Trustee: https://drive.google.com/drive/folders/1ui5cbRdyVhIojeG44EYg17puOdt4bStH
 const OFFICIAL_ALLIO_FOLDER_ID = "1ui5cbRdyVhIojeG44EYg17puOdt4bStH";
 
+const EXTERNAL_LINKS_FILE = path.join(process.cwd(), 'data', 'external-folder-links.json');
+
+const SEED_EXTERNAL_FOLDER_LINKS: Record<string, { folderId: string; label: string }[]> = {
+  CHIRO: [{ folderId: '1vUOmOHvweQkOXN46Hxbbx1OM8PKk24TB', label: 'Chiro Books' }],
+};
+
+let externalFolderLinksCache: Record<string, { folderId: string; label: string }[]> | null = null;
+
+function loadExternalFolderLinks(): Record<string, { folderId: string; label: string }[]> {
+  if (externalFolderLinksCache) return externalFolderLinksCache;
+  try {
+    if (fs.existsSync(EXTERNAL_LINKS_FILE)) {
+      const data = JSON.parse(fs.readFileSync(EXTERNAL_LINKS_FILE, 'utf-8'));
+      externalFolderLinksCache = data;
+      return data;
+    }
+  } catch (err) {
+    console.error('[Drive] Error loading external folder links:', err);
+  }
+  externalFolderLinksCache = JSON.parse(JSON.stringify(SEED_EXTERNAL_FOLDER_LINKS));
+  saveExternalFolderLinks(externalFolderLinksCache!);
+  return externalFolderLinksCache!;
+}
+
+function saveExternalFolderLinks(links: Record<string, { folderId: string; label: string }[]>): void {
+  try {
+    const dir = path.dirname(EXTERNAL_LINKS_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(EXTERNAL_LINKS_FILE, JSON.stringify(links, null, 2));
+    externalFolderLinksCache = links;
+  } catch (err) {
+    console.error('[Drive] Error saving external folder links:', err);
+  }
+}
+
+export function getExternalFolderLinks(): Record<string, { folderId: string; label: string }[]> {
+  return loadExternalFolderLinks();
+}
+
+export function getExternalFoldersForAgent(agentName: string): { folderId: string; label: string }[] {
+  const all = getExternalFolderLinks();
+  return all[agentName.toUpperCase()] || [];
+}
+
+export function addExternalFolderLink(agentName: string, folderId: string, label: string): void {
+  const links = loadExternalFolderLinks();
+  const key = agentName.toUpperCase();
+  if (!links[key]) links[key] = [];
+  if (!links[key].some(f => f.folderId === folderId)) {
+    links[key].push({ folderId, label });
+    saveExternalFolderLinks(links);
+  }
+}
+
+export function removeExternalFolderLink(agentName: string, folderId: string): boolean {
+  const links = loadExternalFolderLinks();
+  const key = agentName.toUpperCase();
+  if (!links[key]) return false;
+  const before = links[key].length;
+  links[key] = links[key].filter(f => f.folderId !== folderId);
+  const after = links[key].length;
+  if (after === 0) delete links[key];
+  if (after < before) {
+    saveExternalFolderLinks(links);
+    return true;
+  }
+  return false;
+}
+
 export async function getUncachableGoogleDriveClient() {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
@@ -1123,7 +1192,7 @@ export async function uploadAudioToAgentFolder(
   }
 }
 
-export async function searchDriveLibrary(query: string): Promise<Array<{
+export async function searchDriveLibrary(query: string, agentName?: string): Promise<Array<{
   id: string;
   name: string;
   mimeType: string;
@@ -1131,24 +1200,65 @@ export async function searchDriveLibrary(query: string): Promise<Array<{
 }>> {
   try {
     const drive = await getUncachableGoogleDriveClient();
+    const sanitizedQuery = query.replace(/'/g, "\\'");
 
-    // We search the system library ID primarily, and the agent output folders secondarily
-    const SYSTEM_LIBRARY_ID = '1G1oo3_6GhnLZL9dCRS3ghQXep3Zn1Ez6';
-    const CHIRO_LIBRARY_ID = '1vUOmOHvweQkOXN46Hxbbx1OM8PKk24TB';
+    const agentFolderIds: string[] = [];
+    if (agentName) {
+      const externalFolders = getExternalFoldersForAgent(agentName);
+      for (const ef of externalFolders) {
+        agentFolderIds.push(ef.folderId);
+      }
+      try {
+        const librariesId = await getOrCreateAgentLibrariesFolder();
+        const uploadFolderId = await findFolderByName(librariesId, agentName);
+        if (uploadFolderId) agentFolderIds.push(uploadFolderId);
+      } catch {}
+    }
 
-    // Using a broad fullText contains query to scan titles and text contents of PDFs/Docs
+    if (agentFolderIds.length > 0) {
+      const parentClauses = agentFolderIds.map(id => `'${id}' in parents`).join(' or ');
+      const agentResponse = await drive.files.list({
+        q: `(${parentClauses}) and (fullText contains '${sanitizedQuery}' or name contains '${sanitizedQuery}') and trashed = false`,
+        fields: 'files(id, name, mimeType, webViewLink)',
+        orderBy: 'modifiedTime desc',
+        pageSize: 15
+      });
+      const agentResults = (agentResponse.data.files || []).map(file => ({
+        id: file.id!,
+        name: file.name!,
+        mimeType: file.mimeType!,
+        webViewLink: file.webViewLink || undefined
+      }));
+
+      if (agentResults.length >= 5) return agentResults;
+
+      const seenIds = new Set(agentResults.map(f => f.id));
+      const globalResponse = await drive.files.list({
+        q: `(fullText contains '${sanitizedQuery}' or name contains '${sanitizedQuery}') and trashed = false`,
+        fields: 'files(id, name, mimeType, webViewLink)',
+        orderBy: 'modifiedTime desc',
+        pageSize: 25
+      });
+      const globalResults = (globalResponse.data.files || [])
+        .filter(f => !seenIds.has(f.id!))
+        .map(file => ({
+          id: file.id!,
+          name: file.name!,
+          mimeType: file.mimeType!,
+          webViewLink: file.webViewLink || undefined
+        }));
+
+      return [...agentResults, ...globalResults].slice(0, 25);
+    }
+
     const response = await drive.files.list({
-      q: `(fullText contains '${query.replace(/'/g, "\\'")}' or name contains '${query.replace(/'/g, "\\'")}') and trashed = false`,
-      fields: 'files(id, name, mimeType, webViewLink, parents)',
+      q: `(fullText contains '${sanitizedQuery}' or name contains '${sanitizedQuery}') and trashed = false`,
+      fields: 'files(id, name, mimeType, webViewLink)',
       orderBy: 'modifiedTime desc',
       pageSize: 25
     });
 
-    // Filter out results that aren't in our ecosystem
-    return (response.data.files || []).filter(file => {
-      // Allow if it matches the known libraries, or just return top hits across the ecosystem
-      return true;
-    }).map(file => ({
+    return (response.data.files || []).map(file => ({
       id: file.id!,
       name: file.name!,
       mimeType: file.mimeType!,
@@ -1263,28 +1373,63 @@ export async function listAgentLibraryFiles(agentName: string): Promise<Array<{
   size?: string;
   createdTime?: string;
   webViewLink?: string;
+  source?: string;
 }>> {
   try {
+    const drive = await getUncachableGoogleDriveClient();
+    const allFiles: Array<{
+      id: string; name: string; mimeType: string;
+      size?: string; createdTime?: string; webViewLink?: string; source?: string;
+    }> = [];
+
     const librariesId = await getOrCreateAgentLibrariesFolder();
     const agentFolderId = await findFolderByName(librariesId, agentName);
-    if (!agentFolderId) return [];
+    if (agentFolderId) {
+      const response = await drive.files.list({
+        q: `'${agentFolderId}' in parents and trashed = false`,
+        fields: 'files(id, name, mimeType, size, createdTime, webViewLink)',
+        orderBy: 'createdTime desc',
+        pageSize: 200
+      });
+      for (const file of response.data.files || []) {
+        allFiles.push({
+          id: file.id!, name: file.name!, mimeType: file.mimeType!,
+          size: file.size || undefined, createdTime: file.createdTime || undefined,
+          webViewLink: file.webViewLink || undefined, source: 'uploaded'
+        });
+      }
+    }
 
-    const drive = await getUncachableGoogleDriveClient();
-    const response = await drive.files.list({
-      q: `'${agentFolderId}' in parents and trashed = false`,
-      fields: 'files(id, name, mimeType, size, createdTime, webViewLink)',
-      orderBy: 'createdTime desc',
-      pageSize: 200
+    const externalFolders = getExternalFoldersForAgent(agentName);
+    for (const ef of externalFolders) {
+      try {
+        const response = await drive.files.list({
+          q: `'${ef.folderId}' in parents and trashed = false`,
+          fields: 'files(id, name, mimeType, size, createdTime, webViewLink)',
+          orderBy: 'createdTime desc',
+          pageSize: 200
+        });
+        for (const file of response.data.files || []) {
+          if (!allFiles.some(f => f.id === file.id)) {
+            allFiles.push({
+              id: file.id!, name: file.name!, mimeType: file.mimeType!,
+              size: file.size || undefined, createdTime: file.createdTime || undefined,
+              webViewLink: file.webViewLink || undefined, source: ef.label
+            });
+          }
+        }
+      } catch (err) {
+        console.error(`[Drive] Error listing external folder ${ef.label} (${ef.folderId}) for ${agentName}:`, err);
+      }
+    }
+
+    allFiles.sort((a, b) => {
+      const dateA = a.createdTime ? new Date(a.createdTime).getTime() : 0;
+      const dateB = b.createdTime ? new Date(b.createdTime).getTime() : 0;
+      return dateB - dateA;
     });
 
-    return (response.data.files || []).map(file => ({
-      id: file.id!,
-      name: file.name!,
-      mimeType: file.mimeType!,
-      size: file.size || undefined,
-      createdTime: file.createdTime || undefined,
-      webViewLink: file.webViewLink || undefined
-    }));
+    return allFiles;
   } catch (error) {
     console.error(`[Drive] Error listing agent library for ${agentName}:`, error);
     return [];
