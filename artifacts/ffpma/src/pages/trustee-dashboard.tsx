@@ -18,6 +18,7 @@ import { Link, useLocation } from "wouter";
 import { agents as staticAgents } from "@shared/agents";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
+import { LegalSigningSection } from "@/components/dashboard/LegalSigningSection";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
 import {
@@ -3902,6 +3903,8 @@ export default function TrusteeDashboard() {
                   )}
                 </CardContent>
               </Card>
+
+              <LegalSigningSection />
             </TabsContent>
 
             <TabsContent value="sentinel-alerts" className="space-y-6">

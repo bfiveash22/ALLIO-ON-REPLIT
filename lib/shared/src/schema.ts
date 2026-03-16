@@ -694,6 +694,7 @@ export const legalDocuments = pgTable("legal_documents", {
   driveFileId: varchar("drive_file_id"), // Google Drive file reference
   driveUrl: varchar("drive_url"),
   signNowDocId: varchar("signnow_doc_id"), // If needs signature
+  signNowTemplateId: varchar("signnow_template_id"), // SignNow template ID for this document
   priority: varchar("priority").default("normal"), // urgent, high, normal, low
   dueDate: timestamp("due_date"),
   filedDate: timestamp("filed_date"),

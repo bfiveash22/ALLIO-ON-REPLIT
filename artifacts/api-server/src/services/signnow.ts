@@ -497,6 +497,177 @@ class SignNowService {
     const documentName = `Member Agreement - ${data.memberName} - ${new Date().toISOString().split('T')[0]}`;
     return this.createAgreement(templateId, data.memberName, data.memberEmail, documentName);
   }
+
+  async convertToTemplate(documentId: string, templateName: string): Promise<{ id: string }> {
+    const token = await this.getAccessToken();
+
+    const response = await axios.post(
+      `${this.baseUrl}/document/${documentId}/template`,
+      { document_name: templateName },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  }
+
+  async addFieldsToDocument(
+    documentId: string,
+    fields: Array<{
+      type: 'signature' | 'date' | 'text';
+      role: string;
+      pageNumber?: number;
+      x?: number;
+      y?: number;
+      width?: number;
+      height?: number;
+      required?: boolean;
+      label?: string;
+    }>
+  ): Promise<any> {
+    const token = await this.getAccessToken();
+
+    const signatureFields = fields.filter(f => f.type === 'signature').map(f => ({
+      x: f.x || 50,
+      y: f.y || 700,
+      width: f.width || 200,
+      height: f.height || 30,
+      page_number: f.pageNumber || 0,
+      role: f.role,
+      required: f.required !== false,
+      label: f.label || 'Signature',
+    }));
+
+    const textFields = fields.filter(f => f.type !== 'signature').map(f => ({
+      x: f.x || 300,
+      y: f.y || 700,
+      width: f.width || 150,
+      height: f.height || 20,
+      page_number: f.pageNumber || 0,
+      role: f.role,
+      required: f.required !== false,
+      label: f.label || 'Date',
+      type: f.type === 'date' ? 'date' : 'text',
+    }));
+
+    const payload: any = {};
+    if (signatureFields.length > 0) payload.signatures = signatureFields;
+    if (textFields.length > 0) payload.texts = textFields;
+
+    const response = await axios.put(
+      `${this.baseUrl}/document/${documentId}`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  }
+
+  async uploadAndCreateTemplate(
+    buffer: Buffer,
+    fileName: string,
+    templateName: string,
+    signerRoleName: string = 'Trustee'
+  ): Promise<{ templateId: string; documentId: string }> {
+    const uploadedDoc = await this.uploadDocumentFromBuffer(buffer, fileName);
+    const documentId = uploadedDoc.id;
+
+    const roles = await this.getDocumentRoles(documentId);
+    const existingRole = roles.find((r: any) =>
+      r.name?.toLowerCase() === signerRoleName.toLowerCase()
+    );
+    const roleName = existingRole?.name || signerRoleName;
+
+    await this.addFieldsToDocument(documentId, [
+      {
+        type: 'signature',
+        role: roleName,
+        pageNumber: 0,
+        x: 50,
+        y: 680,
+        width: 200,
+        height: 30,
+        label: 'Trustee Signature',
+      },
+      {
+        type: 'date',
+        role: roleName,
+        pageNumber: 0,
+        x: 300,
+        y: 680,
+        width: 150,
+        height: 20,
+        label: 'Date Signed',
+      },
+    ]);
+
+    try {
+      const templateResult = await this.convertToTemplate(documentId, templateName);
+      return { templateId: templateResult.id, documentId };
+    } catch (templateError: any) {
+      console.log('Template conversion info, using document directly:', templateError.response?.data || templateError.message);
+      return { templateId: documentId, documentId };
+    }
+  }
+
+  async createEmbeddedSigningSession(
+    documentId: string,
+    signerEmail: string,
+    signerName: string
+  ): Promise<{ signingUrl: string; embeddedUrl: string; documentId: string }> {
+    const roles = await this.getDocumentRoles(documentId);
+    const signerRole = roles.find((r: any) =>
+      r.name?.toLowerCase().includes('trustee') || r.name?.toLowerCase().includes('signer')
+    ) || roles[0];
+
+    if (!signerRole) {
+      const directUrl = `https://app.signnow.com/webapp/document/${documentId}`;
+      return { signingUrl: directUrl, embeddedUrl: directUrl, documentId };
+    }
+
+    try {
+      const inviteResult = await this.createEmbeddedInvite(documentId, signerEmail, signerRole.unique_id);
+
+      let inviteId: string | undefined;
+      if (Array.isArray((inviteResult as any).data)) {
+        inviteId = (inviteResult as any).data[0]?.id;
+      } else if (inviteResult.id) {
+        inviteId = inviteResult.id;
+      }
+
+      if (inviteId) {
+        try {
+          const linkResult = await this.generateSigningLink(documentId, inviteId, 45);
+          return {
+            signingUrl: linkResult.link,
+            embeddedUrl: linkResult.link,
+            documentId,
+          };
+        } catch (linkError: any) {
+          console.error('Embedded link generation failed, using direct URL:', linkError.response?.data);
+        }
+      }
+    } catch (embeddedError: any) {
+      console.error('Embedded invite failed:', embeddedError.response?.data);
+    }
+
+    try {
+      const signingUrl = await this.createSigningInviteLink(documentId, signerEmail, signerName);
+      return { signingUrl, embeddedUrl: signingUrl, documentId };
+    } catch (fallbackError: any) {
+      const directUrl = `https://app.signnow.com/webapp/document/${documentId}`;
+      return { signingUrl: directUrl, embeddedUrl: directUrl, documentId };
+    }
+  }
 }
 
 export const signNowService = new SignNowService();

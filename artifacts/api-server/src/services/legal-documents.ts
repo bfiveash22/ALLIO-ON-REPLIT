@@ -389,12 +389,1117 @@ _Justin, TX 76247_
   };
 }
 
+export function getTrademarkApplication(): LegalDocumentContent {
+  return {
+    title: 'USPTO Trademark Application — ALLIO',
+    slug: 'trademark-application',
+    lastUpdated: LAST_UPDATED,
+    content: `
+# UNITED STATES PATENT AND TRADEMARK OFFICE
+## TRADEMARK/SERVICE MARK APPLICATION
+
+---
+
+**Application Type:** Intent to Use (Section 1(b))
+
+---
+
+### SECTION 1: APPLICANT INFORMATION
+
+**Applicant Name:** Forgotten Formula PMA
+
+**Entity Type:** Private Membership Association
+
+**State/Country of Organization:** Texas, United States
+
+**Mailing Address:**
+Justin, TX 76247
+United States
+
+**Email Address:** blake@forgottenformula.com
+
+**Phone Number:** On file with Association records
+
+---
+
+### SECTION 2: MARK INFORMATION
+
+**The Mark:** ALLIO
+
+**Mark Type:** Standard Character Mark (word only)
+
+**Translation:** N/A — Coined term, no foreign translation
+
+**Mark Literal Element:** ALLIO
+
+**Mark Description:** The mark consists of the word "ALLIO" in standard characters.
+
+---
+
+### SECTION 3: GOODS AND SERVICES
+
+**International Class 9 — Computer Software:**
+Computer software for health analysis; artificial intelligence software for analyzing biological samples; downloadable software for health assessment and wellness tracking; computer software for generating personalized health protocols.
+
+**International Class 42 — Computer and Scientific Services:**
+Software as a service (SaaS) featuring software for health analysis and wellness tracking; providing temporary use of online non-downloadable artificial intelligence software for health assessment; computer software development in the field of healthcare.
+
+**International Class 44 — Medical Services:**
+Health consultation services; providing health information; health assessment services; wellness consultation services; health education services.
+
+---
+
+### SECTION 4: BASIS FOR FILING
+
+**Section 1(b) — Intent to Use**
+
+Applicant has a bona fide intention to use the mark in commerce in connection with the goods and services identified above. Applicant intends to use the mark in interstate commerce through its online SaaS platform accessible to members throughout the United States.
+
+---
+
+### SECTION 5: SPECIMENS OF USE
+
+Specimens will be submitted upon filing of the Statement of Use or Amendment to Allege Use. Planned specimens include:
+- Screenshots of the ALLIO web platform displaying the mark in connection with health analysis services
+- Screenshots of the ALLIO member portal showing the mark used with AI-powered health protocol generation
+- Marketing materials displaying the ALLIO brand in connection with SaaS health services
+
+---
+
+### SECTION 6: DECLARATION
+
+The undersigned, being hereby warned that willful false statements and the like so made are punishable by fine or imprisonment, or both, under 18 U.S.C. Section 1001, and that such willful false statements may jeopardize the validity of the application or any resulting registration, declares that:
+
+✓ The applicant is the owner of the mark sought to be registered.
+
+✓ To the best of the signatory's knowledge and belief, no other person, firm, corporation, or association has the right to use the mark in commerce, either in the identical form thereof or in such near resemblance thereto as to be likely, when used on or in connection with the goods/services of such other person, to cause confusion, or to cause mistake, or to deceive.
+
+✓ The facts set forth in this application are true.
+
+✓ The applicant has a bona fide intention to use the mark in commerce.
+
+**Signature:** ____________________________
+
+**Signatory Name:** ____________________________
+
+**Signatory Position:** Trustee, Forgotten Formula PMA
+
+**Date Signed:** ____________________________
+
+---
+
+### SECTION 7: FEE CALCULATION
+
+| Class | Filing Basis | Fee Type | Amount |
+|-------|-------------|----------|--------|
+| 9     | TEAS Plus   | Per Class | $250  |
+| 42    | TEAS Plus   | Per Class | $250  |
+| 44    | TEAS Plus   | Per Class | $250  |
+|       |             | **Total** | **$750** |
+
+---
+
+**USPTO Filing Portal:** https://www.uspto.gov/trademarks/apply
+
+*Document prepared by THEMIS — Legal Division*
+*Forgotten Formula PMA*
+    `.trim(),
+  };
+}
+
+export function getDeclarationOfIntentToUse(): LegalDocumentContent {
+  return {
+    title: 'Declaration of Intent to Use — ALLIO',
+    slug: 'declaration-intent-to-use',
+    lastUpdated: LAST_UPDATED,
+    content: `
+# DECLARATION OF INTENT TO USE
+## In Support of Trademark Application for ALLIO
+
+---
+
+**Mark:** ALLIO
+**Applicant:** Forgotten Formula PMA
+**Filing Basis:** Section 1(b) of the Trademark Act, 15 U.S.C. § 1051(b)
+
+---
+
+## I. DECLARATION
+
+The undersigned, as Trustee of Forgotten Formula PMA ("Applicant"), hereby declares under penalty of perjury that:
+
+### 1. Bona Fide Intent
+The Applicant has a bona fide intention, and the circumstances show good faith intention, to use the mark ALLIO in commerce in connection with the following goods and services:
+
+**Class 9 — Computer Software:**
+Computer software for health analysis; artificial intelligence software for analyzing biological samples; downloadable software for health assessment and wellness tracking; computer software for generating personalized health protocols.
+
+**Class 42 — Computer and Scientific Services:**
+Software as a service (SaaS) featuring software for health analysis and wellness tracking; providing temporary use of online non-downloadable artificial intelligence software for health assessment; computer software development in the field of healthcare.
+
+**Class 44 — Medical Services:**
+Health consultation services; providing health information; health assessment services; wellness consultation services; health education services.
+
+### 2. Evidence of Intent
+The Applicant's bona fide intent is supported by the following:
+
+a) **Active Development:** The ALLIO platform is under active development, consisting of an AI-powered health protocol generation system, a member portal, blood analysis tools, and a network of practitioners.
+
+b) **Business Planning:** The Applicant has invested substantial resources in platform development, including 48 specialized AI agents, 320+ health products, 58+ educational training modules, and a complete member management system.
+
+c) **Organizational Infrastructure:** The Applicant operates as a Private Membership Association with established legal frameworks, membership agreements, practitioner onboarding contracts, privacy policies, and terms of service — all referencing the ALLIO brand.
+
+d) **Domain and Digital Presence:** The Applicant is establishing digital presence for the ALLIO brand including web domains, marketing materials, and member-facing platform interfaces.
+
+### 3. No Knowledge of Conflicting Use
+To the best of the Applicant's knowledge and belief, no other person, firm, corporation, or association has the right to use the mark ALLIO in commerce in the identified classes, either in the identical form thereof or in such near resemblance thereto as to be likely to cause confusion.
+
+### 4. Ownership
+The Applicant is the owner of the mark and is entitled to use said mark in commerce.
+
+---
+
+## II. UNDERTAKING
+
+The Applicant undertakes to:
+1. File a verified Statement of Use or Amendment to Allege Use before the expiration of the time periods prescribed by 15 U.S.C. § 1051(d).
+2. Submit appropriate specimens of use showing the mark as used in commerce.
+3. Pay all required fees associated with the Statement of Use filing.
+
+---
+
+## III. SIGNATURE
+
+I declare under penalty of perjury under the laws of the United States of America that the foregoing is true and correct.
+
+**Signature:** ____________________________
+
+**Name:** ____________________________
+
+**Title:** Trustee, Forgotten Formula PMA
+
+**Date:** ____________________________
+
+**Location:** Justin, Texas, United States
+
+---
+
+*Document prepared by THEMIS — Legal Division*
+*Forgotten Formula PMA*
+    `.trim(),
+  };
+}
+
+export function getMasterCopyrightAssignment(): LegalDocumentContent {
+  return {
+    title: 'Master Copyright Assignment Agreement',
+    slug: 'master-copyright-assignment',
+    lastUpdated: LAST_UPDATED,
+    content: `
+# MASTER COPYRIGHT ASSIGNMENT AGREEMENT
+## Forgotten Formula PMA
+
+**Effective Date:** ${EFFECTIVE_DATE}
+**Last Updated:** ${LAST_UPDATED}
+
+---
+
+## RECITALS
+
+WHEREAS, Forgotten Formula PMA ("the Association" or "Assignee") is a Private Membership Association organized and operating under the protections afforded by the First and Fourteenth Amendments to the United States Constitution; and
+
+WHEREAS, the Association has developed and operates the ALLIO platform, an AI-powered health ecosystem consisting of specialized artificial intelligence agents, health protocol generation systems, educational content, and related intellectual property; and
+
+WHEREAS, the Association desires to consolidate, protect, and assert ownership over all intellectual property created within and for its private ecosystem; and
+
+WHEREAS, this Agreement serves to assign, confirm, and memorialize the Association's exclusive ownership of all works created by or for the Association, whether by human contributors, AI systems, or contractors;
+
+NOW, THEREFORE, the parties agree as follows:
+
+---
+
+## ARTICLE I: DEFINITIONS
+
+**1.1 "Covered Works"** means all original works of authorship, regardless of medium, created within, for, or in connection with the Association's ecosystem, including but not limited to:
+
+(a) **AI-Generated Health Protocols** — Personalized healing protocols generated by the ALLIO AI system, including the DR_FORMULA protocol engine, nutritional recommendations, supplement regimens, and therapeutic guidance;
+
+(b) **Training Content** — All educational materials, training modules, certification curricula, quizzes, assessments, and instructional content, including the 58+ training modules currently in the platform;
+
+(c) **Agent Reports** — All outputs, analyses, assessments, and reports generated by the Association's 48 specialized AI agents across all divisions (Medical, Research, Operations, Legal, etc.);
+
+(d) **Blood Analysis Outputs** — All images, annotations, reports, pattern analyses, and interpretive content generated through the AI-assisted blood microscopy analysis system;
+
+(e) **Frequency Healing Content** — All frequency libraries, PEMF protocol specifications, frequency healing session designs, and related therapeutic content;
+
+(f) **Educational Materials** — Quizzes, study guides, certification exams, video scripts, presentation materials, and all member-facing educational resources;
+
+(g) **Software and Source Code** — All source code, algorithms, machine learning models, training data configurations, API definitions, and technical documentation for the ALLIO platform;
+
+(h) **Visual and Media Assets** — Brand imagery, video assets, animations, interface designs, marketing materials, and all visual content created for or by the Association;
+
+(i) **Research and Data Compilations** — All compiled research, database structures, curated scientific references, ECS pathway databases, peptide protocol libraries, and similar knowledge bases.
+
+**1.2 "Work Made for Hire"** has the meaning set forth in 17 U.S.C. § 101 of the Copyright Act of 1976.
+
+**1.3 "Contributor"** means any individual, contractor, employee, agent (whether human or artificial intelligence), or entity that creates Covered Works for or on behalf of the Association.
+
+---
+
+## ARTICLE II: ASSIGNMENT OF COPYRIGHT
+
+**2.1 Assignment.** All Contributors hereby irrevocably assign, transfer, and convey to the Association all right, title, and interest in and to any and all Covered Works, including without limitation:
+
+(a) All copyrights and rights under copyright throughout the world;
+
+(b) All rights to register copyrights and renewals and extensions thereof;
+
+(c) All rights to prepare derivative works;
+
+(d) All rights to reproduce, distribute, publicly display, and publicly perform the Covered Works;
+
+(e) All rights to license or sublicense any of the foregoing rights.
+
+**2.2 Works Made for Hire.** To the extent any Covered Work qualifies as a "work made for hire" under 17 U.S.C. § 101, the Association is and shall be deemed the author and sole and exclusive owner of all rights therein from the moment of creation.
+
+**2.3 Supplemental Assignment.** To the extent any Covered Work does not qualify as a work made for hire, each Contributor hereby assigns and agrees to assign to the Association all right, title, and interest in such work, effective upon creation.
+
+**2.4 AI-Generated Works.** All works generated by the Association's artificial intelligence systems (including but not limited to ALLIO, DR_FORMULA, and all 48 named agents) are deemed works made for hire owned exclusively by the Association. The Association, as the entity that initiated, directed, supervised, and controlled the AI systems, is the author and owner of all such outputs under applicable law.
+
+---
+
+## ARTICLE III: PRIVATE DOMAIN PROTECTIONS
+
+**3.1 Constitutional Basis.** The Association asserts that all Covered Works are created within the private domain of a constitutionally protected Private Membership Association, operating under:
+
+(a) The **First Amendment** right of freedom of association, which protects the Association's right to create, share, and control information within its private membership;
+
+(b) The **Fourteenth Amendment** liberty protections, which secure the Association's right to operate its affairs, including intellectual property management, free from unwarranted governmental interference.
+
+**3.2 Case Law Foundation.** The Association's assertion of private domain protections is supported by established constitutional precedent:
+
+- **NAACP v. Alabama, 357 U.S. 449 (1958)** — Recognizing the inviolability of private association membership and internal affairs;
+- **NAACP v. Button, 371 U.S. 415 (1963)** — Protecting the expressive and associational activities of private organizations;
+- **Roberts v. United States Jaycees, 468 U.S. 609 (1984)** — Affirming the right to intimate and expressive association;
+- **Thomas v. Collins, 323 U.S. 516 (1945)** — Protecting freedom of speech and assembly in private contexts;
+- **Gibson v. Florida Legislative Investigation Committee, 372 U.S. 539 (1963)** — Shielding private membership associations from compelled disclosure.
+
+**3.3 Proprietary Nature.** All Covered Works are proprietary to the Association and are not released into the public domain by virtue of being shared with Members within the private ecosystem. Members receive a limited, personal, non-transferable license to access and use Covered Works solely within the Association's platform and for their personal health purposes.
+
+---
+
+## ARTICLE IV: REPRESENTATIONS AND WARRANTIES
+
+**4.1** The Trustee represents that the Association has the authority to enter into this Agreement and to claim ownership of all Covered Works described herein.
+
+**4.2** All Contributors have been or will be notified of the Association's ownership claims and have agreed to the terms of membership, employment, or engagement that include assignment of intellectual property rights.
+
+---
+
+## ARTICLE V: EXECUTION
+
+This Agreement is executed by the Trustee on behalf of Forgotten Formula PMA, effective as of the date signed below.
+
+**Signature:** ____________________________
+
+**Name:** ____________________________
+
+**Title:** Trustee, Forgotten Formula PMA
+
+**Date:** ____________________________
+
+---
+
+*Document prepared by THEMIS — Legal Division*
+*Forgotten Formula PMA*
+*Justin, TX 76247*
+    `.trim(),
+  };
+}
+
+export function getPrivateDomainIPPolicy(): LegalDocumentContent {
+  return {
+    title: 'Private Domain Intellectual Property Policy',
+    slug: 'private-domain-ip-policy',
+    lastUpdated: LAST_UPDATED,
+    content: `
+# PRIVATE DOMAIN INTELLECTUAL PROPERTY POLICY
+## Forgotten Formula PMA
+
+**Effective Date:** ${EFFECTIVE_DATE}
+**Last Updated:** ${LAST_UPDATED}
+**Classification:** Internal Policy — Trustee Approved
+
+---
+
+## PREAMBLE
+
+This Private Domain Intellectual Property Policy ("Policy") establishes the comprehensive framework for the ownership, protection, and governance of all intellectual property created within the Forgotten Formula PMA ecosystem. This Policy operates within the private domain of a constitutionally protected Private Membership Association and asserts the Association's exclusive rights over all content, technology, and creative works produced within its membership ecosystem.
+
+---
+
+## ARTICLE I: CONSTITUTIONAL FOUNDATION
+
+### 1.1 First Amendment Protections
+
+The Forgotten Formula PMA operates as an exercise of the constitutional right of freedom of association guaranteed by the First Amendment to the United States Constitution. This right encompasses the freedom to:
+
+(a) Associate privately for lawful purposes, including the shared pursuit of health and wellness knowledge;
+
+(b) Create, exchange, and protect information within the private association without governmental interference;
+
+(c) Establish internal rules regarding the ownership and use of intellectual property created within the association;
+
+(d) Restrict the dissemination of proprietary association content to members only.
+
+The Supreme Court has consistently recognized that freedom of association includes the right to control the internal affairs of a private organization, including its intellectual property. See **NAACP v. Alabama, 357 U.S. 449 (1958)** (protecting the privacy and autonomy of association membership); **NAACP v. Button, 371 U.S. 415 (1963)** (protecting expressive activities of private organizations).
+
+### 1.2 Fourteenth Amendment Protections
+
+The Fourteenth Amendment's Due Process Clause protects the liberty interests of the Association and its Members, including:
+
+(a) The liberty to engage in private contractual relationships governing intellectual property;
+
+(b) The right to establish private property frameworks within the association's domain;
+
+(c) Protection from state interference with the Association's internal governance of creative works and proprietary content.
+
+See **Roberts v. United States Jaycees, 468 U.S. 609 (1984)** (affirming the interplay between freedom of association and private organizational governance).
+
+### 1.3 Private Domain Doctrine
+
+The Association operates exclusively within the private domain. Activities conducted within the private domain — including the creation, distribution, and use of intellectual property — are governed by the mutual consent of the Members and the Association's internal rules, not by public regulatory frameworks. The Association does not concede that public intellectual property regulations diminish its right to establish additional protections within its private ecosystem.
+
+---
+
+## ARTICLE II: SCOPE OF PROTECTED INTELLECTUAL PROPERTY
+
+### 2.1 Categories
+
+All of the following categories of work created within, for, or in connection with the Association's ecosystem are proprietary intellectual property of Forgotten Formula PMA:
+
+**Technology and Software:**
+- ALLIO platform source code, architecture, and algorithms
+- AI agent configurations, training data, and model weights
+- API definitions, database schemas, and system integrations
+- DR_FORMULA protocol generation engine and logic
+- Blood microscopy AI analysis systems
+
+**Health and Wellness Content:**
+- AI-generated personalized health protocols
+- Nutritional guidance and supplement recommendations
+- Peptide protocol specifications and ECS pathway databases
+- Frequency healing libraries and PEMF protocol designs
+- Blood analysis reports, annotations, and interpretive outputs
+
+**Educational Materials:**
+- Training modules and certification curricula (58+ modules)
+- Assessment questions, quizzes, and examination content
+- Video tutorials, presentations, and instructional guides
+- Member education resources and onboarding content
+
+**Creative and Marketing Assets:**
+- ALLIO brand identity and visual design system
+- Marketing materials, copywriting, and promotional content
+- Video productions, animations, and media assets
+- Brand imagery library and photography
+
+**Research and Data:**
+- Compiled scientific research databases
+- Curated health literature references
+- Proprietary data analyses and health outcome studies
+- Practitioner network data and clinical insights
+
+**Agent-Generated Content:**
+- All reports, analyses, recommendations, and outputs from the Association's 48 specialized AI agents
+- SENTINEL security reports and audit logs
+- THEMIS legal analyses and document drafts
+- ATHENA research compilations and literature reviews
+- All other agent division outputs
+
+### 2.2 Ownership Vesting
+
+Ownership of all protected intellectual property vests exclusively in Forgotten Formula PMA at the moment of creation. No Contributor, Member, or third party acquires any ownership interest in any protected work by virtue of creating, accessing, or using such work.
+
+---
+
+## ARTICLE III: MEMBER RIGHTS AND RESTRICTIONS
+
+### 3.1 Limited License
+
+Members receive a limited, personal, non-exclusive, non-transferable, revocable license to access and use Association intellectual property solely for:
+
+(a) Their personal health and wellness purposes;
+(b) Implementing health protocols prescribed to them through the platform;
+(c) Accessing educational content for personal learning;
+(d) Communicating with practitioners using platform-generated information.
+
+### 3.2 Prohibited Uses
+
+Members shall not:
+
+(a) Copy, reproduce, or distribute Association intellectual property outside the platform;
+(b) Share health protocols, training content, or agent reports with non-members;
+(c) Use Association content for commercial purposes, including resale or redistribution;
+(d) Reverse-engineer, decompile, or attempt to extract underlying algorithms or trade secrets;
+(e) Create derivative works based on Association content without written authorization;
+(f) Represent Association-generated content as their own original work.
+
+### 3.3 Termination of License
+
+The Member's limited license terminates immediately upon termination of membership. Upon termination, the Member retains the right to use previously generated personal health protocols for their own continued care, but may not redistribute or commercially exploit such content.
+
+---
+
+## ARTICLE IV: ENFORCEMENT
+
+### 4.1 Internal Enforcement
+
+The Association reserves the right to:
+
+(a) Monitor compliance with this Policy through its SENTINEL security system;
+(b) Suspend or terminate membership for violations of intellectual property restrictions;
+(c) Pursue injunctive relief and damages for unauthorized use of Association intellectual property;
+(d) Report intellectual property theft to appropriate authorities.
+
+### 4.2 Legal Remedies
+
+In addition to private domain enforcement, the Association reserves all rights and remedies available under federal and state intellectual property law, including:
+
+(a) Copyright infringement claims under 17 U.S.C. § 501 et seq.;
+(b) Trademark infringement claims under 15 U.S.C. § 1114;
+(c) Trade secret misappropriation claims under the Defend Trade Secrets Act (18 U.S.C. § 1836);
+(d) State law unfair competition and misappropriation claims.
+
+---
+
+## ARTICLE V: AMENDMENTS
+
+This Policy may be amended by the Trustee at any time. Members will be notified of material changes through the platform. Continued membership constitutes acceptance of amended terms.
+
+---
+
+## TRUSTEE APPROVAL
+
+**Signature:** ____________________________
+
+**Name:** ____________________________
+
+**Title:** Trustee, Forgotten Formula PMA
+
+**Date:** ____________________________
+
+---
+
+*Document prepared by THEMIS — Legal Division*
+*Forgotten Formula PMA*
+*Justin, TX 76247*
+    `.trim(),
+  };
+}
+
+export function getMemberIPAcknowledgment(): LegalDocumentContent {
+  return {
+    title: 'Member IP Acknowledgment Addendum',
+    slug: 'member-ip-acknowledgment',
+    lastUpdated: LAST_UPDATED,
+    content: `
+# MEMBER INTELLECTUAL PROPERTY ACKNOWLEDGMENT ADDENDUM
+## Supplemental to Unified Membership Contract (UMC v4.0)
+## Forgotten Formula PMA
+
+**Effective Date:** ${EFFECTIVE_DATE}
+**Last Updated:** ${LAST_UPDATED}
+
+---
+
+## PURPOSE
+
+This Addendum supplements the Unified Membership Contract (FFPMA-UMC-4.0) between Forgotten Formula PMA ("the Association") and the undersigned Member. It establishes the Member's acknowledgment and acceptance of the Association's intellectual property ownership rights over all content produced within the Association's private ecosystem.
+
+This Addendum does not modify the terms of UMC v4.0. It provides additional clarity regarding intellectual property rights as the Association expands its technology platform, AI-generated content capabilities, and educational offerings.
+
+---
+
+## SECTION 1: ACKNOWLEDGMENTS
+
+By signing this Addendum, the Member acknowledges and agrees that:
+
+### 1.1 Association Ownership
+All content, materials, reports, protocols, analyses, and other outputs generated by or through the Association's platforms, systems, and AI agents are the exclusive intellectual property of Forgotten Formula PMA. This includes, without limitation:
+
+- Personalized health protocols generated by the ALLIO AI system and DR_FORMULA engine
+- Educational content, training modules, quizzes, and certification materials
+- AI agent reports, analyses, and recommendations from all 48 specialized agents
+- Blood analysis outputs, images, annotations, and interpretive reports
+- Frequency healing libraries and PEMF protocol specifications
+- Research compilations, database queries, and scientific literature syntheses
+- Video content, visual assets, and marketing materials
+
+### 1.2 Private Domain
+All Association intellectual property exists within the private domain of a constitutionally protected Private Membership Association. The Member acknowledges that the Association's assertion of private domain protections is grounded in:
+
+- The First Amendment right of freedom of association
+- The Fourteenth Amendment liberty and due process protections
+- Established constitutional precedent including NAACP v. Alabama (1958), NAACP v. Button (1963), Roberts v. U.S. Jaycees (1984), and related case law
+
+### 1.3 Limited License
+The Member receives a limited, personal, non-exclusive, non-transferable license to access and use Association content solely for their personal health and wellness purposes while an active Member in good standing.
+
+### 1.4 Restrictions
+The Member agrees NOT to:
+
+(a) Copy, reproduce, or redistribute Association content to non-Members or the general public;
+(b) Share health protocols, agent reports, or training materials outside the Association's platform;
+(c) Use Association content for any commercial purpose including resale, publication, or redistribution;
+(d) Reverse-engineer or attempt to extract proprietary algorithms, AI model weights, or trade secrets;
+(e) Represent Association-generated content as their own original work;
+(f) Upload or transmit Association content to competing platforms or public repositories.
+
+### 1.5 Survival
+The ownership rights of the Association in its intellectual property survive termination of the Member's membership. Upon termination, the Member may retain previously generated personal health protocols for continued personal use only.
+
+---
+
+## SECTION 2: CONSENT
+
+The Member consents to:
+
+(a) The Association's monitoring of platform usage for intellectual property compliance through automated systems (SENTINEL);
+(b) The Association's right to update and modify this Addendum with reasonable notice to Members;
+(c) The Association's enforcement of intellectual property rights through membership suspension, termination, or legal action.
+
+---
+
+## SECTION 3: EXECUTION
+
+By signing below, the Member affirms that they have read, understood, and agree to the terms of this Intellectual Property Acknowledgment Addendum.
+
+**Member Signature:** ____________________________
+
+**Member Name (Print):** ____________________________
+
+**Date:** ____________________________
+
+**Membership ID:** ____________________________
+
+---
+
+**Accepted on behalf of Forgotten Formula PMA:**
+
+**Trustee Signature:** ____________________________
+
+**Date:** ____________________________
+
+---
+
+*Supplemental Addendum to FFPMA-UMC-4.0*
+*Document prepared by THEMIS — Legal Division*
+*Forgotten Formula PMA*
+*Justin, TX 76247*
+    `.trim(),
+  };
+}
+
+export function getCopyrightRegistrationCoverSheet(): LegalDocumentContent {
+  return {
+    title: 'Copyright Registration Cover Sheet',
+    slug: 'copyright-registration-cover',
+    lastUpdated: LAST_UPDATED,
+    content: `
+# COPYRIGHT REGISTRATION COVER SHEET
+## Pre-Filled for US Copyright Office Electronic Filing
+
+---
+
+**Filing Method:** Electronic — Copyright Office Online System (eco.copyright.gov)
+**Prepared by:** THEMIS — Legal Division, Forgotten Formula PMA
+
+---
+
+## REGISTRATION 1: SOFTWARE
+
+### Work Being Registered
+
+**Title of Work:** ALLIO — AI-Powered Health Ecosystem Platform
+
+**Type of Work:** Literary Work (Computer Program)
+
+**Year of Completion:** 2026
+
+**Date of First Publication:** Unpublished (private member access only)
+
+**Nation of First Publication:** United States
+
+### Author Information
+
+**Author:** Forgotten Formula PMA
+
+**Author's Domicile:** Texas, United States
+
+**Work Made for Hire:** Yes
+
+**Nature of Authorship:** Computer program — including source code, algorithms, AI agent system architecture, API definitions, database schemas, user interface code, and all related technical implementations comprising the ALLIO platform.
+
+### Claimant Information
+
+**Name:** Forgotten Formula PMA
+
+**Address:** Justin, TX 76247, United States
+
+### Fee
+
+**Filing Fee:** $65.00 (online standard application)
+
+---
+
+## REGISTRATION 2: CREATIVE CONTENT LIBRARY
+
+### Work Being Registered
+
+**Title of Work:** ALLIO Creative Content Library — Collective Work
+
+**Type of Work:** Literary Work / Visual Arts (Group Registration)
+
+**Year of Completion:** 2026
+
+**Date of First Publication:** Unpublished (private member access only)
+
+**Nation of First Publication:** United States
+
+### Author Information
+
+**Author:** Forgotten Formula PMA
+
+**Author's Domicile:** Texas, United States
+
+**Work Made for Hire:** Yes
+
+**Nature of Authorship:** Collective work consisting of: educational training module content (58+ modules); health protocol templates and frameworks; assessment and certification materials; brand imagery and visual design assets; video scripts and production content; marketing and promotional materials; research compilations and curated databases.
+
+### Claimant Information
+
+**Name:** Forgotten Formula PMA
+
+**Address:** Justin, TX 76247, United States
+
+### Fee
+
+**Filing Fee:** $65.00 (online standard application for group registration)
+
+---
+
+## FILING SUMMARY
+
+| Registration | Work | Type | Fee |
+|-------------|------|------|-----|
+| 1 | ALLIO Platform Source Code | Literary Work (Computer Program) | $65 |
+| 2 | Creative Content Library | Literary Work / Visual Arts (Group) | $65 |
+| | | **Total Fees** | **$130** |
+
+---
+
+## ADDITIONAL INFORMATION
+
+**Deposit Requirements:**
+- Registration 1 (Software): Upload of representative source code (first 25 pages and last 25 pages, with trade secret material redacted if applicable, per 37 C.F.R. § 202.20)
+- Registration 2 (Creative Content): Upload of representative samples from each content category
+
+**Correspondence Contact:**
+- Email: blake@forgottenformula.com
+- Mailing Address: Forgotten Formula PMA, Justin, TX 76247
+
+**Special Handling:** Not requested
+
+---
+
+## CERTIFICATION
+
+I, the undersigned, hereby certify that I am the authorized agent of the copyright claimant, Forgotten Formula PMA, and that the statements made in this application are correct to the best of my knowledge.
+
+**Signature:** ____________________________
+
+**Name:** ____________________________
+
+**Title:** Trustee, Forgotten Formula PMA
+
+**Date:** ____________________________
+
+---
+
+**US Copyright Office Filing Portal:** https://eco.copyright.gov
+
+*Document prepared by THEMIS — Legal Division*
+*Forgotten Formula PMA*
+*Justin, TX 76247*
+    `.trim(),
+  };
+}
+
+export function getPowerOfAttorney(): LegalDocumentContent {
+  return {
+    title: 'Power of Attorney for Trademark Counsel',
+    slug: 'power-of-attorney',
+    lastUpdated: LAST_UPDATED,
+    content: `
+# POWER OF ATTORNEY
+## For Trademark Prosecution Before the United States Patent and Trademark Office
+
+---
+
+**IN THE MATTER OF:**
+Trademark Application for the mark ALLIO
+International Classes 9, 42, and 44
+
+---
+
+## I. APPOINTMENT
+
+The undersigned applicant, Forgotten Formula PMA, a Private Membership Association organized under the laws of the State of Texas, having its principal place of business at Justin, TX 76247, United States, hereby appoints and designates the attorney(s) or law firm identified below as its representative(s) before the United States Patent and Trademark Office ("USPTO") in all matters relating to the above-referenced trademark application and any related proceedings.
+
+---
+
+## II. ATTORNEY DESIGNATION
+
+**Attorney/Agent Name:** ____________________________
+
+**Registration Number (if applicable):** ____________________________
+
+**Firm Name:** ____________________________
+
+**Bar Membership State(s):** ____________________________
+
+**Mailing Address:**
+____________________________
+____________________________
+____________________________
+
+**Email Address:** ____________________________
+
+**Phone Number:** ____________________________
+
+**Docket/Reference Number:** ____________________________
+
+---
+
+## III. SCOPE OF AUTHORITY
+
+The appointed attorney/agent is authorized to:
+
+(a) File, prosecute, and maintain the trademark application for the mark ALLIO in International Classes 9, 42, and 44 before the USPTO;
+
+(b) Respond to Office Actions, file amendments, and submit evidence as may be required during prosecution;
+
+(c) Execute declarations, statements of use, amendments to allege use, and requests for extensions of time to file statements of use;
+
+(d) Negotiate and settle oppositions, cancellations, or other inter partes proceedings related to the mark;
+
+(e) Correspond with the USPTO on behalf of the applicant in all matters related to the trademark application;
+
+(f) File maintenance documents, including Sections 8 and 15 affidavits and Section 9 renewal applications;
+
+(g) Take any and all actions deemed necessary and appropriate for the prosecution and maintenance of the trademark registration.
+
+---
+
+## IV. PRIOR APPOINTMENTS
+
+This Power of Attorney revokes any and all prior powers of attorney filed with the USPTO in connection with the above-referenced trademark application.
+
+---
+
+## V. APPLICANT CERTIFICATION
+
+The undersigned, as authorized representative of Forgotten Formula PMA, certifies that:
+
+1. The applicant is the owner of the mark ALLIO as described in the trademark application;
+2. The applicant has the authority to appoint legal counsel for trademark proceedings;
+3. The information provided in this Power of Attorney is true and correct.
+
+---
+
+## VI. EXECUTION
+
+**Applicant Signature:** ____________________________
+
+**Printed Name:** ____________________________
+
+**Title:** Trustee, Forgotten Formula PMA
+
+**Date:** ____________________________
+
+---
+
+**Witness (if required):**
+
+**Witness Signature:** ____________________________
+
+**Witness Name:** ____________________________
+
+**Date:** ____________________________
+
+---
+
+*Document prepared by THEMIS — Legal Division*
+*Forgotten Formula PMA*
+*Justin, TX 76247*
+    `.trim(),
+  };
+}
+
+export function getSpecimensOfUsePackage(): LegalDocumentContent {
+  return {
+    title: 'Specimens of Use Package — ALLIO',
+    slug: 'specimens-of-use',
+    lastUpdated: LAST_UPDATED,
+    content: `
+# SPECIMENS OF USE PACKAGE
+## In Support of Trademark Application for ALLIO
+## Forgotten Formula PMA
+
+---
+
+**Mark:** ALLIO
+**Filing Type:** Intent to Use (Specimens to be submitted with Statement of Use)
+**Prepared by:** THEMIS — Legal Division
+
+---
+
+## I. SPECIMEN OVERVIEW
+
+Per 15 U.S.C. § 1051(b), this application is filed under Intent to Use. Specimens of use are NOT required at initial filing — they are submitted with the Statement of Use (SOU) under 15 U.S.C. § 1051(d) after the mark is in use in commerce. This package documents the specimen collection plan and identifies the exact pages/screens from which specimens will be captured from the live ALLIO platform (https://allio.replit.app) upon commencement of commercial use.
+
+---
+
+## II. CLASS 9 — COMPUTER SOFTWARE SPECIMENS
+
+### Specimen 9-A: Platform Login Screen
+**Source URL:** https://allio.replit.app (root landing/login page)
+**Description:** Screenshot of the ALLIO platform login page displaying the ALLIO mark prominently as the product name.
+**Elements Shown:**
+- ALLIO word mark displayed as the primary brand identifier
+- Login form for member access to the software platform
+- "The All-In-One Healing Ecosystem" tagline
+**Capture Method:** Full-page screenshot at 1920x1080, 300 DPI export
+
+### Specimen 9-B: AI Agent Dashboard
+**Source URL:** https://allio.replit.app/dashboard (agent interaction panel)
+**Description:** Screenshot of the ALLIO AI agent interaction interface showing the mark in use with computer software for health analysis.
+**Elements Shown:**
+- ALLIO branding in the application header/navigation
+- AI-powered health analysis interface
+- Software functionality for analyzing biological data and generating health protocols
+**Capture Method:** Full-page screenshot at 1920x1080, 300 DPI export
+
+### Specimen 9-C: Blood Analysis Interface
+**Source URL:** https://allio.replit.app/blood-analysis (microscopy module)
+**Description:** Screenshot of the ALLIO blood microscopy analysis tool displaying the mark in connection with AI software for analyzing biological samples.
+**Elements Shown:**
+- ALLIO mark in the application interface
+- AI-assisted blood analysis functionality
+- Computer software processing and displaying health assessment data
+**Capture Method:** Full-page screenshot at 1920x1080, 300 DPI export
+
+---
+
+## III. CLASS 42 — SaaS SPECIMENS
+
+### Specimen 42-A: Member Portal Dashboard
+**Source URL:** https://allio.replit.app/member-portal (member dashboard)
+**Description:** Screenshot of the ALLIO member portal showing SaaS delivery of health analysis services.
+**Elements Shown:**
+- ALLIO mark as the SaaS platform identifier
+- Online, non-downloadable software interface accessible via web browser
+- Health tracking and wellness monitoring features delivered as a service
+**Capture Method:** Full-page screenshot at 1920x1080, 300 DPI export
+
+### Specimen 42-B: Protocol Generation Interface
+**Source URL:** https://allio.replit.app/protocols (protocol generator)
+**Description:** Screenshot showing the ALLIO platform generating personalized health protocols via cloud-based AI.
+**Elements Shown:**
+- ALLIO branding on the protocol generation interface
+- SaaS delivery model (web-based, no download required)
+- AI-powered health assessment services provided through the platform
+**Capture Method:** Full-page screenshot at 1920x1080, 300 DPI export
+
+### Specimen 42-C: Training Module Interface
+**Source URL:** https://allio.replit.app/training (educational modules)
+**Description:** Screenshot of the ALLIO educational module system delivered as online software.
+**Elements Shown:**
+- ALLIO mark displayed on the training platform
+- Computer software development in the field of healthcare
+- Online learning management system functionality
+**Capture Method:** Full-page screenshot at 1920x1080, 300 DPI export
+
+---
+
+## IV. CLASS 44 — MEDICAL AND HEALTH SERVICES SPECIMENS
+
+### Specimen 44-A: Health Consultation Interface
+**Source URL:** https://allio.replit.app/consultations (practitioner portal)
+**Description:** Screenshot of the ALLIO platform's health consultation features.
+**Elements Shown:**
+- ALLIO mark associated with health consultation services
+- Practitioner network and appointment scheduling
+- Health information delivery features
+**Capture Method:** Full-page screenshot at 1920x1080, 300 DPI export
+
+### Specimen 44-B: Health Assessment Results
+**Source URL:** https://allio.replit.app/assessments (health reports)
+**Description:** Screenshot of ALLIO health assessment output and recommendations.
+**Elements Shown:**
+- ALLIO branding on health assessment reports
+- Health assessment services and results display
+- Wellness consultation recommendations
+**Capture Method:** Full-page screenshot at 1920x1080, 300 DPI export
+
+### Specimen 44-C: Educational Health Content
+**Source URL:** https://allio.replit.app/education (health resources)
+**Description:** Screenshot of ALLIO health education materials provided to members.
+**Elements Shown:**
+- ALLIO mark on educational content pages
+- Health education services and informational content
+- Member-facing health information resources
+**Capture Method:** Full-page screenshot at 1920x1080, 300 DPI export
+
+---
+
+## V. SPECIMEN PREPARATION INSTRUCTIONS
+
+Upon commencement of commercial use, the following steps will be taken:
+
+1. **Capture Screenshots:** Take high-resolution screenshots (minimum 300 DPI) of each specimen scenario from the live ALLIO platform.
+2. **Annotate Specimens:** Mark each screenshot with a red arrow or box highlighting the ALLIO mark as displayed in commerce.
+3. **Verify Mark Placement:** Ensure the ALLIO mark is clearly visible and associated with the goods/services of the applicable class.
+4. **Format for Filing:** Convert screenshots to JPEG format not exceeding 5 MB per file, as required by the USPTO TEAS system.
+5. **Draft Specimen Descriptions:** Prepare brief written descriptions for each specimen explaining how the mark is used in commerce.
+
+---
+
+## VI. SPECIMEN SUBMISSION TIMELINE
+
+| Milestone | Target Date | Notes |
+|-----------|-------------|-------|
+| Platform Launch (Commercial Use) | TBD | Triggers the Statement of Use filing period |
+| Specimen Capture | Within 7 days of launch | Capture all planned specimen screenshots |
+| Specimen Preparation | Within 14 days of launch | Annotate, format, and draft descriptions |
+| Statement of Use Filing | Within 30 days of launch | Submit specimens and SOU to USPTO |
+
+---
+
+## VII. CERTIFICATION
+
+I certify that the specimens described in this package accurately represent the planned use of the ALLIO mark in commerce and that the specimens will be obtained from bona fide commercial use of the mark.
+
+**Signature:** ____________________________
+
+**Name:** ____________________________
+
+**Title:** Trustee, Forgotten Formula PMA
+
+**Date:** ____________________________
+
+---
+
+*Document prepared by THEMIS — Legal Division*
+*Forgotten Formula PMA*
+*Justin, TX 76247*
+    `.trim(),
+  };
+}
+
+export interface TrusteeSigningDocument {
+  slug: string;
+  title: string;
+  category: 'trademark' | 'copyright';
+  description: string;
+  docType: 'trademark' | 'agreement' | 'filing' | 'compliance';
+  content: string;
+}
+
+export function getTrusteeSigningDocuments(): TrusteeSigningDocument[] {
+  return [
+    {
+      slug: 'trademark-application',
+      title: 'USPTO Trademark Application — ALLIO',
+      category: 'trademark',
+      description: 'Federal trademark application for ALLIO word mark (Classes 9/42/44) — Intent to Use filing with all applicant information pre-filled.',
+      docType: 'trademark',
+      content: getTrademarkApplication().content,
+    },
+    {
+      slug: 'declaration-intent-to-use',
+      title: 'Declaration of Intent to Use — ALLIO',
+      category: 'trademark',
+      description: 'Supporting declaration for the trademark application establishing bona fide intent to use the ALLIO mark in commerce.',
+      docType: 'trademark',
+      content: getDeclarationOfIntentToUse().content,
+    },
+    {
+      slug: 'power-of-attorney',
+      title: 'Power of Attorney for Trademark Counsel',
+      category: 'trademark',
+      description: 'Authorizes designated legal counsel to prosecute and maintain the ALLIO trademark application before the USPTO.',
+      docType: 'agreement',
+      content: getPowerOfAttorney().content,
+    },
+    {
+      slug: 'specimens-of-use',
+      title: 'Specimens of Use Package — ALLIO',
+      category: 'trademark',
+      description: 'Documents the planned specimens showing the ALLIO mark in commerce across Classes 9, 42, and 44 with screenshot specifications.',
+      docType: 'filing',
+      content: getSpecimensOfUsePackage().content,
+    },
+    {
+      slug: 'master-copyright-assignment',
+      title: 'Master Copyright Assignment Agreement',
+      category: 'copyright',
+      description: 'Assigns all ecosystem output (AI protocols, training content, agent reports, blood analysis, frequency content, educational materials) to the PMA.',
+      docType: 'agreement',
+      content: getMasterCopyrightAssignment().content,
+    },
+    {
+      slug: 'private-domain-ip-policy',
+      title: 'Private Domain Intellectual Property Policy',
+      category: 'copyright',
+      description: 'Comprehensive IP policy citing 1st and 14th Amendment protections, establishing all ecosystem content as proprietary PMA property.',
+      docType: 'compliance',
+      content: getPrivateDomainIPPolicy().content,
+    },
+    {
+      slug: 'member-ip-acknowledgment',
+      title: 'Member IP Acknowledgment Addendum',
+      category: 'copyright',
+      description: 'Supplemental addendum to UMC v4.0 where members acknowledge platform output is proprietary PMA intellectual property.',
+      docType: 'agreement',
+      content: getMemberIPAcknowledgment().content,
+    },
+    {
+      slug: 'copyright-registration-cover',
+      title: 'Copyright Registration Cover Sheet',
+      category: 'copyright',
+      description: 'Pre-filled US Copyright Office filing form for the ALLIO platform source code and creative content library.',
+      docType: 'filing',
+      content: getCopyrightRegistrationCoverSheet().content,
+    },
+  ];
+}
+
 export function getAllLegalDocuments(): LegalDocumentContent[] {
   return [
     getPMAMemberAgreement(),
     getPrivacyPolicy(),
     getTermsOfService(),
     getDoctorOnboardingContract(),
+    getTrademarkApplication(),
+    getDeclarationOfIntentToUse(),
+    getPowerOfAttorney(),
+    getSpecimensOfUsePackage(),
+    getMasterCopyrightAssignment(),
+    getPrivateDomainIPPolicy(),
+    getMemberIPAcknowledgment(),
+    getCopyrightRegistrationCoverSheet(),
   ];
 }
 
