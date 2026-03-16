@@ -3,6 +3,21 @@ import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import path from "path";
 import helmet from "helmet";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execStartup = promisify(exec);
+
+(async function setupBrowserEnv() {
+  try {
+    const { stdout } = await execStartup("nix-build '<nixpkgs>' -A libgbm --no-out-link 2>/dev/null", { timeout: 30000 });
+    const libgbmLib = stdout.trim() + '/lib';
+    process.env.LD_LIBRARY_PATH = libgbmLib + (process.env.LD_LIBRARY_PATH ? ':' + process.env.LD_LIBRARY_PATH : '');
+  } catch {}
+  if (!process.env.PLAYWRIGHT_BROWSERS_PATH || process.env.PLAYWRIGHT_BROWSERS_PATH === '0') {
+    process.env.PLAYWRIGHT_BROWSERS_PATH = '/home/runner/workspace/.cache/ms-playwright';
+  }
+})();
 import { startScheduler, stopScheduler } from "./services/scheduler";
 import { startAgentScheduler, stopAgentScheduler, seedInitialTasks } from "./services/agent-scheduler";
 import { sentinel } from "./services/sentinel";
