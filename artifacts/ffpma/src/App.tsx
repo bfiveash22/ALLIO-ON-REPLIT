@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { DevNavPanel } from "@/components/dev-nav-panel";
 import { GlobalAgentChat } from "@/components/GlobalAgentChat";
 import type { MemberProfile, UserRole } from "@shared/schema";
+import { resolveAppRole } from "@/lib/role-utils";
 
 import LandingPage from "@/pages/landing";
 import ProductsPage from "@/pages/products";
@@ -100,9 +101,9 @@ async function fetchProfile(): Promise<MemberProfile | null> {
 
   let role = "member";
   if (user.wpRoles && Array.isArray(user.wpRoles)) {
-    if (user.wpRoles.includes("administrator")) role = "trustee";
-    else if (user.wpRoles.includes("clinic_owner")) role = "clinic";
-    else if (user.wpRoles.includes("doctor")) role = "doctor";
+    const resolved = resolveAppRole(user.wpRoles);
+    if (resolved === "admin") role = "trustee";
+    else role = resolved;
   }
 
   if (user.email && user.email.toLowerCase().includes("blake")) {
@@ -173,24 +174,19 @@ function RoleProtectedRoute({ children, allowedRoles }: { children: React.ReactN
     if (!user) return false;
     let roles: string[] = [];
     if (Array.isArray(user.wpRoles)) {
-      roles = user.wpRoles;
+      roles = user.wpRoles.map((r: string) => r.toLowerCase());
     } else if (typeof user.wpRoles === 'string') {
       try {
-        roles = JSON.parse(user.wpRoles);
+        roles = JSON.parse(user.wpRoles).map((r: string) => r.toLowerCase());
       } catch (e) {
-        roles = user.wpRoles.split(',').map((r: string) => r.trim());
+        roles = user.wpRoles.split(',').map((r: string) => r.trim().toLowerCase());
       }
     }
 
-    // Always trust blake or administrator wpRoles for high-tier access
     const userEmail = typeof user.email === 'string' ? user.email.toLowerCase() : '';
-    let maxRole: UserRole = "member";
-    if (roles.includes('administrator') || userEmail.includes('blake')) {
+    let maxRole: UserRole = resolveAppRole(roles) as UserRole;
+    if (userEmail.includes('blake')) {
       maxRole = "admin";
-    } else if (roles.includes('clinic_owner')) {
-      maxRole = "clinic";
-    } else if (roles.includes('doctor')) {
-      maxRole = "doctor";
     }
 
     if (allowedRoles.includes(maxRole)) return true;

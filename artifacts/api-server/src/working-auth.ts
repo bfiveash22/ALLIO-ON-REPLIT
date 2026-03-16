@@ -213,11 +213,21 @@ export function setupWorkingAuth(app: any) {
       const userEmail = req.session.user.email || '';
       const isBlake = userEmail.toLowerCase().includes('blake');
 
+      const doctorHealerPatterns = [
+        'doctor', 'healer', 'ff_healer', 'ff_doctor', 'practitioner',
+        'um_healer', 'um_doctor', 'um_practitioner',
+        'wellness_practitioner', 'healthcare_provider'
+      ];
+      const normalizedRoles = roles.map((r: string) => r.toLowerCase());
       let redirectTo = '/dashboard';
-      if (roles.includes('administrator') || isBlake) {
+      if (normalizedRoles.includes('administrator') || isBlake) {
         redirectTo = '/trustee';
-      } else if (roles.includes('clinic_owner')) {
+      } else if (normalizedRoles.includes('clinic_owner')) {
         redirectTo = '/clinic';
+      } else if (normalizedRoles.some((r: string) =>
+                   doctorHealerPatterns.includes(r) ||
+                   r.includes('doctor') || r.includes('healer'))) {
+        redirectTo = '/doctors';
       }
 
       res.json({

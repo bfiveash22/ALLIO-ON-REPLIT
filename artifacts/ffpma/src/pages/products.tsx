@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataSourceBadge } from "@/components/data-source-badge";
+import { resolveAppRole } from "@/lib/role-utils";
 
 interface WooCategory {
   id: number;
@@ -88,7 +89,11 @@ interface MemberProfile {
   id: string;
   userId: string;
   role: string;
-  wpRoles?: string[]; // WordPress roles for custom pricing (e.g., "holtorf")
+  wpRoles?: string[];
+  user?: {
+    role: string;
+    wpRoles: string[];
+  };
 }
 
 interface WooStatus {
@@ -114,8 +119,9 @@ export default function Products() {
     staleTime: 60000,
   });
 
-  const userRole = profile?.role || 'member';
-  const userWpRoles = profile?.wpRoles || [];
+  const rawWpRoles: string[] = profile?.user?.wpRoles ?? profile?.wpRoles ?? [];
+  const userRole = resolveAppRole(rawWpRoles);
+  const userWpRoles = rawWpRoles;
 
   const { data: wooStatus } = useQuery<WooStatus>({
     queryKey: ["/api/woocommerce/status"],

@@ -34,6 +34,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import DOMPurify from "dompurify";
 import ImageZoomModal from "@/components/ImageZoomModal";
 import { ZoomIn } from "lucide-react";
+import { resolveAppRole } from "@/lib/role-utils";
 import {
   Select,
   SelectContent,
@@ -43,6 +44,15 @@ import {
 } from "@/components/ui/select";
 
 const WOOCOMMERCE_SITE_URL = import.meta.env.VITE_WOOCOMMERCE_URL || "https://forgottenformula.com";
+
+interface MemberProfile {
+  role: string;
+  wpRoles: string[];
+  user?: {
+    role: string;
+    wpRoles: string[];
+  };
+}
 
 interface RolePricing {
   [role: string]: { price: string; visible: boolean };
@@ -132,6 +142,15 @@ export default function ProductDetailPage() {
     retry: 1,
   });
 
+  const { data: profile } = useQuery<MemberProfile>({
+    queryKey: ["/api/profile"],
+    staleTime: 60000,
+  });
+
+  const rawWpRoles: string[] = profile?.user?.wpRoles ?? profile?.wpRoles ?? [];
+  const userRole = resolveAppRole(rawWpRoles);
+  const userWpRoles: string[] = rawWpRoles;
+
   const variationAttributes = product?.attributes?.filter(attr => attr.variation) || [];
   const hasVariations = product?.productType === "variable" && variationAttributes.length > 0;
 
@@ -160,6 +179,33 @@ export default function ProductDetailPage() {
 
   const hasMultipleImages = validImages.length > 1;
 
+  const getRolePrice = (rolePricing: RolePricing | undefined, basePrice: number, baseSalePrice: number | null): { price: number; isRolePrice: boolean } => {
+    if (!rolePricing) {
+      return { price: baseSalePrice ?? basePrice, isRolePrice: false };
+    }
+    const normalizedRolePricing: Record<string, { price: string; visible: boolean }> = {};
+    for (const [key, value] of Object.entries(rolePricing)) {
+      normalizedRolePricing[key.toLowerCase()] = value;
+    }
+    for (const wpRole of userWpRoles) {
+      const normalizedRole = wpRole.toLowerCase();
+      if (normalizedRolePricing[normalizedRole]?.visible) {
+        const rolePrice = parseFloat(normalizedRolePricing[normalizedRole].price);
+        if (!isNaN(rolePrice) && rolePrice > 0) {
+          return { price: rolePrice, isRolePrice: true };
+        }
+      }
+    }
+    const normalizedUserRole = userRole.toLowerCase();
+    if (normalizedRolePricing[normalizedUserRole]?.visible) {
+      const rolePrice = parseFloat(normalizedRolePricing[normalizedUserRole].price);
+      if (!isNaN(rolePrice) && rolePrice > 0) {
+        return { price: rolePrice, isRolePrice: true };
+      }
+    }
+    return { price: baseSalePrice ?? basePrice, isRolePrice: false };
+  };
+
   const selectedVariation = hasVariations && product?.variations
     ? product.variations.find(v =>
         v.attributes.every(attr =>
@@ -168,12 +214,15 @@ export default function ProductDetailPage() {
       )
     : null;
 
-  const effectivePrice = selectedVariation
-    ? (selectedVariation.salePrice ?? selectedVariation.price)
-    : (product?.salePrice ?? product?.price ?? 0);
+  const rolePricingResult = selectedVariation
+    ? getRolePrice(selectedVariation.rolePricing, selectedVariation.price, selectedVariation.salePrice)
+    : getRolePrice(product?.rolePricing, product?.price ?? 0, product?.salePrice ?? null);
+
+  const effectivePrice = rolePricingResult.price;
+  const isRolePrice = rolePricingResult.isRolePrice;
 
   const effectiveRegularPrice = selectedVariation?.regularPrice ?? product?.regularPrice ?? product?.price ?? 0;
-  const effectiveOnSale = selectedVariation?.onSale ?? product?.onSale ?? false;
+  const effectiveOnSale = isRolePrice ? (effectivePrice < effectiveRegularPrice) : (selectedVariation?.onSale ?? product?.onSale ?? false);
   const effectiveStock = selectedVariation?.stockStatus ?? product?.stockStatus ?? "instock";
   const effectiveSku = selectedVariation?.sku || product?.sku;
 
@@ -191,6 +240,7 @@ export default function ProductDetailPage() {
 
     if (existingIndex >= 0) {
       cart[existingIndex].quantity += quantity;
+      cart[existingIndex].price = String(effectivePrice);
     } else {
       const variationName = selectedVariation
         ? ` (${selectedVariation.attributes.map(a => a.option).join(", ")})`
@@ -485,6 +535,12 @@ export default function ProductDetailPage() {
               )}
               {hasVariations && !allOptionsSelected && (
                 <p className="text-sm text-white/50 mt-2">Select options to see price</p>
+              )}
+              {isRolePrice && (
+                <p className="text-sm text-emerald-400 mt-2 flex items-center gap-1">
+                  <Tag className="w-3 h-3" />
+                  Your {userRole} pricing applied
+                </p>
               )}
             </div>
 
