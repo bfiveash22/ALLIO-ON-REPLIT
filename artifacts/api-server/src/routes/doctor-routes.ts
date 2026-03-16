@@ -3,7 +3,7 @@ import { requireRole } from "../working-auth";
 import { storage } from "../storage";
 import { db } from "../db";
 import { eq, desc, and } from "drizzle-orm";
-import { doctorPatientMessages, doctorOnboarding, memberEnrollment } from "@shared/schema";
+import { doctorPatientMessages, doctorOnboarding, memberEnrollment, type PatientRecord } from "@shared/schema";
 import multer from "multer";
 import { uploadXrayFile } from "../services/drive";
 import { HfInference } from "@huggingface/inference";
@@ -104,6 +104,15 @@ export function registerDoctorRoutes(app: Express): void {
   app.put("/api/doctor/patients/:id", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const updates = { ...req.body };
+
+      if ("name" in updates) {
+        updates.memberName = updates.name;
+        delete updates.name;
+      }
+      if ("email" in updates) {
+        updates.memberEmail = updates.email;
+        delete updates.email;
+      }
       if ("dateOfBirth" in updates) {
         if (updates.dateOfBirth && updates.dateOfBirth !== "") {
           const d = new Date(updates.dateOfBirth);
