@@ -105,13 +105,12 @@ export function MemberMessages() {
     },
   });
 
+  const unreadInThread = selectedMessages.filter((m) => m.senderRole === "doctor" && !m.readAt);
   useEffect(() => {
-    if (selectedDoctorId && selectedMessages.length > 0) {
-      selectedMessages
-        .filter((m) => m.senderRole === "doctor" && !m.readAt)
-        .forEach((m) => markReadMutation.mutate(m.id));
+    if (selectedDoctorId && unreadInThread.length > 0) {
+      unreadInThread.forEach((m) => markReadMutation.mutate(m.id));
     }
-  }, [selectedDoctorId]);
+  }, [selectedDoctorId, unreadInThread.length]);
 
   if (messages.length === 0) {
     return (
