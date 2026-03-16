@@ -1,0 +1,138 @@
+[
+  {
+    "id": "9f61f7eb-1ace-47f3-b8d5-9d5413e1282a",
+    "position": 1,
+    "filepath": "src/pages/slides/TitleSlide.tsx",
+    "title": "FFPMA & ALLIO Ecosystem Handbook",
+    "description": "Cover slide with handbook title, FFPMA branding, and ecosystem overview tagline.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    "position": 2,
+    "filepath": "src/pages/slides/MissionSlide.tsx",
+    "title": "Our Mission",
+    "description": "Healing Over Profits, Nature Over Synthetic — FFPMA mission and three core pillars.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+    "position": 3,
+    "filepath": "src/pages/slides/PhilosophySlide.tsx",
+    "title": "Core Philosophy",
+    "description": "The Steve Baker 2026 Protocol philosophy with key ecosystem statistics.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "position": 4,
+    "filepath": "src/pages/slides/EcosystemBundleSlide.tsx",
+    "title": "The Complete Healing Bundle",
+    "description": "Root Cause Ecosystem bundle overview — peptides, bioregulators, supplements, IV therapy, and diagnostics.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "position": 5,
+    "filepath": "src/pages/slides/FiveRFrameworkSlide.tsx",
+    "title": "The 5R Clinical Model",
+    "description": "Five phases of restoration — Reduce, Rebalance, Reactivate, Restore, Revitalize.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b",
+    "position": 6,
+    "filepath": "src/pages/slides/FiveRDetailsSlide.tsx",
+    "title": "How the 5R Model Works",
+    "description": "Protocol architecture — from patient intake to follow-up adaptation.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c",
+    "position": 7,
+    "filepath": "src/pages/slides/PMANetworkSlide.tsx",
+    "title": "Why a Private Membership Association?",
+    "description": "PMA constitutional protections, member sovereignty, and network benefits.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a7b8c9d0-e1f2-4a3b-4c5d-6e7f8a9b0c1d",
+    "position": 8,
+    "filepath": "src/pages/slides/PMAStructureSlide.tsx",
+    "title": "PMA Organizational Structure",
+    "description": "How the PMA network operates — Trustee, Doctors, Clinics, and Members.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "b8c9d0e1-f2a3-4b4c-5d6e-7f8a9b0c1d2e",
+    "position": 9,
+    "filepath": "src/pages/slides/TrusteeOverviewSlide.tsx",
+    "title": "The Trustee's Role",
+    "description": "Trustee responsibilities — protocol oversight, member management, legal compliance, and AI governance.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "c9d0e1f2-a3b4-4c5d-6e7f-8a9b0c1d2e3f",
+    "position": 10,
+    "filepath": "src/pages/slides/TrusteeToolsSlide.tsx",
+    "title": "Daily Operations Dashboard",
+    "description": "Trustee tools — protocol queue, agent monitor, legal tracker, and communication hub.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "d0e1f2a3-b4c5-4d6e-7f8a-9b0c1d2e3f4a",
+    "position": 11,
+    "filepath": "src/pages/slides/DoctorGuideSlide.tsx",
+    "title": "Practicing Within the FFPMA Network",
+    "description": "Doctor's guide — AI protocol architect, diagnostic intelligence, research integration, and infrastructure.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b",
+    "position": 12,
+    "filepath": "src/pages/slides/DoctorWorkflowSlide.tsx",
+    "title": "From Patient Intake to Protocol Delivery",
+    "description": "Doctor's workflow — five-step process from consultation to follow-up.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "f2a3b4c5-d6e7-4f8a-9b0c-1d2e3f4a5b6c",
+    "position": 13,
+    "filepath": "src/pages/slides/AdminGuideSlide.tsx",
+    "title": "Clinic Administration Made Simple",
+    "description": "Admin guide — member onboarding, product orders, scheduling, and reporting.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a3b4c5d6-e7f8-4a9b-0c1d-2e3f4a5b6c7d",
+    "position": 14,
+    "filepath": "src/pages/slides/AllioOverviewSlide.tsx",
+    "title": "Meet ALLIO — 48 AI Agents, 7 Divisions",
+    "description": "Agent directory overview — all seven divisions of the ALLIO ecosystem.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "b4c5d6e7-f8a9-4b0c-1d2e-3f4a5b6c7d8e",
+    "position": 15,
+    "filepath": "src/pages/slides/AgentHighlightsSlide.tsx",
+    "title": "Agents That Power the Ecosystem",
+    "description": "Key agent profiles — DR. FORMULA, TRUE VISION, RESEARCH SCOUT, AUTO-IMPLEMENTER, GUARDIAN, and ALLIO MONITOR.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "c5d6e7f8-a9b0-4c1d-2e3f-4a5b6c7d8e9f",
+    "position": 16,
+    "filepath": "src/pages/slides/SelfEvolvingSlide.tsx",
+    "title": "ALLIO Gets Smarter Every Week",
+    "description": "Self-evolving intelligence — weekly enhancement cycles, dynamic model routing, and Trustee governance.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "d6e7f8a9-b0c1-4d2e-3f4a-5b6c7d8e9f0a",
+    "position": 17,
+    "filepath": "src/pages/slides/ClosingSlide.tsx",
+    "title": "The Future of Root-Cause Medicine",
+    "description": "Closing slide with FFPMA branding, mission statement, and contact information.",
+    "speakerNotes": ""
+  }
+]
