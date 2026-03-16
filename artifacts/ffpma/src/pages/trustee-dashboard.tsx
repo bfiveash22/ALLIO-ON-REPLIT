@@ -896,6 +896,10 @@ export default function TrusteeDashboard() {
   const [cmdTaskPriority, setCmdTaskPriority] = useState("2");
   const [revisingProposalId, setRevisingProposalId] = useState<string | null>(null);
   const [revisionFeedback, setRevisionFeedback] = useState("");
+  const [libraryAgent, setLibraryAgent] = useState<string>("");
+  const [libraryUploading, setLibraryUploading] = useState(false);
+  const [libraryUploadProgress, setLibraryUploadProgress] = useState(0);
+  const [libraryDragOver, setLibraryDragOver] = useState(false);
 
   const handleViewChange = (value: string) => {
     setViewAs(value as any);
@@ -1359,6 +1363,78 @@ export default function TrusteeDashboard() {
     },
     onError: (error: any) => {
       toast({ title: "Setup Failed", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const { data: libraryFiles, refetch: refetchLibraryFiles } = useQuery<{ success: boolean; files: Array<{ id: string; name: string; mimeType: string; size?: string; createdTime?: string; webViewLink?: string }> }>({
+    queryKey: ["/api/agent-library", libraryAgent],
+    queryFn: async () => {
+      if (!libraryAgent) return { success: true, files: [] };
+      const res = await fetch(`/api/agent-library/${encodeURIComponent(libraryAgent)}`);
+      return res.json();
+    },
+    enabled: !!libraryAgent,
+  });
+
+  const handleLibraryUpload = async (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0 || !libraryAgent) return;
+    const maxSize = 50 * 1024 * 1024;
+    for (let i = 0; i < fileList.length; i++) {
+      if (fileList[i].size > maxSize) {
+        toast({ title: "File Too Large", description: `${fileList[i].name} exceeds the 50MB limit.`, variant: "destructive" });
+        return;
+      }
+    }
+    setLibraryUploading(true);
+    setLibraryUploadProgress(0);
+    try {
+      const formData = new FormData();
+      for (let i = 0; i < fileList.length; i++) {
+        formData.append("files", fileList[i]);
+      }
+      const xhr = new XMLHttpRequest();
+      await new Promise<void>((resolve, reject) => {
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) setLibraryUploadProgress(Math.round((e.loaded / e.total) * 100));
+        });
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            const data = JSON.parse(xhr.responseText);
+            if (data.errors && data.errors.length > 0) {
+              toast({ title: "Some uploads failed", description: data.errors.join("; "), variant: "destructive" });
+            }
+            if (data.uploaded && data.uploaded.length > 0) {
+              toast({ title: "Upload Complete", description: `${data.uploaded.length} file(s) uploaded to ${libraryAgent}'s library.` });
+            }
+            refetchLibraryFiles();
+            resolve();
+          } else {
+            reject(new Error(`Upload failed: ${xhr.statusText}`));
+          }
+        });
+        xhr.addEventListener("error", () => reject(new Error("Network error during upload")));
+        xhr.open("POST", `/api/agent-library/upload/${encodeURIComponent(libraryAgent)}`);
+        xhr.send(formData);
+      });
+    } catch (error: any) {
+      toast({ title: "Upload Failed", description: error.message, variant: "destructive" });
+    } finally {
+      setLibraryUploading(false);
+      setLibraryUploadProgress(0);
+    }
+  };
+
+  const deleteLibraryFileMutation = useMutation({
+    mutationFn: async (fileId: string) => {
+      const res = await apiRequest("DELETE", `/api/agent-library/${encodeURIComponent(libraryAgent)}/file/${fileId}`, {});
+      return res.json();
+    },
+    onSuccess: () => {
+      refetchLibraryFiles();
+      toast({ title: "File Deleted", description: "File removed from agent library." });
+    },
+    onError: (error: any) => {
+      toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
     }
   });
 
@@ -2230,6 +2306,130 @@ export default function TrusteeDashboard() {
                         <p className="text-xs text-white/30 text-center pt-2">
                           {agentTasks.filter(t => t.status === "completed" && t.outputUrl).length} total outputs in Drive
                         </p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-indigo-500/20">
+                    <CardHeader className="pb-3">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div>
+                          <CardTitle className="flex items-center gap-2 text-white">
+                            <BookOpen className="w-5 h-5 text-indigo-400" />
+                            Agent Knowledge Library
+                          </CardTitle>
+                          <CardDescription>Upload books, research papers, and literature for individual agents</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <Select value={libraryAgent} onValueChange={setLibraryAgent}>
+                        <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                          <SelectValue placeholder="Select an agent..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(agents || []).map((a: any) => (
+                            <SelectItem key={a.id} value={a.name}>{a.name} — {a.title}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {libraryAgent && (
+                        <>
+                          <div
+                            className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
+                              libraryDragOver
+                                ? "border-indigo-400 bg-indigo-500/20"
+                                : "border-white/20 hover:border-white/40 bg-white/5"
+                            }`}
+                            onDragOver={(e) => { e.preventDefault(); setLibraryDragOver(true); }}
+                            onDragLeave={() => setLibraryDragOver(false)}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              setLibraryDragOver(false);
+                              handleLibraryUpload(e.dataTransfer.files);
+                            }}
+                            onClick={() => {
+                              const input = document.createElement("input");
+                              input.type = "file";
+                              input.multiple = true;
+                              input.accept = ".pdf,.doc,.docx,.epub,.txt,.jpg,.jpeg,.png,.gif,.webp,.svg";
+                              input.onchange = () => handleLibraryUpload(input.files);
+                              input.click();
+                            }}
+                          >
+                            {libraryUploading ? (
+                              <div className="space-y-2">
+                                <Loader2 className="w-8 h-8 mx-auto text-indigo-400 animate-spin" />
+                                <p className="text-sm text-white/70">Uploading... {libraryUploadProgress}%</p>
+                                <Progress value={libraryUploadProgress} className="h-2 max-w-xs mx-auto" />
+                              </div>
+                            ) : (
+                              <>
+                                <Upload className="w-8 h-8 mx-auto mb-2 text-white/30" />
+                                <p className="text-sm text-white/60">Drag & drop files here, or click to browse</p>
+                                <p className="text-xs text-white/30 mt-1">PDF, DOCX, EPUB, TXT, Images — Max 50MB per file</p>
+                              </>
+                            )}
+                          </div>
+
+                          {libraryFiles?.files && libraryFiles.files.length > 0 ? (
+                            <div className="space-y-2 max-h-64 overflow-y-auto">
+                              {libraryFiles.files.map((file) => (
+                                <div
+                                  key={file.id}
+                                  className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5 group"
+                                >
+                                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <div className="w-8 h-8 rounded bg-indigo-500/20 flex items-center justify-center shrink-0">
+                                      {file.mimeType.includes("image") ? (
+                                        <Image className="w-4 h-4 text-indigo-400" />
+                                      ) : (
+                                        <FileText className="w-4 h-4 text-indigo-400" />
+                                      )}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-sm font-medium truncate text-white/90">{file.name}</p>
+                                      <p className="text-xs text-white/40">
+                                        {file.size ? `${(parseInt(file.size) / 1024).toFixed(1)} KB` : ""}
+                                        {file.createdTime ? ` • ${new Date(file.createdTime).toLocaleDateString()}` : ""}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    {file.webViewLink && (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 w-7 p-0 text-white/30 hover:text-indigo-400"
+                                        onClick={() => window.open(file.webViewLink, "_blank")}
+                                      >
+                                        <ExternalLink className="w-3.5 h-3.5" />
+                                      </Button>
+                                    )}
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 w-7 p-0 text-white/30 hover:text-red-400"
+                                      onClick={() => deleteLibraryFileMutation.mutate(file.id)}
+                                      disabled={deleteLibraryFileMutation.isPending}
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                              <p className="text-xs text-white/30 text-center pt-1">
+                                {libraryFiles.files.length} file(s) in {libraryAgent}'s library
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="p-4 text-center text-white/50">
+                              <BookOpen className="w-8 h-8 mx-auto mb-2 text-white/20" />
+                              <p className="text-sm">No files yet. Upload knowledge for {libraryAgent}.</p>
+                            </div>
+                          )}
+                        </>
                       )}
                     </CardContent>
                   </Card>

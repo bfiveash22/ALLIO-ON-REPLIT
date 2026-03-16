@@ -7,10 +7,30 @@ import {
   listFolderContents, getUncachableGoogleDriveClient,
   uploadMarketingAssets, uploadLegalDocuments,
   uploadBloodAnalysisFile, getBloodAnalysisUploads,
-  createBakerFilesFolder, uploadToBakerFiles
+  createBakerFilesFolder, uploadToBakerFiles,
+  uploadToAgentLibrary, listAgentLibraryFiles, deleteAgentLibraryFile
 } from "../services/drive";
 
+const MAX_LIBRARY_FILE_SIZE = 50 * 1024 * 1024;
+const ALLOWED_LIBRARY_MIMETYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/epub+zip',
+  'text/plain',
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml'
+];
+
 const upload = multer({ storage: multer.memoryStorage() });
+
+const libraryUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_LIBRARY_FILE_SIZE }
+});
 
 export function registerDriveRoutes(app: Express): void {
   app.get("/api/drive/status", requireRole("admin"), async (req: Request, res: Response) => {
@@ -152,6 +172,60 @@ export function registerDriveRoutes(app: Express): void {
       const { localPath, fileName } = req.body;
       if (!localPath) return res.status(400).json({ success: false, error: 'localPath is required' });
       res.json(await uploadToBakerFiles(localPath, fileName));
+    } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
+  });
+
+  app.post("/api/agent-library/upload/:agentName", requireRole("admin"), (req: Request, res: Response, next) => {
+    libraryUpload.array("files", 10)(req, res, (err: any) => {
+      if (err) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(413).json({ success: false, error: `File exceeds the 50MB size limit.` });
+        }
+        return res.status(400).json({ success: false, error: err.message || 'Upload error' });
+      }
+      next();
+    });
+  }, async (req: Request, res: Response) => {
+    try {
+      const { agentName } = req.params;
+      const files = req.files as Express.Multer.File[];
+      if (!files || files.length === 0) return res.status(400).json({ success: false, error: "No files uploaded" });
+
+      const results = [];
+      const errors: string[] = [];
+
+      for (const file of files) {
+        if (!ALLOWED_LIBRARY_MIMETYPES.includes(file.mimetype)) {
+          errors.push(`${file.originalname}: Unsupported file type (${file.mimetype}). Allowed: PDF, DOCX, EPUB, TXT, and images.`);
+          continue;
+        }
+        const result = await uploadToAgentLibrary(agentName, file.buffer, file.originalname, file.mimetype);
+        if (result.success) {
+          results.push(result);
+        } else {
+          errors.push(`${file.originalname}: ${result.error || 'Upload failed'}`);
+        }
+      }
+
+      res.json({ success: errors.length === 0, uploaded: results, errors });
+    } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
+  });
+
+  app.get("/api/agent-library/:agentName", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const files = await listAgentLibraryFiles(req.params.agentName);
+      res.json({ success: true, files });
+    } catch (error: any) { res.status(500).json({ success: false, error: error.message, files: [] }); }
+  });
+
+  app.delete("/api/agent-library/:agentName/file/:fileId", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { agentName, fileId } = req.params;
+      const result = await deleteAgentLibraryFile(fileId, agentName);
+      if (!result.success) {
+        return res.status(403).json(result);
+      }
+      res.json(result);
     } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
   });
 }

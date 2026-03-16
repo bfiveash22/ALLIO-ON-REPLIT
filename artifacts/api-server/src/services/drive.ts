@@ -1052,3 +1052,131 @@ export async function deleteDriveFile(fileId: string): Promise<boolean> {
     return false;
   }
 }
+
+export async function getOrCreateAgentLibrariesFolder(): Promise<string> {
+  const allioFolder = await findAllioFolder();
+  if (!allioFolder) throw new Error('ALLIO folder not found');
+
+  let librariesId = await findFolderByName(allioFolder.id, 'Agent_Libraries');
+  if (!librariesId) {
+    const folder = await createSubfolder(allioFolder.id, 'Agent_Libraries');
+    librariesId = folder.id;
+    console.log('[Drive] Created Agent_Libraries folder:', librariesId);
+  }
+  return librariesId;
+}
+
+export async function getOrCreateAgentLibraryFolder(agentName: string): Promise<string> {
+  const librariesId = await getOrCreateAgentLibrariesFolder();
+  let agentFolderId = await findFolderByName(librariesId, agentName);
+  if (!agentFolderId) {
+    const folder = await createSubfolder(librariesId, agentName);
+    agentFolderId = folder.id;
+    console.log(`[Drive] Created agent library folder for ${agentName}:`, agentFolderId);
+  }
+  return agentFolderId;
+}
+
+export async function uploadToAgentLibrary(
+  agentName: string,
+  buffer: Buffer,
+  fileName: string,
+  mimeType: string
+): Promise<{
+  success: boolean;
+  fileId?: string;
+  name?: string;
+  webViewLink?: string;
+  size?: number;
+  error?: string;
+}> {
+  try {
+    const folderId = await getOrCreateAgentLibraryFolder(agentName);
+    const drive = await getUncachableGoogleDriveClient();
+
+    const { Readable } = await import('stream');
+    const bufferStream = Readable.from(buffer);
+
+    const file = await drive.files.create({
+      requestBody: {
+        name: fileName,
+        parents: [folderId]
+      },
+      media: {
+        mimeType,
+        body: bufferStream
+      },
+      fields: 'id, name, webViewLink, size'
+    });
+
+    return {
+      success: true,
+      fileId: file.data.id || undefined,
+      name: file.data.name || undefined,
+      webViewLink: file.data.webViewLink || undefined,
+      size: file.data.size ? parseInt(file.data.size) : buffer.length
+    };
+  } catch (error: any) {
+    console.error(`[Drive] Error uploading to agent library ${agentName}:`, error);
+    return { success: false, error: error.message || 'Upload failed' };
+  }
+}
+
+export async function listAgentLibraryFiles(agentName: string): Promise<Array<{
+  id: string;
+  name: string;
+  mimeType: string;
+  size?: string;
+  createdTime?: string;
+  webViewLink?: string;
+}>> {
+  try {
+    const librariesId = await getOrCreateAgentLibrariesFolder();
+    const agentFolderId = await findFolderByName(librariesId, agentName);
+    if (!agentFolderId) return [];
+
+    const drive = await getUncachableGoogleDriveClient();
+    const response = await drive.files.list({
+      q: `'${agentFolderId}' in parents and trashed = false`,
+      fields: 'files(id, name, mimeType, size, createdTime, webViewLink)',
+      orderBy: 'createdTime desc',
+      pageSize: 200
+    });
+
+    return (response.data.files || []).map(file => ({
+      id: file.id!,
+      name: file.name!,
+      mimeType: file.mimeType!,
+      size: file.size || undefined,
+      createdTime: file.createdTime || undefined,
+      webViewLink: file.webViewLink || undefined
+    }));
+  } catch (error) {
+    console.error(`[Drive] Error listing agent library for ${agentName}:`, error);
+    return [];
+  }
+}
+
+export async function verifyFileInAgentLibrary(fileId: string, agentName: string): Promise<boolean> {
+  try {
+    const librariesId = await getOrCreateAgentLibrariesFolder();
+    const agentFolderId = await findFolderByName(librariesId, agentName);
+    if (!agentFolderId) return false;
+
+    const drive = await getUncachableGoogleDriveClient();
+    const file = await drive.files.get({ fileId, fields: 'parents' });
+    const parents = file.data.parents || [];
+    return parents.includes(agentFolderId);
+  } catch {
+    return false;
+  }
+}
+
+export async function deleteAgentLibraryFile(fileId: string, agentName: string): Promise<{ success: boolean; error?: string }> {
+  const belongs = await verifyFileInAgentLibrary(fileId, agentName);
+  if (!belongs) {
+    return { success: false, error: 'File does not belong to this agent\'s library' };
+  }
+  const deleted = await trashDriveFile(fileId);
+  return { success: deleted };
+}
