@@ -42,4 +42,24 @@ WP_SITE_URL = "https://www.forgottenformula.com"
   [nix]
   channel = "stable-25_05"
 packages = ["alsa-lib", "at-spi2-atk", "cairo", "cups", "dbus", "expat", "gitFull", "glib", "gtk3", "libdrm", "libxkbcommon", "mesa", "mesa_glu", "nspr", "nss", "pango", "playwright-driver", "xorg.libX11", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXext", "xorg.libXfixes", "xorg.libXrandr", "xorg.libxcb"]
+
+[[ports]]
+localPort = 8081
+externalPort = 8081
+
+[[ports]]
+localPort = 18352
+externalPort = 3002
+
+[[ports]]
+localPort = 19237
+externalPort = 3003
+
+[[ports]]
+localPort = 22375
+externalPort = 3000
+
+[[ports]]
+localPort = 22608
+externalPort = 3001
   

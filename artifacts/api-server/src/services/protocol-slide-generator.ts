@@ -203,7 +203,7 @@ export async function generateAnnetteGomerSlides(): Promise<ProtocolSlideResult>
           shapeBackgroundFill: {
             solidFill: { color: { rgbColor: color } },
           },
-          outline: { outlineFill: { solidFill: { color: { rgbColor: color } } }, weight: { magnitude: 0, unit: 'PT' } },
+          outline: { outlineFill: { solidFill: { color: { rgbColor: color } } }, weight: { magnitude: 0.5, unit: 'PT' } },
         },
         fields: 'shapeBackgroundFill.solidFill.color,outline',
       },
@@ -932,7 +932,7 @@ export async function generateKathrynSmithSlides(): Promise<ProtocolSlideResult>
           shapeBackgroundFill: {
             solidFill: { color: { rgbColor: color } },
           },
-          outline: { outlineFill: { solidFill: { color: { rgbColor: color } } }, weight: { magnitude: 0, unit: 'PT' } },
+          outline: { outlineFill: { solidFill: { color: { rgbColor: color } } }, weight: { magnitude: 0.5, unit: 'PT' } },
         },
         fields: 'shapeBackgroundFill.solidFill.color,outline',
       },

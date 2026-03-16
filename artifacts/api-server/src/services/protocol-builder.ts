@@ -279,7 +279,7 @@ WRITING STYLE - BE A CLINICAL MENTOR:
     
     if (response.body) {
       const { Readable } = await import('node:stream');
-      const webStream: ReadableStream<Uint8Array> = response.body;
+      const webStream = response.body as any;
       const nodeStream = Readable.fromWeb(webStream);
       nodeStream.pipe(res);
     } else {

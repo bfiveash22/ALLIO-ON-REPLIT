@@ -676,7 +676,7 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
         }
       }
 
-      const protocolAny = protocol as Record<string, unknown>;
+      const protocolAny = protocol as unknown as Record<string, unknown>;
       const ivFields = ['ivTherapies', 'ivProtocol', 'ivTreatments', 'ivSchedule'];
       for (const field of ivFields) {
         const fieldValue = protocolAny[field];

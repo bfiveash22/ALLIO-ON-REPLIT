@@ -1387,9 +1387,12 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
           await storage.updateAgentTask(taskId, {
             status: 'completed',
             progress: 100,
-            result: labResult.message || labResult.error || 'Manual lab order required — WhatsApp notification sent to Trustee',
+            errorLog: labResult.message || labResult.error || 'Manual lab order required — WhatsApp notification sent to Trustee',
           });
-          return;
+          return {
+            success: false,
+            error: labResult.message || labResult.error || 'Manual lab order required — WhatsApp notification sent to Trustee',
+          };
         }
         throw new Error(labResult.error || 'Rupa Health lab ordering failed');
       }
