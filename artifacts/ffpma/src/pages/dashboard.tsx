@@ -89,6 +89,7 @@ import {
   Headphones,
   Building2,
   Stethoscope,
+  ExternalLink,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -1290,6 +1291,8 @@ interface MarketingAsset {
   date: string;
   description: string;
   imagePath?: string;
+  videoUrl?: string;
+  driveLink?: string;
 }
 
 export default function Dashboard() {
@@ -3746,7 +3749,19 @@ export default function Dashboard() {
                 </Button>
               </div>
 
-              {previewAsset.imagePath ? (
+              {previewAsset.videoUrl ? (
+                <div className="rounded-2xl border border-white/10 overflow-hidden">
+                  <video
+                    src={previewAsset.videoUrl}
+                    controls
+                    autoPlay
+                    className="w-full max-h-[70vh]"
+                    data-testid="video-player-inline"
+                  >
+                    Your browser does not support video playback.
+                  </video>
+                </div>
+              ) : previewAsset.imagePath ? (
                 <div className="rounded-2xl border border-white/10 overflow-hidden">
                   <img
                     src={previewAsset.imagePath}
@@ -3782,23 +3797,53 @@ export default function Dashboard() {
               </div>
 
               <div className="flex gap-4 mt-6">
-                <Button
-                  className="flex-1 bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-400 hover:to-violet-400 text-white border-0 py-6"
-                  onClick={() => {
-                    setPreviewAsset(null);
-                    setDownloadStatus('Starting playback... Full video player coming soon!');
-                    setTimeout(() => setDownloadStatus(null), 3000);
-                  }}
-                >
-                  <Play className="w-5 h-5 mr-2" />
-                  Play Full Video
-                </Button>
+                {previewAsset.driveLink ? (
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-400 hover:to-violet-400 text-white border-0 py-6"
+                    onClick={() => window.open(previewAsset.driveLink, '_blank')}
+                  >
+                    <ExternalLink className="w-5 h-5 mr-2" />
+                    Open in Google Drive
+                  </Button>
+                ) : previewAsset.videoUrl ? (
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-400 hover:to-violet-400 text-white border-0 py-6"
+                    onClick={() => {
+                      setDownloadStatus('Playing video inline above');
+                      setTimeout(() => setDownloadStatus(null), 2000);
+                    }}
+                  >
+                    <Play className="w-5 h-5 mr-2" />
+                    Playing Inline
+                  </Button>
+                ) : (
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-400 hover:to-violet-400 text-white border-0 py-6"
+                    onClick={() => {
+                      setPreviewAsset(null);
+                      setDownloadStatus('Video will be available after production completes.');
+                      setTimeout(() => setDownloadStatus(null), 3000);
+                    }}
+                  >
+                    <Play className="w-5 h-5 mr-2" />
+                    Play Full Video
+                  </Button>
+                )}
                 <Button
                   className="bg-white/10 hover:bg-white/20 text-white border-0 py-6 px-8"
                   onClick={() => {
-                    setPreviewAsset(null);
-                    setDownloadStatus('Download queued. PRISM will prepare your file.');
-                    setTimeout(() => setDownloadStatus(null), 3000);
+                    if (previewAsset.videoUrl) {
+                      const link = document.createElement('a');
+                      link.href = previewAsset.videoUrl;
+                      link.download = `${previewAsset.name.replace(/[^a-zA-Z0-9]/g, '_')}.mp4`;
+                      link.click();
+                    } else if (previewAsset.driveLink) {
+                      window.open(previewAsset.driveLink, '_blank');
+                    } else {
+                      setPreviewAsset(null);
+                      setDownloadStatus('Download queued. PRISM will prepare your file.');
+                      setTimeout(() => setDownloadStatus(null), 3000);
+                    }
                   }}
                 >
                   <Download className="w-5 h-5 mr-2" />

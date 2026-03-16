@@ -39,6 +39,10 @@ import {
   BarChart3,
   Zap,
   Brain,
+  Play,
+  Clock,
+  Film,
+  ExternalLink,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -57,6 +61,29 @@ interface GeneratedImage {
   };
 }
 
+interface VideoTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  sceneCount: number;
+  totalDuration: number;
+}
+
+interface VideoProductionResult {
+  success: boolean;
+  videoPath?: string;
+  driveLink?: string;
+  driveFileId?: string;
+  steps: string[];
+  duration: number;
+  error?: string;
+  title?: string;
+  sceneCount?: number;
+  totalDuration?: number;
+  message?: string;
+}
+
 export default function MarketingStudioPage() {
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
@@ -65,6 +92,11 @@ export default function MarketingStudioPage() {
   const [assetType, setAssetType] = useState<AssetType>("social_post");
   const [assetDescription, setAssetDescription] = useState("");
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
+
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [videoTitle, setVideoTitle] = useState("");
+  const [voiceStyle, setVoiceStyle] = useState<"female" | "male" | "neutral">("neutral");
+  const [videoResult, setVideoResult] = useState<VideoProductionResult | null>(null);
 
   const { data: mediaStatus } = useQuery<{
     imageGeneration: boolean;
@@ -84,6 +116,11 @@ export default function MarketingStudioPage() {
   }>({
     queryKey: ["/api/agents/status"],
     refetchInterval: 60000,
+  });
+
+  const { data: videoTemplates } = useQuery<{ templates: VideoTemplate[] }>({
+    queryKey: ["/api/video/templates"],
+    refetchInterval: 300000,
   });
 
   const generateImageMutation = useMutation({
@@ -111,6 +148,21 @@ export default function MarketingStudioPage() {
     },
   });
 
+  const generateVideoMutation = useMutation({
+    mutationFn: async (data: {
+      templateId?: string;
+      title: string;
+      voiceStyle?: string;
+      uploadToDrive?: boolean;
+    }) => {
+      const response = await apiRequest("POST", "/api/video/auto-produce", data);
+      return response.json();
+    },
+    onSuccess: (data: VideoProductionResult) => {
+      setVideoResult(data);
+    },
+  });
+
   const handleGenerateImage = () => {
     if (!prompt.trim()) return;
     generateImageMutation.mutate({
@@ -129,6 +181,17 @@ export default function MarketingStudioPage() {
     });
   };
 
+  const handleGenerateVideo = () => {
+    if (!videoTitle.trim() || !selectedTemplate) return;
+    setVideoResult(null);
+    generateVideoMutation.mutate({
+      templateId: selectedTemplate,
+      title: videoTitle,
+      voiceStyle,
+      uploadToDrive: true,
+    });
+  };
+
   const downloadImage = (image: GeneratedImage, index: number) => {
     const link = document.createElement("a");
     link.href = image.imageBase64;
@@ -137,10 +200,10 @@ export default function MarketingStudioPage() {
   };
 
   const stylePresets = [
-    { value: "healing", label: "Healing", icon: "💚", desc: "Soft, calming wellness aesthetic" },
-    { value: "professional", label: "Professional", icon: "💼", desc: "Clean corporate look" },
-    { value: "educational", label: "Educational", icon: "📚", desc: "Clear informative style" },
-    { value: "marketing", label: "Marketing", icon: "🚀", desc: "Vibrant engaging visuals" },
+    { value: "healing", label: "Healing", icon: "\u{1F49A}", desc: "Soft, calming wellness aesthetic" },
+    { value: "professional", label: "Professional", icon: "\u{1F4BC}", desc: "Clean corporate look" },
+    { value: "educational", label: "Educational", icon: "\u{1F4DA}", desc: "Clear informative style" },
+    { value: "marketing", label: "Marketing", icon: "\u{1F680}", desc: "Vibrant engaging visuals" },
   ];
 
   const assetTypes = [
@@ -149,6 +212,8 @@ export default function MarketingStudioPage() {
     { value: "product_image", label: "Product Image", icon: FileImage, ratio: "4:3" },
     { value: "infographic", label: "Infographic", icon: BarChart3, ratio: "9:16" },
   ];
+
+  const templates = videoTemplates?.templates || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
@@ -176,6 +241,15 @@ export default function MarketingStudioPage() {
             ) : (
               <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
                 <XCircle className="w-3 h-3 mr-1" /> Image Gen Offline
+              </Badge>
+            )}
+            {mediaStatus?.videoGeneration ? (
+              <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                <Film className="w-3 h-3 mr-1" /> ffmpeg Available
+              </Badge>
+            ) : (
+              <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                <Film className="w-3 h-3 mr-1" /> ffmpeg Unavailable
               </Badge>
             )}
             {agentStatus?.available ? (
@@ -324,15 +398,152 @@ export default function MarketingStudioPage() {
                     Video Generation
                   </CardTitle>
                   <CardDescription className="text-slate-400">
-                    Create marketing videos with LTX-Video (Coming Soon)
+                    Produce marketing videos with PRISM (narration + images + music)
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-col items-center justify-center h-[300px] text-center">
-                  <Video className="w-16 h-16 text-slate-600 mb-4" />
-                  <p className="text-slate-400 mb-2">Video generation requires dedicated GPU endpoints</p>
-                  <Badge variant="outline" className="border-cyan-500/30 text-cyan-400">
-                    Coming with HF Inference Endpoints
-                  </Badge>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="text-sm text-slate-300 mb-2 block">Video Title</label>
+                    <Input
+                      data-testid="input-video-title"
+                      placeholder="e.g., Peptide Therapy Introduction"
+                      value={videoTitle}
+                      onChange={(e) => setVideoTitle(e.target.value)}
+                      className="bg-slate-800/50 border-slate-700 text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-slate-300 mb-2 block">Template</label>
+                    <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                      <SelectTrigger
+                        data-testid="select-video-template"
+                        className="bg-slate-800/50 border-slate-700 text-white"
+                      >
+                        <SelectValue placeholder="Select a video template..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {templates.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            <span className="flex items-center gap-2">
+                              <Film className="w-3 h-3" />
+                              {t.name} ({t.sceneCount} scenes, {t.totalDuration}s)
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {selectedTemplate && selectedTemplate !== "none" && (
+                    <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-lg">
+                      <p className="text-cyan-300 text-sm">
+                        {templates.find(t => t.id === selectedTemplate)?.description}
+                      </p>
+                      <div className="flex gap-3 mt-2">
+                        <Badge variant="outline" className="text-xs border-cyan-500/30 text-cyan-400">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {templates.find(t => t.id === selectedTemplate)?.totalDuration}s
+                        </Badge>
+                        <Badge variant="outline" className="text-xs border-cyan-500/30 text-cyan-400">
+                          <Film className="w-3 h-3 mr-1" />
+                          {templates.find(t => t.id === selectedTemplate)?.sceneCount} scenes
+                        </Badge>
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="text-sm text-slate-300 mb-2 block">Voice Style</label>
+                    <Select value={voiceStyle} onValueChange={(v) => setVoiceStyle(v as "female" | "male" | "neutral")}>
+                      <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="neutral">Neutral</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="male">Male</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button
+                    data-testid="button-generate-video"
+                    onClick={handleGenerateVideo}
+                    disabled={!videoTitle.trim() || !selectedTemplate || generateVideoMutation.isPending}
+                    className="w-full bg-gradient-to-r from-cyan-600 to-violet-600 hover:from-cyan-700 hover:to-violet-700"
+                  >
+                    {generateVideoMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Producing Video...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4 mr-2" />
+                        Produce Video
+                      </>
+                    )}
+                  </Button>
+
+                  {generateVideoMutation.isError && (
+                    <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                      <p className="text-red-400 text-sm">
+                        {(generateVideoMutation.error as Error)?.message || "Video production failed"}
+                      </p>
+                    </div>
+                  )}
+
+                  {videoResult && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`p-4 rounded-lg border ${
+                        videoResult.success
+                          ? "bg-green-500/10 border-green-500/30"
+                          : "bg-red-500/10 border-red-500/30"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        {videoResult.success ? (
+                          <CheckCircle className="w-4 h-4 text-green-400" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-red-400" />
+                        )}
+                        <span className={`text-sm font-medium ${videoResult.success ? "text-green-300" : "text-red-300"}`}>
+                          {videoResult.success ? "Video Produced Successfully" : "Production Failed"}
+                        </span>
+                      </div>
+                      {videoResult.steps && videoResult.steps.length > 0 && (
+                        <ScrollArea className="max-h-[120px]">
+                          <ul className="space-y-1">
+                            {videoResult.steps.map((step, i) => (
+                              <li key={i} className="text-xs text-slate-400 flex items-start gap-1">
+                                <span className="text-cyan-500 mt-0.5">&#8227;</span>
+                                {step}
+                              </li>
+                            ))}
+                          </ul>
+                        </ScrollArea>
+                      )}
+                      {videoResult.driveLink && (
+                        <a
+                          href={videoResult.driveLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-3 inline-flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          View on Google Drive
+                        </a>
+                      )}
+                      {videoResult.duration > 0 && (
+                        <p className="text-xs text-slate-500 mt-2">
+                          Production time: {videoResult.duration.toFixed(1)}s
+                        </p>
+                      )}
+                    </motion.div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -417,6 +628,53 @@ export default function MarketingStudioPage() {
                 )}
               </CardContent>
             </Card>
+
+            {templates.length > 0 && (
+              <Card className="bg-slate-900/50 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <Film className="w-5 h-5 text-cyan-400" />
+                    Video Templates
+                  </CardTitle>
+                  <CardDescription className="text-slate-400">
+                    Pre-built video templates for common marketing needs
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {templates.map((template) => (
+                      <motion.div
+                        key={template.id}
+                        whileHover={{ scale: 1.02 }}
+                        className="p-4 rounded-lg border border-slate-700 bg-slate-800/30 hover:border-cyan-500/40 transition-all cursor-pointer"
+                        onClick={() => {
+                          setSelectedTemplate(template.id);
+                          setVideoTitle(template.name);
+                        }}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <Video className="w-5 h-5 text-cyan-400" />
+                          <Badge variant="outline" className="text-xs border-slate-600 capitalize">
+                            {template.category}
+                          </Badge>
+                        </div>
+                        <h4 className="text-white text-sm font-medium mb-1">{template.name}</h4>
+                        <p className="text-slate-400 text-xs line-clamp-2 mb-3">{template.description}</p>
+                        <div className="flex gap-2">
+                          <Badge variant="outline" className="text-xs border-cyan-500/30 text-cyan-400">
+                            <Clock className="w-3 h-3 mr-1" />
+                            {template.totalDuration}s
+                          </Badge>
+                          <Badge variant="outline" className="text-xs border-slate-600 text-slate-400">
+                            {template.sceneCount} scenes
+                          </Badge>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="gallery">

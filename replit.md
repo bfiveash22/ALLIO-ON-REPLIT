@@ -192,6 +192,17 @@ Google Drive/Auth: `audit-drive`, `audit-drive-assets`, `check-drive-structure`,
 
 Media: `assemble-launch-video`, `upload-launch-video`, `generate-allio-voiceover`, `generate-pptx`, `manual-slides`
 
+## Video Production System (PRISM)
+
+The Marketing Studio includes a functional video generation pipeline:
+- **Frontend**: `artifacts/ffpma/src/pages/marketing-studio.tsx` — Template selector, title input, voice style picker, production progress display with Drive link output
+- **Backend Services**: `auto-video-producer.ts` (automated pipeline), `video-production.ts` (ffmpeg operations), `video-templates.ts` (6 templates), `marketing-orchestrator.ts` (orchestration)
+- **Templates**: ALLIO Launch, Training Module Intro, ECS Foundations Promo, Peptide Therapy Overview, Ozonated Glycerin Educational, New Member Welcome
+- **Pipeline**: Template/custom scenes → TTS narration per scene → image matching from Drive → background music from FORGE folder → ffmpeg slideshow assembly → Google Drive upload
+- **API Endpoints**: `GET /api/video/templates`, `POST /api/video/auto-produce`, `POST /api/video/produce-premium`, `POST /api/video/render`, `POST /api/video/assemble`, `GET /api/video/status`
+- **Dashboard**: Inline video player with `<video>` element for assets with `videoUrl`, Drive link button for assets with `driveLink`
+- **Video generation flag**: `checkMediaStatus()` now detects ffmpeg availability and sets `videoGeneration: true` dynamically
+
 Infrastructure: `deploy-vps`, `build`, `fetch-openclaw`, `ls-openclaw`, `test-openclaw`, `test-locks`, `test-auto-implementer`, `test-ui-proposal`, `run-auto`, `trigger-daily-enhancement`, `cleanup`
 
 Convenience scripts in `scripts/package.json`: `pnpm --filter @workspace/scripts run <name>`

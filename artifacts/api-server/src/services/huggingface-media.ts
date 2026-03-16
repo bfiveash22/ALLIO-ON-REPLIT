@@ -206,12 +206,23 @@ export async function checkMediaStatus(): Promise<{
     }
   }
 
+  let videoAvailable = false;
+  try {
+    const { exec } = await import('child_process');
+    const { promisify } = await import('util');
+    const execAsync = promisify(exec);
+    await execAsync('ffmpeg -version', { timeout: 5000 });
+    videoAvailable = true;
+  } catch {
+    console.log('[HF Media] ffmpeg not available for video production');
+  }
+
   return {
     imageGeneration: imageAvailable,
-    videoGeneration: false, // Video requires dedicated endpoints
+    videoGeneration: videoAvailable,
     availableModels,
     status: imageAvailable 
-      ? `Media generation ready (${availableModels[0]})`
+      ? `Media generation ready (${availableModels[0]})${videoAvailable ? ' + Video production (ffmpeg)' : ''}`
       : 'Media generation offline - check HF quota'
   };
 }
