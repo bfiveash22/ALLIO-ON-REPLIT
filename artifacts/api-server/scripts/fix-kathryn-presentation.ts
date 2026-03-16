@@ -110,12 +110,8 @@ export async function fixKathrynPresentation(options?: {
     .update(generatedProtocols)
     .set({
       slidesPresentationId: uploadResult.fileId,
-      slidesWebViewLink: uploadResult.webViewLink || null,
-      notes: [
-        targetRecord.notes || "",
-        `Drive PDF: ${uploadResult.webViewLink}`,
-        `Interactive presentation: ${PRODUCTION_PRESENTATION_URL}`,
-      ].filter(Boolean).join("\n"),
+      slidesWebViewLink: PRODUCTION_PRESENTATION_URL,
+      notes: `Interactive presentation: ${PRODUCTION_PRESENTATION_URL}\nDrive PDF: ${uploadResult.webViewLink}`,
     })
     .where(eq(generatedProtocols.id, PRIMARY_RECORD_ID));
 
@@ -132,30 +128,11 @@ export async function fixKathrynPresentation(options?: {
   if (verified.slidesPresentationId !== uploadResult.fileId) {
     throw new Error(`Verification failed: slidesPresentationId mismatch (expected=${uploadResult.fileId}, got=${verified.slidesPresentationId})`);
   }
+  if (verified.slidesWebViewLink !== PRODUCTION_PRESENTATION_URL) {
+    throw new Error(`Verification failed: slidesWebViewLink mismatch (expected=${PRODUCTION_PRESENTATION_URL}, got=${verified.slidesWebViewLink})`);
+  }
 
   console.log(`[Fix] Verified record id=${PRIMARY_RECORD_ID}: slidesPresentationId=${verified.slidesPresentationId}, slidesWebViewLink=${verified.slidesWebViewLink}`);
-
-  const [secondaryRecord] = await db
-    .select()
-    .from(generatedProtocols)
-    .where(
-      and(
-        eq(generatedProtocols.id, 1),
-        eq(generatedProtocols.memberId, KATHRYN_MEMBER_ID)
-      )
-    )
-    .limit(1);
-
-  if (secondaryRecord) {
-    await db
-      .update(generatedProtocols)
-      .set({
-        slidesPresentationId: uploadResult.fileId,
-        slidesWebViewLink: uploadResult.webViewLink || null,
-      })
-      .where(eq(generatedProtocols.id, 1));
-    console.log(`[Fix] Also updated secondary record id=1`);
-  }
 
   const summary = {
     badSlidesDeleted: BAD_SLIDES_ID,
