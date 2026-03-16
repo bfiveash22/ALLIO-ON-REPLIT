@@ -11,6 +11,18 @@ import * as path from 'path';
 
 const OFFICIAL_ALLIO_FOLDER_ID = "1ui5cbRdyVhIojeG44EYg17puOdt4bStH";
 
+const KNOWN_LEGACY_FOLDERS = new Set([
+    'TESLA', 'TITAN', 'GAVEL', 'LEAD-ENGINEER', 'CHIEF-SCIENCE', 'LEGAL-LEAD',
+    'CHIEF_SCIENCE', 'LEAD_ENGINEER', 'LEGAL_LEAD',
+]);
+
+const DRIVE_FOLDER_ALIASES: Record<string, string> = {
+    'DR_TRIAGE': 'DR-TRIAGE',
+    'DR_FORMULA': 'DR-FORMULA',
+    'MAX_MINERAL': 'MAX-MINERAL',
+    'ALLIO_SUPPORT': 'ALLIO-SUPPORT',
+};
+
 const CROSS_AGENT_ROUTING_MAP: Record<string, string[]> = {
     'FORGE': ['DAEDALUS', 'ARACHNE', 'SERPENS'],
     'SYNTHESIS': ['FORGE', 'DAEDALUS'],
@@ -92,15 +104,17 @@ class AutoImplementer {
                     if (agentFolder.mimeType !== 'application/vnd.google-apps.folder') continue;
 
                     const agentIdUpper = agentFolder.name.toUpperCase();
-                    if (!registeredAgents.has(agentIdUpper)) continue;
+                    const resolvedId = DRIVE_FOLDER_ALIASES[agentIdUpper] || agentIdUpper;
+                    if (KNOWN_LEGACY_FOLDERS.has(agentIdUpper)) continue;
+                    if (!registeredAgents.has(resolvedId)) continue;
 
-                    foundAgents.add(agentIdUpper);
+                    foundAgents.add(resolvedId);
                     const agentSubFolders = await listFolderContents(agentFolder.id);
                     const outputFolder = agentSubFolders.find(f => f.name.toLowerCase() === 'output');
                     if (outputFolder) {
-                        agentsWithOutput.add(agentIdUpper);
+                        agentsWithOutput.add(resolvedId);
                     } else {
-                        issues.push(`Agent ${agentIdUpper} in ${divisionFolder.name} has no output folder`);
+                        issues.push(`Agent ${resolvedId} in ${divisionFolder.name} has no output folder`);
                     }
                 }
             }
@@ -406,7 +420,10 @@ class AutoImplementer {
 
                                 if (outputFolder) {
                                     const agentIdUpper = agentFolder.name.toUpperCase();
-                                    if (validAgents.has(agentIdUpper)) {
+                                    const resolvedAgentId = DRIVE_FOLDER_ALIASES[agentIdUpper] || agentIdUpper;
+                                    if (KNOWN_LEGACY_FOLDERS.has(agentIdUpper)) {
+                                        continue;
+                                    } else if (validAgents.has(resolvedAgentId)) {
                                         const dateFolders = await listFolderContents(outputFolder.id);
                                         for (const item of dateFolders) {
                                             if (item.mimeType === 'application/vnd.google-apps.folder') {
@@ -417,7 +434,7 @@ class AutoImplementer {
                                                             id: o.id,
                                                             name: o.name,
                                                             mimeType: o.mimeType,
-                                                            agentId: agentIdUpper,
+                                                            agentId: resolvedAgentId,
                                                             modifiedTime: o.modifiedTime || o.createdTime || ''
                                                         });
                                                     }
@@ -427,13 +444,13 @@ class AutoImplementer {
                                                     id: item.id,
                                                     name: item.name,
                                                     mimeType: item.mimeType,
-                                                    agentId: agentIdUpper,
+                                                    agentId: resolvedAgentId,
                                                     modifiedTime: item.modifiedTime || item.createdTime || ''
                                                 });
                                             }
                                         }
                                     } else {
-                                        console.log(`[AUTO-IMPLEMENTER] Ignored ghost agent output folder: ${agentFolder.name}`);
+                                        console.log(`[AUTO-IMPLEMENTER] Skipping unrecognized agent folder: ${agentFolder.name}`);
                                     }
                                 }
                             }

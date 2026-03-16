@@ -79,6 +79,12 @@ class McpClientManager {
         HOME: process.env.HOME || '',
         NODE_ENV: process.env.NODE_ENV || 'production',
         LANG: process.env.LANG || 'en_US.UTF-8',
+        XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME || '/home/runner/workspace/.config',
+        ...(process.env.XDG_DATA_HOME ? { XDG_DATA_HOME: process.env.XDG_DATA_HOME } : {}),
+        ...(process.env.XDG_CACHE_HOME ? { XDG_CACHE_HOME: process.env.XDG_CACHE_HOME } : {}),
+        ...(process.env.REPLIT_GITHUB_CONNECTIONS ? { REPLIT_GITHUB_CONNECTIONS: process.env.REPLIT_GITHUB_CONNECTIONS } : {}),
+        ...(process.env.npm_config_prefix ? { npm_config_prefix: process.env.npm_config_prefix } : {}),
+        ...(process.env.npm_config_cache ? { npm_config_cache: process.env.npm_config_cache } : {}),
       };
       const env: Record<string, string> = {
         ...safeBaseEnv,

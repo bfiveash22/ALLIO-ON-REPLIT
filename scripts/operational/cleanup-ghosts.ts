@@ -4,7 +4,7 @@ import { inArray } from 'drizzle-orm';
 
 async function cleanupGhostTasks() {
     console.log("Starting ghost task cleanup...");
-    const ghostIds = ['TESLA', 'DR_FORMULA', 'chief-science', 'TITAN', 'DR_TRIAGE', 'CHIEF_SCIENCE', 'CHIEF-SCIENCE'];
+    const ghostIds = ['TESLA', 'chief-science', 'TITAN', 'CHIEF_SCIENCE', 'CHIEF-SCIENCE', 'GAVEL', 'LEAD-ENGINEER', 'LEAD_ENGINEER', 'LEGAL-LEAD', 'LEGAL_LEAD'];
 
     try {
         const result = await db.delete(agentTasks).where(

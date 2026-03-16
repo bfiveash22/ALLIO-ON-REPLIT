@@ -1,31 +1,47 @@
 import { chromium, type Browser, type BrowserContext } from 'playwright';
 import { sendToTrustee } from './openclaw';
+import { sendToOpenClaw } from './openclaw';
 
 let playwrightAvailable: boolean | null = null;
 let browserLaunchable: boolean | null = null;
 
-async function sendWhatsAppFallback(
+async function sendLabOrderToTrustee(
   patientName: string,
   panels: string[],
-  reason: string
-): Promise<void> {
+  context?: string
+): Promise<{ success: boolean; error?: string }> {
   const manualUrl = 'https://app.rupahealth.com/orders/new';
   const panelList = panels.join(', ');
   const msg = [
-    `⚠️ RUPA LAB ORDER REQUIRES MANUAL ACTION`,
+    `🔬 RUPA LAB ORDER REQUEST`,
     ``,
     `Patient: ${patientName}`,
     `Panels: ${panelList}`,
-    `Reason: ${reason}`,
+    ...(context ? [`Context: ${context}`] : []),
     ``,
     `Order here: ${manualUrl}`,
   ].join('\n');
 
   try {
-    await sendToTrustee('RUPA_HEALTH_AGENT', msg, 'urgent');
-    console.log('[RUPA-HEALTH-AGENT] WhatsApp/OpenClaw fallback notification sent to Trustee');
-  } catch (notifyErr) {
-    console.error('[RUPA-HEALTH-AGENT] Failed to send fallback notification:', notifyErr);
+    const trusteeResult = await sendToTrustee('RUPA_HEALTH_AGENT', msg, 'urgent');
+    const openClawResult = await sendToOpenClaw({
+      agentId: 'RUPA_HEALTH_AGENT',
+      taskType: 'lab_order',
+      description: `Lab order for ${patientName}: ${panelList}`,
+      priority: 'urgent',
+      context: { patientName, panels, manualUrl },
+    });
+
+    if (!trusteeResult && !openClawResult.success) {
+      console.error('[RUPA-HEALTH-AGENT] Both notification channels failed');
+      return { success: false, error: 'Failed to deliver lab order to Trustee via both channels' };
+    }
+
+    console.log('[RUPA-HEALTH-AGENT] Lab order task sent to Trustee via OpenClaw/Telegram');
+    return { success: true };
+  } catch (notifyErr: any) {
+    console.error('[RUPA-HEALTH-AGENT] Failed to send lab order notification:', notifyErr);
+    return { success: false, error: `Notification delivery failed: ${notifyErr.message || 'unknown error'}` };
   }
 }
 
@@ -84,45 +100,74 @@ export class RupaHealthAgentService {
   async placeOrder(
     patientDetails: { firstName: string; lastName: string; email: string; dob?: string; phone?: string },
     testPanels: string[],
-    dryRun: boolean = true
+    dryRun: boolean = true,
+    options?: { forceAutomation?: boolean }
   ): Promise<{ success: boolean; terminal?: boolean; resultUrl?: string; message?: string; error?: string }> {
+    const patientName = `${patientDetails.firstName} ${patientDetails.lastName}`;
+    const manualUrl = 'https://app.rupahealth.com/orders/new';
+
+    if (!options?.forceAutomation) {
+      console.log(`[RUPA-HEALTH-AGENT] Routing lab order to Trustee (HITL primary path) for patient: ${patientName}`);
+      const delivery = await sendLabOrderToTrustee(patientName, testPanels);
+      if (!delivery.success) {
+        return {
+          success: false,
+          error: delivery.error || 'Failed to deliver lab order to Trustee',
+          resultUrl: manualUrl,
+          message: `Lab order delivery failed. Manual action required at ${manualUrl} for patient "${patientName}": ${testPanels.join(', ')}.`,
+        };
+      }
+      return {
+        success: true,
+        resultUrl: manualUrl,
+        message: `Lab order request sent to Trustee via OpenClaw/Telegram for patient "${patientName}": ${testPanels.join(', ')}. Trustee will place the order manually at ${manualUrl}.`,
+      };
+    }
+
     const credentialCheck = this.validateCredentials();
     if (!credentialCheck.valid) {
       console.error(`[RUPA-HEALTH-AGENT] Credential validation failed: ${credentialCheck.error}`);
-      return { success: false, error: `Rupa Health agent unavailable: ${credentialCheck.error}` };
+      const delivery = await sendLabOrderToTrustee(patientName, testPanels, 'Credentials not configured');
+      return {
+        success: delivery.success,
+        error: delivery.success ? undefined : (delivery.error || credentialCheck.error),
+        resultUrl: manualUrl,
+        message: delivery.success
+          ? `Credentials unavailable. Lab order request sent to Trustee instead.`
+          : `Credentials unavailable and notification delivery also failed.`,
+      };
     }
 
-    console.log(`[RUPA-HEALTH-AGENT] Starting task execution for patient: ${patientDetails.firstName} ${patientDetails.lastName}`);
+    console.log(`[RUPA-HEALTH-AGENT] forceAutomation=true — attempting browser automation for patient: ${patientName}`);
 
     const username = process.env.RUPA_USERNAME!;
     const password = process.env.RUPA_PASSWORD!;
 
-    const patientName = `${patientDetails.firstName} ${patientDetails.lastName}`;
-    const manualUrl = 'https://app.rupahealth.com/orders/new';
-
     const browserReady = await checkPlaywrightAvailable();
     if (!browserReady) {
-      console.error('[RUPA-HEALTH-AGENT] Playwright is not available — returning manual fallback');
-      await sendWhatsAppFallback(patientName, testPanels, 'Playwright browser automation is not available');
+      console.warn('[RUPA-HEALTH-AGENT] Playwright not available — falling back to HITL');
+      const delivery = await sendLabOrderToTrustee(patientName, testPanels, 'Playwright not available');
       return {
-        success: false,
-        terminal: true,
-        error: 'Playwright is not available in this environment.',
+        success: delivery.success,
+        error: delivery.success ? undefined : delivery.error,
         resultUrl: manualUrl,
-        message: `Automated ordering unavailable. WhatsApp notification sent. Please order manually at ${manualUrl} for patient "${patientName}": ${testPanels.join(', ')}`,
+        message: delivery.success
+          ? `Playwright unavailable. Lab order sent to Trustee for manual placement.`
+          : `Playwright unavailable and notification delivery failed.`,
       };
     }
 
     const canLaunch = await checkBrowserLaunchable();
     if (!canLaunch) {
-      console.error('[RUPA-HEALTH-AGENT] Browser cannot launch — returning manual fallback');
-      await sendWhatsAppFallback(patientName, testPanels, 'Browser cannot launch in this environment');
+      console.warn('[RUPA-HEALTH-AGENT] Browser cannot launch — falling back to HITL');
+      const delivery = await sendLabOrderToTrustee(patientName, testPanels, 'Browser cannot launch');
       return {
-        success: false,
-        terminal: true,
-        error: 'Browser cannot launch in this environment.',
+        success: delivery.success,
+        error: delivery.success ? undefined : delivery.error,
         resultUrl: manualUrl,
-        message: `Automated ordering unavailable. WhatsApp notification sent. Please order manually at ${manualUrl} for patient "${patientName}": ${testPanels.join(', ')}`,
+        message: delivery.success
+          ? `Browser unavailable. Lab order sent to Trustee for manual placement.`
+          : `Browser unavailable and notification delivery failed.`,
       };
     }
 
@@ -252,29 +297,17 @@ export class RupaHealthAgentService {
       return { success: true, message: "Task completed. Check Rupa Health dashboard for the draft order." };
     } catch (error: any) {
       const errMsg = error.message || 'Unknown Playwright execution error';
-      const isTimeout = /timeout|timed?\s*out/i.test(errMsg);
-      console.error(`[RUPA-HEALTH-AGENT] Execution failed (timeout=${isTimeout}):`, errMsg);
+      console.warn(`[RUPA-HEALTH-AGENT] Browser automation failed, falling back to HITL: ${errMsg}`);
 
-      const panelList = testPanels.join(', ');
-      const reason = isTimeout ? 'Automated ordering timed out' : `Automation error: ${errMsg}`;
-      await sendWhatsAppFallback(patientName, testPanels, reason);
-
-      if (isTimeout) {
-        return {
-          success: false,
-          terminal: true,
-          error: `Automated lab ordering timed out. Please place the order manually.`,
-          resultUrl: manualUrl,
-          message: `Manual action required. WhatsApp notification sent. Go to ${manualUrl}, search for patient "${patientName}", and add these panels: ${panelList}.`,
-        };
-      }
+      const delivery = await sendLabOrderToTrustee(patientName, testPanels, `Automation failed: ${errMsg}`);
 
       return {
-        success: false,
-        terminal: true,
-        error: errMsg,
+        success: delivery.success,
+        error: delivery.success ? undefined : delivery.error,
         resultUrl: manualUrl,
-        message: `Automation failed. WhatsApp notification sent. Manual fallback: Go to ${manualUrl} and order panels (${panelList}) for patient "${patientName}".`,
+        message: delivery.success
+          ? `Browser automation failed. Lab order sent to Trustee for manual placement at ${manualUrl}.`
+          : `Browser automation failed and notification delivery also failed.`,
       };
     } finally {
       if (context) await context.close().catch(() => {});

@@ -1363,13 +1363,8 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
         outputUrl: result.outputUrl,
       };
     } else if (upperAgentId === 'DR-TRIAGE' && isLabOrderTask(task)) {
-      console.log(`[Agent Executor] Launching Rupa Health lab ordering for ${agentId}...`);
+      console.log(`[Agent Executor] Routing Rupa Health lab order for ${agentId} (HITL primary)...`);
       await storage.updateAgentTask(taskId, { progress: 20 });
-
-      const status = rupaHealthAgent.getStatus();
-      if (!status.available) {
-        throw new Error(`Rupa Health not configured: ${status.error || 'credentials missing'}. Cannot execute lab ordering.`);
-      }
 
       const nameParts = (task.title || 'Patient Unknown').split(' ');
       const firstName = nameParts[0] || 'Patient';
@@ -1382,19 +1377,16 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
       );
 
       if (!labResult.success) {
-        if (labResult.terminal) {
-          console.log(`[Agent Executor] Rupa lab order terminal failure — WhatsApp fallback sent, skipping retry`);
-          await storage.updateAgentTask(taskId, {
-            status: 'completed',
-            progress: 100,
-            errorLog: labResult.message || labResult.error || 'Manual lab order required — WhatsApp notification sent to Trustee',
-          });
-          return {
-            success: false,
-            error: labResult.message || labResult.error || 'Manual lab order required — WhatsApp notification sent to Trustee',
-          };
-        }
-        throw new Error(labResult.error || 'Rupa Health lab ordering failed');
+        console.error(`[Agent Executor] Lab order routing failed: ${labResult.error || 'unknown'}`);
+        await storage.updateAgentTask(taskId, {
+          status: 'failed',
+          progress: 100,
+          errorLog: labResult.error || 'Lab order routing failed',
+        });
+        return {
+          success: false,
+          error: labResult.error || 'Lab order routing failed',
+        };
       }
 
       await storage.updateAgentTask(taskId, { progress: 90 });
@@ -1409,7 +1401,7 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
       }
 
       await storage.updateAgentTask(taskId, {
-        status: 'in_progress',
+        status: 'completed',
         progress: 100,
         outputUrl: labResult.resultUrl,
         outputDriveFileId: uploadResult?.id,

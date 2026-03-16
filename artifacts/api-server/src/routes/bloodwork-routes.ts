@@ -61,25 +61,23 @@ export function registerBloodworkRoutes(app: Express): void {
       if (!dryRun) {
         try {
           const { rupaHealthAgent } = await import("../services/rupa-health-agent");
-          const rupaStatus = rupaHealthAgent.getStatus();
-          if (rupaStatus.available) {
-            const result = await rupaHealthAgent.placeOrder(
-              { firstName: memberName?.split(' ')[0] || 'Patient', lastName: memberName?.split(' ').slice(1).join(' ') || '', email: '' },
-              panels,
-              false
-            );
-            if (result.success) {
-              await storage.updateLabOrder(order.id, {
-                status: "submitted",
-                rupaOrderUrl: result.resultUrl || null,
-              });
-            } else if (result.terminal) {
-              await storage.updateLabOrder(order.id, {
-                status: "pending",
-                notes: `Manual order required: ${result.message || result.error}`,
-              });
-              console.log("[Bloodwork] Rupa automation failed (terminal) — WhatsApp fallback sent, order marked pending for manual completion");
-            }
+          const result = await rupaHealthAgent.placeOrder(
+            { firstName: memberName?.split(' ')[0] || 'Patient', lastName: memberName?.split(' ').slice(1).join(' ') || '', email: '' },
+            panels,
+            false
+          );
+          if (result.success) {
+            await storage.updateLabOrder(order.id, {
+              status: "submitted",
+              rupaOrderUrl: result.resultUrl || null,
+              notes: result.message || null,
+            });
+          } else {
+            await storage.updateLabOrder(order.id, {
+              status: "pending",
+              notes: `Lab order routing failed: ${result.message || result.error}`,
+            });
+            console.log("[Bloodwork] Lab order routing failed — order marked pending");
           }
         } catch (rupaError: any) {
           console.error("[Bloodwork] Rupa Health order error:", rupaError.message);
