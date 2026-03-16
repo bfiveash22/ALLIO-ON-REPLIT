@@ -59,7 +59,7 @@ export class RupaHealthAgentService {
             // Note: Since Rupa Health may block cloud ips or if remote isn't configured, we start with remote browser
             // For stability with complex UI actions, we use gpt-4o.
             // In a production scenario, we'd use a dedicated cloud profile ID to persist the login session.
-            const bashCommand = `browser-use -b remote run "${prompt}" --llm gpt-4o --json`;
+            const bashCommand = `browser-use --json -b remote run "${prompt}" --llm gpt-4o`;
             console.log(`[RUPA-HEALTH-AGENT] Running browser-use command (credentials hidden in log)...`);
 
             // Execute the browser-use CLI command

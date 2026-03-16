@@ -1272,7 +1272,7 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
 
     const upperAgentId = agentId.toUpperCase();
 
-    if (upperAgentId === 'CANVA' || upperAgentId === 'PIXEL') {
+    if (upperAgentId === 'CANVA' || upperAgentId === 'PIXEL' || upperAgentId === 'PEXEL') {
       console.log(`[Agent Executor] Launching Canva automation for ${agentId}...`);
 
       await storage.updateAgentTask(taskId, { progress: 20 });

@@ -150,10 +150,20 @@ const integrationRegistry: IntegrationDefinition[] = [
     mode: "live",
     healthCheck: async () => {
       const sessionId = process.env.CANVA_SESSION_ID;
-      if (!sessionId) {
-        return { connected: false, error: "Missing CANVA_SESSION_ID. PIXEL agent Canva automation unavailable." };
+      const errors: string[] = [];
+      try {
+        const { execSync } = require('child_process');
+        execSync('which browser-use', { timeout: 5000 });
+      } catch {
+        errors.push('browser-use CLI not installed');
       }
-      return { connected: true, sampleData: `Canva session configured (${sessionId.substring(0, 6)}…)` };
+      if (!sessionId) {
+        errors.push('Missing CANVA_SESSION_ID');
+      }
+      if (errors.length > 0) {
+        return { connected: false, error: errors.join('; ') + '. PIXEL agent Canva automation unavailable.' };
+      }
+      return { connected: true, sampleData: `Canva session configured (${sessionId!.substring(0, 6)}…), browser-use installed` };
     }
   },
   {

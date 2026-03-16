@@ -3,6 +3,8 @@ import { orchestrator, validateProviderCredentials, AGENT_MODEL_ASSIGNMENTS, SPE
 import { AGENT_DIVISIONS, Division } from './services/sentinel';
 import { requireRole } from './working-auth';
 import { storage } from './storage';
+import { canvaAgent } from './services/canva-agent';
+import { executeAgentTask } from './services/agent-executor';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -519,11 +521,13 @@ export function registerSentinelRoutes(app: Express): void {
         byDivision[agent.division].agents.push(agent.agentId);
       }
 
+      const canvaStatus = await canvaAgent.getStatus();
       const browserUseAgents = {
         canva: {
           agentId: 'PIXEL',
-          sessionConfigured: !!process.env.CANVA_SESSION_ID,
-          status: process.env.CANVA_SESSION_ID ? 'ready' : 'missing CANVA_SESSION_ID',
+          browserUseInstalled: canvaStatus.browserUseInstalled,
+          sessionConfigured: canvaStatus.sessionConfigured,
+          status: canvaStatus.available ? 'ready' : (canvaStatus.error || 'not ready'),
         },
         rupaHealth: {
           agentId: 'DR-TRIAGE',
@@ -545,5 +549,69 @@ export function registerSentinelRoutes(app: Express): void {
     }
   });
 
+  app.get('/api/canva/status', adminOnly, async (_req: Request, res: Response) => {
+    try {
+      const status = await canvaAgent.getStatus();
+      res.json({
+        agent: 'PIXEL',
+        integration: 'canva_browser',
+        ...status,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/canva/generate', adminOnly, async (req: Request, res: Response) => {
+    try {
+      const { prompt, title, description, priority } = req.body;
+
+      if (!prompt && !description) {
+        return res.status(400).json({ error: 'Either "prompt" or "description" is required' });
+      }
+
+      const status = await canvaAgent.getStatus();
+      if (!status.available) {
+        return res.status(503).json({
+          error: 'Canva agent is not ready',
+          details: status.error,
+          browserUseInstalled: status.browserUseInstalled,
+          sessionConfigured: status.sessionConfigured,
+        });
+      }
+
+      const taskTitle = title || 'Canva Design Generation';
+      const taskDescription = description || prompt;
+
+      const task = await storage.createAgentTask({
+        agentId: 'PIXEL',
+        division: 'marketing',
+        title: taskTitle,
+        description: taskDescription,
+        status: 'pending',
+        priority: priority || 2,
+      });
+
+      console.log(`[CANVA-API] Created task ${task.id} for Canva generation: ${taskTitle}`);
+
+      executeAgentTask(task.id).then((result) => {
+        console.log(`[CANVA-API] Task ${task.id} completed:`, result.success ? 'success' : result.error);
+      }).catch((err) => {
+        console.error(`[CANVA-API] Task ${task.id} failed:`, err.message);
+      });
+
+      res.status(202).json({
+        taskId: task.id,
+        agentId: 'PIXEL',
+        status: 'accepted',
+        message: `Canva generation task queued. Poll task status at GET /api/sentinel/tasks/${task.id}`,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   console.log('[SENTINEL] Orchestrator routes registered (admin-protected)');
+  console.log('[SENTINEL] Canva API routes registered: GET /api/canva/status, POST /api/canva/generate');
 }
