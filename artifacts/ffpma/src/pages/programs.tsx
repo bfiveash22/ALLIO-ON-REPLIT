@@ -125,6 +125,27 @@ export default function ProgramsPage() {
               </Card>
             ))}
           </div>
+        ) : programs && programs.length === 0 ? (
+          <Card className="border-card-border">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <Activity className="mb-4 h-16 w-16 text-muted-foreground" />
+              <h3 className="mb-2 text-lg font-semibold">
+                No Programs Available
+              </h3>
+              <p className="mb-4 text-center text-muted-foreground max-w-md">
+                New healing programs are being developed. Browse our training
+                courses and protocols in the meantime.
+              </p>
+              <div className="flex gap-3">
+                <Button asChild variant="outline">
+                  <Link href="/training">View Training</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/protocols">View Protocols</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {(programs || []).map((program) => {
