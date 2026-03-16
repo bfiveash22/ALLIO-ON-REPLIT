@@ -1,5 +1,7 @@
-import PptxGenJSModule from "pptxgenjs";
-const PptxGenJS = (PptxGenJSModule as any).default || PptxGenJSModule;
+import PptxGenJS from "pptxgenjs";
+type PptxPresentation = InstanceType<typeof PptxGenJS> & { readonly shapes: typeof PptxGenJS.shapes };
+const PptxModule = PptxGenJS as unknown as Record<string, unknown>;
+const PptxCtor = (typeof PptxModule["default"] === "function" ? PptxModule["default"] : PptxGenJS) as typeof PptxGenJS;
 import type {
   HealingProtocol,
   PatientProfile,
@@ -35,7 +37,7 @@ export async function generateProtocolPPTX(
   protocol: HealingProtocol,
   profile: PatientProfile
 ): Promise<Buffer> {
-  const pres = new PptxGenJS();
+  const pres = new PptxCtor() as PptxPresentation;
   pres.layout = "LAYOUT_16x9";
   pres.author = "Forgotten Formula PMA — DR. FORMULA";
   pres.title = `${protocol.patientName} — Member Protocol 2026`;
@@ -96,7 +98,7 @@ export async function generateProtocolPPTX(
   return Buffer.from(data as ArrayBuffer);
 }
 
-function slideCover(pres: PptxGenJS, protocol: HealingProtocol, date: string, isCancer: boolean) {
+function slideCover(pres: PptxPresentation, protocol: HealingProtocol, date: string, isCancer: boolean) {
   const slide = pres.addSlide();
   slide.background = { color: DARK_BG };
 
@@ -147,7 +149,7 @@ function slideCover(pres: PptxGenJS, protocol: HealingProtocol, date: string, is
   ], { x: 1.5, y: 4.8, w: 7, h: 0.6, align: "center", fontFace: BODY_FONT });
 }
 
-function slideSummary(pres: PptxGenJS, protocol: HealingProtocol) {
+function slideSummary(pres: PptxPresentation, protocol: HealingProtocol) {
   const slide = pres.addSlide();
   slide.background = { color: LIGHT_GRAY };
 
@@ -188,7 +190,7 @@ function slideSummary(pres: PptxGenJS, protocol: HealingProtocol) {
   });
 }
 
-function slideMemberInfo(pres: PptxGenJS, protocol: HealingProtocol, profile: PatientProfile, resources: ReturnType<typeof getPatientResources>) {
+function slideMemberInfo(pres: PptxPresentation, protocol: HealingProtocol, profile: PatientProfile, resources: ReturnType<typeof getPatientResources>) {
   const slide = pres.addSlide();
   slide.background = { color: LIGHT_GRAY };
 
@@ -278,7 +280,7 @@ function slideMemberInfo(pres: PptxGenJS, protocol: HealingProtocol, profile: Pa
   }
 }
 
-function slideTimeline(pres: PptxGenJS, profile: PatientProfile) {
+function slideTimeline(pres: PptxPresentation, profile: PatientProfile) {
   const slide = pres.addSlide();
   slide.background = { color: LIGHT_GRAY };
 
@@ -312,7 +314,7 @@ function slideTimeline(pres: PptxGenJS, profile: PatientProfile) {
   }
 }
 
-function slideTrusteeAnalysis(pres: PptxGenJS, protocol: HealingProtocol) {
+function slideTrusteeAnalysis(pres: PptxPresentation, protocol: HealingProtocol) {
   const slide = pres.addSlide();
   slide.background = { color: LIGHT_GRAY };
 
@@ -332,7 +334,7 @@ function slideTrusteeAnalysis(pres: PptxGenJS, protocol: HealingProtocol) {
   });
 }
 
-function slideRootCauses(pres: PptxGenJS, protocol: HealingProtocol) {
+function slideRootCauses(pres: PptxPresentation, protocol: HealingProtocol) {
   if (!protocol.rootCauseAnalysis?.length) return;
 
   const slide = pres.addSlide();
@@ -375,7 +377,7 @@ function slideRootCauses(pres: PptxGenJS, protocol: HealingProtocol) {
   });
 }
 
-function slide5Rs(pres: PptxGenJS, protocol: HealingProtocol) {
+function slide5Rs(pres: PptxPresentation, protocol: HealingProtocol) {
   const slide = pres.addSlide();
   slide.background = { color: DARK_BG };
 
@@ -414,7 +416,7 @@ function slide5Rs(pres: PptxGenJS, protocol: HealingProtocol) {
   });
 }
 
-function slideDailySchedule(pres: PptxGenJS, protocol: HealingProtocol) {
+function slideDailySchedule(pres: PptxPresentation, protocol: HealingProtocol) {
   const slide = pres.addSlide();
   slide.background = { color: LIGHT_GRAY };
 
@@ -470,7 +472,7 @@ function slideDailySchedule(pres: PptxGenJS, protocol: HealingProtocol) {
   });
 }
 
-function slideProductsFF(pres: PptxGenJS, protocol: HealingProtocol) {
+function slideProductsFF(pres: PptxPresentation, protocol: HealingProtocol) {
   const slide = pres.addSlide();
   slide.background = { color: LIGHT_GRAY };
 
@@ -506,7 +508,7 @@ function slideProductsFF(pres: PptxGenJS, protocol: HealingProtocol) {
   });
 }
 
-function slideInjectablePeptides(pres: PptxGenJS, protocol: HealingProtocol) {
+function slideInjectablePeptides(pres: PptxPresentation, protocol: HealingProtocol) {
   const slide = pres.addSlide();
   slide.background = { color: DARK_BG };
 
@@ -547,7 +549,7 @@ function slideInjectablePeptides(pres: PptxGenJS, protocol: HealingProtocol) {
   });
 }
 
-function slideOralPeptides(pres: PptxGenJS, protocol: HealingProtocol) {
+function slideOralPeptides(pres: PptxPresentation, protocol: HealingProtocol) {
   const slide = pres.addSlide();
   slide.background = { color: LIGHT_GRAY };
 
@@ -575,7 +577,7 @@ function slideOralPeptides(pres: PptxGenJS, protocol: HealingProtocol) {
   });
 }
 
-function slideBioregulators(pres: PptxGenJS, protocol: HealingProtocol) {
+function slideBioregulators(pres: PptxPresentation, protocol: HealingProtocol) {
   const slide = pres.addSlide();
   slide.background = { color: LIGHT_GRAY };
 
@@ -606,7 +608,7 @@ function slideBioregulators(pres: PptxGenJS, protocol: HealingProtocol) {
   });
 }
 
-function slideSupplements(pres: PptxGenJS, protocol: HealingProtocol) {
+function slideSupplements(pres: PptxPresentation, protocol: HealingProtocol) {
   const slide = pres.addSlide();
   slide.background = { color: LIGHT_GRAY };
 
@@ -633,7 +635,7 @@ function slideSupplements(pres: PptxGenJS, protocol: HealingProtocol) {
   });
 }
 
-function slideIVIM(pres: PptxGenJS, protocol: HealingProtocol) {
+function slideIVIM(pres: PptxPresentation, protocol: HealingProtocol) {
   const slide = pres.addSlide();
   slide.background = { color: LIGHT_GRAY };
 
@@ -686,7 +688,7 @@ function slideIVIM(pres: PptxGenJS, protocol: HealingProtocol) {
   }
 }
 
-function slideDetox(pres: PptxGenJS, protocol: HealingProtocol) {
+function slideDetox(pres: PptxPresentation, protocol: HealingProtocol) {
   const slide = pres.addSlide();
   slide.background = { color: LIGHT_GRAY };
 
@@ -713,7 +715,7 @@ function slideDetox(pres: PptxGenJS, protocol: HealingProtocol) {
   });
 }
 
-function slideParasite(pres: PptxGenJS, protocol: HealingProtocol) {
+function slideParasite(pres: PptxPresentation, protocol: HealingProtocol) {
   const slide = pres.addSlide();
   slide.background = { color: LIGHT_GRAY };
 
@@ -740,7 +742,7 @@ function slideParasite(pres: PptxGenJS, protocol: HealingProtocol) {
   });
 }
 
-function slideLifestyle(pres: PptxGenJS, protocol: HealingProtocol) {
+function slideLifestyle(pres: PptxPresentation, protocol: HealingProtocol) {
   const slide = pres.addSlide();
   slide.background = { color: LIGHT_GRAY };
 
@@ -794,7 +796,7 @@ function slideLifestyle(pres: PptxGenJS, protocol: HealingProtocol) {
   }
 }
 
-function slideFollowUp(pres: PptxGenJS, protocol: HealingProtocol) {
+function slideFollowUp(pres: PptxPresentation, protocol: HealingProtocol) {
   const slide = pres.addSlide();
   slide.background = { color: LIGHT_GRAY };
 
@@ -846,7 +848,7 @@ function slideFollowUp(pres: PptxGenJS, protocol: HealingProtocol) {
   }
 }
 
-function slideBooks(pres: PptxGenJS, resources: ReturnType<typeof getPatientResources>) {
+function slideBooks(pres: PptxPresentation, resources: ReturnType<typeof getPatientResources>) {
   const slide = pres.addSlide();
   slide.background = { color: LIGHT_GRAY };
 
@@ -884,7 +886,7 @@ function slideBooks(pres: PptxGenJS, resources: ReturnType<typeof getPatientReso
   });
 }
 
-function slideResearchLinks(pres: PptxGenJS, resources: ReturnType<typeof getPatientResources>) {
+function slideResearchLinks(pres: PptxPresentation, resources: ReturnType<typeof getPatientResources>) {
   const slide = pres.addSlide();
   slide.background = { color: LIGHT_GRAY };
 
@@ -911,7 +913,7 @@ function slideResearchLinks(pres: PptxGenJS, resources: ReturnType<typeof getPat
   });
 }
 
-function slideDriveLinks(pres: PptxGenJS, resources: ReturnType<typeof getPatientResources>) {
+function slideDriveLinks(pres: PptxPresentation, resources: ReturnType<typeof getPatientResources>) {
   const slide = pres.addSlide();
   slide.background = { color: LIGHT_GRAY };
 
@@ -960,7 +962,7 @@ function slideDriveLinks(pres: PptxGenJS, resources: ReturnType<typeof getPatien
   }
 }
 
-function slideCommitment(pres: PptxGenJS) {
+function slideCommitment(pres: PptxPresentation) {
   const slide = pres.addSlide();
   slide.background = { color: DARK_BG };
 

@@ -557,7 +557,7 @@ export function generateProtocolPDF(
           const startY = doc.y;
           doc.rect(60, startY, doc.page.width - 120, 45).fill("#F5F9FC");
           doc.rect(60, startY, 4, 45).fill(COLORS.accent);
-          doc.fontSize(11).fillColor(COLORS.primary).text(book.title, 72, startY + 5, { width: doc.page.width - 150, bold: true });
+          doc.fontSize(11).fillColor(COLORS.primary).font("Helvetica-Bold").text(book.title, 72, startY + 5, { width: doc.page.width - 150 }).font("Helvetica");
           doc.fontSize(9).fillColor(COLORS.accent).text(`by ${book.author}`, 72, startY + 20);
           doc.fontSize(9).fillColor(COLORS.lightText).text(book.reason, 72, startY + 32, { width: doc.page.width - 150 });
           doc.y = startY + 50;
