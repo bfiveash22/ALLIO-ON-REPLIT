@@ -3,6 +3,31 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
+let libgbmPath: string | null = null;
+
+async function resolveLibgbm(): Promise<string | null> {
+    if (libgbmPath !== null) return libgbmPath;
+    try {
+        const { stdout } = await execAsync("nix-build '<nixpkgs>' -A libgbm --no-out-link 2>/dev/null", { timeout: 30000 });
+        libgbmPath = stdout.trim() + '/lib';
+    } catch {
+        libgbmPath = '';
+    }
+    return libgbmPath || null;
+}
+
+function getBrowserEnv(): Record<string, string> {
+    const env: Record<string, string> = { ...process.env as Record<string, string> };
+    if (libgbmPath) {
+        env.LD_LIBRARY_PATH = libgbmPath + (env.LD_LIBRARY_PATH ? ':' + env.LD_LIBRARY_PATH : '');
+    }
+    const playwrightPath = '/home/runner/workspace/.cache/ms-playwright';
+    if (!env.PLAYWRIGHT_BROWSERS_PATH || env.PLAYWRIGHT_BROWSERS_PATH === '0') {
+        env.PLAYWRIGHT_BROWSERS_PATH = playwrightPath;
+    }
+    return env;
+}
+
 export class RupaHealthAgentService {
     validateCredentials(): { valid: boolean; missing: string[]; error?: string } {
         const missing: string[] = [];
@@ -44,6 +69,7 @@ export class RupaHealthAgentService {
         const password = process.env.RUPA_PASSWORD;
 
         try {
+            await resolveLibgbm();
             // Formulate the comprehensive prompt for browser-use to navigate Rupa Health
             let prompt = `Navigate to https://www.rupahealth.com/ and log in using username: '${username}' and password: '${password}'. `;
             prompt += `Search for the patient named '${patientDetails.firstName} ${patientDetails.lastName}'. `;
@@ -64,7 +90,7 @@ export class RupaHealthAgentService {
 
             // Execute the browser-use CLI command
             // We give it a generous timeout (e.g. 5 minutes) since ordering tests takes multiple steps
-            const { stdout, stderr } = await execAsync(bashCommand, { maxBuffer: 1024 * 1024 * 10, timeout: 300000 });
+            const { stdout, stderr } = await execAsync(bashCommand, { maxBuffer: 1024 * 1024 * 10, timeout: 300000, env: getBrowserEnv() });
 
             console.log(`[RUPA-HEALTH-AGENT] browser-use execution completed.`);
 

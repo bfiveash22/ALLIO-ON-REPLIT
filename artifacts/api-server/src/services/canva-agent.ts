@@ -6,6 +6,30 @@ const execFileAsync = promisify(execFile);
 
 let browserUseAvailable: boolean | null = null;
 let browserUsePath: string | null = null;
+let libgbmPath: string | null = null;
+
+async function resolveLibgbm(): Promise<string | null> {
+  if (libgbmPath !== null) return libgbmPath;
+  try {
+    const { stdout } = await execAsync("nix-build '<nixpkgs>' -A libgbm --no-out-link 2>/dev/null", { timeout: 30000 });
+    libgbmPath = stdout.trim() + '/lib';
+  } catch {
+    libgbmPath = '';
+  }
+  return libgbmPath || null;
+}
+
+function getBrowserEnv(): Record<string, string> {
+  const env: Record<string, string> = { ...process.env as Record<string, string> };
+  if (libgbmPath) {
+    env.LD_LIBRARY_PATH = libgbmPath + (env.LD_LIBRARY_PATH ? ':' + env.LD_LIBRARY_PATH : '');
+  }
+  const playwrightPath = '/home/runner/workspace/.cache/ms-playwright';
+  if (!env.PLAYWRIGHT_BROWSERS_PATH || env.PLAYWRIGHT_BROWSERS_PATH === '0') {
+    env.PLAYWRIGHT_BROWSERS_PATH = playwrightPath;
+  }
+  return env;
+}
 
 async function checkBrowserUseInstalled(): Promise<boolean> {
   if (browserUseAvailable !== null) return browserUseAvailable;
@@ -13,6 +37,7 @@ async function checkBrowserUseInstalled(): Promise<boolean> {
     const { stdout } = await execAsync('which browser-use', { timeout: 5000 });
     browserUsePath = stdout.trim();
     browserUseAvailable = true;
+    await resolveLibgbm();
   } catch {
     browserUseAvailable = false;
   }
@@ -115,6 +140,7 @@ export class CanvaAgentService {
       const { stdout, stderr } = await execFileAsync(getBrowserUsePath(), args, {
         maxBuffer: 1024 * 1024 * 10,
         timeout: 300000,
+        env: getBrowserEnv(),
       });
 
       console.log(`[CANVA-AGENT] browser-use execution completed.`);

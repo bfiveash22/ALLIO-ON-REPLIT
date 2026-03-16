@@ -41,5 +41,5 @@ modules = ["nodejs-24", "python-3.11"]
 
   [nix]
   channel = "stable-25_05"
-  packages = ["alsa-lib", "at-spi2-atk", "cairo", "cups", "dbus", "expat", "gitFull", "glib", "gtk3", "libdrm", "libxkbcommon", "mesa", "mesa_glu", "nspr", "nss", "pango", "playwright-driver", "xorg.libX11", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXext", "xorg.libXfixes", "xorg.libXrandr", "xorg.libxcb"]
+packages = ["alsa-lib", "at-spi2-atk", "cairo", "cups", "dbus", "expat", "gitFull", "glib", "gtk3", "libdrm", "libxkbcommon", "mesa", "mesa_glu", "nspr", "nss", "pango", "playwright-driver", "xorg.libX11", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXext", "xorg.libXfixes", "xorg.libXrandr", "xorg.libxcb"]
   
