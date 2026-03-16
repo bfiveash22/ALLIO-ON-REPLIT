@@ -21,6 +21,8 @@ import {
   Maximize,
   RefreshCw,
 } from "lucide-react";
+import { useAudioOutputDevice } from "@/hooks/useAudioOutputDevice";
+import { AudioDeviceSelector } from "@/components/AudioDeviceSelector";
 
 interface TrainingPlayerProps {
   title: string;
@@ -57,9 +59,19 @@ export function InteractiveTrainingPlayer({
   const [activeTab, setActiveTab] = useState<string>("content");
   const [currentSection, setCurrentSection] = useState(0);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [hasGeneratedAudio, setHasGeneratedAudio] = useState(false);
   
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  const {
+    outputDevices,
+    selectedDevice,
+    selectDevice,
+    applySinkId,
+    fallbackNotification,
+    dismissNotification,
+  } = useAudioOutputDevice();
 
   const mediaRef = videoUrl ? videoRef : audioRef;
   const hasVideo = !!videoUrl;
@@ -96,6 +108,13 @@ export function InteractiveTrainingPlayer({
       media.removeEventListener("ended", handleEnded);
     };
   }, [onProgress, onComplete, mediaRef]);
+
+  useEffect(() => {
+    const media = mediaRef.current;
+    if (media) {
+      applySinkId(media);
+    }
+  }, [selectedDevice, applySinkId, mediaRef]);
 
   const togglePlay = () => {
     const media = mediaRef.current;
@@ -168,9 +187,25 @@ export function InteractiveTrainingPlayer({
       if (response.ok) {
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
-        if (audioRef.current) {
-          audioRef.current.src = url;
+        if (!audioRef.current) {
+          const audio = new Audio();
+          audio.addEventListener("timeupdate", () => {
+            setCurrentTime(audio.currentTime);
+            const progress = (audio.currentTime / audio.duration) * 100;
+            onProgress?.(progress);
+          });
+          audio.addEventListener("durationchange", () => setDuration(audio.duration));
+          audio.addEventListener("ended", () => {
+            setIsPlaying(false);
+            onComplete?.();
+          });
+          audioRef.current = audio;
         }
+        const currentAudio = audioRef.current!;
+        currentAudio.src = url;
+        await applySinkId(currentAudio);
+        setHasGeneratedAudio(true);
+        setActiveTab("media");
       }
     } catch (error) {
       console.error("Failed to generate audio narration:", error);
@@ -227,7 +262,7 @@ export function InteractiveTrainingPlayer({
                 Content
               </TabsTrigger>
             )}
-            {(hasVideo || hasAudio) && (
+            {(hasVideo || hasAudio || hasGeneratedAudio) && (
               <TabsTrigger
                 value="media"
                 className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary px-4 py-3"
@@ -337,7 +372,7 @@ export function InteractiveTrainingPlayer({
             </TabsContent>
           )}
 
-          {(hasVideo || hasAudio) && (
+          {(hasVideo || hasAudio || hasGeneratedAudio) && (
             <TabsContent value="media" className="p-0">
               {hasVideo && (
                 <div className="relative bg-black aspect-video">
@@ -350,14 +385,14 @@ export function InteractiveTrainingPlayer({
                 </div>
               )}
 
-              {hasAudio && !hasVideo && (
+              {(hasAudio || hasGeneratedAudio) && !hasVideo && (
                 <div className="p-6 bg-gradient-to-br from-primary/5 to-cyan-500/5">
                   <div className="flex items-center justify-center py-12">
                     <div className="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center">
                       <Headphones className={`h-16 w-16 text-primary ${isPlaying ? "animate-pulse" : ""}`} />
                     </div>
                   </div>
-                  <audio ref={audioRef} src={audioUrl || undefined} />
+                  {hasAudio && <audio ref={audioRef} src={audioUrl || undefined} />}
                 </div>
               )}
 
@@ -411,6 +446,15 @@ export function InteractiveTrainingPlayer({
                     />
                   </div>
                 </div>
+
+                <AudioDeviceSelector
+                  outputDevices={outputDevices}
+                  selectedDevice={selectedDevice}
+                  onDeviceChange={selectDevice}
+                  fallbackNotification={fallbackNotification}
+                  onDismissNotification={dismissNotification}
+                  compact
+                />
               </div>
             </TabsContent>
           )}
@@ -456,6 +500,7 @@ export function AudioNarrationButton({
   const [isLoading, setIsLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { applySinkId } = useAudioOutputDevice();
 
   const handleClick = async () => {
     if (audioRef.current && isPlaying) {
@@ -483,6 +528,8 @@ export function AudioNarrationButton({
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
         audioRef.current = audio;
+
+        await applySinkId(audio);
         
         audio.onended = () => setIsPlaying(false);
         audio.play();

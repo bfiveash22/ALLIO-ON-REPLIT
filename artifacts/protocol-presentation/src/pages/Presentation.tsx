@@ -4,6 +4,8 @@ import SlideRenderer from "../components/SlideRenderer";
 import { buildSlides } from "../lib/slide-builder";
 import { buildKathrynSmithDemoData } from "../lib/demo-data";
 import type { SlideData } from "../lib/types";
+import { useAudioOutputDevice } from "../hooks/useAudioOutputDevice";
+import { AudioDeviceSelector } from "../components/AudioDeviceSelector";
 
 export default function Presentation() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -18,7 +20,16 @@ export default function Presentation() {
   const [narrationText, setNarrationText] = useState("");
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
   const params = useParams<{ id?: string }>();
+  const {
+    outputDevices,
+    selectedDevice,
+    selectDevice,
+    applySinkId,
+    fallbackNotification,
+    dismissNotification,
+  } = useAudioOutputDevice();
 
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
@@ -66,7 +77,53 @@ export default function Presentation() {
     }
   }
 
-  const speak = useCallback((text: string) => {
+  const advanceAfterNarration = useCallback(() => {
+    if (currentSlide < slides.length - 1) {
+      setTransitioning(true);
+      if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+      transitionTimerRef.current = setTimeout(() => {
+        setCurrentSlide(prev => prev + 1);
+        setTransitioning(false);
+      }, 300);
+    } else {
+      setIsPlaying(false);
+    }
+  }, [currentSlide, slides.length]);
+
+  const speakWithTTS = useCallback(async (text: string) => {
+    if (ttsAudioRef.current) {
+      ttsAudioRef.current.pause();
+      ttsAudioRef.current = null;
+    }
+    try {
+      const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const apiBase = baseUrl.replace("/protocol-presentation", "");
+      const response = await fetch(`${apiBase}/api/tts/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, voice: "onyx" }),
+        credentials: "include",
+      });
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        ttsAudioRef.current = audio;
+        await applySinkId(audio);
+        audio.onended = () => {
+          URL.revokeObjectURL(url);
+          advanceAfterNarration();
+        };
+        await audio.play();
+      } else {
+        speakWithSynthesis(text);
+      }
+    } catch {
+      speakWithSynthesis(text);
+    }
+  }, [applySinkId, advanceAfterNarration]);
+
+  const speakWithSynthesis = useCallback((text: string) => {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 0.9;
@@ -77,21 +134,23 @@ export default function Presentation() {
                       voices.find(v => v.lang.startsWith("en-US")) ||
                       voices[0];
     if (preferred) utterance.voice = preferred;
-    utterance.onend = () => {
-      if (currentSlide < slides.length - 1) {
-        setTransitioning(true);
-        if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-        transitionTimerRef.current = setTimeout(() => {
-          setCurrentSlide(prev => prev + 1);
-          setTransitioning(false);
-        }, 300);
-      } else {
-        setIsPlaying(false);
-      }
-    };
+    utterance.onend = advanceAfterNarration;
     utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
-  }, [currentSlide, slides.length]);
+  }, [advanceAfterNarration]);
+
+  const speak = useCallback((text: string) => {
+    window.speechSynthesis.cancel();
+    if (ttsAudioRef.current) {
+      ttsAudioRef.current.pause();
+      ttsAudioRef.current = null;
+    }
+    if (selectedDevice !== "default") {
+      speakWithTTS(text);
+    } else {
+      speakWithSynthesis(text);
+    }
+  }, [selectedDevice, speakWithTTS, speakWithSynthesis]);
 
   useEffect(() => {
     if (slides[currentSlide]) {
@@ -108,6 +167,10 @@ export default function Presentation() {
   const togglePlay = () => {
     if (isPlaying) {
       window.speechSynthesis.cancel();
+      if (ttsAudioRef.current) {
+        ttsAudioRef.current.pause();
+        ttsAudioRef.current = null;
+      }
       setIsPlaying(false);
     } else {
       setIsPlaying(true);
@@ -116,6 +179,10 @@ export default function Presentation() {
 
   const goToSlide = (index: number) => {
     window.speechSynthesis.cancel();
+    if (ttsAudioRef.current) {
+      ttsAudioRef.current.pause();
+      ttsAudioRef.current = null;
+    }
     if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
     setTransitioning(true);
     transitionTimerRef.current = setTimeout(() => {
@@ -152,6 +219,10 @@ export default function Presentation() {
   useEffect(() => {
     return () => {
       window.speechSynthesis.cancel();
+      if (ttsAudioRef.current) {
+        ttsAudioRef.current.pause();
+        ttsAudioRef.current = null;
+      }
       if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
     };
   }, []);
@@ -246,6 +317,14 @@ export default function Presentation() {
             {currentSlide + 1} / {slides.length}
           </span>
         </div>
+
+        <AudioDeviceSelector
+          outputDevices={outputDevices}
+          selectedDevice={selectedDevice}
+          onDeviceChange={selectDevice}
+          fallbackNotification={fallbackNotification}
+          onDismissNotification={dismissNotification}
+        />
 
         <div className="flex items-center gap-2">
           <span className="text-gray-500 text-xs">{patientName}</span>

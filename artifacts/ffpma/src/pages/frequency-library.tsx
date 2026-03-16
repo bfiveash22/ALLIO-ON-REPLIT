@@ -10,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { useAudioOutputDevice } from "@/hooks/useAudioOutputDevice";
+import { AudioDeviceSelector } from "@/components/AudioDeviceSelector";
 import {
   Search,
   Play,
@@ -168,9 +170,16 @@ function FrequencyPlayer({ frequency, onClose }: { frequency: Frequency; onClose
   const [isMuted, setIsMuted] = useState(false);
   const [isLooping, setIsLooping] = useState(true);
   const [elapsed, setElapsed] = useState(0);
-  const [outputDevices, setOutputDevices] = useState<MediaDeviceInfo[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<string>("default");
   const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const {
+    outputDevices,
+    selectedDevice,
+    selectDevice,
+    applySinkId,
+    fallbackNotification,
+    dismissNotification,
+  } = useAudioOutputDevice();
 
   const playMutation = useMutation({
     mutationFn: async () => {
@@ -179,15 +188,6 @@ function FrequencyPlayer({ frequency, onClose }: { frequency: Frequency; onClose
   });
 
   useEffect(() => {
-    async function getDevices() {
-      try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        setOutputDevices(devices.filter(d => d.kind === "audiooutput"));
-      } catch {
-      }
-    }
-    getDevices();
     return () => stopPlayback();
   }, []);
 
@@ -246,13 +246,7 @@ function FrequencyPlayer({ frequency, onClose }: { frequency: Frequency; onClose
       audio.volume = isMuted ? 0 : volume;
       audioElementRef.current = audio;
 
-      if (selectedDevice !== "default" && "setSinkId" in audio) {
-        try {
-          await (audio as any).setSinkId(selectedDevice);
-        } catch (e) {
-          console.warn("Could not set audio output device:", e);
-        }
-      }
+      await applySinkId(audio);
 
       const audioCtx = new AudioContext();
       const source = audioCtx.createMediaElementSource(audio);
@@ -268,14 +262,6 @@ function FrequencyPlayer({ frequency, onClose }: { frequency: Frequency; onClose
     } else if (hz > 0) {
       const audioCtx = new AudioContext();
 
-      if (selectedDevice !== "default" && "setSinkId" in audioCtx) {
-        try {
-          await (audioCtx as any).setSinkId(selectedDevice);
-        } catch (e) {
-          console.warn("Could not set audio output device:", e);
-        }
-      }
-
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
       const analyser = audioCtx.createAnalyser();
@@ -288,7 +274,18 @@ function FrequencyPlayer({ frequency, onClose }: { frequency: Frequency; onClose
 
       oscillator.connect(gainNode);
       gainNode.connect(analyser);
-      analyser.connect(audioCtx.destination);
+
+      if (selectedDevice !== "default" && "createMediaStreamDestination" in audioCtx) {
+        const dest = audioCtx.createMediaStreamDestination();
+        analyser.connect(dest);
+        const routingAudio = new Audio();
+        routingAudio.srcObject = dest.stream;
+        await applySinkId(routingAudio);
+        await routingAudio.play();
+        audioElementRef.current = routingAudio;
+      } else {
+        analyser.connect(audioCtx.destination);
+      }
 
       oscillator.start();
 
@@ -307,7 +304,7 @@ function FrequencyPlayer({ frequency, onClose }: { frequency: Frequency; onClose
     elapsedRef.current = setInterval(() => {
       setElapsed(prev => prev + 1);
     }, 1000);
-  }, [frequency, volume, isMuted, isLooping, selectedDevice, drawVisualization, playMutation]);
+  }, [frequency, volume, isMuted, isLooping, selectedDevice, drawVisualization, playMutation, applySinkId]);
 
   const stopPlayback = useCallback(() => {
     if (oscillatorRef.current) {
@@ -433,29 +430,14 @@ function FrequencyPlayer({ frequency, onClose }: { frequency: Frequency; onClose
         <span className="text-xs text-muted-foreground w-8 text-right">{Math.round(volume * 100)}%</span>
       </div>
 
-      {outputDevices.length > 1 && (
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2 text-sm">
-            <Bluetooth className="h-4 w-4" />
-            Audio Output Device
-          </Label>
-          <Select value={selectedDevice} onValueChange={setSelectedDevice}>
-            <SelectTrigger>
-              <SelectValue placeholder="Default speakers" />
-            </SelectTrigger>
-            <SelectContent>
-              {outputDevices.map(device => (
-                <SelectItem key={device.deviceId} value={device.deviceId}>
-                  {device.label || `Device ${device.deviceId.slice(0, 8)}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            Select a Bluetooth speaker or plasma device to route audio output
-          </p>
-        </div>
-      )}
+      <AudioDeviceSelector
+        outputDevices={outputDevices}
+        selectedDevice={selectedDevice}
+        onDeviceChange={selectDevice}
+        fallbackNotification={fallbackNotification}
+        onDismissNotification={dismissNotification}
+        description="Select a Bluetooth speaker or plasma device to route audio output"
+      />
 
       {frequency.purpose && (
         <div className="bg-muted/50 rounded-lg p-3">

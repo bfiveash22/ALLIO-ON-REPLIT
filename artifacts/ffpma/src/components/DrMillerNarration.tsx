@@ -13,6 +13,8 @@ import {
   Waves,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAudioOutputDevice } from "@/hooks/useAudioOutputDevice";
+import { AudioDeviceSelector } from "@/components/AudioDeviceSelector";
 
 interface DrMillerNarrationProps {
   sectionTitle: string;
@@ -39,6 +41,14 @@ export function DrMillerNarration({
   const [duration, setDuration] = useState(0);
   const [hasGenerated, setHasGenerated] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const {
+    outputDevices,
+    selectedDevice,
+    selectDevice,
+    applySinkId,
+    fallbackNotification,
+    dismissNotification,
+  } = useAudioOutputDevice();
 
   const formatTime = (time: number) => {
     const mins = Math.floor(time / 60);
@@ -65,6 +75,8 @@ export function DrMillerNarration({
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
         audioRef.current = audio;
+        
+        await applySinkId(audio);
         
         audio.volume = volume;
         audio.muted = isMuted;
@@ -95,6 +107,12 @@ export function DrMillerNarration({
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (audioRef.current && selectedDevice) {
+      applySinkId(audioRef.current);
+    }
+  }, [selectedDevice, applySinkId]);
 
   const togglePlay = () => {
     if (!audioRef.current) {
@@ -228,27 +246,46 @@ export function DrMillerNarration({
                     </div>
                   )}
                 </div>
+
+                <AudioDeviceSelector
+                  outputDevices={outputDevices}
+                  selectedDevice={selectedDevice}
+                  onDeviceChange={selectDevice}
+                  fallbackNotification={fallbackNotification}
+                  onDismissNotification={dismissNotification}
+                  compact
+                />
               </div>
             ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={generateNarration}
-                disabled={isLoading}
-                data-testid="button-generate-dr-miller-narration"
-              >
-                {isLoading ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Generating narration...
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-4 w-4 mr-2" />
-                    Listen to {instructorName}
-                  </>
-                )}
-              </Button>
+              <div className="space-y-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={generateNarration}
+                  disabled={isLoading}
+                  data-testid="button-generate-dr-miller-narration"
+                >
+                  {isLoading ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Generating narration...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4 mr-2" />
+                      Listen to {instructorName}
+                    </>
+                  )}
+                </Button>
+                <AudioDeviceSelector
+                  outputDevices={outputDevices}
+                  selectedDevice={selectedDevice}
+                  onDeviceChange={selectDevice}
+                  fallbackNotification={fallbackNotification}
+                  onDismissNotification={dismissNotification}
+                  compact
+                />
+              </div>
             )}
           </div>
         </div>
