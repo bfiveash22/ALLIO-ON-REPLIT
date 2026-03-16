@@ -898,6 +898,255 @@ interface ProtocolQueueItem {
   updatedAt: string;
 }
 
+interface OpenClawTaskItem {
+  id: string;
+  agentId: string;
+  taskType: string;
+  description: string;
+  priority: string;
+  status: string;
+  context: Record<string, unknown> | null;
+  callbackUrl: string | null;
+  result: Record<string, unknown> | null;
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+  startedAt: string | null;
+  completedAt: string | null;
+}
+
+interface OpenClawTasksResponse {
+  tasks: OpenClawTaskItem[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+  summary: { pending: number; in_progress: number; completed: number; failed: number };
+}
+
+function OpenClawTasksPanel() {
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [expandedTask, setExpandedTask] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const queryParams = new URLSearchParams();
+  queryParams.set("page", String(currentPage));
+  queryParams.set("limit", "25");
+  if (statusFilter !== "all") queryParams.set("status", statusFilter);
+  if (priorityFilter !== "all") queryParams.set("priority", priorityFilter);
+
+  const { data, isLoading } = useQuery<OpenClawTasksResponse>({
+    queryKey: [`/api/openclaw/tasks?${queryParams.toString()}`],
+    refetchInterval: 15000,
+  });
+
+  const tasks = data?.tasks ?? [];
+  const summary = data?.summary ?? { pending: 0, in_progress: 0, completed: 0, failed: 0 };
+  const pagination = data?.pagination ?? { page: 1, limit: 25, total: 0, totalPages: 1 };
+
+  const statusBadge = (status: string) => {
+    const styles: Record<string, string> = {
+      pending: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
+      in_progress: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+      completed: "bg-green-500/20 text-green-300 border-green-500/30",
+      failed: "bg-red-500/20 text-red-300 border-red-500/30",
+    };
+    return <Badge variant="outline" className={styles[status] || "bg-gray-500/20 text-gray-300"}>{status.replace("_", " ")}</Badge>;
+  };
+
+  const priorityBadge = (priority: string) => {
+    const styles: Record<string, string> = {
+      urgent: "bg-red-500/20 text-red-300 border-red-500/30",
+      high: "bg-orange-500/20 text-orange-300 border-orange-500/30",
+      normal: "bg-slate-500/20 text-slate-300 border-slate-500/30",
+      low: "bg-slate-700/20 text-slate-400 border-slate-700/30",
+    };
+    return <Badge variant="outline" className={styles[priority] || "bg-gray-500/20 text-gray-300"}>{priority}</Badge>;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="bg-yellow-500/5 border-yellow-500/20">
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-yellow-300">{summary.pending}</p>
+            <p className="text-xs text-yellow-400/70">Pending</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-blue-500/5 border-blue-500/20">
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-blue-300">{summary.in_progress}</p>
+            <p className="text-xs text-blue-400/70">In Progress</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-green-500/5 border-green-500/20">
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-green-300">{summary.completed}</p>
+            <p className="text-xs text-green-400/70">Completed</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-red-500/5 border-red-500/20">
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-red-300">{summary.failed}</p>
+            <p className="text-xs text-red-400/70">Failed</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="bg-white/[0.02] border-white/10">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <CardTitle className="flex items-center gap-2 text-orange-100">
+              <Zap className="w-5 h-5 text-orange-400" />
+              OPENCLAW Tasks
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
+                <SelectTrigger className="w-[140px] bg-white/5 border-white/10 text-white text-sm">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="failed">Failed</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={priorityFilter} onValueChange={(v) => { setPriorityFilter(v); setCurrentPage(1); }}>
+                <SelectTrigger className="w-[130px] bg-white/5 border-white/10 text-white text-sm">
+                  <SelectValue placeholder="Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Priority</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-orange-400" />
+            </div>
+          ) : tasks.length === 0 ? (
+            <div className="text-center py-12 text-white/40">
+              <Zap className="w-10 h-10 mx-auto mb-3 opacity-30" />
+              <p>No OPENCLAW tasks found</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {tasks.map((task) => (
+                <div
+                  key={task.id}
+                  className="border border-white/10 rounded-lg overflow-hidden hover:border-orange-500/30 transition-colors"
+                >
+                  <button
+                    onClick={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
+                    className="w-full p-4 flex items-center justify-between text-left hover:bg-white/[0.02] transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        {statusBadge(task.status)}
+                        {priorityBadge(task.priority)}
+                        <Badge variant="outline" className="bg-cyan-500/10 text-cyan-300 border-cyan-500/30 text-xs">{task.agentId}</Badge>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-white truncate">{task.description}</p>
+                        <p className="text-xs text-white/40 mt-0.5">{task.taskType} &middot; {formatDistanceToNow(new Date(task.createdAt), { addSuffix: true })}</p>
+                      </div>
+                    </div>
+                    <ChevronRight className={`w-4 h-4 text-white/40 transition-transform flex-shrink-0 ${expandedTask === task.id ? "rotate-90" : ""}`} />
+                  </button>
+
+                  {expandedTask === task.id && (
+                    <div className="px-4 pb-4 border-t border-white/5 pt-3 space-y-3">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                        <div>
+                          <span className="text-white/40">Task ID</span>
+                          <p className="text-white/80 font-mono mt-0.5 break-all">{task.id}</p>
+                        </div>
+                        <div>
+                          <span className="text-white/40">Created</span>
+                          <p className="text-white/80 mt-0.5">{new Date(task.createdAt).toLocaleString()}</p>
+                        </div>
+                        {task.startedAt && (
+                          <div>
+                            <span className="text-white/40">Started</span>
+                            <p className="text-white/80 mt-0.5">{new Date(task.startedAt).toLocaleString()}</p>
+                          </div>
+                        )}
+                        {task.completedAt && (
+                          <div>
+                            <span className="text-white/40">Completed</span>
+                            <p className="text-white/80 mt-0.5">{new Date(task.completedAt).toLocaleString()}</p>
+                          </div>
+                        )}
+                      </div>
+                      {task.callbackUrl && (
+                        <div className="text-xs">
+                          <span className="text-white/40">Callback URL</span>
+                          <p className="text-white/60 font-mono mt-0.5 break-all">{task.callbackUrl}</p>
+                        </div>
+                      )}
+                      {task.context && (
+                        <div className="text-xs">
+                          <span className="text-white/40">Context</span>
+                          <pre className="mt-1 p-2 bg-black/30 rounded text-white/60 overflow-x-auto text-xs">{JSON.stringify(task.context, null, 2)}</pre>
+                        </div>
+                      )}
+                      {task.result && (
+                        <div className="text-xs">
+                          <span className="text-white/40">Result</span>
+                          <pre className="mt-1 p-2 bg-green-900/20 border border-green-500/20 rounded text-green-300/80 overflow-x-auto text-xs">{JSON.stringify(task.result, null, 2)}</pre>
+                        </div>
+                      )}
+                      {task.errorMessage && (
+                        <div className="text-xs">
+                          <span className="text-white/40">Error</span>
+                          <p className="mt-1 p-2 bg-red-900/20 border border-red-500/20 rounded text-red-300">{task.errorMessage}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {pagination.totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4">
+                  <p className="text-xs text-white/40">Page {pagination.page} of {pagination.totalPages} ({pagination.total} tasks)</p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage <= 1}
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      className="text-xs border-white/10 text-white/60"
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage >= pagination.totalPages}
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      className="text-xs border-white/10 text-white/60"
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function ProtocolQueuePanel() {
   const { toast } = useToast();
   const [reviewNotes, setReviewNotes] = useState("");
@@ -2395,6 +2644,10 @@ export default function TrusteeDashboard() {
                 <TabsTrigger value="protocol-queue" className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-400 data-[state=active]:bg-emerald-950/20 data-[state=active]:text-white text-white/60 hover:text-white/80 transition-all whitespace-nowrap" data-testid="tab-protocol-queue">
                   <ClipboardList className="w-4 h-4 mr-2" />
                   Protocol Queue
+                </TabsTrigger>
+                <TabsTrigger value="openclaw-tasks" className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-orange-400 data-[state=active]:bg-orange-950/20 data-[state=active]:text-white text-white/60 hover:text-white/80 transition-all whitespace-nowrap" data-testid="tab-openclaw-tasks">
+                  <Zap className="w-4 h-4 mr-2" />
+                  OPENCLAW Tasks
                 </TabsTrigger>
               </TabsList>
             </ScrollArea>
@@ -4736,6 +4989,10 @@ export default function TrusteeDashboard() {
 
             <TabsContent value="protocol-queue" className="space-y-6">
               <ProtocolQueuePanel />
+            </TabsContent>
+
+            <TabsContent value="openclaw-tasks" className="space-y-6">
+              <OpenClawTasksPanel />
             </TabsContent>
           </Tabs>
         </main>

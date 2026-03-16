@@ -1,7 +1,8 @@
 import { Express, Request, Response, NextFunction } from 'express';
 import { db } from './db';
-import { openclawMessages } from '@shared/schema';
-import { eq, desc, sql, and, count } from 'drizzle-orm';
+import { openclawMessages, openclawTasks } from '@shared/schema';
+import { eq, desc, sql, and, count, gte, lte } from 'drizzle-orm';
+import { requireAuth, requireRole } from './working-auth';
 
 function requireOpenClawAuth(req: Request, res: Response, next: NextFunction): void {
   const apiKey = process.env.OPENCLAW_API_KEY;
@@ -139,6 +140,192 @@ export function registerOpenClawRoutes(app: Express): void {
     } catch (error: any) {
       console.error('[OpenClaw Status] error:', error);
       res.status(500).json({ error: error.message || 'Failed to fetch status' });
+    }
+  });
+
+  app.post('/api/openclaw/send', requireOpenClawAuth, async (req: Request, res: Response) => {
+    try {
+      const { agent_id, task_type, description, priority, context, callback_url } = req.body;
+
+      if (!agent_id || typeof agent_id !== 'string') {
+        res.status(400).json({ error: 'agent_id is required and must be a string' });
+        return;
+      }
+      if (!description || typeof description !== 'string') {
+        res.status(400).json({ error: 'description is required and must be a string' });
+        return;
+      }
+
+      const validPriorities = ['urgent', 'high', 'normal', 'low'];
+      if (priority && !validPriorities.includes(priority)) {
+        res.status(400).json({ error: `Invalid priority. Must be one of: ${validPriorities.join(', ')}` });
+        return;
+      }
+      if (context !== undefined && (typeof context !== 'object' || context === null || Array.isArray(context))) {
+        res.status(400).json({ error: 'context must be a JSON object if provided' });
+        return;
+      }
+      if (callback_url && typeof callback_url !== 'string') {
+        res.status(400).json({ error: 'callback_url must be a string if provided' });
+        return;
+      }
+
+      const [task] = await db.insert(openclawTasks).values({
+        agentId: agent_id.toUpperCase(),
+        taskType: task_type || 'general',
+        description: description.substring(0, 10000),
+        priority: priority || 'normal',
+        status: 'pending',
+        context: context || null,
+        callbackUrl: callback_url || null,
+      }).returning();
+
+      console.log(`[OpenClaw] Task created: ${task.id} from ${agent_id} (${task_type})`);
+
+      res.status(201).json({
+        message_id: task.id,
+        status: 'pending',
+        estimated_response: priority === 'urgent' ? '< 1 hour' : priority === 'high' ? '< 4 hours' : '< 24 hours',
+      });
+    } catch (error: any) {
+      console.error('[OpenClaw Send] POST error:', error);
+      res.status(500).json({ error: error.message || 'Failed to create task' });
+    }
+  });
+
+  app.post('/api/openclaw/response', requireOpenClawAuth, async (req: Request, res: Response) => {
+    try {
+      const { message_id, status, result, error_message } = req.body;
+
+      if (!message_id || typeof message_id !== 'string') {
+        res.status(400).json({ error: 'message_id is required and must be a string' });
+        return;
+      }
+
+      const validStatuses = ['in_progress', 'completed', 'failed'];
+      if (!status || !validStatuses.includes(status)) {
+        res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+        return;
+      }
+
+      if (result !== undefined && typeof result !== 'object') {
+        res.status(400).json({ error: 'result must be a JSON object if provided' });
+        return;
+      }
+
+      const updateData: Record<string, any> = {
+        status,
+        updatedAt: new Date(),
+      };
+
+      if (status === 'in_progress') {
+        updateData.startedAt = new Date();
+      } else if (status === 'completed' || status === 'failed') {
+        updateData.completedAt = new Date();
+      }
+
+      if (result !== undefined) {
+        updateData.result = result;
+      }
+
+      if (error_message && typeof error_message === 'string') {
+        updateData.errorMessage = error_message.substring(0, 5000);
+      }
+
+      const [updated] = await db.update(openclawTasks)
+        .set(updateData)
+        .where(eq(openclawTasks.id, message_id))
+        .returning();
+
+      if (!updated) {
+        res.status(404).json({ error: 'Task not found' });
+        return;
+      }
+
+      console.log(`[OpenClaw] Task ${message_id} updated to ${status}`);
+
+      res.json({ task: updated });
+    } catch (error: any) {
+      console.error('[OpenClaw Response] POST error:', error);
+      res.status(500).json({ error: error.message || 'Failed to update task' });
+    }
+  });
+
+  app.get('/api/openclaw/tasks', requireAuth, requireRole('admin', 'trustee'), async (req: Request, res: Response) => {
+    try {
+      const statusFilter = req.query.status as string | undefined;
+      const priorityFilter = req.query.priority as string | undefined;
+      const agentFilter = req.query.agent as string | undefined;
+      const dateFrom = req.query.date_from as string | undefined;
+      const dateTo = req.query.date_to as string | undefined;
+      const page = Math.max(parseInt(req.query.page as string) || 1, 1);
+      const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
+      const offset = (page - 1) * limit;
+
+      const conditions: any[] = [];
+      if (statusFilter && statusFilter !== 'all') {
+        conditions.push(eq(openclawTasks.status, statusFilter));
+      }
+      if (priorityFilter && priorityFilter !== 'all') {
+        conditions.push(eq(openclawTasks.priority, priorityFilter));
+      }
+      if (agentFilter && agentFilter !== 'all') {
+        conditions.push(eq(openclawTasks.agentId, agentFilter.toUpperCase()));
+      }
+      if (dateFrom) {
+        const from = new Date(dateFrom);
+        if (!isNaN(from.getTime())) {
+          conditions.push(gte(openclawTasks.createdAt, from));
+        }
+      }
+      if (dateTo) {
+        const to = new Date(dateTo);
+        if (!isNaN(to.getTime())) {
+          conditions.push(lte(openclawTasks.createdAt, to));
+        }
+      }
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      const priorityOrder = sql`CASE ${openclawTasks.priority}
+        WHEN 'urgent' THEN 1
+        WHEN 'high' THEN 2
+        WHEN 'normal' THEN 3
+        WHEN 'low' THEN 4
+        ELSE 5
+      END`;
+
+      const [tasks, [totalResult], [pendingCount], [inProgressCount], [completedCount], [failedCount]] = await Promise.all([
+        db.select().from(openclawTasks)
+          .where(whereClause)
+          .orderBy(priorityOrder, desc(openclawTasks.createdAt))
+          .limit(limit)
+          .offset(offset),
+        db.select({ count: count() }).from(openclawTasks).where(whereClause),
+        db.select({ count: count() }).from(openclawTasks).where(eq(openclawTasks.status, 'pending')),
+        db.select({ count: count() }).from(openclawTasks).where(eq(openclawTasks.status, 'in_progress')),
+        db.select({ count: count() }).from(openclawTasks).where(eq(openclawTasks.status, 'completed')),
+        db.select({ count: count() }).from(openclawTasks).where(eq(openclawTasks.status, 'failed')),
+      ]);
+
+      res.json({
+        tasks,
+        pagination: {
+          page,
+          limit,
+          total: totalResult?.count ?? 0,
+          totalPages: Math.ceil((totalResult?.count ?? 0) / limit),
+        },
+        summary: {
+          pending: pendingCount?.count ?? 0,
+          in_progress: inProgressCount?.count ?? 0,
+          completed: completedCount?.count ?? 0,
+          failed: failedCount?.count ?? 0,
+        },
+      });
+    } catch (error: any) {
+      console.error('[OpenClaw Tasks] GET error:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch tasks' });
     }
   });
 }

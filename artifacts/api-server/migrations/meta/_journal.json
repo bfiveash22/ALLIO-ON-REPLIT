@@ -29,6 +29,13 @@
       "when": 1773634510960,
       "tag": "0003_narrow_lady_ursula",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1742140800000,
+      "tag": "0004_openclaw_tasks",
+      "breakpoints": true
     }
   ]
 }

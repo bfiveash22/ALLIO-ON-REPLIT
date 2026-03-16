@@ -2082,6 +2082,27 @@ export const insertOpenclawMessageSchema = createInsertSchema(openclawMessages).
 export type InsertOpenclawMessage = z.infer<typeof insertOpenclawMessageSchema>;
 export type OpenclawMessage = typeof openclawMessages.$inferSelect;
 
+export const openclawTasks = pgTable("openclaw_tasks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: varchar("agent_id").notNull(),
+  taskType: varchar("task_type").notNull(),
+  description: text("description").notNull(),
+  priority: varchar("priority").default("normal"),
+  status: varchar("status").default("pending"),
+  context: jsonb("context"),
+  callbackUrl: varchar("callback_url"),
+  result: jsonb("result"),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+});
+
+export const insertOpenclawTaskSchema = createInsertSchema(openclawTasks).omit({ id: true, createdAt: true, updatedAt: true, startedAt: true, completedAt: true });
+export type InsertOpenclawTask = z.infer<typeof insertOpenclawTaskSchema>;
+export type OpenclawTask = typeof openclawTasks.$inferSelect;
+
 // Clinic Nodes - Distributed Allio Architecture
 export const clinicNodes = pgTable("clinic_nodes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
