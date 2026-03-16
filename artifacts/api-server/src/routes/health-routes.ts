@@ -7,6 +7,10 @@ import { requireAuth, requireRole } from "../working-auth";
 const startTime = Date.now();
 
 export function registerHealthRoutes(app: Express): void {
+  app.get("/api/healthz", (_req: Request, res: Response) => {
+    res.json({ status: "ok" });
+  });
+
   app.get("/api/health", async (_req: Request, res: Response) => {
     let dbStatus: "connected" | "disconnected" = "disconnected";
     try {
