@@ -192,9 +192,10 @@ export function registerOpenClawRoutes(app: Express): void {
       }
 
       const [message] = await db.insert(openclawMessages).values({
-        fromAgent: `INBOUND:${sourceAgent.toUpperCase()}`,
+        fromAgent: sourceAgent.toUpperCase(),
         toRecipient: targetAgent.toUpperCase(),
         message: content.substring(0, 50000),
+        direction: 'inbound',
         priority: priority || 'normal',
         status: 'pending',
       }).returning();

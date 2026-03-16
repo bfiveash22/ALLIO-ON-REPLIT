@@ -2071,6 +2071,7 @@ export const openclawMessages = pgTable("openclaw_messages", {
   fromAgent: varchar("from_agent").notNull(),
   toRecipient: varchar("to_recipient").default("trustee"),
   message: text("message").notNull(),
+  direction: varchar("direction").default("outbound"),
   priority: varchar("priority").default("normal"),
   status: varchar("status").default("pending"),
   createdAt: timestamp("created_at").defaultNow(),
