@@ -594,6 +594,6 @@ The root cause - those amalgam fillings - has been poisoning your system for 60+
 
 ---
 
-*"Before you heal someone, ask him if he's willing to give up the things that make him sick." - Hippocrates*
+*"Before you heal someone, ask them if they're willing to give up the things that make them sick." - Hippocrates*
 
 **Annette, you've already committed. Now we heal.** 💪🙏

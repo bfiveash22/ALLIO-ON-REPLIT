@@ -26,7 +26,7 @@ function TitleSlide({ slide }: { slide: SlideData }) {
         Prepared by: FF Trustee {slide.content.trustee}
       </p>
       <p className="absolute bottom-12 text-gray-500 italic text-sm max-w-xl">
-        "Before you heal someone, ask him if he's willing to give up the things that make him sick"
+        "Before you heal someone, ask them if they're willing to give up the things that make them sick"
       </p>
     </div>
   );
@@ -126,7 +126,7 @@ function TrusteeThoughtsSlide({ slide }: { slide: SlideData }) {
         <p className="text-gray-300 text-base leading-relaxed whitespace-pre-wrap">{slide.content.notes}</p>
       </div>
       <p className="absolute bottom-12 text-gray-500 italic text-sm">
-        "Before you heal someone, ask him if he's willing to give up the things that make him sick"
+        "Before you heal someone, ask them if they're willing to give up the things that make them sick"
       </p>
     </div>
   );
@@ -665,7 +665,7 @@ function CommitmentSlide({ slide }: { slide: SlideData }) {
         ))}
       </div>
       <p className="absolute bottom-28 text-gray-500 italic text-sm">
-        "Before you heal someone, ask him if he's willing to give up the things that make him sick"
+        "Before you heal someone, ask them if they're willing to give up the things that make them sick"
       </p>
     </div>
   );

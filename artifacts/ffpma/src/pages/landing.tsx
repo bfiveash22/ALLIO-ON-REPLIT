@@ -643,7 +643,7 @@ export default function LandingPage() {
                 5 Stages of Wellness
               </h2>
               <p className="mx-auto max-w-2xl text-muted-foreground italic">
-                "Before you heal someone, ask him if he's willing to give up the things that make him sick."
+                "Before you heal someone, ask them if they're willing to give up the things that make them sick."
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-5">

@@ -275,7 +275,7 @@ export async function generateAnnetteGomerSlides(): Promise<ProtocolSlideResult>
   addTextBox(titleSlide, 'Complete Healing Protocol', 40, 140, 640, 40, 24, false, FFPMA_COLORS.cyan, 'Montserrat');
   addTextBox(titleSlide, 'FF PMA Model — The 5 Rs of Forgotten Formula', 40, 185, 640, 30, 14, false, FFPMA_COLORS.gold, 'Open Sans');
   addTextBox(titleSlide, 'Prepared by: FFPMA Medical Team\nDate: March 9, 2026\nPatient DOB: September 7, 1950 (Age 75)', 40, 240, 400, 60, 11, false, FFPMA_COLORS.lightGray, 'Open Sans');
-  addTextBox(titleSlide, 'FORGOTTEN FORMULA PMA\n"Before you heal someone, ask him if he\'s willing to give up the things that make him sick." — Hippocrates', 40, 330, 640, 40, 9, false, FFPMA_COLORS.subtleText, 'Open Sans');
+  addTextBox(titleSlide, 'FORGOTTEN FORMULA PMA\n"Before you heal someone, ask them if they\'re willing to give up the things that make them sick." — Hippocrates', 40, 330, 640, 40, 9, false, FFPMA_COLORS.subtleText, 'Open Sans');
 
   // ═══════════════════════════════════════════
   // SLIDE 2: Patient Overview
@@ -1001,7 +1001,7 @@ export async function generateKathrynSmithSlides(): Promise<ProtocolSlideResult>
   addTextBox(titleSlide, 'Complete Healing Protocol', 40, 140, 640, 40, 24, false, FFPMA_COLORS.cyan, 'Montserrat');
   addTextBox(titleSlide, 'FF PMA Model — Breast Cancer (Second Occurrence) — Root Cause Approach', 40, 185, 640, 30, 14, false, FFPMA_COLORS.gold, 'Open Sans');
   addTextBox(titleSlide, 'Prepared by: FFPMA Medical Team\nDate: March 13, 2026\nPatient DOB: ~1951 (Age 75)', 40, 240, 400, 60, 11, false, FFPMA_COLORS.lightGray, 'Open Sans');
-  addTextBox(titleSlide, 'FORGOTTEN FORMULA PMA\n"Before you heal someone, ask him if he\'s willing to give up the things that make him sick." — Hippocrates', 40, 330, 640, 40, 9, false, FFPMA_COLORS.subtleText, 'Open Sans');
+  addTextBox(titleSlide, 'FORGOTTEN FORMULA PMA\n"Before you heal someone, ask them if they\'re willing to give up the things that make them sick." — Hippocrates', 40, 330, 640, 40, 9, false, FFPMA_COLORS.subtleText, 'Open Sans');
 
   buildContentSlide(
     'PATIENT OVERVIEW',
