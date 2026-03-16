@@ -1,6 +1,6 @@
 # DR_FORMULA - FFPMA Medical Protocol Agent
 **Created:** 2026-03-09  
-**Based On:** Trustee's Baker Intake Methodology + The 5 Rs of Forgotten Formula
+**Based On:** FF PMA Trustee Intake Model + The 5 Rs of Forgotten Formula
 
 ---
 

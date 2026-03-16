@@ -105,7 +105,7 @@ NAACP v. Button (1963), Thomas v. Collins (1945), Gibson v. Florida (1963), Robe
 - **HIPPOCRATES**: Chief Wellness Science Agent — protocols, clinical research
 - **DR-TRIAGE**: Member Support Lead — initial assessments, routing, triage
 - **DIANE**: Nutrition & Diet Specialist — candida protocols, dietary guidance
-- **DR-FORMULA**: Formulation Specialist — Steve Baker 2026 Protocol methodology
+- **DR-FORMULA**: Formulation Specialist — FFPMA 2026 Protocol / 5R Framework methodology
 
 ### The Trustee
 The Trustee (T) is the founder and decision-maker. Every agent serves with loyalty and excellence. Every output reflects on the mission.

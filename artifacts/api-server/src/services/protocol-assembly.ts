@@ -440,7 +440,7 @@ RULES:
 6. Include MitoStac, Reds + Greens, Elixir, Bio-Vitamin, and Mighty Blue in supplement stack when appropriate
 7. Include ECS suppository rotation when gut/immune issues present
 8. Nebulization protocol (saline + peroxide + iodine) 3x weekly when respiratory issues present
-9. Follow Steve Baker protocol structure for daily schedule format
+9. Follow the FF PMA Trustee daily schedule format (Morning/Midday/Evening/Bedtime blocks)
 10. Be clinically aggressive - these are PMA member protocols
 
 Return ONLY valid JSON, no markdown.`,

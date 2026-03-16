@@ -193,6 +193,77 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
     }
   });
 
+  app.post('/api/protocol-assembly/seed/kathryn-smith', requireAuth, requireRole('admin', 'trustee'), async (_req: Request, res: Response) => {
+    try {
+      const { buildKathrynSmithProfile, buildKathrynSmithProtocol } = await import('../services/kathryn-smith-protocol');
+      const profile = buildKathrynSmithProfile();
+      const protocol = buildKathrynSmithProtocol();
+      const protocolId = await saveProtocol(profile, protocol, 'manual_seed', 'ALLIO-DR_FORMULA');
+      let citations;
+      try {
+        citations = await fetchProtocolCitations(protocol, profile);
+      } catch (e) {
+        console.warn('[Protocol Assembly] Citation fetch failed during seed:', e);
+      }
+      res.json({
+        id: protocolId,
+        patientName: protocol.patientName,
+        status: 'draft',
+        sections: {
+          rootCauses: protocol.rootCauseAnalysis?.length || 0,
+          phases: protocol.phases?.length || 0,
+          injectablePeptides: protocol.injectablePeptides?.length || 0,
+          oralPeptides: protocol.oralPeptides?.length || 0,
+          bioregulators: protocol.bioregulators?.length || 0,
+          supplements: protocol.supplements?.length || 0,
+          ivTherapies: protocol.ivTherapies?.length || 0,
+          imTherapies: protocol.imTherapies?.length || 0,
+          detoxProtocols: protocol.detoxProtocols?.length || 0,
+          parasiteProtocols: protocol.parasiteAntiviralProtocols?.length || 0,
+          lifestyleRecs: protocol.lifestyleRecommendations?.length || 0,
+          dietaryGuidelines: protocol.dietaryGuidelines?.length || 0,
+          followUps: protocol.followUpPlan?.length || 0,
+          labsRequired: protocol.labsRequired?.length || 0,
+        },
+        citationCount: citations?.length || 0,
+        citations,
+        message: 'Kathryn Smith 90-day protocol seeded successfully via FF PMA 5R Framework'
+      });
+    } catch (error: any) {
+      console.error('[Protocol Assembly] Kathryn Smith seed error:', error);
+      res.status(500).json({ error: 'Failed to seed Kathryn Smith protocol' });
+    }
+  });
+
+  app.get('/api/protocol-assembly/protocols/:id/presentation', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+      const record = await getProtocol(id);
+      if (!record) return res.status(404).json({ error: 'Protocol not found' });
+      const protocol = record.protocol as any;
+      const profile = record.patientProfile as any;
+      let citations;
+      try {
+        citations = await fetchProtocolCitations(protocol, profile);
+      } catch (e) {
+        console.warn('[Protocol Assembly] Citation fetch for presentation:', e);
+      }
+      res.json({
+        protocolId: id,
+        patientName: record.patientName,
+        profile,
+        protocol,
+        citations: citations || [],
+        generatedDate: protocol.generatedDate,
+        trusteeNotes: profile.practitionerNotes || '',
+      });
+    } catch (error: any) {
+      console.error('[Protocol Assembly] Presentation data error:', error);
+      res.status(500).json({ error: 'Failed to get presentation data' });
+    }
+  });
+
   app.post('/api/protocol-assembly/protocols/:id/citations', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);

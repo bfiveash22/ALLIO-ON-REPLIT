@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/protocol-presentation/"
+title = "Protocol Presentation System"
+version = "1.0.0"
+id = "artifacts/protocol-presentation"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 19237
+name = "web"
+paths = ["/protocol-presentation/"]
+
+[services.development]
+run = "pnpm --filter @workspace/protocol-presentation run dev"
+
+[services.env]
+PORT = "19237"
+BASE_PATH = "/protocol-presentation/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/protocol-presentation", "run", "build"]
+publicDir = "artifacts/protocol-presentation/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"

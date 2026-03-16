@@ -1,6 +1,6 @@
 # Patient Intake Form - Custom Build Specification
 **For:** Antigravity  
-**Project:** FFPMA Patient Intake System (Steve Baker Model)  
+**Project:** FFPMA Patient Intake System (FF PMA Trustee Model)  
 **Deadline:** ASAP (after ML APIs deployment complete)  
 **Platform:** ffpma.com (VPS deployment, Linux/Nginx)
 
@@ -8,7 +8,7 @@
 
 ## PROJECT OVERVIEW
 
-Build a comprehensive patient intake form that automates the Steve Baker Model 1-hour life timeline collection process. The form will reduce Trustee's intake time from 60 minutes to 15 minutes by having patients fill out their complete health history BEFORE the appointment.
+Build a comprehensive patient intake form that automates the FF PMA Trustee Model 1-hour life timeline collection process. The form will reduce Trustee's intake time from 60 minutes to 15 minutes by having patients fill out their complete health history BEFORE the appointment.
 
 **Goal:** Save 45 minutes per patient = 4x patient capacity
 

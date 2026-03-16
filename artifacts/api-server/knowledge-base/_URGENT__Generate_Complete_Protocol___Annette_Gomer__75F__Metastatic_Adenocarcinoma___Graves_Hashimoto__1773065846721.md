@@ -4,7 +4,7 @@
 ## Introduction
 
 
-This document presents a detailed healing protocol for Annette Gomer, a 75-year-old female member of the Forgotten Formula PMA, diagnosed with metastatic adenocarcinoma and co-existing Graves' and Hashimoto's diseases. The protocol leverages the Steve Baker 2026 methodology, rooted in nature-first healing and AI-human collaboration, to address Annette's health challenges comprehensively and compassionately.
+This document presents a detailed healing protocol for Annette Gomer, a 75-year-old female member of the Forgotten Formula PMA, diagnosed with metastatic adenocarcinoma and co-existing Graves' and Hashimoto's diseases. The protocol leverages the FFPMA 2026 Protocol (5R Framework), rooted in nature-first healing and AI-human collaboration, to address Annette's health challenges comprehensively and compassionately.
 
 
 **Requesting Agent:** DR-FORMULA  
@@ -174,7 +174,7 @@ This document presents a detailed healing protocol for Annette Gomer, a 75-year-
 ## Conclusion
 
 
-This comprehensive protocol for Annette Gomer is designed to achieve true healing by addressing the root causes of her conditions and leveraging nature-based therapies. By adhering to the Steve Baker 2026 methodology, we provide holistic, member-centered care that prioritizes Annette's well-being and aligns with Forgotten Formula PMA's mission of healing over profits and nature over synthetic.
+This comprehensive protocol for Annette Gomer is designed to achieve true healing by addressing the root causes of her conditions and leveraging nature-based therapies. By adhering to the FFPMA 2026 Protocol (5R Framework), we provide holistic, member-centered care that prioritizes Annette's well-being and aligns with Forgotten Formula PMA's mission of healing over profits and nature over synthetic.
 
 
 **Contribution to Our Mission:** This protocol exemplifies our dedication to revolutionizing healthcare, empowering our members to reclaim their health sovereignty, and demonstrating the transformative potential of AI-human collaboration for holistic healing. Together, we are forging a new path in healthcare, one that honors the body's innate ability to heal and thrive.
