@@ -7,6 +7,7 @@ import {
   listFolderContents, getUncachableGoogleDriveClient,
   uploadMarketingAssets, uploadLegalDocuments,
   uploadBloodAnalysisFile, getBloodAnalysisUploads,
+  uploadSkinAnalysisFile,
   createBakerFilesFolder, uploadToBakerFiles,
   uploadToAgentLibrary, listAgentLibraryFiles, deleteAgentLibraryFile,
   createPatientProtocolsFolder,
@@ -161,6 +162,18 @@ export function registerDriveRoutes(app: Express): void {
   app.get("/api/blood-analysis/uploads", requireRole("admin"), async (req: Request, res: Response) => {
     try { res.json({ success: true, uploads: await getBloodAnalysisUploads() }); }
     catch (error: any) { res.status(500).json({ success: false, error: error.message, uploads: [] }); }
+  });
+
+  app.post("/api/skin-analysis/upload", requireRole("admin", "doctor"), upload.single("file"), async (req: Request, res: Response) => {
+    try {
+      if (!req.file) return res.status(400).json({ success: false, error: "No file uploaded" });
+      const { patientId } = req.body;
+      const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedMimeTypes.includes(req.file.mimetype)) return res.status(400).json({ success: false, error: "Invalid file type. Please upload an image (JPEG, PNG, GIF, WebP)." });
+      if (req.file.size > 50 * 1024 * 1024) return res.status(400).json({ success: false, error: "File too large. Maximum size is 50MB." });
+      const result = await uploadSkinAnalysisFile(req.file.buffer, req.file.originalname, req.file.mimetype, patientId);
+      res.json(result);
+    } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
   });
 
   app.post("/api/drive/create-baker-folder", requireRole("admin"), async (req: Request, res: Response) => {

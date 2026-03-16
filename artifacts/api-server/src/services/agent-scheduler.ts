@@ -1107,16 +1107,14 @@ export async function scheduleWeeklyMedicalEnhancement(): Promise<void> {
       });
     }
 
-    // 4. Skin Cancer Detection (DISABLED PER USER REQUEST)
-    /*
+    // 4. Skin Cancer Detection Auto-Enhancement
     await storage.createAgentTask({
       agentId: 'DR-TRIAGE',
       division: 'support',
       title: `Weekly Skin Cancer AI Auto-Enhancement (${now})`,
-      description: `Audit the recent outputs of the Melanoma/Skin anomaly detection model. Check for the latest medical journals on dermatological imaging features to enhance the diagnostic confidence threshold.`,
+      description: `Audit the recent outputs of the Melanoma/Skin anomaly detection model (VRJBro/skin-cancer-detection). Check for the latest medical journals on dermatological imaging features to enhance the diagnostic confidence threshold. Review ABCDE criteria annotations for accuracy.`,
       priority: 3,
     });
-    */
 
     log('[SENTINEL] Medical auto-enhancement tasks successfully deployed to Science and Support agents.', 'agent-scheduler');
   } catch (error: any) {

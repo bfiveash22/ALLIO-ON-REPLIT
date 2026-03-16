@@ -4369,7 +4369,7 @@ export default function TrusteeDashboard() {
                         {[
                           { name: "Live Blood Analysis", model: "ALLIO Vision", status: "Active" },
                           { name: "X-Ray Analysis", model: "HuggingFace", status: "Active" },
-                          { name: "Skin Analysis", model: "HuggingFace", status: "Planned" }
+                          { name: "Skin Analysis", model: "HuggingFace", status: "Active" }
                         ].map((tool) => (
                           <div key={tool.name} className="flex items-center justify-between p-2 rounded-lg bg-white/5">
                             <span className="text-sm">{tool.name}</span>

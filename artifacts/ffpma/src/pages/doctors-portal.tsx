@@ -64,6 +64,7 @@ import { DoctorScheduling } from "@/components/DoctorScheduling";
 import { DoctorPatientMessaging } from "@/components/DoctorPatientMessaging";
 import { EnrollMemberModal } from "@/components/EnrollMemberModal";
 import { BloodworkLabs } from "@/components/BloodworkLabs";
+import { SkinAnalysisUpload } from "@/components/SkinAnalysisUpload";
 
 interface DoctorReferralInfo {
   doctorCode: string | null;
@@ -1127,24 +1128,7 @@ export default function DoctorsPortal() {
                   />
 
                   <div className="mt-4">
-                    <div className="p-4 rounded-lg bg-gradient-to-r from-rose-500/10 to-pink-500/10 border border-rose-500/20">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-10 h-10 rounded-lg bg-rose-500/20 flex items-center justify-center">
-                            <Heart className="w-5 h-5 text-rose-400" />
-                          </div>
-                          <div>
-                            <p className="font-medium">Skin Condition Analysis</p>
-                            <p className="text-xs text-white/50">Dermatological patterns</p>
-                          </div>
-                        </div>
-                        <Badge className="bg-amber-500/20 text-amber-300">Coming Soon</Badge>
-                      </div>
-                      <Button className="w-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-300" disabled>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload Skin Image
-                      </Button>
-                    </div>
+                    <SkinAnalysisUpload />
                   </div>
                 </Card>
               </div>

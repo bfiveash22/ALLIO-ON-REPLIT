@@ -764,6 +764,74 @@ export async function uploadXrayFile(
   }
 }
 
+export async function uploadSkinAnalysisFile(
+  buffer: Buffer,
+  fileName: string,
+  mimeType: string,
+  patientId?: string
+): Promise<{
+  success: boolean;
+  fileId?: string;
+  webViewLink?: string;
+  thumbnailLink?: string;
+  error?: string;
+}> {
+  try {
+    const drive = await getUncachableGoogleDriveClient();
+
+    let allioFolder = await findAllioFolder();
+    if (!allioFolder) {
+      allioFolder = await createAllioFolder();
+    }
+
+    await setupAgentFolders(allioFolder.id);
+
+    const memberContentId = await findFolderByName(allioFolder.id, 'Member Content');
+    if (!memberContentId) {
+      return { success: false, error: 'Could not find Member Content folder' };
+    }
+
+    let skinAnalysisFolderId = await findFolderByName(memberContentId, 'Skin Analysis Uploads');
+    if (!skinAnalysisFolderId) {
+      const newFolder = await createSubfolder(memberContentId, 'Skin Analysis Uploads');
+      skinAnalysisFolderId = newFolder.id;
+    }
+
+    const timestamp = new Date().toISOString().slice(0, 10);
+    const sanitizedFileName = `${timestamp}_${patientId || 'unknown'}_skin_${fileName}`;
+
+    const { Readable } = await import('stream');
+    const bufferStream = Readable.from(buffer);
+
+    const fileMetadata = {
+      name: sanitizedFileName,
+      parents: [skinAnalysisFolderId],
+      description: `Skin analysis upload for patient ${patientId || 'unknown'}`
+    };
+
+    const media = {
+      mimeType: mimeType,
+      body: bufferStream
+    };
+
+    const file = await drive.files.create({
+      requestBody: fileMetadata,
+      media: media,
+      fields: 'id, name, webViewLink, thumbnailLink'
+    });
+
+    return {
+      success: true,
+      fileId: file.data.id || undefined,
+      webViewLink: file.data.webViewLink || undefined,
+      thumbnailLink: file.data.thumbnailLink || undefined
+    };
+  } catch (error: any) {
+    console.error('Error uploading skin analysis file:', error);
+    return { success: false, error: error.message || 'Upload failed' };
+  }
+}
+
 export async function createBakerFilesFolder(): Promise<{
   success: boolean;
   folderId?: string;

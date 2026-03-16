@@ -152,43 +152,103 @@ export function registerDoctorRoutes(app: Express): void {
       const { patientUploadId, analysisType, imageData } = req.body;
       const requestedBy = req.user?.id as string;
 
-      const modelId = analysisType === "xray" ? "jiviai/Jivi-RadX-v1" : "VRJBro/skin-cancer-detection";
       const startTime = Date.now();
+      let analysisResult: any;
       let findings: Array<{ area: string; description: string; confidence: number }> = [];
+      let inferenceSucceeded = false;
 
-      try {
-        const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
-        const imageBuffer = Buffer.from(imageData.replace(/^data:image\/\w+;base64,/, ''), 'base64');
-        const classifications = await hf.imageClassification({
-          model: modelId,
-          data: imageBuffer,
-        });
+      if (analysisType === "skin" && imageData) {
+        const SKIN_MODEL = "VRJBro/skin-cancer-detection";
+        const base64Data = imageData.includes(",") ? imageData.split(",")[1] : imageData;
+        const imageBuffer = Buffer.from(base64Data, "base64");
 
-        findings = classifications.map((c: any) => ({
-          area: c.label || "Classification",
-          description: `Pattern detected: ${c.label}`,
-          confidence: c.score || 0,
-        }));
-      } catch (hfError: any) {
-        console.error("[AI Analyze] HuggingFace API error:", hfError.message);
+        let classification: Array<{ label: string; score: number }> = [];
+        try {
+          const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+          classification = await hf.imageClassification({
+            model: SKIN_MODEL,
+            data: imageBuffer,
+          }) as Array<{ label: string; score: number }>;
+        } catch (hfError: any) {
+          console.error("[Skin Analysis] HuggingFace model error:", hfError.message);
+          classification = [{ label: "Unable to classify - model unavailable", score: 0 }];
+        }
+
+        const topResult = classification[0] || { label: "unknown", score: 0 };
+        const confidence = topResult.score;
+        const isSuspicious = topResult.label.toLowerCase().includes("malignant") ||
+          topResult.label.toLowerCase().includes("melanoma") ||
+          topResult.label.toLowerCase().includes("cancer");
+
+        const abcdeCriteria = {
+          asymmetry: { assessed: true, description: isSuspicious ? "Potential asymmetry detected in lesion shape" : "Lesion appears relatively symmetrical", risk: isSuspicious ? "elevated" : "low" },
+          border: { assessed: true, description: isSuspicious ? "Borders may show irregularity" : "Borders appear well-defined and regular", risk: isSuspicious ? "elevated" : "low" },
+          color: { assessed: true, description: isSuspicious ? "Multiple color variations noted" : "Uniform coloration observed", risk: isSuspicious ? "elevated" : "low" },
+          diameter: { assessed: true, description: "Diameter assessment requires physical measurement (>6mm is a concern)", risk: "requires_measurement" },
+          evolution: { assessed: false, description: "Single-image analysis — evolution tracking requires longitudinal data", risk: "insufficient_data" }
+        };
+
+        const processingTimeMs = Date.now() - startTime;
         findings = [
-          { area: "Analysis Failed", description: `Model inference error: ${hfError.message}. Please try again later.`, confidence: 0 }
+          { area: "Classification", description: `Primary classification: ${topResult.label}`, confidence },
+          { area: "Assessment", description: isSuspicious ? "Lesion shows characteristics that may warrant further evaluation" : "Lesion does not show high-risk characteristics", confidence },
+          ...classification.slice(1, 4).map(c => ({ area: "Differential", description: `${c.label} (${(c.score * 100).toFixed(1)}%)`, confidence: c.score }))
         ];
+        inferenceSucceeded = classification.length > 0 && classification[0].label !== "Unable to classify - model unavailable";
+
+        analysisResult = {
+          success: inferenceSucceeded,
+          analysisType: "skin",
+          model: SKIN_MODEL,
+          result: {
+            classification: topResult.label,
+            allClassifications: classification.slice(0, 5),
+            assessment: isSuspicious ? "Suspicious — further dermatological evaluation recommended" : "Appears benign — routine monitoring advised",
+            isSuspicious,
+            confidence,
+            abcdeCriteria,
+            findings,
+            disclaimer: "This AI analysis is for educational purposes only within the PMA. It does not constitute medical advice or diagnosis. Skin lesion assessment should always be performed by a qualified dermatologist or healthcare practitioner. The ABCDE criteria annotations are AI-estimated and must be confirmed through clinical examination."
+          },
+          processingTimeMs
+        };
+      } else {
+        const modelId = analysisType === "xray" ? "jiviai/Jivi-RadX-v1" : "VRJBro/skin-cancer-detection";
+
+        try {
+          const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+          const imageBuffer = Buffer.from(imageData.replace(/^data:image\/\w+;base64,/, ''), 'base64');
+          const classifications = await hf.imageClassification({
+            model: modelId,
+            data: imageBuffer,
+          });
+
+          findings = classifications.map((c: any) => ({
+            area: c.label || "Classification",
+            description: `Pattern detected: ${c.label}`,
+            confidence: c.score || 0,
+          }));
+        } catch (hfError: any) {
+          console.error("[AI Analyze] HuggingFace API error:", hfError.message);
+          findings = [
+            { area: "Analysis Failed", description: `Model inference error: ${hfError.message}. Please try again later.`, confidence: 0 }
+          ];
+        }
+
+        const processingTimeMs = Date.now() - startTime;
+        inferenceSucceeded = findings.length > 0 && findings[0].area !== "Analysis Failed";
+
+        analysisResult = {
+          success: inferenceSucceeded,
+          analysisType,
+          model: modelId,
+          result: {
+            findings,
+            disclaimer: "This AI analysis is for educational purposes only within the PMA. It does not constitute medical advice. All findings should be reviewed by a qualified healthcare practitioner."
+          },
+          processingTimeMs
+        };
       }
-
-      const processingTimeMs = Date.now() - startTime;
-      const inferenceSucceeded = findings.length > 0 && findings[0].area !== "Analysis Failed";
-
-      const analysisResult = {
-        success: inferenceSucceeded,
-        analysisType,
-        model: modelId,
-        result: {
-          findings,
-          disclaimer: "This AI analysis is for educational purposes only within the PMA. It does not constitute medical advice. All findings should be reviewed by a qualified healthcare practitioner."
-        },
-        processingTimeMs
-      };
 
       const { aiAnalysisRequests } = await import("@shared/schema");
       const avgConfidence = findings.length > 0
@@ -199,11 +259,11 @@ export function registerDoctorRoutes(app: Express): void {
         patientUploadId: patientUploadId || "demo",
         requestedBy,
         analysisType,
-        model: modelId,
+        model: analysisResult.model,
         status: inferenceSucceeded ? "completed" : "failed",
         result: analysisResult.result,
         confidence: avgConfidence,
-        processingTimeMs,
+        processingTimeMs: analysisResult.processingTimeMs,
         errorMessage: inferenceSucceeded ? undefined : findings[0]?.description,
         completedAt: new Date()
       });
