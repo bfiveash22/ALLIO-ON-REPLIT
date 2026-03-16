@@ -1,8 +1,8 @@
 import type { Express, Request, Response } from "express";
 import { requireAuth, requireRole } from "../working-auth";
 import { db } from "../db";
-import { eq } from "drizzle-orm";
-import { doctorOnboarding, memberEnrollment, doctorAppointments, doctorPatientMessages } from "@shared/schema";
+import { eq, inArray } from "drizzle-orm";
+import { doctorOnboarding, memberEnrollment, doctorAppointments, users } from "@shared/schema";
 import { signNowService } from "../services/signnow";
 import { wordPressAuthService } from "../services/wordpress-auth";
 import { triggerWelcomeOnSignup } from "../services/enrollment-automation";
@@ -243,12 +243,35 @@ export function registerOnboardingRoutes(app: Express): void {
         where: (d, { eq, and }) => and(eq(d.email, userEmail!), eq(d.status, 'completed'))
       });
 
+      const resolveUserIds = async (enrollments: any[]) => {
+        const emails = enrollments.map(m => m.email).filter(Boolean);
+        const matchedUsers = emails.length > 0
+          ? await db.select({ id: users.id, email: users.email }).from(users).where(
+              emails.length === 1 ? eq(users.email, emails[0]) : inArray(users.email, emails)
+            )
+          : [];
+        const emailToUserId = new Map(matchedUsers.map(u => [u.email, u.id]));
+        return enrollments.map(m => ({
+          id: emailToUserId.get(m.email) || m.id,
+          enrollmentId: m.id,
+          name: m.fullName,
+          email: m.email,
+          phone: m.phone,
+          status: m.status,
+          enrolledAt: m.createdAt,
+          documentSigned: !!m.documentSignedAt,
+          paymentComplete: !!m.paymentCompletedAt,
+          doctorCode: m.doctorCode,
+        }));
+      };
+
       if (!doctor) {
         const profile = await db.query.memberProfiles.findFirst({ where: (p, { eq }) => eq(p.userId, userId || '') });
         if (profile?.role === 'admin') {
           const allEnrollments = await db.query.memberEnrollment.findMany({ orderBy: (m, { desc }) => desc(m.createdAt), limit: 50 });
+          const membersWithUserIds = await resolveUserIds(allEnrollments);
           return res.json({
-            members: allEnrollments.map(m => ({ id: m.id, name: m.fullName, email: m.email, phone: m.phone, status: m.status, enrolledAt: m.createdAt, documentSigned: !!m.documentSignedAt, paymentComplete: !!m.paymentCompletedAt, doctorCode: m.doctorCode })),
+            members: membersWithUserIds,
             total: allEnrollments.length, isAdmin: true
           });
         }
@@ -256,8 +279,9 @@ export function registerOnboardingRoutes(app: Express): void {
       }
 
       const enrolledMembers = await db.query.memberEnrollment.findMany({ where: (m, { eq }) => eq(m.doctorCode, doctor.doctorCode || ''), orderBy: (m, { desc }) => desc(m.createdAt) });
+      const membersWithUserIds = await resolveUserIds(enrolledMembers);
       res.json({
-        members: enrolledMembers.map(m => ({ id: m.id, name: m.fullName, email: m.email, phone: m.phone, status: m.status, enrolledAt: m.createdAt, documentSigned: !!m.documentSignedAt, paymentComplete: !!m.paymentCompletedAt })),
+        members: membersWithUserIds,
         total: enrolledMembers.length
       });
     } catch (error: any) { res.status(500).json({ error: error.message }); }
@@ -280,31 +304,6 @@ export function registerOnboardingRoutes(app: Express): void {
       if (!patientId || !appointmentDate) return res.status(400).json({ error: "Missing required fields" });
       const newAppointment = await db.insert(doctorAppointments).values({ doctorId: userId, patientId, appointmentDate: new Date(appointmentDate), durationMinutes: durationMinutes || 60, appointmentType: appointmentType || "consultation", notes }).returning();
       res.json(newAppointment[0]);
-    } catch (error: any) { res.status(500).json({ error: error.message }); }
-  });
-
-  app.get("/api/doctor/messages/:patientId", requireAuth, async (req: Request, res: Response) => {
-    try {
-      const userId = (req.user as any)?.id;
-      if (!userId) return res.status(401).json({ error: "Not authenticated" });
-      const { patientId } = req.params;
-      const messages = await db.query.doctorPatientMessages.findMany({
-        where: (m, { and, or, eq }) => or(and(eq(m.senderId, userId), eq(m.recipientId, patientId)), and(eq(m.senderId, patientId), eq(m.recipientId, userId))),
-        orderBy: (m, { asc }) => asc(m.createdAt)
-      });
-      res.json(messages.map(m => ({ ...m, messageText: m.content })));
-    } catch (error: any) { res.status(500).json({ error: error.message }); }
-  });
-
-  app.post("/api/doctor/messages/:patientId", requireAuth, async (req: Request, res: Response) => {
-    try {
-      const userId = (req.user as any)?.id;
-      if (!userId) return res.status(401).json({ error: "Not authenticated" });
-      const { patientId } = req.params;
-      const { messageText } = req.body;
-      if (!messageText) return res.status(400).json({ error: "Message text required" });
-      const newMessage = await db.insert(doctorPatientMessages).values({ conversationId: `${userId}-${patientId}`, senderId: userId, senderRole: 'doctor', recipientId: patientId, recipientRole: 'patient', content: messageText }).returning();
-      res.json({ ...newMessage[0], messageText: newMessage[0].content });
     } catch (error: any) { res.status(500).json({ error: error.message }); }
   });
 

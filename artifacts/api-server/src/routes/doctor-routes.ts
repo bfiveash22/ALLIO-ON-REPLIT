@@ -18,9 +18,16 @@ async function isDoctorsMember(doctorUserId: string, patientId: string): Promise
     where: (d, { eq: e, and: a }) => a(e(d.email, doctorUser.email!), e(d.status, 'completed'))
   });
   if (!doctor?.doctorCode) return false;
-  const enrollment = await db.query.memberEnrollment.findFirst({
+  const patientUser = await storage.getUser(patientId);
+  const patientEmail = patientUser?.email;
+  let enrollment = await db.query.memberEnrollment.findFirst({
     where: (m, { eq: e, and: a }) => a(e(m.id, patientId), e(m.doctorCode, doctor.doctorCode!))
   });
+  if (!enrollment && patientEmail) {
+    enrollment = await db.query.memberEnrollment.findFirst({
+      where: (m, { eq: e, and: a }) => a(e(m.email, patientEmail), e(m.doctorCode, doctor.doctorCode!))
+    });
+  }
   return !!enrollment;
 }
 
