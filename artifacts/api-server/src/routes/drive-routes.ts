@@ -10,11 +10,11 @@ import {
   createBakerFilesFolder, uploadToBakerFiles,
   uploadToAgentLibrary, listAgentLibraryFiles, deleteAgentLibraryFile
 } from "../services/drive";
+import { ingestFileToLibrary, backfillAgentLibrary, getFileIndexingStatus, deleteIndexedFile } from "../services/library-ingestion";
 
 const MAX_LIBRARY_FILE_SIZE = 50 * 1024 * 1024;
 const ALLOWED_LIBRARY_MIMETYPES = [
   'application/pdf',
-  'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/epub+zip',
   'text/plain',
@@ -202,6 +202,11 @@ export function registerDriveRoutes(app: Express): void {
         const result = await uploadToAgentLibrary(agentName, file.buffer, file.originalname, file.mimetype);
         if (result.success) {
           results.push(result);
+          if (result.fileId) {
+            ingestFileToLibrary(agentName, result.fileId, file.originalname, file.mimetype, file.buffer)
+              .then(r => console.log(`[Library Ingestion] ${file.originalname}: ${r.chunksCreated} chunks`))
+              .catch(e => console.error(`[Library Ingestion] ${file.originalname} failed:`, e.message));
+          }
         } else {
           errors.push(`${file.originalname}: ${result.error || 'Upload failed'}`);
         }
@@ -214,7 +219,16 @@ export function registerDriveRoutes(app: Express): void {
   app.get("/api/agent-library/:agentName", requireRole("admin"), async (req: Request, res: Response) => {
     try {
       const files = await listAgentLibraryFiles(req.params.agentName);
-      res.json({ success: true, files });
+      const indexingStatuses = await getFileIndexingStatus(req.params.agentName);
+      const statusMap = new Map(indexingStatuses.map(s => [s.driveFileId, s]));
+      const enrichedFiles = files.map(f => ({
+        ...f,
+        indexingStatus: statusMap.get(f.id)?.indexingStatus || 'pending',
+        totalChunks: statusMap.get(f.id)?.totalChunks || 0,
+        indexedAt: statusMap.get(f.id)?.indexedAt || null,
+        indexingError: statusMap.get(f.id)?.errorMessage || null,
+      }));
+      res.json({ success: true, files: enrichedFiles });
     } catch (error: any) { res.status(500).json({ success: false, error: error.message, files: [] }); }
   });
 
@@ -225,7 +239,16 @@ export function registerDriveRoutes(app: Express): void {
       if (!result.success) {
         return res.status(403).json(result);
       }
+      deleteIndexedFile(fileId).catch(e => console.error(`[Library] Failed to clean up indexed data for ${fileId}:`, e.message));
       res.json(result);
+    } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
+  });
+
+  app.post("/api/agent-library/:agentName/backfill", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { agentName } = req.params;
+      const result = await backfillAgentLibrary(agentName);
+      res.json({ success: true, ...result });
     } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
   });
 }

@@ -106,6 +106,7 @@ import {
   Printer,
   Share,
   Rocket,
+  XCircle,
 } from "lucide-react";
 
 interface EmailSummary {
@@ -1405,7 +1406,7 @@ export default function TrusteeDashboard() {
               toast({ title: "Some uploads failed", description: data.errors.join("; "), variant: "destructive" });
             }
             if (data.uploaded && data.uploaded.length > 0) {
-              toast({ title: "Upload Complete", description: `${data.uploaded.length} file(s) uploaded to ${libraryAgent}'s library.` });
+              toast({ title: "Upload Complete", description: `${data.uploaded.length} file(s) uploaded to ${libraryAgent}'s library. Indexing in progress...` });
             }
             refetchLibraryFiles();
             resolve();
@@ -1436,6 +1437,20 @@ export default function TrusteeDashboard() {
     },
     onError: (error: any) => {
       toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const backfillLibraryMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", `/api/agent-library/${encodeURIComponent(libraryAgent)}/backfill`, {});
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      refetchLibraryFiles();
+      toast({ title: "Backfill Complete", description: `Processed ${data.processed} file(s), skipped ${data.skipped}.${data.errors?.length ? ` Errors: ${data.errors.length}` : ''}` });
+    },
+    onError: (error: any) => {
+      toast({ title: "Backfill Failed", description: error.message, variant: "destructive" });
     }
   });
 
@@ -2354,7 +2369,7 @@ export default function TrusteeDashboard() {
                               const input = document.createElement("input");
                               input.type = "file";
                               input.multiple = true;
-                              input.accept = ".pdf,.doc,.docx,.epub,.txt,.jpg,.jpeg,.png,.gif,.webp,.svg";
+                              input.accept = ".pdf,.docx,.epub,.txt,.jpg,.jpeg,.png,.gif,.webp,.svg";
                               input.onchange = () => handleLibraryUpload(input.files);
                               input.click();
                             }}
@@ -2369,14 +2384,14 @@ export default function TrusteeDashboard() {
                               <>
                                 <Upload className="w-8 h-8 mx-auto mb-2 text-white/30" />
                                 <p className="text-sm text-white/60">Drag & drop files here, or click to browse</p>
-                                <p className="text-xs text-white/30 mt-1">PDF, DOCX, EPUB, TXT, Images — Max 50MB per file</p>
+                                <p className="text-xs text-white/30 mt-1">PDF, DOCX, EPUB, TXT, Images — Max 50MB per file (no legacy .doc)</p>
                               </>
                             )}
                           </div>
 
                           {libraryFiles?.files && libraryFiles.files.length > 0 ? (
                             <div className="space-y-2 max-h-64 overflow-y-auto">
-                              {libraryFiles.files.map((file) => (
+                              {libraryFiles.files.map((file: any) => (
                                 <div
                                   key={file.id}
                                   className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5 group"
@@ -2391,9 +2406,29 @@ export default function TrusteeDashboard() {
                                     </div>
                                     <div className="min-w-0 flex-1">
                                       <p className="text-sm font-medium truncate text-white/90">{file.name}</p>
-                                      <p className="text-xs text-white/40">
+                                      <p className="text-xs text-white/40 flex items-center gap-1">
                                         {file.size ? `${(parseInt(file.size) / 1024).toFixed(1)} KB` : ""}
                                         {file.createdTime ? ` • ${new Date(file.createdTime).toLocaleDateString()}` : ""}
+                                        {file.indexingStatus === 'indexed' && (
+                                          <span className="inline-flex items-center gap-0.5 text-emerald-400" title={`${file.totalChunks} chunks indexed`}>
+                                            <CheckCircle2 className="w-3 h-3" /> Indexed ({file.totalChunks} chunks)
+                                          </span>
+                                        )}
+                                        {file.indexingStatus === 'processing' && (
+                                          <span className="inline-flex items-center gap-0.5 text-amber-400">
+                                            <Loader2 className="w-3 h-3 animate-spin" /> Indexing...
+                                          </span>
+                                        )}
+                                        {file.indexingStatus === 'failed' && (
+                                          <span className="inline-flex items-center gap-0.5 text-red-400" title={file.indexingError || 'Indexing failed'}>
+                                            <XCircle className="w-3 h-3" /> Failed
+                                          </span>
+                                        )}
+                                        {file.indexingStatus === 'pending' && !file.mimeType.includes("image") && (
+                                          <span className="inline-flex items-center gap-0.5 text-white/30">
+                                            <Clock className="w-3 h-3" /> Not indexed
+                                          </span>
+                                        )}
                                       </p>
                                     </div>
                                   </div>
@@ -2420,9 +2455,26 @@ export default function TrusteeDashboard() {
                                   </div>
                                 </div>
                               ))}
-                              <p className="text-xs text-white/30 text-center pt-1">
-                                {libraryFiles.files.length} file(s) in {libraryAgent}'s library
-                              </p>
+                              <div className="flex items-center justify-between pt-1">
+                                <p className="text-xs text-white/30">
+                                  {libraryFiles.files.length} file(s) in {libraryAgent}'s library
+                                </p>
+                                {libraryFiles.files.some((f: any) => f.indexingStatus === 'pending' && !f.mimeType.includes('image')) && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-6 text-xs px-2 border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/20"
+                                    onClick={() => backfillLibraryMutation.mutate()}
+                                    disabled={backfillLibraryMutation.isPending}
+                                  >
+                                    {backfillLibraryMutation.isPending ? (
+                                      <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Indexing...</>
+                                    ) : (
+                                      "Index All Files"
+                                    )}
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           ) : (
                             <div className="p-4 text-center text-white/50">

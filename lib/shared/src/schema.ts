@@ -2316,3 +2316,36 @@ export const vitalityAssessments = pgTable("vitality_assessments", {
 export const insertVitalityAssessmentSchema = createInsertSchema(vitalityAssessments).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertVitalityAssessment = z.infer<typeof insertVitalityAssessmentSchema>;
 export type VitalityAssessment = typeof vitalityAssessments.$inferSelect;
+
+export const indexingStatusEnum = pgEnum("indexing_status", ["pending", "processing", "indexed", "failed"]);
+
+export const agentLibraryChunks = pgTable("agent_library_chunks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentName: varchar("agent_name").notNull(),
+  driveFileId: varchar("drive_file_id").notNull(),
+  fileName: varchar("file_name").notNull(),
+  mimeType: varchar("mime_type"),
+  chunkIndex: integer("chunk_index").notNull(),
+  totalChunks: integer("total_chunks").notNull(),
+  content: text("content").notNull(),
+  chunkTitle: varchar("chunk_title"),
+  indexingStatus: indexingStatusEnum("indexing_status").default("indexed"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const agentLibraryFiles = pgTable("agent_library_files", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentName: varchar("agent_name").notNull(),
+  driveFileId: varchar("drive_file_id").notNull().unique(),
+  fileName: varchar("file_name").notNull(),
+  mimeType: varchar("mime_type"),
+  fileSize: integer("file_size"),
+  indexingStatus: indexingStatusEnum("indexing_status").default("pending"),
+  totalChunks: integer("total_chunks").default(0),
+  errorMessage: text("error_message"),
+  indexedAt: timestamp("indexed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type AgentLibraryChunk = typeof agentLibraryChunks.$inferSelect;
+export type AgentLibraryFile = typeof agentLibraryFiles.$inferSelect;

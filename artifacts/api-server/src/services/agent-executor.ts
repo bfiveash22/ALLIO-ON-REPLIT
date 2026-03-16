@@ -14,6 +14,7 @@ import { rupaHealthAgent } from './rupa-health-agent';
 import { agents, FFPMA_CREED } from '@shared/agents';
 import { searchAllSources } from './research-apis';
 import { searchKnowledgeBase } from './knowledge-base';
+import { searchAgentLibrary } from './library-ingestion';
 import { db } from '../db';
 import { agentTasks } from '@shared/schema';
 import { eq } from 'drizzle-orm';
@@ -886,6 +887,20 @@ Generate the full document now:`;
           required: ["query"]
         }
       }
+    },
+    {
+      type: "function",
+      function: {
+        name: "search_agent_library",
+        description: "Search your personal agent library of uploaded books, research papers, and documents. Use this to find specific information from literature uploaded to your library by the Trustee.",
+        parameters: {
+          type: "object",
+          properties: {
+            query: { type: "string", description: "The search query or topic to look for in your library" }
+          },
+          required: ["query"]
+        }
+      }
     }
   ];
 
@@ -1169,17 +1184,43 @@ Generate the full document now:`;
           console.log(`[Agent Executor] ${agentId} called search_knowledge_base for "${args.query}"`);
           try {
             const kbResult = await searchKnowledgeBase(args.query, args.specificFile);
+            let libraryAddendum = '';
+            try {
+              const libResult = await searchAgentLibrary(agentId, args.query, 5);
+              if (!libResult.includes('No results found') && !libResult.includes('No valid search')) {
+                libraryAddendum = '\n\n--- Agent Library Results ---\n' + libResult;
+              }
+            } catch { /* library search is supplementary */ }
             messages.push({
               tool_call_id: toolCall.id,
               role: "tool",
               name: "search_knowledge_base",
-              content: JSON.stringify({ result: kbResult })
+              content: JSON.stringify({ result: kbResult + libraryAddendum })
             });
           } catch (e: any) {
             messages.push({
               tool_call_id: toolCall.id,
               role: "tool",
               name: "search_knowledge_base",
+              content: JSON.stringify({ error: e.message })
+            });
+          }
+        } else if (toolCall.function.name === 'search_agent_library') {
+          const args = JSON.parse(toolCall.function.arguments);
+          console.log(`[Agent Executor] ${agentId} called search_agent_library for "${args.query}"`);
+          try {
+            const libraryResult = await searchAgentLibrary(agentId, args.query);
+            messages.push({
+              tool_call_id: toolCall.id,
+              role: "tool",
+              name: "search_agent_library",
+              content: JSON.stringify({ result: libraryResult })
+            });
+          } catch (e: any) {
+            messages.push({
+              tool_call_id: toolCall.id,
+              role: "tool",
+              name: "search_agent_library",
               content: JSON.stringify({ error: e.message })
             });
           }
