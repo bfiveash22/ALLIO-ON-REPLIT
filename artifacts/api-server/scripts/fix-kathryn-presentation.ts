@@ -3,36 +3,33 @@ import * as path from "path";
 import { deleteDriveFile, uploadProtocolToDrive, getUncachableGoogleDriveClient } from "../src/services/drive";
 import { db } from "../src/db";
 import { generatedProtocols } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 const BAD_SLIDES_ID = "1NyjPJFaTtRX1ydpWPwLbC7mZFihIuvpoU4FSho4rt6s";
 const KATHRYN_MEMBER_ID = "kathryn-smith-2026";
+const PRIMARY_RECORD_ID = 2;
 const DRIVE_FOLDER_ID = "1ui5cbRdyVhIojeG44EYg17puOdt4bStH";
 const WORKSPACE_ROOT = path.resolve(process.cwd(), "..", "..");
 const PDF_PATH = path.join(WORKSPACE_ROOT, "public", "protocols", "Kathryn_Smith_Protocol_Presentation.pdf");
-const DEV_DOMAIN = process.env.REPLIT_DEV_DOMAIN || "";
-const WEB_PRESENTATION_URL = `https://${DEV_DOMAIN}/protocol-presentation/`;
+const PRODUCTION_PRESENTATION_URL = "https://www.ffpma.com/protocol-presentation/";
 
 export async function fixKathrynPresentation(options?: {
-  skipDelete?: boolean;
   skipCleanup?: boolean;
   pdfPath?: string;
 }) {
   const opts = options || {};
   const pdfFilePath = opts.pdfPath || PDF_PATH;
 
-  if (!opts.skipDelete) {
-    console.log("[Fix] Step 1: Delete bad Google Slides presentation...");
-    const deleted = await deleteDriveFile(BAD_SLIDES_ID);
-    if (deleted) {
-      console.log(`[Fix] Deleted bad Google Slides: ${BAD_SLIDES_ID}`);
-    } else {
-      console.log(`[Fix] Could not delete Google Slides ${BAD_SLIDES_ID} (may already be deleted)`);
-    }
+  console.log("[Fix] Step 1: Delete bad Google Slides presentation...");
+  const deleted = await deleteDriveFile(BAD_SLIDES_ID);
+  if (deleted) {
+    console.log(`[Fix] Deleted bad Google Slides: ${BAD_SLIDES_ID}`);
+  } else {
+    console.log(`[Fix] Google Slides ${BAD_SLIDES_ID} already deleted or not found`);
   }
 
   if (!opts.skipCleanup) {
-    console.log("[Fix] Step 2: Listing existing Kathryn files in Drive folder for cleanup...");
+    console.log("[Fix] Step 2: Cleaning up duplicate Kathryn files in Drive...");
     try {
       const drive = await getUncachableGoogleDriveClient();
       const listRes = await drive.files.list({
@@ -43,18 +40,14 @@ export async function fixKathrynPresentation(options?: {
       const files = listRes.data.files || [];
       console.log(`[Fix] Found ${files.length} files in ALLIO folder`);
 
-      const kathrynFiles = files.filter(f =>
-        f.name?.toLowerCase().includes("kathryn") ||
-        f.name?.toLowerCase().includes("smith")
-      );
-
-      const pdfFiles = kathrynFiles.filter(f =>
+      const kathrynPdfs = files.filter(f =>
+        (f.name?.toLowerCase().includes("kathryn") || f.name?.toLowerCase().includes("smith")) &&
         f.name?.endsWith(".pdf") &&
         !f.name?.includes("Presentation")
       );
 
-      const grouped: Record<string, typeof pdfFiles> = {};
-      for (const f of pdfFiles) {
+      const grouped: Record<string, typeof kathrynPdfs> = {};
+      for (const f of kathrynPdfs) {
         const baseName = f.name?.replace(/_\d{4}-\d{2}-\d{2}\.pdf$/, "") || "unknown";
         if (!grouped[baseName]) grouped[baseName] = [];
         grouped[baseName].push(f);
@@ -65,15 +58,14 @@ export async function fixKathrynPresentation(options?: {
           const sorted = groupFiles.sort((a, b) =>
             new Date(b.createdTime || 0).getTime() - new Date(a.createdTime || 0).getTime()
           );
-          const dupes = sorted.slice(1);
-          for (const dupe of dupes) {
+          for (const dupe of sorted.slice(1)) {
             console.log(`[Fix] Deleting older duplicate: ${dupe.name} (${dupe.id})`);
             await deleteDriveFile(dupe.id!);
           }
         }
       }
     } catch (err) {
-      console.warn("[Fix] Could not list/clean Drive files:", err);
+      console.warn("[Fix] Could not clean Drive files:", err);
     }
   }
 
@@ -90,59 +82,87 @@ export async function fixKathrynPresentation(options?: {
     "Kathryn_Smith_Protocol_Presentation.pdf"
   );
 
-  if (!uploadResult.success) {
+  if (!uploadResult.success || !uploadResult.fileId) {
     throw new Error(`Upload failed: ${JSON.stringify(uploadResult)}`);
   }
 
   console.log(`[Fix] Uploaded to Drive: ${uploadResult.webViewLink}`);
   console.log(`[Fix] File ID: ${uploadResult.fileId}`);
 
-  console.log("[Fix] Step 4: Update DB records (id=1 and id=2)...");
-  const targetIds = [1, 2];
-  let updatedCount = 0;
+  console.log(`[Fix] Step 4: Update DB record id=${PRIMARY_RECORD_ID} (member_id=${KATHRYN_MEMBER_ID})...`);
 
-  for (const targetId of targetIds) {
-    const [existing] = await db
-      .select()
-      .from(generatedProtocols)
-      .where(
-        eq(generatedProtocols.id, targetId)
+  const [targetRecord] = await db
+    .select()
+    .from(generatedProtocols)
+    .where(
+      and(
+        eq(generatedProtocols.id, PRIMARY_RECORD_ID),
+        eq(generatedProtocols.memberId, KATHRYN_MEMBER_ID)
       )
-      .limit(1);
+    )
+    .limit(1);
 
-    if (!existing || existing.memberId !== KATHRYN_MEMBER_ID) {
-      console.warn(`[Fix] Record id=${targetId} not found or not Kathryn's — skipping`);
-      continue;
-    }
+  if (!targetRecord) {
+    throw new Error(`Record id=${PRIMARY_RECORD_ID} with member_id=${KATHRYN_MEMBER_ID} not found`);
+  }
 
-    const existingNotes = existing.notes || "";
-    const webUrlNote = `Interactive presentation: ${WEB_PRESENTATION_URL}`;
-    const driveNote = `Drive PDF: ${uploadResult.webViewLink}`;
-    const updatedNotes = existingNotes
-      ? `${existingNotes}\n${webUrlNote}\n${driveNote}`
-      : `${webUrlNote}\n${driveNote}`;
+  await db
+    .update(generatedProtocols)
+    .set({
+      slidesPresentationId: uploadResult.fileId,
+      slidesWebViewLink: uploadResult.webViewLink || null,
+      notes: [
+        targetRecord.notes || "",
+        `Drive PDF: ${uploadResult.webViewLink}`,
+        `Interactive presentation: ${PRODUCTION_PRESENTATION_URL}`,
+      ].filter(Boolean).join("\n"),
+    })
+    .where(eq(generatedProtocols.id, PRIMARY_RECORD_ID));
 
+  const [verified] = await db
+    .select({
+      id: generatedProtocols.id,
+      slidesPresentationId: generatedProtocols.slidesPresentationId,
+      slidesWebViewLink: generatedProtocols.slidesWebViewLink,
+    })
+    .from(generatedProtocols)
+    .where(eq(generatedProtocols.id, PRIMARY_RECORD_ID))
+    .limit(1);
+
+  if (verified.slidesPresentationId !== uploadResult.fileId) {
+    throw new Error(`Verification failed: slidesPresentationId mismatch (expected=${uploadResult.fileId}, got=${verified.slidesPresentationId})`);
+  }
+
+  console.log(`[Fix] Verified record id=${PRIMARY_RECORD_ID}: slidesPresentationId=${verified.slidesPresentationId}, slidesWebViewLink=${verified.slidesWebViewLink}`);
+
+  const [secondaryRecord] = await db
+    .select()
+    .from(generatedProtocols)
+    .where(
+      and(
+        eq(generatedProtocols.id, 1),
+        eq(generatedProtocols.memberId, KATHRYN_MEMBER_ID)
+      )
+    )
+    .limit(1);
+
+  if (secondaryRecord) {
     await db
       .update(generatedProtocols)
       .set({
-        slidesPresentationId: uploadResult.fileId || null,
-        slidesWebViewLink: WEB_PRESENTATION_URL,
-        notes: updatedNotes,
+        slidesPresentationId: uploadResult.fileId,
+        slidesWebViewLink: uploadResult.webViewLink || null,
       })
-      .where(eq(generatedProtocols.id, targetId));
-    console.log(`[Fix] Updated record id=${targetId}: slidesPresentationId=${uploadResult.fileId}, slidesWebViewLink=${WEB_PRESENTATION_URL}`);
-    updatedCount++;
-  }
-
-  if (updatedCount === 0) {
-    throw new Error("No Kathryn records updated — expected to update id=1 and id=2");
+      .where(eq(generatedProtocols.id, 1));
+    console.log(`[Fix] Also updated secondary record id=1`);
   }
 
   const summary = {
-    presentationDrivePdfLink: uploadResult.webViewLink,
-    presentationFileId: uploadResult.fileId,
-    webPresentationUrl: WEB_PRESENTATION_URL,
-    dbRecordsUpdated: updatedCount,
+    badSlidesDeleted: BAD_SLIDES_ID,
+    drivePdfLink: uploadResult.webViewLink,
+    driveFileId: uploadResult.fileId,
+    productionPresentationUrl: PRODUCTION_PRESENTATION_URL,
+    primaryRecordUpdated: PRIMARY_RECORD_ID,
   };
 
   console.log("\n[Fix] Summary:", JSON.stringify(summary, null, 2));
@@ -151,7 +171,7 @@ export async function fixKathrynPresentation(options?: {
 
 const isMainModule = process.argv[1]?.includes("fix-kathryn-presentation");
 if (isMainModule) {
-  fixKathrynPresentation({ skipDelete: true })
+  fixKathrynPresentation()
     .then(() => process.exit(0))
     .catch((err) => {
       console.error("[Fix] Fatal error:", err);
