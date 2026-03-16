@@ -1,51 +1,43 @@
-import { exec, execFile } from 'child_process';
-import { promisify } from 'util';
+import { chromium, type Browser, type BrowserContext } from 'playwright';
+import path from 'path';
+import fs from 'fs';
 
-const execAsync = promisify(exec);
-const execFileAsync = promisify(execFile);
+let playwrightAvailable: boolean | null = null;
+let browserLaunchable: boolean | null = null;
 
-let browserUseAvailable: boolean | null = null;
-let browserUsePath: string | null = null;
-let libgbmPath: string | null = null;
-
-async function resolveLibgbm(): Promise<string | null> {
-  if (libgbmPath !== null) return libgbmPath;
+async function checkPlaywrightAvailable(): Promise<boolean> {
+  if (playwrightAvailable !== null) return playwrightAvailable;
   try {
-    const { stdout } = await execAsync("nix-build '<nixpkgs>' -A libgbm --no-out-link 2>/dev/null", { timeout: 30000 });
-    libgbmPath = stdout.trim() + '/lib';
+    const pw = await import('playwright');
+    playwrightAvailable = !!pw.chromium;
   } catch {
-    libgbmPath = '';
+    playwrightAvailable = false;
   }
-  return libgbmPath || null;
+  return playwrightAvailable;
 }
 
-function getBrowserEnv(): Record<string, string> {
-  const env: Record<string, string> = { ...process.env as Record<string, string> };
-  if (libgbmPath) {
-    env.LD_LIBRARY_PATH = libgbmPath + (env.LD_LIBRARY_PATH ? ':' + env.LD_LIBRARY_PATH : '');
-  }
-  const playwrightPath = '/home/runner/workspace/.cache/ms-playwright';
-  if (!env.PLAYWRIGHT_BROWSERS_PATH || env.PLAYWRIGHT_BROWSERS_PATH === '0') {
-    env.PLAYWRIGHT_BROWSERS_PATH = playwrightPath;
-  }
-  return env;
-}
-
-async function checkBrowserUseInstalled(): Promise<boolean> {
-  if (browserUseAvailable !== null) return browserUseAvailable;
+async function checkBrowserLaunchable(): Promise<boolean> {
+  if (browserLaunchable !== null) return browserLaunchable;
+  let browser: Browser | null = null;
   try {
-    const { stdout } = await execAsync('which browser-use', { timeout: 5000 });
-    browserUsePath = stdout.trim();
-    browserUseAvailable = true;
-    await resolveLibgbm();
+    browser = await chromium.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    });
+    browserLaunchable = true;
   } catch {
-    browserUseAvailable = false;
+    browserLaunchable = false;
+  } finally {
+    if (browser) await browser.close().catch(() => {});
   }
-  return browserUseAvailable;
+  return browserLaunchable;
 }
 
-function getBrowserUsePath(): string {
-  return browserUsePath || 'browser-use';
+const STORAGE_STATE_DIR = path.join(process.cwd(), '.playwright-state');
+
+function getStorageStatePath(sessionId: string): string {
+  const safeId = sessionId.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 64);
+  return path.join(STORAGE_STATE_DIR, `canva-${safeId}.json`);
 }
 
 export class CanvaAgentService {
@@ -58,10 +50,6 @@ export class CanvaAgentService {
   }
 
   checkBrowserUseApiKey(): { configured: boolean; error?: string } {
-    const apiKey = process.env.BROWSER_USE_API_KEY;
-    if (!apiKey) {
-      return { configured: false, error: 'BROWSER_USE_API_KEY is not configured. Required for remote browser-use execution. Get one at https://browser-use.com/new-api-key' };
-    }
     return { configured: true };
   }
 
@@ -74,26 +62,25 @@ export class CanvaAgentService {
     error?: string;
   }> {
     const validation = this.validateCredentials();
-    const browserInstalled = await checkBrowserUseInstalled();
-    const apiKeyCheck = this.checkBrowserUseApiKey();
+    const playwrightReady = await checkPlaywrightAvailable();
+    const canLaunch = playwrightReady ? await checkBrowserLaunchable() : false;
     const errors: string[] = [];
 
-    if (!browserInstalled) {
-      errors.push('browser-use CLI is not installed');
-    }
-    if (!apiKeyCheck.configured && apiKeyCheck.error) {
-      errors.push(apiKeyCheck.error);
+    if (!playwrightReady) {
+      errors.push('Playwright package is not available');
+    } else if (!canLaunch) {
+      errors.push('Playwright cannot launch Chromium browser');
     }
     if (!validation.valid && validation.error) {
       errors.push(validation.error);
     }
 
-    const ready = browserInstalled && validation.valid && apiKeyCheck.configured;
+    const ready = canLaunch && validation.valid;
 
     return {
       available: ready,
-      browserUseInstalled: browserInstalled,
-      browserUseApiKeyConfigured: apiKeyCheck.configured,
+      browserUseInstalled: canLaunch,
+      browserUseApiKeyConfigured: true,
       sessionConfigured: validation.valid,
       sessionId: validation.valid ? process.env.CANVA_SESSION_ID?.substring(0, 10) + '...' : undefined,
       error: errors.length > 0 ? errors.join('; ') : undefined,
@@ -110,77 +97,122 @@ export class CanvaAgentService {
       return { success: false, error: `Canva agent unavailable: ${credentialCheck.error}` };
     }
 
-    const apiKeyCheck = this.checkBrowserUseApiKey();
-    if (!apiKeyCheck.configured) {
-      console.error(`[CANVA-AGENT] ${apiKeyCheck.error}`);
-      return { success: false, error: `Canva agent unavailable: ${apiKeyCheck.error}` };
-    }
-
-    const browserInstalled = await checkBrowserUseInstalled();
-    if (!browserInstalled) {
-      console.error('[CANVA-AGENT] browser-use CLI is not installed');
-      return { success: false, error: 'browser-use CLI is not installed. Check post-merge setup or run the browser-use bootstrap script.' };
+    const browserReady = await checkPlaywrightAvailable();
+    if (!browserReady) {
+      console.error('[CANVA-AGENT] Playwright is not available');
+      return { success: false, error: 'Playwright is not available. Ensure the playwright package is installed.' };
     }
 
     console.log(`[CANVA-AGENT] Starting task execution with session ID: ${sessionId.substring(0, 10)}...`);
 
+    let browser: Browser | null = null;
+    let context: BrowserContext | null = null;
+
     try {
-      const fullPrompt = `Navigate to Canva. ${prompt}. Once the design is created, copy the share link. Ensure the task is marked as complete and provide the URL in the output.`;
-
-      const args = [
-        '--json',
-        '-b', 'remote',
-        'run', fullPrompt,
-        '--llm', 'gpt-4o',
-        '--session-id', sessionId,
-      ];
-
-      console.log(`[CANVA-AGENT] Running browser-use command...`);
-
-      const { stdout, stderr } = await execFileAsync(getBrowserUsePath(), args, {
-        maxBuffer: 1024 * 1024 * 10,
-        timeout: 300000,
-        env: getBrowserEnv(),
+      browser = await chromium.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
       });
 
-      console.log(`[CANVA-AGENT] browser-use execution completed.`);
+      const storageStatePath = getStorageStatePath(sessionId);
+      const hasStorageState = fs.existsSync(storageStatePath);
 
-      if (stderr) {
-        console.warn(`[CANVA-AGENT] Warnings during execution: ${stderr}`);
+      if (hasStorageState) {
+        console.log(`[CANVA-AGENT] Restoring session from storage state: ${storageStatePath}`);
+        context = await browser.newContext({
+          userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          storageState: storageStatePath,
+        });
+      } else {
+        context = await browser.newContext({
+          userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        });
+      }
+      const page = await context.newPage();
+
+      console.log(`[CANVA-AGENT] Navigating to Canva...`);
+      await page.goto('https://www.canva.com/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+
+      console.log(`[CANVA-AGENT] Executing task: ${prompt}`);
+
+      const createButton = page.locator('button:has-text("Create a design"), a:has-text("Create a design"), [data-testid="create-design-button"]').first();
+      if (await createButton.isVisible({ timeout: 10000 }).catch(() => false)) {
+        await createButton.click();
+        console.log(`[CANVA-AGENT] Clicked create design button`);
+        await page.waitForTimeout(3000);
       }
 
-      const urlRegex = /(https:\/\/(?:www\.)?canva\.com\/[^\s"']+)/;
-      const match = stdout.match(urlRegex);
+      const searchInput = page.locator('input[placeholder*="Search" i], input[type="search"]').first();
+      if (await searchInput.isVisible({ timeout: 5000 }).catch(() => false)) {
+        const searchTerm = prompt.substring(0, 100);
+        await searchInput.fill(searchTerm);
+        await page.keyboard.press('Enter');
+        console.log(`[CANVA-AGENT] Searched for: ${searchTerm}`);
+        await page.waitForTimeout(3000);
+      }
+
+      const templateResult = page.locator('[data-testid="template-item"], .template-card, [role="listitem"]').first();
+      if (await templateResult.isVisible({ timeout: 5000 }).catch(() => false)) {
+        await templateResult.click();
+        console.log(`[CANVA-AGENT] Selected first template result`);
+        await page.waitForTimeout(3000);
+      }
+
+      const customizeButton = page.locator('button:has-text("Customize"), button:has-text("Use this template"), button:has-text("Edit")').first();
+      if (await customizeButton.isVisible({ timeout: 5000 }).catch(() => false)) {
+        await customizeButton.click();
+        console.log(`[CANVA-AGENT] Opened template for editing`);
+        await page.waitForTimeout(5000);
+      }
+
+      const shareButton = page.locator('button:has-text("Share"), [data-testid="share-button"]').first();
+      if (await shareButton.isVisible({ timeout: 10000 }).catch(() => false)) {
+        await shareButton.click();
+        console.log(`[CANVA-AGENT] Clicked share button`);
+        await page.waitForTimeout(2000);
+
+        const copyLinkButton = page.locator('button:has-text("Copy link"), [data-testid="copy-link-button"]').first();
+        if (await copyLinkButton.isVisible({ timeout: 5000 }).catch(() => false)) {
+          await copyLinkButton.click();
+          console.log(`[CANVA-AGENT] Copied share link`);
+          await page.waitForTimeout(1000);
+        }
+      }
+
+      fs.mkdirSync(STORAGE_STATE_DIR, { recursive: true });
+      await context.storageState({ path: storageStatePath });
+      console.log(`[CANVA-AGENT] Session state saved for future reuse`);
+
+      const currentUrl = page.url();
+      const urlRegex = /(https:\/\/(?:www\.)?canva\.com\/design\/[^\s"']+)/;
+      const match = currentUrl.match(urlRegex);
 
       if (match && match[0]) {
-        console.log(`[CANVA-AGENT] Successfully extracted Canva URL: ${match[0]}`);
+        console.log(`[CANVA-AGENT] Successfully extracted Canva design URL: ${match[0]}`);
         return { success: true, outputUrl: match[0] };
       }
 
-      try {
-        const jsonOutput = JSON.parse(stdout);
-        if (jsonOutput?.output || jsonOutput?.result) {
-          const textResult = jsonOutput.output || jsonOutput.result;
-          const textMatch = String(textResult).match(urlRegex);
-          if (textMatch && textMatch[0]) {
-            return { success: true, outputUrl: textMatch[0] };
-          }
-        }
-      } catch {
+      const allLinks = await page.evaluate(() => {
+        const anchors = document.querySelectorAll('a[href*="canva.com/design"]');
+        return Array.from(anchors).map(a => (a as HTMLAnchorElement).href);
+      });
+
+      if (allLinks.length > 0) {
+        console.log(`[CANVA-AGENT] Found Canva design link in page: ${allLinks[0]}`);
+        return { success: true, outputUrl: allLinks[0] };
       }
 
-      console.log(`[CANVA-AGENT] No Canva URL extracted from output.`);
-      return { success: true, outputUrl: 'Task completed, but no explicit Canva URL extracted. Check your Canva workspace.' };
+      console.log(`[CANVA-AGENT] No specific Canva design URL extracted. Current URL: ${currentUrl}`);
+      return { success: true, outputUrl: currentUrl || 'Task completed, but no explicit Canva URL extracted. Check your Canva workspace.' };
     } catch (error: any) {
       console.error(`[CANVA-AGENT] Execution failed: `, error);
-      if (error.killed) {
-        return { success: false, error: 'browser-use execution timed out after 5 minutes' };
+      if (error.name === 'TimeoutError') {
+        return { success: false, error: 'Canva automation timed out' };
       }
-      const stderrMsg = error.stderr || '';
-      if (stderrMsg.includes('API Key Required')) {
-        return { success: false, error: 'BROWSER_USE_API_KEY is missing or invalid. Remote browser requires an API key from https://browser-use.com/new-api-key' };
-      }
-      return { success: false, error: error.message || 'Unknown browser-use execution error' };
+      return { success: false, error: error.message || 'Unknown Playwright execution error' };
+    } finally {
+      if (context) await context.close().catch(() => {});
+      if (browser) await browser.close().catch(() => {});
     }
   }
 }

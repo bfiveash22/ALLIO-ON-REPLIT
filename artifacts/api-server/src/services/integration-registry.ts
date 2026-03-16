@@ -148,20 +148,27 @@ const integrationRegistry: IntegrationDefinition[] = [
   },
   {
     id: "canva_browser",
-    name: "Canva (browser-use)",
+    name: "Canva (Playwright)",
     mode: "live",
     healthCheck: async () => {
       const sessionId = process.env.CANVA_SESSION_ID;
-      const apiKey = process.env.BROWSER_USE_API_KEY;
       const errors: string[] = [];
       try {
-        const { execSync } = require('child_process');
-        execSync('which browser-use', { timeout: 5000 });
+        const pw = await import('playwright');
+        if (!pw.chromium) {
+          errors.push('Playwright Chromium not available');
+        } else {
+          let testBrowser = null;
+          try {
+            testBrowser = await pw.chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'] });
+          } catch (e: any) {
+            errors.push(`Playwright browser launch failed: ${e.message?.substring(0, 80)}`);
+          } finally {
+            if (testBrowser) await testBrowser.close().catch(() => {});
+          }
+        }
       } catch {
-        errors.push('browser-use CLI not installed');
-      }
-      if (!apiKey) {
-        errors.push('Missing BROWSER_USE_API_KEY (required for remote browser)');
+        errors.push('Playwright package not installed');
       }
       if (!sessionId) {
         errors.push('Missing CANVA_SESSION_ID');
@@ -169,23 +176,44 @@ const integrationRegistry: IntegrationDefinition[] = [
       if (errors.length > 0) {
         return { connected: false, error: errors.join('; ') + '. PIXEL agent Canva automation unavailable.' };
       }
-      return { connected: true, sampleData: `Canva session configured (${sessionId!.substring(0, 6)}…), browser-use installed, API key set` };
+      return { connected: true, sampleData: `Canva session configured (${sessionId!.substring(0, 6)}…), Playwright browser verified` };
     }
   },
   {
     id: "rupa_health",
-    name: "Rupa Health (browser-use)",
+    name: "Rupa Health (Playwright)",
     mode: "live",
     healthCheck: async () => {
       const username = process.env.RUPA_USERNAME;
       const password = process.env.RUPA_PASSWORD;
+      const errors: string[] = [];
+      try {
+        const pw = await import('playwright');
+        if (!pw.chromium) {
+          errors.push('Playwright Chromium not available');
+        } else {
+          let testBrowser = null;
+          try {
+            testBrowser = await pw.chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'] });
+          } catch (e: any) {
+            errors.push(`Playwright browser launch failed: ${e.message?.substring(0, 80)}`);
+          } finally {
+            if (testBrowser) await testBrowser.close().catch(() => {});
+          }
+        }
+      } catch {
+        errors.push('Playwright package not installed');
+      }
       if (!username || !password) {
         const missing = [];
         if (!username) missing.push('RUPA_USERNAME');
         if (!password) missing.push('RUPA_PASSWORD');
-        return { connected: false, error: `Missing ${missing.join(', ')}. Lab ordering unavailable.` };
+        errors.push(`Missing ${missing.join(', ')}`);
       }
-      return { connected: true, sampleData: `Rupa Health credentials configured` };
+      if (errors.length > 0) {
+        return { connected: false, error: errors.join('; ') + '. Lab ordering unavailable.' };
+      }
+      return { connected: true, sampleData: `Rupa Health credentials configured, Playwright browser verified` };
     }
   },
   {
