@@ -45,10 +45,13 @@ The project is organized as a pnpm monorepo using workspaces, enabling efficient
 ### Protocol Assembly System
 An AI-powered pipeline (`artifacts/api-server/src/services/protocol-assembly.ts`) for generating personalized 90-day healing protocols.
 - **Process**: Analyzes call transcripts, extracts structured patient profiles, generates protocols with 5R framework (Remove, Restore, Replenish, Regenerate, Rebalance).
-- **4-Deliverable Pipeline**: On protocol approval, auto-generates: (1) Full Protocol PDF, (2) Daily Schedule PDF, (3) Peptide Schedule PDF, (4) Slideshow Presentation with narration. All PDFs upload to Google Drive with links stored in DB.
-- **PDF Branding**: Deep blue/cyan/gold color scheme with FF PMA branding. Generated via PDFKit in `protocol-pdf.ts`.
+- **4-Deliverable Pipeline**: On protocol approval, auto-generates: (1) Full Protocol PDF, (2) Daily Schedule PDF, (3) Peptide Schedule PDF, (4) PPTX Presentation (20+ slides). All files upload to Google Drive with links stored in DB.
+- **Resource Engine** (`protocol-resources.ts`): Condition-based mapping engine that auto-selects books, research links, Drive library resources, and YouTube channels based on patient conditions (cancer, amalgam, parasite, gut, hormone, metabolic, heart, autoimmune, mold).
+- **PPTX Generator** (`protocol-pptx.ts`): Uses `pptxgenjs` to create 20+ slide presentations matching Trustee's format — cover, summary, member info, timeline, analysis, root causes, 5Rs phases, daily schedule, therapeutics tables, supplements, IV/IM, detox, parasite, lifestyle, follow-up, books, research, Drive links, and commitment letter.
+- **PDF Branding**: Deep blue/cyan/gold color scheme with FF PMA branding. Generated via PDFKit in `protocol-pdf.ts`. Includes dynamic resource sections (books, research, Drive links, YouTube) and Trustee commitment page.
 - **Presentation**: 30-slide interactive slideshow at `/protocol-presentation/` with narration, slide navigation, and share functionality. Built as separate Vite artifact.
-- **Kathryn Smith Rebuild**: `kathryn-smith-protocol.ts` rebuilds the reference protocol from timeline data in `docs/operational/KATHRYN-SMITH-TIMELINE.md`. Generates all 3 PDFs and uploads to Drive.
+- **Kathryn Smith Rebuild**: `kathryn-smith-protocol.ts` rebuilds the reference protocol from timeline data in `docs/operational/KATHRYN-SMITH-TIMELINE.md`. Generates all 4 deliverables and uploads to Drive.
+- **DB Columns**: `pdf_drive_file_id`, `daily_schedule_pdf_file_id`, `peptide_schedule_pdf_file_id`, `slides_presentation_id` (for PPTX), `slides_web_view_link`.
 - **AI Engines**: OpenAI (gpt-4o), with comparative testing against Abacus AI (gpt-4.1-mini) and Gemini.
 - **Lipo-B**: IM ONLY formulation (216mg/mL total). Never in IV sections.
 

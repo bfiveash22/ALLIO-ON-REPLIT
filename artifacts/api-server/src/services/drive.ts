@@ -1574,7 +1574,8 @@ export async function createPatientProtocolsFolder(): Promise<{
 
 export async function uploadProtocolToDrive(
   pdfBuffer: Buffer,
-  fileName: string
+  fileName: string,
+  mimeType: string = 'application/pdf'
 ): Promise<{
   success: boolean;
   fileId?: string;
@@ -1594,10 +1595,10 @@ export async function uploadProtocolToDrive(
       requestBody: {
         name: fileName,
         parents: [folderResult.folderId],
-        mimeType: 'application/pdf',
+        mimeType,
       },
       media: {
-        mimeType: 'application/pdf',
+        mimeType,
         body: Readable.from(pdfBuffer),
       },
       fields: 'id, name, webViewLink',

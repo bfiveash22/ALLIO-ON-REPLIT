@@ -3,6 +3,7 @@ import type {
   HealingProtocol,
   PatientProfile,
 } from "@shared/types/protocol-assembly";
+import { getPatientResources, type PatientResources } from "./protocol-resources";
 
 const COLORS = {
   darkBg: "#0F1923",
@@ -24,34 +25,6 @@ const COLORS = {
 
 const FF_WEBSITE = "https://www.forgottenformula.com";
 const FF_SHOP = `${FF_WEBSITE}/shop`;
-
-const DRIVE_RESOURCES = [
-  { title: "FF Detox Bath Protocol", category: "Detox Guide", description: "Baking soda, bentonite clay, epsom salt, lavender — complete instructions" },
-  { title: "Liver & Gallbladder Cleanse Guide", category: "Detox Guide", description: "Step-by-step liver flush protocol with olive oil and grapefruit" },
-  { title: "5-Day Fast Protocol", category: "Detox Guide", description: "Guided fasting protocol for deep cellular repair and autophagy" },
-  { title: "Rapid Virus Recovery — Dr. Thomas Levy", category: "Recommended Reading", description: "How to rapidly recover from viral infections using high-dose vitamin C" },
-  { title: "A Cancer Therapy: Results of Fifty Cases — Dr. Max Gerson", category: "Clinical Protocol", description: "The original Gerson therapy clinical documentation and diet protocol" },
-  { title: "One Minute Cure — Madison Cavanaugh", category: "Holistic Modality", description: "Hydrogen peroxide therapy overview and applications" },
-  { title: "Cymatics: A Study of Wave Phenomena — Hans Jenny", category: "Research", description: "Foundation text for frequency-based healing modalities" },
-];
-
-const CANCER_RESOURCES = [
-  { title: "DIANE Anti-Cancer Diet Protocol", category: "Cancer Protocol", description: "Zero sugar, zero GMO, organic-only dietary framework for cancer patients" },
-  { title: "Metabolic Approach to Cancer — Dr. Nasha Winters", category: "Recommended Reading", description: "Integrative oncology nutrition and metabolic terrain assessment" },
-  { title: "Fenbendazole / Ivermectin Anti-Cancer Protocol", category: "Cancer Protocol", description: "Off-label anti-parasitic compounds with documented anti-tumor properties" },
-  { title: "ECS & Cannabinoid Cancer Therapy Guide", category: "Cancer Protocol", description: "CB2 receptor activation, CBD/CBG dosing, and suppository protocols" },
-];
-
-function isCancerPatient(protocol: HealingProtocol, profile: PatientProfile): boolean {
-  const cancerKeywords = ["cancer", "tumor", "carcinoma", "oncolog", "malignant", "metastas", "chemo", "radiation therapy", "HER2", "ER+", "PR+"];
-  const allText = [
-    ...(profile.currentDiagnoses || []),
-    ...(profile.chiefComplaints || []),
-    protocol.summary || "",
-    ...(protocol.rootCauseAnalysis?.map(r => r.details) || []),
-  ].join(" ").toLowerCase();
-  return cancerKeywords.some(kw => allText.includes(kw.toLowerCase()));
-}
 
 function drawBrandedCoverPage(doc: PDFKit.PDFDocument, title: string, subtitle: string, patientName: string, date: string, isCancer: boolean) {
   doc.rect(0, 0, doc.page.width, doc.page.height).fill(COLORS.darkBg);
@@ -184,6 +157,51 @@ function drawProductItem(doc: PDFKit.PDFDocument, name: string, category: string
   }
 }
 
+function drawCommitmentPage(doc: PDFKit.PDFDocument, patientName: string) {
+  newPage(doc, patientName);
+  doc.moveDown(1);
+  drawSectionHeader(doc, "My Commitment to You");
+  doc.moveDown(0.5);
+
+  doc.fontSize(10).fillColor(COLORS.text).text(
+    "I will do everything in my power and knowledge to focus on the root of all problems. Most doctors focus only on the symptoms, " +
+    "not the underlying cause of the disease or issue. We will not give up on you, but you need to work with us on every step of this protocol.",
+    65, undefined, { width: doc.page.width - 130 }
+  );
+  doc.moveDown(0.5);
+
+  doc.fontSize(10).fillColor(COLORS.text).text(
+    "Don't lose hope and don't give up! There is no single pill or capsule that will fix this. Only a commitment to follow the steps " +
+    "laid herein — if you choose to do so, the ECS, the gut, and your body will take care of itself. Homeostasis is about balance in the body.",
+    65, undefined, { width: doc.page.width - 130 }
+  );
+  doc.moveDown(0.5);
+
+  doc.fontSize(10).fillColor(COLORS.text).text(
+    "There is no value in radiation or chemo if the underlying issues that caused the body to malfunction aren't addressed. " +
+    "You do not treat the body with poison to cure it. That is a profit model, not a cure. The Pharma model has made trillions and cured nothing.",
+    65, undefined, { width: doc.page.width - 130 }
+  );
+  doc.moveDown(0.5);
+
+  doc.fontSize(10).fillColor(COLORS.text).text(
+    "We have provided the educational tools and research to help guide you through your journey. Please utilize these resources. " +
+    "These are extremely specific formulations that only a handful of folks know how to do — it's my lifelong work.",
+    65, undefined, { width: doc.page.width - 130 }
+  );
+  doc.moveDown(1);
+
+  doc.fontSize(11).fillColor(COLORS.secondary).text(
+    '"Hope is coming and a solution is in route. There is no doubt in my mind about the efficacy of our formulations and our 5 steps to health and wellness."',
+    65, undefined, { align: "center", width: doc.page.width - 130, oblique: true }
+  );
+  doc.moveDown(1);
+  doc.fontSize(10).fillColor(COLORS.text).text("Thank you for giving us this opportunity. We are looking forward to healing you.", { align: "center" });
+  doc.moveDown(1.5);
+  doc.fontSize(12).fillColor(COLORS.primary).text("Michael Blake", { align: "center" });
+  doc.fontSize(10).fillColor(COLORS.secondary).text("FF Founder and Medical Trustee", { align: "center" });
+}
+
 function drawDisclaimer(doc: PDFKit.PDFDocument) {
   newPage(doc, "");
   doc.moveDown(3);
@@ -238,10 +256,10 @@ export function generateProtocolPDF(
       doc.on("error", reject);
 
       const pn = protocol.patientName;
-      const isCancer = isCancerPatient(protocol, profile);
+      const resources = getPatientResources(protocol, profile);
       const dateStr = protocol.generatedDate || new Date().toISOString().split("T")[0];
 
-      drawBrandedCoverPage(doc, "Personalized Healing Protocol", "FF PMA 2026 Protocol — The 5R Framework", pn, dateStr, isCancer);
+      drawBrandedCoverPage(doc, "Personalized Healing Protocol", "FF PMA 2026 Protocol — The 5R Framework", pn, dateStr, resources.isCancer);
 
       newPage(doc, pn);
       drawSectionHeader(doc, "Executive Summary");
@@ -529,21 +547,59 @@ export function generateProtocolPDF(
       doc.moveDown(0.2);
       doc.fontSize(9).fillColor(COLORS.lightText).text("Healer pricing applied at checkout for PMA members.", 65);
 
-      newPage(doc, pn);
-      drawSectionHeader(doc, "Additional Resources — Drive Library");
-      doc.fontSize(10).fillColor(COLORS.text).text(
-        "The following resources are available in the Forgotten Formula Google Drive Library. " +
-        "Your Trustee will share direct links upon protocol activation.",
-        65, undefined, { width: doc.page.width - 130 }
-      );
-      doc.moveDown(0.5);
-
-      DRIVE_RESOURCES.forEach(r => drawResourceLink(doc, r.title, r.category, r.description));
-
-      if (isCancer) {
+      if (resources.books.length > 0) {
+        newPage(doc, pn);
+        drawSectionHeader(doc, "Recommended Reading — Starter Books");
+        drawBody(doc, "Based on your specific conditions, these books have been selected to support your understanding of the healing process:");
         doc.moveDown(0.5);
-        drawSubheader(doc, "Cancer-Specific Resources");
-        CANCER_RESOURCES.forEach(r => drawResourceLink(doc, r.title, r.category, r.description));
+        resources.books.forEach(book => {
+          checkPage(doc, 55);
+          const startY = doc.y;
+          doc.rect(60, startY, doc.page.width - 120, 45).fill("#F5F9FC");
+          doc.rect(60, startY, 4, 45).fill(COLORS.accent);
+          doc.fontSize(11).fillColor(COLORS.primary).text(book.title, 72, startY + 5, { width: doc.page.width - 150, bold: true });
+          doc.fontSize(9).fillColor(COLORS.accent).text(`by ${book.author}`, 72, startY + 20);
+          doc.fontSize(9).fillColor(COLORS.lightText).text(book.reason, 72, startY + 32, { width: doc.page.width - 150 });
+          doc.y = startY + 50;
+        });
+      }
+
+      if (resources.researchLinks.length > 0) {
+        newPage(doc, pn);
+        drawSectionHeader(doc, "Research Backing Our Protocols");
+        drawBody(doc, "The following research and articles support the interventions used in your protocol:");
+        doc.moveDown(0.5);
+        resources.researchLinks.forEach(link => {
+          checkPage(doc, 40);
+          doc.fontSize(10).fillColor(COLORS.secondary).text(link.title, 65, doc.y, { link: link.url, underline: true, width: doc.page.width - 130 });
+          doc.fontSize(9).fillColor(COLORS.lightText).text(link.description, 65, undefined, { width: doc.page.width - 130 });
+          doc.fontSize(8).fillColor(COLORS.accent).text(link.url, 65, undefined, { link: link.url, width: doc.page.width - 130 });
+          doc.moveDown(0.4);
+        });
+      }
+
+      newPage(doc, pn);
+      drawSectionHeader(doc, "Google Drive Links & Resources");
+      drawBody(doc, "Links to your Daily Schedule, Library, Research Documents, Detox Baths, and 5-Day Fasting instructions:");
+      doc.moveDown(0.5);
+      resources.driveResources.forEach(dr => {
+        checkPage(doc, 45);
+        const typeLabel = dr.type === "folder" ? "Drive Folder" : dr.type === "document" ? "Document" : "Guide";
+        drawResourceLink(doc, dr.title, typeLabel, dr.description);
+        doc.fontSize(8).fillColor(COLORS.secondary).text(dr.url, 70, undefined, { link: dr.url, width: doc.page.width - 140 });
+        doc.moveDown(0.2);
+      });
+
+      if (resources.youtubeResources.length > 0) {
+        doc.moveDown(0.5);
+        drawSubheader(doc, "Helpful YouTube Channels & Videos");
+        resources.youtubeResources.forEach(yt => {
+          checkPage(doc, 35);
+          doc.fontSize(10).fillColor(COLORS.primary).text(yt.title, 65, doc.y, { width: doc.page.width - 130 });
+          doc.fontSize(9).fillColor(COLORS.lightText).text(yt.description, 75, undefined, { width: doc.page.width - 140 });
+          doc.fontSize(8).fillColor(COLORS.secondary).text(yt.url, 75, undefined, { link: yt.url, width: doc.page.width - 140 });
+          doc.moveDown(0.3);
+        });
       }
 
       if (citations && citations.length > 0) {
@@ -564,6 +620,7 @@ export function generateProtocolPDF(
         });
       }
 
+      drawCommitmentPage(doc, pn);
       drawDisclaimer(doc);
       doc.end();
     } catch (error) {
@@ -595,7 +652,8 @@ export function generateDailySchedulePDF(
       doc.on("error", reject);
 
       const pn = protocol.patientName;
-      const isCancer = isCancerPatient(protocol, profile);
+      const resources = getPatientResources(protocol, profile);
+      const isCancer = resources.isCancer;
       const dateStr = protocol.generatedDate || new Date().toISOString().split("T")[0];
 
       drawBrandedCoverPage(doc, "Daily Protocol Schedule", `Complete daily routine — ${protocol.protocolDurationDays || 90} Day Protocol`, pn, dateStr, isCancer);
@@ -703,11 +761,10 @@ export function generateDailySchedulePDF(
         65, undefined, { width: doc.page.width - 130 }
       );
       doc.moveDown(0.3);
-      DRIVE_RESOURCES.forEach(r => drawResourceLink(doc, r.title, r.category, r.description));
-      if (isCancer) {
-        doc.moveDown(0.3);
-        CANCER_RESOURCES.forEach(r => drawResourceLink(doc, r.title, r.category, r.description));
-      }
+      resources.driveResources.forEach(dr => {
+        const typeLabel = dr.type === "folder" ? "Drive Folder" : dr.type === "document" ? "Document" : "Guide";
+        drawResourceLink(doc, dr.title, typeLabel, dr.description);
+      });
 
       drawDisclaimer(doc);
       doc.end();
@@ -740,7 +797,7 @@ export function generatePeptideSchedulePDF(
       doc.on("error", reject);
 
       const pn = protocol.patientName;
-      const isCancer = isCancerPatient(protocol, _profile);
+      const isCancer = getPatientResources(protocol, _profile).isCancer;
       const dateStr = protocol.generatedDate || new Date().toISOString().split("T")[0];
       const totalPeptides = (protocol.injectablePeptides?.length || 0) + (protocol.oralPeptides?.length || 0) + (protocol.bioregulators?.length || 0);
 
@@ -870,10 +927,11 @@ export function generatePeptideSchedulePDF(
 
       doc.moveDown(1);
       drawSubheader(doc, "Resources & Guides");
-      DRIVE_RESOURCES.slice(0, 3).forEach(r => drawResourceLink(doc, r.title, r.category, r.description));
-      if (isCancer) {
-        CANCER_RESOURCES.slice(0, 2).forEach(r => drawResourceLink(doc, r.title, r.category, r.description));
-      }
+      const pepResources = getPatientResources(protocol, _profile);
+      pepResources.driveResources.slice(0, 3).forEach(dr => {
+        const typeLabel = dr.type === "folder" ? "Drive Folder" : dr.type === "document" ? "Document" : "Guide";
+        drawResourceLink(doc, dr.title, typeLabel, dr.description);
+      });
 
       drawDisclaimer(doc);
       doc.end();
