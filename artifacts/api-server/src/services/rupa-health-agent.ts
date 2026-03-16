@@ -73,8 +73,26 @@ export class RupaHealthAgentService {
 
     const browserReady = await checkPlaywrightAvailable();
     if (!browserReady) {
-      console.error('[RUPA-HEALTH-AGENT] Playwright is not available');
-      return { success: false, error: 'Playwright is not available. Ensure the playwright package is installed.' };
+      const manualUrl = 'https://app.rupahealth.com/orders/new';
+      console.error('[RUPA-HEALTH-AGENT] Playwright is not available — returning manual fallback');
+      return {
+        success: false,
+        error: 'Playwright is not available in this environment.',
+        resultUrl: manualUrl,
+        message: `Automated ordering unavailable. Please order manually at ${manualUrl} for patient "${patientDetails.firstName} ${patientDetails.lastName}": ${testPanels.join(', ')}`,
+      };
+    }
+
+    const canLaunch = await checkBrowserLaunchable();
+    if (!canLaunch) {
+      const manualUrl = 'https://app.rupahealth.com/orders/new';
+      console.error('[RUPA-HEALTH-AGENT] Browser cannot launch — returning manual fallback');
+      return {
+        success: false,
+        error: 'Browser cannot launch in this environment.',
+        resultUrl: manualUrl,
+        message: `Automated ordering unavailable. Please order manually at ${manualUrl} for patient "${patientDetails.firstName} ${patientDetails.lastName}": ${testPanels.join(', ')}`,
+      };
     }
 
     let browser: Browser | null = null;
@@ -202,8 +220,29 @@ export class RupaHealthAgentService {
       console.log(`[RUPA-HEALTH-AGENT] Order flow completed. Current URL: ${currentUrl}`);
       return { success: true, message: "Task completed. Check Rupa Health dashboard for the draft order." };
     } catch (error: any) {
-      console.error(`[RUPA-HEALTH-AGENT] Execution failed: `, error);
-      return { success: false, error: error.message || 'Unknown Playwright execution error' };
+      const errMsg = error.message || 'Unknown Playwright execution error';
+      const isTimeout = /timeout|timed?\s*out/i.test(errMsg);
+      console.error(`[RUPA-HEALTH-AGENT] Execution failed (timeout=${isTimeout}):`, errMsg);
+
+      const manualUrl = 'https://app.rupahealth.com/orders/new';
+      const patientName = `${patientDetails.firstName} ${patientDetails.lastName}`;
+      const panelList = testPanels.join(', ');
+
+      if (isTimeout) {
+        return {
+          success: false,
+          error: `Automated lab ordering timed out. Please place the order manually.`,
+          resultUrl: manualUrl,
+          message: `Manual action required: Go to ${manualUrl}, search for patient "${patientName}", and add these panels: ${panelList}. The Rupa Health portal may be slow or have changed its interface.`,
+        };
+      }
+
+      return {
+        success: false,
+        error: errMsg,
+        resultUrl: manualUrl,
+        message: `Automation failed. Manual fallback: Go to ${manualUrl} and order panels (${panelList}) for patient "${patientName}".`,
+      };
     } finally {
       if (context) await context.close().catch(() => {});
       if (browser) await browser.close().catch(() => {});

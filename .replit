@@ -31,13 +31,14 @@ integrations = ["github:1.0.0", "google-drive:1.0.0"]
   [userenv]
 
   [userenv.shared]
-WP_SITE_URL = "https://www.ffpma.com"
+WP_SITE_URL = "https://www.forgottenformula.com"
   WP_USERNAME = "blake"
   ENABLE_SCHEDULERS = "true"
   SIGNNOW_EMAIL = "blake@forgottenformula.com"
   RUPA_USERNAME = "blake@forgottenformula.com"
   PREVIEW_TOKEN_SECRET = "4175182e27d318e22d3b9d91599f0cb0fb1ed2ab88099908978f4cf97f4932c5"
   TELEGRAM_CHAT_ID = ""
+OPENCLAW_API_KEY = "oc_da7ffd6f57209de6914009086019136eb497a8ed802a1a8a1338f29d45135ca6"
 
   [nix]
   channel = "stable-25_05"
