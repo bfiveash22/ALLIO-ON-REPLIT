@@ -675,6 +675,18 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
           }
         }
       }
+
+      const protocolAny = protocol as Record<string, unknown>;
+      const ivFields = ['ivTherapies', 'ivProtocol', 'ivTreatments', 'ivSchedule'];
+      for (const field of ivFields) {
+        const fieldValue = protocolAny[field];
+        if (fieldValue) {
+          const serialized = JSON.stringify(fieldValue).toLowerCase();
+          if (/lipo.?b/i.test(serialized)) {
+            catalogWarnings.push(`Catalog violation: Lipo-B found in structured IV field "${field}". Lipo-B is IM ONLY (216mg/mL).`);
+          }
+        }
+      }
     } catch (catErr) {
       console.warn(`[Finalize] Catalog cross-check failed (non-fatal):`, catErr);
       catalogWarnings.push('Catalog cross-check unavailable — could not fetch catalog');
