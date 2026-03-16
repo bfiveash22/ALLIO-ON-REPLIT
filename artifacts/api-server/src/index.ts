@@ -97,6 +97,8 @@ app.use('/api/agent-tasks', agentRateLimiter);
 app.use('/api/agents', agentRateLimiter);
 app.use('/api/intake', writeRateLimiter);
 app.use('/api/checkout', writeRateLimiter);
+app.use('/api/openclaw/webhook', webhookRateLimiter);
+app.use('/api/openclaw', agentRateLimiter);
 app.use('/api/payments/webhook', webhookRateLimiter);
 app.use('/api/payments', writeRateLimiter);
 app.use('/api/onboarding', writeRateLimiter);

@@ -34,8 +34,8 @@ const AGENT_MODEL_ASSIGNMENTS: Record<string, { provider: string; model: string;
 };
 
 export async function seedAgentRegistry(): Promise<void> {
-  let registered = 0;
-  let skipped = 0;
+  let upserted = 0;
+  let unchanged = 0;
 
   for (const agent of agents) {
     const agentId = agent.id.toUpperCase();
@@ -43,23 +43,13 @@ export async function seedAgentRegistry(): Promise<void> {
 
     if (!DIVISION_METADATA[division]) continue;
 
-    const existingAgent = await db.select({ agentId: agentRegistry.agentId })
-      .from(agentRegistry)
-      .where(sql`UPPER(${agentRegistry.agentId}) = ${agentId}`)
-      .limit(1);
-
-    if (existingAgent.length > 0) {
-      skipped++;
-      continue;
-    }
-
     const divMeta = DIVISION_METADATA[division];
     const modelConfig = AGENT_MODEL_ASSIGNMENTS[agentId] || { provider: 'openai', model: 'gpt-4o', specialty: [] };
     const dynamicCapabilities = modelConfig.specialty.length > 0
       ? modelConfig.specialty
       : (agent.specialty ? agent.specialty.split(',').map((s: string) => s.trim()) : []);
 
-    await db.insert(agentRegistry).values({
+    const values = {
       agentId,
       name: agent.name || agentId,
       title: agent.title || 'AI Agent',
@@ -72,14 +62,29 @@ export async function seedAgentRegistry(): Promise<void> {
       capabilities: dynamicCapabilities,
       pendingTasks: 0,
       completedTasks: 0,
-    });
+    };
 
-    registered++;
+    const result = await db.insert(agentRegistry).values(values)
+      .onConflictDoUpdate({
+        target: agentRegistry.agentId,
+        set: {
+          name: values.name,
+          title: values.title,
+          division: values.division,
+          specialty: values.specialty,
+          isLead: values.isLead,
+          aiModel: values.aiModel,
+          modelProvider: values.modelProvider,
+          capabilities: values.capabilities,
+        },
+      }).returning({ agentId: agentRegistry.agentId });
+
+    if (result.length > 0) {
+      upserted++;
+    } else {
+      unchanged++;
+    }
   }
 
-  if (registered > 0) {
-    console.log(`[agent-registry-seed] Registered ${registered} new agents (${skipped} already existed)`);
-  } else {
-    console.log(`[agent-registry-seed] All ${skipped} agents already registered`);
-  }
+  console.log(`[agent-registry-seed] Upserted ${upserted} agents (${unchanged} unchanged)`);
 }

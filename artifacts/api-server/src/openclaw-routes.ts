@@ -166,8 +166,22 @@ export function registerOpenClawRoutes(app: Express): void {
         res.status(400).json({ error: 'sourceAgent is required and must be a string' });
         return;
       }
+      if (!targetAgent || typeof targetAgent !== 'string') {
+        res.status(400).json({ error: 'targetAgent is required and must be a string' });
+        return;
+      }
+      if (!messageType || typeof messageType !== 'string') {
+        res.status(400).json({ error: 'messageType is required and must be a string' });
+        return;
+      }
       if (!content || typeof content !== 'string') {
         res.status(400).json({ error: 'content is required and must be a string (message body)' });
+        return;
+      }
+
+      const validMessageTypes = ['general', 'task_request', 'task', 'status_update', 'alert', 'report', 'query', 'response'];
+      if (!validMessageTypes.includes(messageType)) {
+        res.status(400).json({ error: `Invalid messageType. Must be one of: ${validMessageTypes.join(', ')}` });
         return;
       }
 
@@ -178,20 +192,19 @@ export function registerOpenClawRoutes(app: Express): void {
       }
 
       const [message] = await db.insert(openclawMessages).values({
-        fromAgent: sourceAgent.toUpperCase(),
-        toRecipient: targetAgent?.toUpperCase() || 'SENTINEL',
+        fromAgent: `INBOUND:${sourceAgent.toUpperCase()}`,
+        toRecipient: targetAgent.toUpperCase(),
         message: content.substring(0, 50000),
         priority: priority || 'normal',
-        status: 'delivered',
-        deliveredAt: new Date(),
+        status: 'pending',
       }).returning();
 
-      console.log(`[OpenClaw Webhook] Inbound message ${message.id} from ${sourceAgent} to ${targetAgent || 'SENTINEL'} (${messageType || 'general'})`);
+      console.log(`[OpenClaw Webhook] Inbound ${messageType} message ${message.id} from ${sourceAgent} to ${targetAgent} (priority: ${priority || 'normal'})`);
 
       if (messageType === 'task_request' || messageType === 'task') {
         const [task] = await db.insert(openclawTasks).values({
-          agentId: (targetAgent || sourceAgent).toUpperCase(),
-          taskType: messageType || 'general',
+          agentId: targetAgent.toUpperCase(),
+          taskType: messageType,
           description: content.substring(0, 10000),
           priority: priority || 'normal',
           status: 'pending',
@@ -199,10 +212,11 @@ export function registerOpenClawRoutes(app: Express): void {
           callbackUrl: null,
         }).returning();
 
-        console.log(`[OpenClaw Webhook] Auto-created task ${task.id} from inbound message`);
+        console.log(`[OpenClaw Webhook] Auto-created task ${task.id} from inbound ${messageType}`);
 
         res.status(201).json({
           received: true,
+          direction: 'inbound',
           messageId: message.id,
           taskId: task.id,
           correlationId: correlationId || null,
@@ -213,6 +227,7 @@ export function registerOpenClawRoutes(app: Express): void {
 
       res.status(201).json({
         received: true,
+        direction: 'inbound',
         messageId: message.id,
         correlationId: correlationId || null,
         timestamp: new Date().toISOString(),
