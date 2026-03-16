@@ -9,6 +9,32 @@ import { MessageSquare, Send, Mail, MailOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
+interface Message {
+  id: string;
+  senderId: string;
+  senderRole: string;
+  senderName: string | null;
+  recipientId: string;
+  recipientRole: string;
+  recipientName: string | null;
+  content: string;
+  readAt: string | null;
+  createdAt: string;
+}
+
+interface MessagesResponse {
+  messages: Message[];
+  unreadCount: number;
+}
+
+interface DoctorThread {
+  id: string;
+  name: string;
+  lastMessage: Message;
+  messageCount: number;
+  unread: number;
+}
+
 export function MemberMessages() {
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
@@ -16,7 +42,7 @@ export function MemberMessages() {
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { data: messagesData } = useQuery<{ messages: any[]; unreadCount: number }>({
+  const { data: messagesData } = useQuery<MessagesResponse>({
     queryKey: ['/api/member/messages'],
     refetchInterval: 10000,
   });
@@ -24,17 +50,17 @@ export function MemberMessages() {
   const messages = messagesData?.messages || [];
   const unreadCount = messagesData?.unreadCount || 0;
 
-  const doctorThreads = messages.reduce((acc: Record<string, any[]>, msg: any) => {
+  const doctorThreads = messages.reduce<Record<string, Message[]>>((acc, msg) => {
     const otherId = msg.senderRole === "doctor" ? msg.senderId : msg.recipientId;
     if (!acc[otherId]) acc[otherId] = [];
     acc[otherId].push(msg);
     return acc;
   }, {});
 
-  const doctorList = Object.entries(doctorThreads).map(([id, msgs]) => {
+  const doctorList: DoctorThread[] = Object.entries(doctorThreads).map(([id, msgs]) => {
     const lastMsg = msgs[msgs.length - 1];
     const name = lastMsg.senderRole === "doctor" ? lastMsg.senderName : lastMsg.recipientName;
-    const unread = msgs.filter((m: any) => m.senderRole === "doctor" && !m.readAt).length;
+    const unread = msgs.filter((m) => m.senderRole === "doctor" && !m.readAt).length;
     return { id, name: name || "Doctor", lastMessage: lastMsg, messageCount: msgs.length, unread };
   });
 
@@ -66,7 +92,7 @@ export function MemberMessages() {
       queryClient.invalidateQueries({ queryKey: ['/api/member/messages'] });
       setReplyText("");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to send reply",
@@ -78,8 +104,8 @@ export function MemberMessages() {
   useEffect(() => {
     if (selectedDoctorId && selectedMessages.length > 0) {
       selectedMessages
-        .filter((m: any) => m.senderRole === "doctor" && !m.readAt)
-        .forEach((m: any) => markReadMutation.mutate(m.id));
+        .filter((m) => m.senderRole === "doctor" && !m.readAt)
+        .forEach((m) => markReadMutation.mutate(m.id));
     }
   }, [selectedDoctorId]);
 
@@ -141,7 +167,7 @@ export function MemberMessages() {
           {selectedDoctorId ? (
             <>
               <div className="flex-1 overflow-y-auto space-y-3 mb-3">
-                {selectedMessages.map((msg: any) => {
+                {selectedMessages.map((msg) => {
                   const isFromDoctor = msg.senderRole === "doctor";
                   return (
                     <div key={msg.id} className={`flex ${isFromDoctor ? 'justify-start' : 'justify-end'}`}>

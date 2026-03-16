@@ -149,19 +149,47 @@ export function registerDoctorRoutes(app: Express): void {
 
   app.post("/api/doctor/conversations", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
     try {
+      const userId = req.user?.id as string;
+      const { participantIds } = req.body;
+      if (!participantIds || !Array.isArray(participantIds) || !participantIds.includes(userId)) {
+        return res.status(403).json({ success: false, error: "You must be a participant in the conversation" });
+      }
+      const otherParticipants = participantIds.filter((id: string) => id !== userId);
+      for (const pId of otherParticipants) {
+        const authorized = await isDoctorsMember(userId, pId);
+        if (!authorized) {
+          return res.status(403).json({ success: false, error: "One or more participants are not your enrolled members" });
+        }
+      }
       const conversation = await storage.createConversation(req.body);
       res.json({ success: true, conversation });
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ success: false, error: errMsg });
     }
   });
 
   app.post("/api/doctor/messages", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
     try {
-      const message = await storage.createMessage(req.body);
+      const userId = req.user?.id as string;
+      const { recipientId, conversationId } = req.body;
+      if (recipientId) {
+        const authorized = await isDoctorsMember(userId, recipientId);
+        if (!authorized) {
+          return res.status(403).json({ success: false, error: "Recipient is not your enrolled member" });
+        }
+      }
+      if (conversationId) {
+        const conversation = await storage.getConversation(conversationId);
+        if (!conversation || !conversation.participantIds.includes(userId)) {
+          return res.status(403).json({ success: false, error: "Not a participant in this conversation" });
+        }
+      }
+      const message = await storage.createMessage({ ...req.body, senderId: userId, senderRole: "doctor" });
       res.json({ success: true, message });
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ success: false, error: errMsg });
     }
   });
 

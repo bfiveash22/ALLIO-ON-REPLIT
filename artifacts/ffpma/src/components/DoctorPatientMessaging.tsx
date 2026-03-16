@@ -8,6 +8,30 @@ import { MessageSquare, Send, Phone, Video, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
+interface Message {
+  id: string;
+  senderId: string;
+  senderRole: string;
+  senderName: string | null;
+  recipientId: string;
+  recipientRole: string;
+  recipientName: string | null;
+  content: string;
+  readAt: string | null;
+  createdAt: string;
+}
+
+interface Member {
+  id: string | number;
+  name: string;
+  email: string;
+  status: string;
+}
+
+interface MembersResponse {
+  members: Member[];
+}
+
 interface DoctorPatientMessagingProps {
   doctorId?: string;
   preselectedPatientId?: string;
@@ -26,11 +50,11 @@ export function DoctorPatientMessaging({ doctorId, preselectedPatientId }: Docto
     }
   }, [preselectedPatientId]);
 
-  const { data: membersData } = useQuery<{ members: any[] }>({
+  const { data: membersData } = useQuery<MembersResponse>({
     queryKey: ['/api/doctor/members'],
   });
 
-  const { data: messages } = useQuery<any[]>({
+  const { data: messages } = useQuery<Message[]>({
     queryKey: ['/api/doctor/messages', selectedPatientId],
     enabled: !!selectedPatientId,
     refetchInterval: 5000,
@@ -52,7 +76,7 @@ export function DoctorPatientMessaging({ doctorId, preselectedPatientId }: Docto
       queryClient.invalidateQueries({ queryKey: ['/api/doctor/messages', selectedPatientId] });
       setMessageText("");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error Sending Message",
         description: error.message || "Failed to send message",
@@ -65,6 +89,8 @@ export function DoctorPatientMessaging({ doctorId, preselectedPatientId }: Docto
     if (!messageText.trim()) return;
     sendMessageMutation.mutate(messageText);
   };
+
+  const selectedMember = membersData?.members?.find(m => m.id.toString() === selectedPatientId);
 
   return (
     <Card className="bg-black/20 border-white/10 p-6">
@@ -81,7 +107,7 @@ export function DoctorPatientMessaging({ doctorId, preselectedPatientId }: Docto
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-3 max-h-[500px] overflow-y-auto pr-2">
           <h3 className="font-medium text-white/80 mb-3">Your Patients</h3>
-          {membersData?.members?.map((member: any) => (
+          {membersData?.members?.map((member) => (
             <div 
               key={member.id} 
               onClick={() => setSelectedPatientId(member.id.toString())}
@@ -104,11 +130,11 @@ export function DoctorPatientMessaging({ doctorId, preselectedPatientId }: Docto
               <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center font-bold">
-                    {membersData?.members?.find(m => m.id.toString() === selectedPatientId)?.name?.substring(0,2).toUpperCase() || "PT"}
+                    {selectedMember?.name?.substring(0,2).toUpperCase() || "PT"}
                   </div>
                   <div>
                     <p className="font-medium">
-                      {membersData?.members?.find(m => m.id.toString() === selectedPatientId)?.name || "Patient"}
+                      {selectedMember?.name || "Patient"}
                     </p>
                     <p className="text-xs text-white/50">Secure Thread</p>
                   </div>
@@ -129,7 +155,7 @@ export function DoctorPatientMessaging({ doctorId, preselectedPatientId }: Docto
                     No messages in this conversation yet. Send a message to start.
                   </div>
                 ) : (
-                  messages.map((msg: any) => {
+                  messages.map((msg) => {
                     const isDoctor = msg.senderId === doctorId || msg.senderRole === "doctor";
                     return (
                       <div key={msg.id} className={`flex ${isDoctor ? 'justify-end' : 'justify-start'}`}>
