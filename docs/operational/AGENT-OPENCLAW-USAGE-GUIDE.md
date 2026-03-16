@@ -1,6 +1,6 @@
 # AGENT OPENCLAW USAGE GUIDE
 **For:** All Allio Agents  
-**Purpose:** How to communicate with Trustee via WhatsApp through OpenClaw bridge
+**Purpose:** How to communicate with Trustee via Telegram through OpenClaw bridge
 
 ---
 
@@ -14,7 +14,7 @@ import { sendToTrustee } from '../services/openclaw';
 await sendToTrustee('SENTINEL', 'Need approval: New clinic application from Dr. Smith', 'high');
 ```
 
-**That's it!** Your message will appear on Trustee's WhatsApp within 3-5 minutes.
+**That's it!** Your message will appear on Trustee's Telegram within 3-5 minutes.
 
 ---
 
@@ -55,24 +55,24 @@ sendToTrustee(
 1. **Your agent calls `sendToTrustee()`**
 2. **Message inserted into database** (`openclaw_messages` table)
 3. **OpenClaw polls database** (1-10 min based on priority)
-4. **OpenClaw sends WhatsApp** with format: `[YOUR_AGENT_NAME] Your message`
+4. **OpenClaw sends Telegram** with format: `[YOUR_AGENT_NAME] Your message`
 5. **Trustee receives on phone**
 
 ---
 
 ## 📥 RECEIVING TRUSTEE REPLIES
 
-**Trustee replies via WhatsApp:**
+**Trustee replies via Telegram:**
 ```
 @SENTINEL Approved - proceed with onboarding
 ```
 
 **What happens:**
-1. OpenClaw receives WhatsApp message
+1. OpenClaw receives Telegram message
 2. Parses `@SENTINEL` mention
 3. POSTs to `/api/webhooks/openclaw`
 4. **New task created for SENTINEL:**
-   - Title: "Direct Order: Trustee via WhatsApp"
+   - Title: "Direct Order: Trustee via Telegram"
    - Description: Contains Trustee's message
    - Priority: 1 (highest)
    - Status: pending
@@ -139,7 +139,7 @@ const result = await db.query(`
 
 **Status values:**
 - `pending` - Waiting for OpenClaw to send
-- `sent` - Sent to Trustee via WhatsApp
+- `sent` - Sent to Trustee via Telegram
 - `failed` - Failed to send (rare)
 
 ---
@@ -185,7 +185,7 @@ hey need approval
 
 **Data Safety:**
 - Messages stored in database (not encrypted at rest)
-- Sent via WhatsApp (end-to-end encrypted)
+- Sent via Telegram (end-to-end encrypted)
 - Do not include PHI or sensitive personal data
 - Use patient initials or IDs instead of full names
 

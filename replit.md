@@ -215,3 +215,16 @@ The platform includes an AI agent network with:
 - Agent scheduler for automated tasks
 - Sentinel monitoring system
 - Diane AI assistant for member support
+
+## OpenClaw Telegram Integration
+
+The OpenClaw system bridges AI agent communication to the Trustee via Telegram (migrated from WhatsApp).
+
+- **VPS Gateway**: OpenClaw gateway on VPS (130.49.160.73) handles Telegram bot `@AllioFFPMA_bot` via `channels.telegram.botToken`
+- **Bot Token**: Stored in `TELEGRAM_BOT_TOKEN` secret and in VPS OpenClaw config (`channels.telegram.botToken`)
+- **Chat ID**: Stored in `TELEGRAM_CHAT_ID` secret
+- **Outbound flow**: Agents queue messages to `openclaw_messages` table -> OpenClaw gateway polls DB and sends via Telegram
+- **Inbound flow**: Trustee messages bot on Telegram -> OpenClaw POSTs to `localhost:5000/api/webhooks/openclaw` -> creates high-priority task for target agent
+- **Standalone bot**: `artifacts/api-server/src/openclaw-telegram-bot.ts` - alternative relay service that polls `/api/openclaw/outbox` and sends via Telegram API directly. Set `TELEGRAM_ENABLE_INCOMING=false` when running alongside OpenClaw gateway.
+- **Test script**: `pnpm --filter @workspace/scripts run test-telegram` validates bot connectivity and sends a test message
+- **VPS config**: `/root/.openclaw/openclaw.json` - WhatsApp disabled, Telegram enabled with `botToken`

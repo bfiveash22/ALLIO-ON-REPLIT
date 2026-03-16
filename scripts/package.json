@@ -19,14 +19,17 @@
     "cancel-tasks": "tsx ./operational/cancel-tasks.ts",
     "fix-db-agents": "tsx ./operational/fix-db-agents.ts",
     "force-drformula": "tsx ./operational/force-drformula.ts",
-    "force-execute": "tsx ./operational/force-execute.ts"
+    "force-execute": "tsx ./operational/force-execute.ts",
+    "test-telegram": "tsx ./operational/test-telegram.ts"
   },
   "dependencies": {
+    "@types/node-telegram-bot-api": "^0.64.14",
     "drizzle-orm": "^0.39.3",
     "drizzle-zod": "^0.7.1",
     "esbuild": "^0.25.0",
     "googleapis": "^144.0.0",
     "node-ssh": "^13.2.1",
+    "node-telegram-bot-api": "^0.67.0",
     "openai": "^4.103.0",
     "pdf-parse": "^1.1.1",
     "pg": "^8.16.3",

@@ -34,6 +34,8 @@ WP_USERNAME = "blake"
 ENABLE_SCHEDULERS = "true"
 SIGNNOW_EMAIL = "blake@forgottenformula.com"
 RUPA_USERNAME = "blake@forgottenformula.com"
+PREVIEW_TOKEN_SECRET = "4175182e27d318e22d3b9d91599f0cb0fb1ed2ab88099908978f4cf97f4932c5"
+TELEGRAM_CHAT_ID = ""
 
 [nix]
 channel = "stable-25_05"

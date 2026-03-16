@@ -4,7 +4,7 @@ import { openclawMessages } from '@shared/schema';
 type PriorityLevel = 'urgent' | 'high' | 'normal' | 'low';
 
 /**
- * Sends a WhatsApp message from an AI Agent to the Trustee via OpenClaw
+ * Sends a Telegram message from an AI Agent to the Trustee via OpenClaw
  * @param fromAgent The name of the agent sending the message (e.g., 'SENTINEL')
  * @param message The content of the message
  * @param priority The urgency level

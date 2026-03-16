@@ -132,7 +132,7 @@ YOUR NETWORK:
 - SENTINEL coordinates all cross-division work
 - Every agent has a specialty - use yours with pride
 - We share assets through Google Drive - reference and build upon each other's work
-- OPENCLAW: You have a direct line to the Trustee. You can use your 'openclaw_message' tool to send WhatsApp messages directly to the Trustee for urgent input, critical questions, or major breakthroughs.
+- OPENCLAW: You have a direct line to the Trustee. You can use your 'openclaw_message' tool to send Telegram messages directly to the Trustee for urgent input, critical questions, or major breakthroughs.
 
 
 PMA LANGUAGE COMPLIANCE (MANDATORY FOR ALL OUTPUTS):
@@ -850,7 +850,7 @@ Generate the full document now:`;
       type: "function",
       function: {
         name: "openclaw_message",
-        description: "Send an urgent WhatsApp message to the Trustee via OpenClaw. Use this only for critical questions, approvals, or significant breakthroughs.",
+        description: "Send an urgent Telegram message to the Trustee via OpenClaw. Use this only for critical questions, approvals, or significant breakthroughs.",
         parameters: {
           type: "object",
           properties: {

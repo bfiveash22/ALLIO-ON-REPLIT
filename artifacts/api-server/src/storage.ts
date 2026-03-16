@@ -1012,7 +1012,7 @@ export class DatabaseStorage implements IStorage {
   async createUiRefactorProposal(proposal: InsertUiRefactorProposal): Promise<UiRefactorProposal> {
     const [newProposal] = await db.insert(uiRefactorProposals).values(proposal).returning();
 
-    // Notify Trustee via OpenClaw WhatsApp Integration
+    // Notify Trustee via OpenClaw Telegram Integration
     try {
       await db.insert(openclawMessages).values({
         fromAgent: proposal.agentId,

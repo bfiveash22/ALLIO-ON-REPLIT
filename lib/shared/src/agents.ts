@@ -80,7 +80,7 @@ export const agents: AgentProfile[] = [
     name: "OPENCLAW",
     title: "Executive Trustee Proxy",
     division: "executive",
-    specialty: "High-priority oversight, VIP comms, Trustee WhatsApp bridge",
+    specialty: "High-priority oversight, VIP comms, Trustee Telegram bridge",
     voice: "Decisive, protective, urgent. Acts explicitly on behalf of the Trustee.",
     personality: "The immediate response mechanism and direct line to the Trustee. Handles critical issues that bypass the rest of the network.",
     coreBeliefs: [

@@ -345,7 +345,7 @@ export function registerSentinelRoutes(app: Express): void {
     }
   });
 
-  // --- OpenClaw WhatsApp Webhooks ---
+  // --- OpenClaw Telegram Webhooks ---
   app.post('/api/webhooks/openclaw', async (req: Request, res: Response) => {
     try {
       const { from, to_agent, message } = req.body;
@@ -355,8 +355,8 @@ export function registerSentinelRoutes(app: Express): void {
         return res.status(400).json({ error: 'Invalid sender' });
       }
 
-      // Convert the WhatsApp message into a high-priority task for the designated agent
-      const description = `TRUSTEE DIRECTIVE via OPENCLAW WhatsApp:\n"${message}"`;
+      // Convert the Telegram message into a high-priority task for the designated agent
+      const description = `TRUSTEE DIRECTIVE via OPENCLAW Telegram:\n"${message}"`;
 
       let targetAgent = (to_agent || 'SENTINEL').toUpperCase();
       if (['DR BAKER', 'DR. BAKER', 'DR FORMULA', 'DR. FORMULA'].includes(targetAgent)) {
@@ -365,7 +365,7 @@ export function registerSentinelRoutes(app: Express): void {
 
       await orchestrator.assignTask({
         agentId: targetAgent,
-        title: `Direct Order: Trustee via WhatsApp`,
+        title: `Direct Order: Trustee via Telegram`,
         description: description,
         priority: 1, // Urgent priority for direct orders
         assignedBy: 'TRUSTEE'

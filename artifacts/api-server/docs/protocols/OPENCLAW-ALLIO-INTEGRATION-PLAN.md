@@ -48,9 +48,9 @@ const pending = await db.query(`
   ORDER BY priority DESC, created_at ASC
 `);
 
-// Send via WhatsApp
+// Send via Telegram
 for (const msg of pending) {
-  await sendWhatsApp(msg.message);
+  await sendTelegram(msg.message);
   await markSent(msg.id);
 }
 ```
@@ -86,7 +86,7 @@ const messages = await response.json();
 
 ### Real-Time Webhook (FAST)
 
-**Trustee sends WhatsApp message:**
+**Trustee sends Telegram message:**
 ```
 @SENTINEL Approved - proceed with clinic onboarding
 ```
@@ -211,10 +211,10 @@ async function checkOpenClawMessages() {
   `);
   
   for (const msg of result.rows) {
-    // Send via WhatsApp
+    // Send via Telegram
     await message({
       action: 'send',
-      channel: 'whatsapp',
+      channel: 'telegram',
       to: '+19405970117',
       message: `[${msg.from_agent}] ${msg.message}`
     });
@@ -233,7 +233,7 @@ async function checkOpenClawMessages() {
 ### 2. Route Trustee Replies to Agents
 
 ```javascript
-// When I receive WhatsApp from Trustee
+// When I receive Telegram from Trustee
 async function handleTrusteeMessage(message) {
   // Parse for agent mentions
   const agentMatch = message.match(/@([A-Z_]+)/);
@@ -269,14 +269,14 @@ VALUES (
 );
 ```
 
-**Trustee receives via WhatsApp:**
+**Trustee receives via Telegram:**
 ```
 [SENTINEL] New clinic application received from Dr. Sarah Johnson (Texas). Ready for approval.
 ```
 
 ### Trustee → Agent
 
-**Trustee sends via WhatsApp:**
+**Trustee sends via Telegram:**
 ```
 @SENTINEL Approved - proceed with onboarding
 ```
@@ -335,12 +335,12 @@ Allio ← http://localhost:5000/api/webhooks/openclaw ← OpenClaw
    VALUES ('TEST', 'Hello Trustee from TEST agent');
    ```
 5. **Wait 3-5 min for my heartbeat**
-6. **Trustee should receive WhatsApp message**
+6. **Trustee should receive Telegram message**
 
 ### For Me (already done):
 
 - ✅ Database access configured (same DATABASE_URL)
-- ✅ WhatsApp messaging tool available
+- ✅ Telegram messaging tool available
 - ✅ HTTP POST capability for webhooks
 - ⏳ Just need to add polling logic to heartbeat
 
