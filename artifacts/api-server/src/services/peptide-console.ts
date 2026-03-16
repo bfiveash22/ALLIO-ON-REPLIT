@@ -1,5 +1,4 @@
 import type { Express, Request, Response } from "express";
-import fetch from "node-fetch";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -172,30 +171,34 @@ export function registerPeptideConsoleRoutes(app: Express): void {
         const body = response.body;
         if (!body) throw new Error("No response body");
 
-        body.on('data', (chunk: Buffer) => {
-          const text = chunk.toString();
-          const lines = text.split('\n');
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') {
-                res.write('data: {"done":true}\n\n');
-                return;
-              }
-              try {
-                const parsed = JSON.parse(data);
-                const content = parsed.choices?.[0]?.delta?.content || '';
-                if (content) {
-                  res.write(`data: ${JSON.stringify({ content })}\n\n`);
+        const reader = body.getReader();
+        const decoder = new TextDecoder();
+        let done = false;
+        while (!done) {
+          const result = await reader.read();
+          done = result.done;
+          if (result.value) {
+            const text = decoder.decode(result.value, { stream: true });
+            const lines = text.split('\n');
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') {
+                  res.write('data: {"done":true}\n\n');
+                  continue;
                 }
-              } catch (e) { /* ignore parse errors */ }
+                try {
+                  const parsed = JSON.parse(data);
+                  const content = parsed.choices?.[0]?.delta?.content || '';
+                  if (content) {
+                    res.write(`data: ${JSON.stringify({ content })}\n\n`);
+                  }
+                } catch (e) { /* ignore parse errors */ }
+              }
             }
           }
-        });
-
-        body.on('end', () => {
-          res.end();
-        });
+        }
+        res.end();
 
       } else {
         // Fallback to OpenAI if Abacus is not configured

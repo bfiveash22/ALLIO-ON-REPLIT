@@ -5,7 +5,6 @@ import express from 'express';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import pg from 'pg';
-import fetch from 'node-fetch';
 
 const { Pool } = pg;
 const PgSession = connectPgSimple(session);

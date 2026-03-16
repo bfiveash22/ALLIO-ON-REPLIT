@@ -232,7 +232,6 @@ WRITING STYLE - BE A CLINICAL MENTOR:
 
     // Abacus AI is the preferred model based on original implementation
     // Using streaming response
-    const fetch = (await import('node-fetch')).default;
     const response = await fetch('https://apps.abacus.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -279,7 +278,10 @@ WRITING STYLE - BE A CLINICAL MENTOR:
     res.setHeader('Connection', 'keep-alive');
     
     if (response.body) {
-      response.body.pipe(res);
+      const { Readable } = await import('node:stream');
+      const webStream: ReadableStream<Uint8Array> = response.body;
+      const nodeStream = Readable.fromWeb(webStream);
+      nodeStream.pipe(res);
     } else {
       res.end();
     }
