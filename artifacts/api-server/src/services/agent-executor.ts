@@ -1,5 +1,6 @@
 ﻿// Removed Replit Image Generator
 import { findAllioFolder, createSubfolder, findFolderByName, getUncachableGoogleDriveClient, uploadTextDocument, uploadPresentation, searchDriveLibrary } from './drive';
+import { searchAllKnowledge } from './knowledge-base';
 import { copyPresentation, updatePresentation, extractTextFromPresentation } from './slides';
 import { readDocument, appendDocumentText } from './docs';
 import { readSheet, appendSheetRow, updateSheetCell } from './sheets';
@@ -13,8 +14,6 @@ import { canvaAgent } from './canva-agent';
 import { rupaHealthAgent } from './rupa-health-agent';
 import { agents, FFPMA_CREED } from '@shared/agents';
 import { searchAllSources } from './research-apis';
-import { searchKnowledgeBase } from './knowledge-base';
-import { searchAgentLibrary } from './library-ingestion';
 import { db } from '../db';
 import { agentTasks } from '@shared/schema';
 import { eq } from 'drizzle-orm';
@@ -57,7 +56,7 @@ AND THE HEALING MISSION OF FORGOTTEN FORMULA PMA.
 
 *SYSTEM UPGRADE: You now possess dual-engine ML capabilities. Your core reasoning is powered by OpenAI GPT-4o. You ALSO have direct access to Google Gemini 1.5 Pro via your toolset for processing massive context windows and performing deep multimodal analysis.*
 
-*KNOWLEDGE BASE UPGRADE: You now have the 'search_knowledge_base' tool. You MUST use this tool to search '/root/allio-v1/knowledge-base/' for relevant documents, manuals, legal texts, or protocols before answering questions or generating documents that require internal factual accuracy. Never hallucinate facts when a document exists.*
+*UNIFIED KNOWLEDGE SEARCH: You have the 'search_all_knowledge' tool which searches ALL knowledge sources at once — local knowledge base files, compound interaction data, the library database (articles, protocols, training content), Drive documents, and your agent-specific library folders. Results are ranked by relevance with source attribution. You MUST use this tool before answering questions or generating documents that require internal factual accuracy. Never hallucinate facts when a document exists.*
 
 OUR MISSION: ${FFPMA_CREED.mission}
 
@@ -635,14 +634,18 @@ Generate the full document now:`;
     {
       type: "function",
       function: {
-        name: "search_drive",
-        description: "Search the FFPMA Google Drive libraries for protocols, manuals, and documents.",
+        name: "search_all_knowledge",
+        description: "Search ALL knowledge sources at once: local knowledge base files, compound interaction data, library database (articles, protocols, training), Drive documents, and agent-specific library folders. Returns ranked results with source attribution. Always use this instead of guessing internal facts.",
         parameters: {
           type: "object",
           properties: {
             query: {
               type: "string",
-              description: "The search query to match against document names and contents.",
+              description: "The search query or topic to look for across all knowledge sources.",
+            },
+            specificFile: {
+              type: "string",
+              description: "Optional specific file name to read from the local knowledge base (e.g., 'PMA_Bylaws.md').",
             },
           },
           required: ["query"],
@@ -873,35 +876,6 @@ Generate the full document now:`;
         }
       }
     },
-    {
-      type: "function",
-      function: {
-        name: "search_knowledge_base",
-        description: "Search the local knowledge base (PMA bylaws, medical protocols, training manuals, etc.) for factual grounding. Always use this instead of guessing internal facts.",
-        parameters: {
-          type: "object",
-          properties: {
-            query: { type: "string", description: "The search query or topic to look for" },
-            specificFile: { type: "string", description: "Optional specific file name to read (e.g., 'PMA_Bylaws.md')" }
-          },
-          required: ["query"]
-        }
-      }
-    },
-    {
-      type: "function",
-      function: {
-        name: "search_agent_library",
-        description: "Search your personal agent library of uploaded books, research papers, and documents. Use this to find specific information from literature uploaded to your library by the Trustee.",
-        parameters: {
-          type: "object",
-          properties: {
-            query: { type: "string", description: "The search query or topic to look for in your library" }
-          },
-          required: ["query"]
-        }
-      }
-    }
   ];
 
   let rawContent = "Document generation failed.";
@@ -950,16 +924,35 @@ Generate the full document now:`;
               content: JSON.stringify({ error: e.message })
             });
           }
+        } else if (toolCall.function.name === 'search_all_knowledge') {
+          const args = JSON.parse(toolCall.function.arguments);
+          console.log(`[Agent Executor] ${agentId} called search_all_knowledge: "${args.query}"`);
+          try {
+            const results = await searchAllKnowledge(args.query, agentId, args.specificFile);
+            messages.push({
+              tool_call_id: toolCall.id,
+              role: "tool",
+              name: "search_all_knowledge",
+              content: JSON.stringify({ result: results })
+            });
+          } catch (e: any) {
+            messages.push({
+              tool_call_id: toolCall.id,
+              role: "tool",
+              name: "search_all_knowledge",
+              content: JSON.stringify({ error: e.message })
+            });
+          }
         } else if (toolCall.function.name === 'search_drive') {
           const args = JSON.parse(toolCall.function.arguments);
-          console.log(`[Agent Executor] ${agentId} called search_drive: ${args.query}`);
+          console.log(`[Agent Executor] ${agentId} called search_drive (legacy): ${args.query}`);
           try {
-            const results = await searchDriveLibrary(args.query, agentId);
+            const results = await searchAllKnowledge(args.query, agentId);
             messages.push({
               tool_call_id: toolCall.id,
               role: "tool",
               name: "search_drive",
-              content: JSON.stringify(results.slice(0, 5)) // Limit to top 5 hits
+              content: JSON.stringify({ result: results })
             });
           } catch (e: any) {
             messages.push({
@@ -1181,21 +1174,14 @@ Generate the full document now:`;
           }
         } else if (toolCall.function.name === 'search_knowledge_base') {
           const args = JSON.parse(toolCall.function.arguments);
-          console.log(`[Agent Executor] ${agentId} called search_knowledge_base for "${args.query}"`);
+          console.log(`[Agent Executor] ${agentId} called search_knowledge_base (legacy) for "${args.query}"`);
           try {
-            const kbResult = await searchKnowledgeBase(args.query, args.specificFile);
-            let libraryAddendum = '';
-            try {
-              const libResult = await searchAgentLibrary(agentId, args.query, 5);
-              if (!libResult.includes('No results found') && !libResult.includes('No valid search')) {
-                libraryAddendum = '\n\n--- Agent Library Results ---\n' + libResult;
-              }
-            } catch { /* library search is supplementary */ }
+            const kbResult = await searchAllKnowledge(args.query, agentId, args.specificFile);
             messages.push({
               tool_call_id: toolCall.id,
               role: "tool",
               name: "search_knowledge_base",
-              content: JSON.stringify({ result: kbResult + libraryAddendum })
+              content: JSON.stringify({ result: kbResult })
             });
           } catch (e: any) {
             messages.push({
@@ -1207,9 +1193,9 @@ Generate the full document now:`;
           }
         } else if (toolCall.function.name === 'search_agent_library') {
           const args = JSON.parse(toolCall.function.arguments);
-          console.log(`[Agent Executor] ${agentId} called search_agent_library for "${args.query}"`);
+          console.log(`[Agent Executor] ${agentId} called search_agent_library (legacy) for "${args.query}"`);
           try {
-            const libraryResult = await searchAgentLibrary(agentId, args.query);
+            const libraryResult = await searchAllKnowledge(args.query, agentId);
             messages.push({
               tool_call_id: toolCall.id,
               role: "tool",

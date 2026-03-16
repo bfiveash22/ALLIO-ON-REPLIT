@@ -1270,6 +1270,82 @@ export async function searchDriveLibrary(query: string, agentName?: string): Pro
   }
 }
 
+export async function searchDriveLibraryScoped(
+  query: string,
+  agentId?: string
+): Promise<Array<{
+  id: string;
+  name: string;
+  mimeType: string;
+  webViewLink?: string;
+  folderContext: string;
+}>> {
+  try {
+    const drive = await getUncachableGoogleDriveClient();
+
+    const SYSTEM_LIBRARY_ID = '1G1oo3_6GhnLZL9dCRS3ghQXep3Zn1Ez6';
+    const CHIRO_LIBRARY_ID = '1vUOmOHvweQkOXN46Hxbbx1OM8PKk24TB';
+
+    const folderIds: Array<{ id: string; context: string }> = [
+      { id: SYSTEM_LIBRARY_ID, context: 'System Library' },
+    ];
+
+    if (agentId === 'chiro' || !agentId) {
+      folderIds.push({ id: CHIRO_LIBRARY_ID, context: 'Chiro Books' });
+    }
+
+    if (agentId) {
+      try {
+        const agentName = agentId.toUpperCase().replace(/-/g, '_');
+        const librariesId = await getOrCreateAgentLibrariesFolder();
+        const agentFolderId = await findFolderByName(librariesId, agentName);
+        if (agentFolderId) {
+          folderIds.push({ id: agentFolderId, context: `${agentName} Library` });
+        }
+      } catch (e) {
+        console.error(`[Drive] Could not resolve agent library folder for ${agentId}:`, e);
+      }
+    }
+
+    const escapedQuery = query.replace(/'/g, "\\'");
+    const allResults: Array<{
+      id: string;
+      name: string;
+      mimeType: string;
+      webViewLink?: string;
+      folderContext: string;
+    }> = [];
+
+    for (const folder of folderIds) {
+      try {
+        const response = await drive.files.list({
+          q: `(fullText contains '${escapedQuery}' or name contains '${escapedQuery}') and trashed = false and '${folder.id}' in parents`,
+          fields: 'files(id, name, mimeType, webViewLink)',
+          orderBy: 'modifiedTime desc',
+          pageSize: 10
+        });
+
+        for (const file of response.data.files || []) {
+          allResults.push({
+            id: file.id!,
+            name: file.name!,
+            mimeType: file.mimeType!,
+            webViewLink: file.webViewLink || undefined,
+            folderContext: folder.context
+          });
+        }
+      } catch (e) {
+        console.error(`[Drive] Error searching folder ${folder.context}:`, e);
+      }
+    }
+
+    return allResults;
+  } catch (error) {
+    console.error('[Drive] Error in scoped library search:', error);
+    return [];
+  }
+}
+
 export async function trashDriveFile(fileId: string): Promise<boolean> {
   try {
     const drive = await getUncachableGoogleDriveClient();
