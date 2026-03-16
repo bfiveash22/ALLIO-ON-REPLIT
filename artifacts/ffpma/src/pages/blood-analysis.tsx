@@ -1,10 +1,12 @@
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { UploadCloud, Activity, FileText, CheckCircle, AlertCircle, ArrowLeft, Loader2, Dna, ImageIcon, X } from "lucide-react";
+import { UploadCloud, Activity, FileText, CheckCircle, AlertCircle, ArrowLeft, Loader2, Dna, ImageIcon, X, Camera, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { LiveCapturePanel } from "@/components/LiveCapturePanel";
 
 interface AnalysisResult {
   observations: string[];
@@ -22,6 +24,8 @@ export default function BloodAnalysisPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("upload");
+  const [recordedVideo, setRecordedVideo] = useState<{ blob: Blob; filename: string } | null>(null);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -62,9 +66,97 @@ export default function BloodAnalysisPage() {
     const reader = new FileReader();
     reader.onload = (e) => {
       setSelectedImage(e.target?.result as string);
-      setResult(null); // Clear previous results
+      setResult(null);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleFrameCaptured = (dataUrl: string) => {
+    setSelectedImage(dataUrl);
+    setResult(null);
+  };
+
+  const handleVideoRecorded = (blob: Blob, filename: string) => {
+    setRecordedVideo({ blob, filename });
+    toast({
+      title: "Video Ready",
+      description: `${filename} is ready for upload to Google Drive.`,
+    });
+  };
+
+  const saveFrameToDrive = async (dataUrl: string) => {
+    try {
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const filename = `blood-capture-${Date.now()}.png`;
+
+      const formData = new FormData();
+      formData.append("file", blob, filename);
+      formData.append("patientId", "unassigned");
+      formData.append("analysisType", "live-blood");
+
+      const response = await fetch("/api/blood-analysis/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        toast({
+          title: "Frame Saved",
+          description: "Captured frame uploaded to Google Drive blood samples folder.",
+        });
+      } else {
+        throw new Error(data.error || "Upload failed");
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Save Failed",
+        description: error.message || "Could not save frame to Drive.",
+      });
+    }
+  };
+
+  const uploadRecordedVideo = async () => {
+    if (!recordedVideo) return;
+
+    const formData = new FormData();
+    formData.append("file", recordedVideo.blob, recordedVideo.filename);
+    formData.append("patientId", "unassigned");
+    formData.append("analysisType", "live-blood");
+
+    try {
+      const response = await fetch("/api/blood-analysis/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        toast({
+          title: "Video Saved",
+          description: "Recording saved to Google Drive for later review and analysis.",
+        });
+        setRecordedVideo(null);
+      } else {
+        throw new Error(data.error || "Upload failed");
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Upload Failed",
+        description: error.message || "Could not upload recording.",
+      });
+    }
   };
 
   const startAnalysis = async () => {
@@ -75,7 +167,6 @@ export default function BloodAnalysisPage() {
       const response = await fetch("/api/vision/analyze-blood", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // selectedImage is already a base64 data URL
         body: JSON.stringify({ imageBase64: selectedImage }),
       });
 
@@ -102,7 +193,6 @@ export default function BloodAnalysisPage() {
 
   return (
     <div className="flex-1 space-y-8 p-8 pt-6 relative min-h-screen">
-      {/* Decorative Background Elements */}
       <div className="absolute top-0 right-0 -z-10 w-[800px] h-[800px] bg-rose-500/10 rounded-full blur-[100px] opacity-50 mix-blend-screen pointer-events-none" />
       <div className="absolute bottom-0 left-0 -z-10 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[100px] opacity-50 mix-blend-screen pointer-events-none" />
 
@@ -117,103 +207,196 @@ export default function BloodAnalysisPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Column: Upload and Preview */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="space-y-6"
         >
-          <div 
-            className={`glass-panel rounded-2xl p-8 border-2 border-dashed transition-all duration-300 relative overflow-hidden ${
-              dragActive ? "border-rose-500 bg-rose-500/10" : "border-white/20"
-            }`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleChange}
-            />
-            
-            <AnimatePresence mode="wait">
-              {!selectedImage ? (
-                <motion.div 
-                  key="upload"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex flex-col items-center justify-center py-12 text-center"
-                >
-                  <div className="h-20 w-20 rounded-full bg-rose-500/20 flex items-center justify-center mb-6 ring-8 ring-rose-500/10">
-                    <UploadCloud className="h-10 w-10 text-rose-400" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">Drag &amp; drop microscopy scan</h3>
-                  <p className="text-white/60 mb-6 max-w-sm">
-                    Upload a high-resolution frame from your live blood analysis feed (JPEG/PNG)
-                  </p>
-                  <Button 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-900/20 glass-card"
-                  >
-                    Select Image
-                  </Button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="preview"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="relative rounded-xl overflow-hidden"
-                >
-                  <Button 
-                    size="icon" 
-                    variant="destructive" 
-                    className="absolute top-4 right-4 z-10 rounded-full w-8 h-8 shadow-xl"
-                    onClick={() => {
-                      setSelectedImage(null);
-                      setResult(null);
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                  <img 
-                    src={selectedImage} 
-                    alt="Microscopy Preview" 
-                    className="w-full h-auto object-cover rounded-xl"
-                  />
-                  
-                  {isAnalyzing && (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="w-full bg-white/5 border border-white/10 p-1 rounded-xl">
+              <TabsTrigger
+                value="upload"
+                className="flex-1 data-[state=active]:bg-rose-600 data-[state=active]:text-white rounded-lg transition-all text-white/60"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Upload File
+              </TabsTrigger>
+              <TabsTrigger
+                value="live"
+                className="flex-1 data-[state=active]:bg-cyan-600 data-[state=active]:text-white rounded-lg transition-all text-white/60"
+              >
+                <Camera className="w-4 h-4 mr-2" />
+                Live Capture
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="upload" className="mt-4">
+              <div 
+                className={`glass-panel rounded-2xl p-8 border-2 border-dashed transition-all duration-300 relative overflow-hidden ${
+                  dragActive ? "border-rose-500 bg-rose-500/10" : "border-white/20"
+                }`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleChange}
+                />
+                
+                <AnimatePresence mode="wait">
+                  {!selectedImage ? (
                     <motion.div 
-                      className="absolute inset-0 bg-rose-500/20"
-                      initial={{ top: "0%", height: "0%" }}
-                      animate={{ top: ["0%", "100%", "0%"], height: ["2px", "2px", "2px"] }}
-                      transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                      key="upload"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex flex-col items-center justify-center py-12 text-center"
                     >
-                      <div className="w-full h-full shadow-[0_0_20px_rgba(244,63,94,0.8)] bg-rose-500" />
+                      <div className="h-20 w-20 rounded-full bg-rose-500/20 flex items-center justify-center mb-6 ring-8 ring-rose-500/10">
+                        <UploadCloud className="h-10 w-10 text-rose-400" />
+                      </div>
+                      <h3 className="text-xl font-semibold mb-2">Drag &amp; drop microscopy scan</h3>
+                      <p className="text-white/60 mb-6 max-w-sm">
+                        Upload a high-resolution frame from your live blood analysis feed (JPEG/PNG)
+                      </p>
+                      <Button 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-900/20 glass-card"
+                      >
+                        Select Image
+                      </Button>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="preview"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="relative rounded-xl overflow-hidden"
+                    >
+                      <Button 
+                        size="icon" 
+                        variant="destructive" 
+                        className="absolute top-4 right-4 z-10 rounded-full w-8 h-8 shadow-xl"
+                        onClick={() => {
+                          setSelectedImage(null);
+                          setResult(null);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                      <img 
+                        src={selectedImage} 
+                        alt="Microscopy Preview" 
+                        className="w-full h-auto object-cover rounded-xl"
+                      />
+                      
+                      {isAnalyzing && (
+                        <motion.div 
+                          className="absolute inset-0 bg-rose-500/20"
+                          initial={{ top: "0%", height: "0%" }}
+                          animate={{ top: ["0%", "100%", "0%"], height: ["2px", "2px", "2px"] }}
+                          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                        >
+                          <div className="w-full h-full shadow-[0_0_20px_rgba(244,63,94,0.8)] bg-rose-500" />
+                        </motion.div>
+                      )}
+                      
+                      {isAnalyzing && (
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center flex-col">
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                          >
+                            <Dna className="w-16 h-16 text-rose-400 mb-4" />
+                          </motion.div>
+                          <span className="text-xl font-bold text-white tracking-widest uppercase title-glow">Processing Pattern Recognition...</span>
+                        </div>
+                      )}
                     </motion.div>
                   )}
-                  
-                  {isAnalyzing && (
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center flex-col">
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                      >
-                        <Dna className="w-16 h-16 text-rose-400 mb-4" />
-                      </motion.div>
-                      <span className="text-xl font-bold text-white tracking-widest uppercase title-glow">Processing Pattern Recognition...</span>
+                </AnimatePresence>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="live" className="mt-4">
+              <div className="glass-panel rounded-2xl p-6 border border-white/10">
+                <LiveCapturePanel
+                  onFrameCaptured={handleFrameCaptured}
+                  onVideoRecorded={handleVideoRecorded}
+                  onSaveFrameToDrive={saveFrameToDrive}
+                />
+              </div>
+
+              <AnimatePresence>
+                {recordedVideo && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="mt-3 glass-card rounded-xl p-4 border border-white/10 flex items-center justify-between"
+                  >
+                    <div className="text-sm">
+                      <p className="text-white font-medium">{recordedVideo.filename}</p>
+                      <p className="text-white/50">{(recordedVideo.blob.size / (1024 * 1024)).toFixed(1)} MB</p>
                     </div>
-                  )}
+                    <Button
+                      onClick={uploadRecordedVideo}
+                      size="sm"
+                      className="bg-cyan-600 hover:bg-cyan-500 text-white"
+                    >
+                      <Upload className="w-3 h-3 mr-1" />
+                      Save to Drive
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {selectedImage && activeTab === "live" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-3 glass-panel rounded-2xl p-4 border border-white/10"
+                >
+                  <div className="relative rounded-xl overflow-hidden">
+                    <Button 
+                      size="icon" 
+                      variant="destructive" 
+                      className="absolute top-3 right-3 z-10 rounded-full w-7 h-7 shadow-xl"
+                      onClick={() => {
+                        setSelectedImage(null);
+                        setResult(null);
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                    <img 
+                      src={selectedImage} 
+                      alt="Captured Frame" 
+                      className="w-full h-auto object-cover rounded-xl"
+                    />
+
+                    {isAnalyzing && (
+                      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center flex-col">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        >
+                          <Dna className="w-12 h-12 text-rose-400 mb-3" />
+                        </motion.div>
+                        <span className="text-lg font-bold text-white tracking-widest uppercase title-glow">Processing...</span>
+                      </div>
+                    )}
+                  </div>
                 </motion.div>
               )}
-            </AnimatePresence>
-          </div>
+            </TabsContent>
+          </Tabs>
 
           <AnimatePresence>
             {selectedImage && !isAnalyzing && !result && (
@@ -234,7 +417,6 @@ export default function BloodAnalysisPage() {
           </AnimatePresence>
         </motion.div>
 
-        {/* Right Column: AI Results */}
         <div className="space-y-6">
           <AnimatePresence mode="wait">
             {!result ? (
@@ -246,7 +428,7 @@ export default function BloodAnalysisPage() {
                 className="h-full glass-panel rounded-2xl p-8 flex flex-col items-center justify-center text-center text-white/40 border border-white/5"
               >
                 <ImageIcon className="w-16 h-16 mb-4 opacity-50" />
-                <p>Upload a microscopy image to generate an AI-driven FFPMA protocol alignment report.</p>
+                <p>Upload or capture a microscopy image to generate an AI-driven FFPMA protocol alignment report.</p>
               </motion.div>
             ) : (
               <motion.div
@@ -256,7 +438,6 @@ export default function BloodAnalysisPage() {
                 transition={{ duration: 0.5, staggerChildren: 0.1 }}
                 className="space-y-6"
               >
-                {/* Summary Card */}
                 <motion.div className="glass-panel-heavy rounded-2xl p-6 border border-rose-500/30 shadow-[0_0_30px_rgba(244,63,94,0.1)]">
                   <div className="flex items-start justify-between mb-4">
                     <h3 className="text-xl font-bold flex items-center gap-2">
@@ -271,7 +452,6 @@ export default function BloodAnalysisPage() {
                   <p className="text-white/80 leading-relaxed">{result.clinicalSummary}</p>
                 </motion.div>
 
-                {/* Grid for Observations & Causes */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <motion.div className="glass-card rounded-xl p-5 border-l-4 border-l-blue-500">
                     <h4 className="text-sm uppercase tracking-wider text-white/50 mb-3 font-semibold flex items-center gap-2">
@@ -302,7 +482,6 @@ export default function BloodAnalysisPage() {
                   </motion.div>
                 </div>
 
-                {/* FFPMA Protocol Recommendations */}
                 <motion.div className="glass-panel rounded-xl p-6 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -z-10" />
                   <h4 className="text-lg font-bold text-emerald-400 mb-4 flex items-center gap-2">
