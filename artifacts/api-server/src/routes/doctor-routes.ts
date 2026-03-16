@@ -3,12 +3,26 @@ import { requireRole } from "../working-auth";
 import { storage } from "../storage";
 import { db } from "../db";
 import { eq, desc, and } from "drizzle-orm";
-import { doctorPatientMessages } from "@shared/schema";
+import { doctorPatientMessages, doctorOnboarding, memberEnrollment } from "@shared/schema";
 import multer from "multer";
 import { uploadXrayFile } from "../services/drive";
 import { HfInference } from "@huggingface/inference";
 
 const xrayUpload = multer({ storage: multer.memoryStorage() });
+
+async function isDoctorsMember(doctorUserId: string, patientId: string): Promise<boolean> {
+  const doctorUser = await storage.getUser(doctorUserId);
+  if (!doctorUser) return false;
+  if (doctorUser.wpRoles?.includes("admin") || doctorUser.wpRoles?.includes("administrator")) return true;
+  const doctor = await db.query.doctorOnboarding.findFirst({
+    where: (d, { eq: e, and: a }) => a(e(d.email, doctorUser.email!), e(d.status, 'completed'))
+  });
+  if (!doctor?.doctorCode) return false;
+  const enrollment = await db.query.memberEnrollment.findFirst({
+    where: (m, { eq: e, and: a }) => a(e(m.id, patientId), e(m.doctorCode, doctor.doctorCode!))
+  });
+  return !!enrollment;
+}
 
 export function registerDoctorRoutes(app: Express): void {
   app.get("/api/doctor/patients", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
@@ -165,6 +179,10 @@ export function registerDoctorRoutes(app: Express): void {
     try {
       const doctorId = req.user?.id as string;
       const patientId = req.params.patientId;
+      const authorized = await isDoctorsMember(doctorId, patientId);
+      if (!authorized) {
+        return res.status(403).json({ success: false, error: "This patient is not enrolled under your practice" });
+      }
       const messages = await storage.getMessagesBetween(doctorId, patientId);
       res.json(messages);
     } catch (error: any) {
@@ -176,6 +194,10 @@ export function registerDoctorRoutes(app: Express): void {
     try {
       const doctorId = req.user?.id as string;
       const patientId = req.params.patientId;
+      const authorized = await isDoctorsMember(doctorId, patientId);
+      if (!authorized) {
+        return res.status(403).json({ success: false, error: "This patient is not enrolled under your practice" });
+      }
       const { messageText } = req.body;
       const doctorUser = await storage.getUser(doctorId);
       const patientUser = await storage.getUser(patientId);
