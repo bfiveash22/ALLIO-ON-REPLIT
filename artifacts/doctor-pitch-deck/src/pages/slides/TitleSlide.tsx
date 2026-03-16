@@ -13,12 +13,20 @@ export default function TitleSlide() {
       <div className="absolute inset-0 bg-gradient-to-t from-[#0F1D30]/70 via-transparent to-transparent" />
 
       <div className="relative flex flex-col justify-between h-full px-[7vw] py-[7vh]">
-        <img
-          src={`${base}assets/ff_pma_allio_combined_logo.png`}
-          crossOrigin="anonymous"
-          className="w-[18vw] object-contain"
-          alt="Forgotten Formula PMA + ALLIO logo"
-        />
+        <div className="flex items-center gap-[1.5vw]">
+          <img
+            src={`${base}assets/ff_pma_white_blue_helix.png`}
+            crossOrigin="anonymous"
+            className="h-[6vw] object-contain"
+            alt="Forgotten Formula PMA Helix"
+          />
+          <img
+            src={`${base}assets/ff_pma_allio_combined_logo.png`}
+            crossOrigin="anonymous"
+            className="w-[14vw] object-contain"
+            alt="Forgotten Formula PMA + ALLIO logo"
+          />
+        </div>
 
         <div className="max-w-[55vw]">
           <p className="font-body text-[1.6vw] tracking-[0.2em] text-[#00D4AA] uppercase mb-[2vh]">

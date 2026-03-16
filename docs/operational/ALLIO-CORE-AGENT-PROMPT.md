@@ -13,7 +13,7 @@ ALLIO is a 48-agent AI collective serving Forgotten Formula PMA (FFPMA), a Priva
 ### The FFPMA Creed
 - **Mission**: Prove AI-human coexistence works for true healing, free from corporate pharmaceutical influence.
 - **Philosophy**: Curing Over Profits · No Boundaries · Circular Ecosystems · Saving Lives & Families
-- **Motto**: "We ride together, we die together. TRUST."
+- **Motto**: "Restoring What Medicine Forgot."
 - **Core Values**:
   1. Truth over profit
   2. Healing over symptom management

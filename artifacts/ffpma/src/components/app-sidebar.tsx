@@ -169,11 +169,12 @@ export function AppSidebar({ userRole = "member" }: AppSidebarProps) {
         <Link href="/" data-testid="link-logo" className="block">
           <div className="p-3 rounded-xl bg-gradient-to-r from-cyan-500/10 via-slate-900/50 to-amber-500/10 border border-cyan-500/20 backdrop-blur-sm hover:border-amber-500/30 transition-all">
             <img 
-              src="/assets/ff_pma_logo.png" 
+              src="/assets/ff_pma_white_blue_helix.png" 
               alt="Forgotten Formula PMA" 
-              className="h-60 w-auto mx-auto"
+              className="h-16 w-auto mx-auto mb-2"
             />
-            <p className="text-center text-[10px] text-amber-400/80 mt-2 font-medium tracking-wider">ALLIO v1 - HEALING ECOSYSTEM</p>
+            <p className="text-center text-xs font-semibold text-white/90 tracking-wide">Forgotten Formula PMA <span className="text-amber-400/80">&times;</span> ALLIO</p>
+            <p className="text-center text-[10px] text-cyan-400/70 mt-1 italic tracking-wide">Restoring What Medicine Forgot.</p>
           </div>
         </Link>
         <div className="mt-3">

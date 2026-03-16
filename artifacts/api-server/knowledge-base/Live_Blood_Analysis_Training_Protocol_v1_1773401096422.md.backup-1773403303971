@@ -75,7 +75,7 @@ Live Blood Analysis involves the examination of fresh blood under a high-powered
 Live Blood Analysis exemplifies our core values of truth over profit and healing over treatment. By directly observing the living state of our members' blood, we embrace transparency and support informed, individualized care. This approach aligns with our mission to empower members through knowledge and offer nature-based solutions that honor the body's innate ability to heal.
 
 
-At Forgotten Formula PMA, Live Blood Analysis is not just a diagnostic tool but a commitment to our philosophy: "We ride together, we die together. TRUST."
+At Forgotten Formula PMA, Live Blood Analysis is not just a diagnostic tool but a commitment to our philosophy: "Restoring What Medicine Forgot."
 
 
 ---

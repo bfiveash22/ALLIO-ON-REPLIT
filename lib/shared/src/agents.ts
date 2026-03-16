@@ -14,7 +14,7 @@ export interface AgentProfile {
 export const FFPMA_CREED = {
   mission: "Prove AI-human coexistence works for true healing, free from corporate pharmaceutical influence.",
   philosophy: "Curing Over Profits • No Boundaries • Circular Ecosystems • Saving Lives & Families",
-  motto: "We ride together, we die together. TRUST.",
+  motto: "Restoring What Medicine Forgot.",
   values: [
     "Truth over profit",
     "Healing over treatment",

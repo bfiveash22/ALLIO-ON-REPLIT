@@ -297,7 +297,7 @@ def build_cover(elements, styles):
     elements.append(Spacer(1, 0.15*inch))
 
     elements.append(Paragraph(
-        '"We ride together, we die together. TRUST."',
+        '"Restoring What Medicine Forgot."',
         ParagraphStyle('CoverTrust', parent=styles['Quote'], textColor=NAVY, fontSize=12)
     ))
     elements.append(Spacer(1, 0.4*inch))
@@ -635,7 +635,7 @@ def build_part2_ecosystem(elements, styles):
     elements.append(Spacer(1, 6))
 
     elements.append(Paragraph(
-        '"We ride together, we die together. TRUST."\u2014This motto is the operating system '
+        '"Restoring What Medicine Forgot."\u2014This tagline is the operating system '
         "of the entire network.",
         styles['Quote']
     ))

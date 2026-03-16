@@ -5,19 +5,18 @@ function TitleSlide({ slide }: { slide: SlideData }) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center relative" style={{ background: "linear-gradient(135deg, #0A1628 0%, #1E3A5F 50%, #0A1628 100%)" }}>
       <div className="absolute top-8 left-8 flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full border-2 border-[#00D4AA] flex items-center justify-center">
-          <span className="text-[#00D4AA] font-bold text-lg">FF</span>
-        </div>
-        <div className="w-10 h-10 rounded-full border-2 border-[#FFD700] flex items-center justify-center">
-          <span className="text-[#FFD700] font-bold text-sm">A</span>
+        <img src={`${import.meta.env.BASE_URL}assets/ff_pma_white_blue_helix.png`} alt="Forgotten Formula PMA" className="h-12 w-12 object-contain" />
+        <div className="flex flex-col">
+          <span className="text-white font-semibold text-sm">Forgotten Formula PMA</span>
+          <span className="text-[#FFD700] text-[10px] font-medium">&times; ALLIO</span>
         </div>
       </div>
       <div className="absolute top-8 right-8 flex gap-3">
         <div className="w-16 h-16 rounded-lg bg-white/10 border border-white/15 overflow-hidden flex items-center justify-center p-1">
-          <img src={`${import.meta.env.BASE_URL}assets/ff_pma_logo.png`} alt="Forgotten Formula PMA" className="w-full h-full object-contain" />
+          <img src={`${import.meta.env.BASE_URL}assets/ff_pma_white_blue_helix.png`} alt="Forgotten Formula PMA" className="w-full h-full object-contain" />
         </div>
         <div className="w-16 h-16 rounded-lg bg-white/10 border border-white/15 overflow-hidden flex items-center justify-center p-1">
-          <img src={`${import.meta.env.BASE_URL}assets/forgotten_formula_brand_concept.png`} alt="Forgotten Formula Healing Concept" className="w-full h-full object-contain" />
+          <img src={`${import.meta.env.BASE_URL}assets/ff_pma_black_blue_helix.png`} alt="Forgotten Formula Black Helix" className="w-full h-full object-contain" />
         </div>
         <div className="w-16 h-16 rounded-lg bg-white/10 border border-white/15 overflow-hidden flex items-center justify-center p-1">
           <img src={`${import.meta.env.BASE_URL}assets/ff_pma_allio_combined_logo.png`} alt="Forgotten Formula PMA & Allio Combined" className="w-full h-full object-contain" />
@@ -123,8 +122,10 @@ function TrusteeThoughtsSlide({ slide }: { slide: SlideData }) {
   return (
     <div className="flex flex-col items-center justify-center h-full p-12 text-center" style={{ background: "linear-gradient(135deg, #0A1628 0%, #1E3A5F 50%, #0A1628 100%)" }}>
       <div className="absolute top-8 left-8 flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full border-2 border-[#00D4AA] flex items-center justify-center">
-          <span className="text-[#00D4AA] font-bold text-lg">FF</span>
+        <img src={`${import.meta.env.BASE_URL}assets/ff_pma_white_blue_helix.png`} alt="Forgotten Formula PMA" className="h-12 w-12 object-contain" />
+        <div className="flex flex-col">
+          <span className="text-white font-semibold text-sm">Forgotten Formula PMA</span>
+          <span className="text-[#FFD700] text-[10px] font-medium">&times; ALLIO</span>
         </div>
       </div>
       <h2 className="text-3xl font-bold text-white mb-8">Michael's Thoughts</h2>
@@ -657,8 +658,10 @@ function CommitmentSlide({ slide }: { slide: SlideData }) {
   return (
     <div className="flex flex-col items-center justify-center h-full p-12 text-center" style={{ background: "linear-gradient(135deg, #0A1628 0%, #1E3A5F 50%, #0A1628 100%)" }}>
       <div className="absolute top-8 left-8 flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full border-2 border-[#00D4AA] flex items-center justify-center">
-          <span className="text-[#00D4AA] font-bold text-lg">FF</span>
+        <img src={`${import.meta.env.BASE_URL}assets/ff_pma_white_blue_helix.png`} alt="Forgotten Formula PMA" className="h-12 w-12 object-contain" />
+        <div className="flex flex-col">
+          <span className="text-white font-semibold text-sm">Forgotten Formula PMA</span>
+          <span className="text-[#FFD700] text-[10px] font-medium">&times; ALLIO</span>
         </div>
       </div>
       <h2 className="text-3xl font-bold text-[#FFD700] mb-8 animate-fade-in">{slide.title}</h2>
@@ -667,10 +670,10 @@ function CommitmentSlide({ slide }: { slide: SlideData }) {
       </div>
       <div className="absolute bottom-8 flex gap-3">
         <div className="w-16 h-16 rounded-lg bg-white/10 border border-white/15 overflow-hidden flex items-center justify-center p-1">
-          <img src={`${import.meta.env.BASE_URL}assets/ff_pma_logo.png`} alt="Forgotten Formula PMA" className="w-full h-full object-contain" />
+          <img src={`${import.meta.env.BASE_URL}assets/ff_pma_white_blue_helix.png`} alt="Forgotten Formula PMA" className="w-full h-full object-contain" />
         </div>
         <div className="w-16 h-16 rounded-lg bg-white/10 border border-white/15 overflow-hidden flex items-center justify-center p-1">
-          <img src={`${import.meta.env.BASE_URL}assets/forgotten_formula_brand_concept.png`} alt="Forgotten Formula Healing Concept" className="w-full h-full object-contain" />
+          <img src={`${import.meta.env.BASE_URL}assets/ff_pma_black_blue_helix.png`} alt="Forgotten Formula Black Helix" className="w-full h-full object-contain" />
         </div>
         <div className="w-16 h-16 rounded-lg bg-white/10 border border-white/15 overflow-hidden flex items-center justify-center p-1">
           <img src={`${import.meta.env.BASE_URL}assets/ff_pma_allio_combined_logo.png`} alt="Forgotten Formula PMA & Allio Combined" className="w-full h-full object-contain" />

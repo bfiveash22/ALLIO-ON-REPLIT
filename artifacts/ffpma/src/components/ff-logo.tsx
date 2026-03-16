@@ -5,28 +5,33 @@ interface FFLogoProps {
 
 export function FFLogo({ className = "", size = "md" }: FFLogoProps) {
   const sizeClasses = {
-    sm: "h-6 w-6 text-sm",
-    md: "h-8 w-8 text-lg",
-    lg: "h-12 w-12 text-xl",
+    sm: "h-6 w-6",
+    md: "h-8 w-8",
+    lg: "h-12 w-12",
   };
 
   return (
-    <div className={`flex items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold ${sizeClasses[size]} ${className}`}>
-      FF
-    </div>
+    <img
+      src="/assets/ff_pma_white_blue_helix.png"
+      alt="FF PMA"
+      className={`object-contain ${sizeClasses[size]} ${className}`}
+    />
   );
 }
 
 export function FFLogoFull({ className = "" }: { className?: string }) {
   return (
     <div className={`flex items-center gap-3 ${className}`}>
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600">
-        <span className="text-white font-bold text-lg">FF</span>
-      </div>
+      <img
+        src="/assets/ff_pma_white_blue_helix.png"
+        alt="Forgotten Formula PMA"
+        className="h-10 w-10 object-contain"
+      />
       <div className="flex flex-col">
         <span className="text-lg font-bold tracking-tight text-foreground">Forgotten Formula</span>
         <span className="text-[10px] text-muted-foreground leading-none">Private Member Association</span>
       </div>
+      <span className="text-[10px] text-muted-foreground/60 font-medium self-end mb-0.5">&times; ALLIO</span>
     </div>
   );
 }
@@ -34,12 +39,14 @@ export function FFLogoFull({ className = "" }: { className?: string }) {
 export function AllioLogoText({ className = "" }: { className?: string }) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-        <span className="text-primary font-bold text-lg">FF</span>
-      </div>
+      <img
+        src="/assets/ff_pma_white_blue_helix.png"
+        alt="Forgotten Formula PMA"
+        className="h-8 w-8 object-contain"
+      />
       <div className="flex flex-col">
         <span className="text-base font-bold tracking-tight text-foreground">Forgotten Formula</span>
-        <span className="text-[9px] text-muted-foreground leading-none">True Healing Ecosystem</span>
+        <span className="text-[9px] text-muted-foreground leading-none">Restoring What Medicine Forgot.</span>
       </div>
     </div>
   );
