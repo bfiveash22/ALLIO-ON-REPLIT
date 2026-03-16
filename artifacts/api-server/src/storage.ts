@@ -118,6 +118,9 @@ export interface IStorage {
   getMessages(conversationId: string): Promise<DoctorPatientMessage[]>;
   createMessage(message: InsertDoctorPatientMessage): Promise<DoctorPatientMessage>;
   markMessageRead(id: string): Promise<DoctorPatientMessage | undefined>;
+  getOrCreateConversation(doctorId: string, doctorName: string, patientId: string, patientName: string): Promise<Conversation>;
+  getMessagesBetween(userId1: string, userId2: string): Promise<DoctorPatientMessage[]>;
+  getUnreadMessagesForUser(userId: string): Promise<DoctorPatientMessage[]>;
   // UI Refactor Proposals
   getUiRefactorProposals(status?: string): Promise<UiRefactorProposal[]>;
   getUiRefactorProposal(id: string): Promise<UiRefactorProposal | undefined>;
@@ -952,6 +955,45 @@ export class DatabaseStorage implements IStorage {
   async markMessageRead(id: string): Promise<DoctorPatientMessage | undefined> {
     const [updated] = await db.update(doctorPatientMessages).set({ status: 'read', readAt: new Date() }).where(eq(doctorPatientMessages.id, id)).returning();
     return updated;
+  }
+
+  async getOrCreateConversation(doctorId: string, doctorName: string, patientId: string, patientName: string): Promise<Conversation> {
+    const existing = await db.select().from(conversations)
+      .where(
+        and(
+          sql`${conversations.participantIds} @> ARRAY[${doctorId}, ${patientId}]::text[]`,
+          sql`array_length(${conversations.participantIds}, 1) = 2`
+        )
+      );
+    if (existing.length > 0) return existing[0];
+    const [newConvo] = await db.insert(conversations).values({
+      participantIds: [doctorId, patientId],
+      participantNames: [doctorName, patientName],
+      subject: `Dr. ${doctorName} ↔ ${patientName}`,
+    }).returning();
+    return newConvo;
+  }
+
+  async getMessagesBetween(userId1: string, userId2: string): Promise<DoctorPatientMessage[]> {
+    return await db.select().from(doctorPatientMessages)
+      .where(
+        or(
+          and(eq(doctorPatientMessages.senderId, userId1), eq(doctorPatientMessages.recipientId, userId2)),
+          and(eq(doctorPatientMessages.senderId, userId2), eq(doctorPatientMessages.recipientId, userId1))
+        )
+      )
+      .orderBy(doctorPatientMessages.createdAt);
+  }
+
+  async getUnreadMessagesForUser(userId: string): Promise<DoctorPatientMessage[]> {
+    return await db.select().from(doctorPatientMessages)
+      .where(
+        and(
+          eq(doctorPatientMessages.recipientId, userId),
+          sql`${doctorPatientMessages.readAt} IS NULL`
+        )
+      )
+      .orderBy(desc(doctorPatientMessages.createdAt));
   }
 
   // UI Refactor Proposals

@@ -371,6 +371,7 @@ export default function DoctorsPortal() {
   // Blood Analysis Modal State
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
   const [selectedPatientForAnalysis, setSelectedPatientForAnalysis] = useState<string | null>(null);
+  const [messagingPatientId, setMessagingPatientId] = useState<string | null>(null);
 
   // Enroll Member Modal State
   const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
@@ -1015,19 +1016,32 @@ export default function DoctorsPortal() {
                             >
                               <Microscope className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="cursor-not-allowed opacity-30 relative" disabled data-testid={`button-view-member-${member.id}`} title="Coming Soon">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedPatient(selectedPatient === member.id ? null : member.id);
+                              }}
+                              className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-400/10"
+                              data-testid={`button-view-member-${member.id}`}
+                              title="View Member Details"
+                            >
                               <Eye className="w-4 h-4" />
-                              <span className="absolute top-1 right-1 flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                              </span>
                             </Button>
-                            <Button variant="ghost" size="icon" className="cursor-not-allowed opacity-30 relative" disabled data-testid={`button-message-member-${member.id}`} title="Coming Soon">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setMessagingPatientId(member.id.toString());
+                                setActiveTab("messaging");
+                              }}
+                              className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
+                              data-testid={`button-message-member-${member.id}`}
+                              title="Message Member"
+                            >
                               <MessageSquare className="w-4 h-4" />
-                              <span className="absolute top-1 right-1 flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                              </span>
                             </Button>
                           </div>
                         </div>
@@ -1541,7 +1555,7 @@ export default function DoctorsPortal() {
 
             {/* Messaging Tab */}
             <TabsContent value="messaging" className="space-y-6">
-              <DoctorPatientMessaging />
+              <DoctorPatientMessaging preselectedPatientId={messagingPatientId || undefined} />
             </TabsContent>
 
             <TabsContent value="bloodwork" className="space-y-6">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Card } from "@/components/ui/card";
@@ -10,13 +10,21 @@ import { apiRequest } from "@/lib/queryClient";
 
 interface DoctorPatientMessagingProps {
   doctorId?: string;
+  preselectedPatientId?: string;
 }
 
-export function DoctorPatientMessaging({ doctorId }: DoctorPatientMessagingProps) {
-  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+export function DoctorPatientMessaging({ doctorId, preselectedPatientId }: DoctorPatientMessagingProps) {
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(preselectedPatientId || null);
   const [messageText, setMessageText] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (preselectedPatientId) {
+      setSelectedPatientId(preselectedPatientId);
+    }
+  }, [preselectedPatientId]);
 
   const { data: membersData } = useQuery<{ members: any[] }>({
     queryKey: ['/api/doctor/members'],
@@ -25,7 +33,12 @@ export function DoctorPatientMessaging({ doctorId }: DoctorPatientMessagingProps
   const { data: messages } = useQuery<any[]>({
     queryKey: ['/api/doctor/messages', selectedPatientId],
     enabled: !!selectedPatientId,
+    refetchInterval: 5000,
   });
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const sendMessageMutation = useMutation({
     mutationFn: async (text: string) => {
@@ -66,7 +79,6 @@ export function DoctorPatientMessaging({ doctorId }: DoctorPatientMessagingProps
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Conversation List */}
         <div className="lg:col-span-1 space-y-3 max-h-[500px] overflow-y-auto pr-2">
           <h3 className="font-medium text-white/80 mb-3">Your Patients</h3>
           {membersData?.members?.map((member: any) => (
@@ -86,7 +98,6 @@ export function DoctorPatientMessaging({ doctorId }: DoctorPatientMessagingProps
           )}
         </div>
 
-        {/* Message View */}
         <div className="lg:col-span-2 flex flex-col h-[500px] rounded-xl bg-white/5 p-4 border border-white/10">
           {selectedPatientId ? (
             <>
@@ -103,10 +114,10 @@ export function DoctorPatientMessaging({ doctorId }: DoctorPatientMessagingProps
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" title="Coming Soon">
+                  <Button variant="ghost" size="sm" title="Voice call — coming soon" className="text-white/30">
                     <Phone className="w-4 h-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" title="Coming Soon">
+                  <Button variant="ghost" size="sm" title="Video call — coming soon" className="text-white/30">
                     <Video className="w-4 h-4" />
                   </Button>
                 </div>
@@ -119,12 +130,11 @@ export function DoctorPatientMessaging({ doctorId }: DoctorPatientMessagingProps
                   </div>
                 ) : (
                   messages.map((msg: any) => {
-                    // if doctor is sending, it's on the right
-                    const isDoctor = msg.senderId === doctorId; 
+                    const isDoctor = msg.senderId === doctorId || msg.senderRole === "doctor";
                     return (
                       <div key={msg.id} className={`flex ${isDoctor ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[80%] p-3 rounded-lg ${isDoctor ? 'bg-cyan-500/20 text-white' : 'bg-white/10'}`}>
-                          <p className="text-sm whitespace-pre-wrap">{msg.messageText}</p>
+                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                           <p className="text-xs text-white/40 mt-1 text-right">
                             {format(new Date(msg.createdAt), "MMM d, h:mm a")}
                           </p>
@@ -133,10 +143,11 @@ export function DoctorPatientMessaging({ doctorId }: DoctorPatientMessagingProps
                     );
                   })
                 )}
+                <div ref={messagesEndRef} />
               </div>
 
               <div className="flex items-center gap-2 mt-auto pt-2 border-t border-white/10">
-                <Button variant="ghost" size="sm" className="hidden sm:flex text-white/50" title="Attachments coming soon">
+                <Button variant="ghost" size="sm" className="hidden sm:flex text-white/50" title="Attachments — coming in Phase 2">
                   <Upload className="w-4 h-4" />
                 </Button>
                 <Input 

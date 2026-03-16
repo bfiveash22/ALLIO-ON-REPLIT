@@ -147,6 +147,103 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
+  app.get("/api/doctor/messages/:patientId", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+    try {
+      const doctorId = req.user?.id as string;
+      const patientId = req.params.patientId;
+      const messages = await storage.getMessagesBetween(doctorId, patientId);
+      res.json(messages);
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.post("/api/doctor/messages/:patientId", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
+    try {
+      const doctorId = req.user?.id as string;
+      const patientId = req.params.patientId;
+      const { messageText } = req.body;
+      const doctorUser = await storage.getUser(doctorId);
+      const patientUser = await storage.getUser(patientId);
+      const doctorName = doctorUser?.firstName && doctorUser?.lastName
+        ? `${doctorUser.firstName} ${doctorUser.lastName}`
+        : doctorUser?.email || "Doctor";
+      const patientName = patientUser?.firstName && patientUser?.lastName
+        ? `${patientUser.firstName} ${patientUser.lastName}`
+        : patientUser?.email || "Patient";
+      const conversation = await storage.getOrCreateConversation(doctorId, doctorName, patientId, patientName);
+      const message = await storage.createMessage({
+        conversationId: conversation.id,
+        senderId: doctorId,
+        senderRole: "doctor",
+        senderName: doctorName,
+        recipientId: patientId,
+        recipientRole: "member",
+        recipientName: patientName,
+        content: messageText,
+      });
+      res.json({ success: true, message });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.get("/api/member/messages", requireRole("admin", "member", "doctor"), async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id as string;
+      const messages = await storage.getUnreadMessagesForUser(userId);
+      const allConversations = await storage.getConversations(userId);
+      const allMessages: any[] = [];
+      for (const convo of allConversations) {
+        const msgs = await storage.getMessages(convo.id);
+        allMessages.push(...msgs);
+      }
+      allMessages.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+      res.json({ messages: allMessages, unreadCount: messages.length });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.post("/api/member/messages/:doctorId", requireRole("admin", "member", "doctor"), async (req: Request, res: Response) => {
+    try {
+      const memberId = req.user?.id as string;
+      const doctorId = req.params.doctorId;
+      const { messageText } = req.body;
+      const memberUser = await storage.getUser(memberId);
+      const doctorUser = await storage.getUser(doctorId);
+      const memberName = memberUser?.firstName && memberUser?.lastName
+        ? `${memberUser.firstName} ${memberUser.lastName}`
+        : memberUser?.email || "Member";
+      const doctorName = doctorUser?.firstName && doctorUser?.lastName
+        ? `${doctorUser.firstName} ${doctorUser.lastName}`
+        : doctorUser?.email || "Doctor";
+      const conversation = await storage.getOrCreateConversation(doctorId, doctorName, memberId, memberName);
+      const message = await storage.createMessage({
+        conversationId: conversation.id,
+        senderId: memberId,
+        senderRole: "member",
+        senderName: memberName,
+        recipientId: doctorId,
+        recipientRole: "doctor",
+        recipientName: doctorName,
+        content: messageText,
+      });
+      res.json({ success: true, message });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.put("/api/member/messages/:id/read", requireRole("admin", "member", "doctor"), async (req: Request, res: Response) => {
+    try {
+      const message = await storage.markMessageRead(req.params.id);
+      res.json({ success: true, message });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   app.post("/api/ai/analyze-image", requireRole("admin", "doctor"), async (req: Request, res: Response) => {
     try {
       const { patientUploadId, analysisType, imageData } = req.body;

@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import type { Order, Program, TrainingModule, Payment } from "@shared/schema";
+import { MemberMessages } from "@/components/MemberMessages";
 import {
   ShoppingBag,
   GraduationCap,
@@ -269,6 +270,14 @@ export default function MemberHomePage() {
             </motion.div>
           ))}
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <MemberMessages />
+        </motion.div>
 
         <div className="grid gap-6 lg:grid-cols-3">
           <motion.div
