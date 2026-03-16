@@ -310,6 +310,55 @@ export function buildSlides(protocol: any, profile: any, citations: any[], trust
   });
 
   slides.push({
+    id: "ecosystem",
+    type: "ecosystem",
+    title: "The ALLIO Ecosystem",
+    narration: `Your healing journey is powered by the ALLIO AI ecosystem — a comprehensive platform built specifically for Forgotten Formula PMA members. ALLIO handles protocol assembly, research validation, lab tracking, document generation, and progress monitoring. With ${protocol.injectablePeptides?.length || 0} peptides, ${protocol.supplements?.length || 0} supplements, and ${protocol.detoxProtocols?.length || 0} detox protocols coordinated across ${protocol.phases?.length || 4} phases, the ALLIO system ensures nothing falls through the cracks. Every intervention is backed by peer-reviewed research and monitored by your Trustee.`,
+    content: {
+      capabilities: [
+        "Protocol Assembly",
+        "Research Engine",
+        "Member Portal",
+        "Trustee Dashboard",
+        "Drive Library",
+        "Intake System",
+        "Lab Tracking",
+        "Slide Generator",
+        "PDF Protocols",
+        "AI Analysis"
+      ],
+      stats: [
+        { value: protocol.injectablePeptides?.length || 0, label: "Peptides", color: "#00D4AA" },
+        { value: protocol.supplements?.length || 0, label: "Supplements", color: "#FFD700" },
+        { value: protocol.protocolDurationDays || 90, suffix: " days", label: "Protocol Duration", color: "#4DA6FF" },
+        { value: protocol.phases?.length || 4, label: "Phases", color: "#B47EFF" }
+      ]
+    }
+  });
+
+  const nextSteps = [];
+  const dentalRec = protocol.lifestyleRecommendations?.find((r: any) => r.recommendation?.includes("Amalgam"));
+  if (dentalRec) {
+    nextSteps.push({ number: 1, title: "Schedule Amalgam Removal", description: "Contact a biological dentist for SMART protocol mercury amalgam removal. This is the most urgent intervention.", urgency: "urgent" });
+  }
+  nextSteps.push({ number: nextSteps.length + 1, title: "Begin Supplement Foundation", description: "Start the daily supplement protocol immediately — nascent iodine, copper, selenium, vitamin C, D3-K2, and MitoStac.", urgency: "high" });
+  nextSteps.push({ number: nextSteps.length + 1, title: "Order Injectable Peptides", description: `Order ${protocol.injectablePeptides?.length || 0} peptides from approved suppliers. Your Trustee will provide reconstitution training.`, urgency: "high" });
+  nextSteps.push({ number: nextSteps.length + 1, title: "Schedule Lab Work", description: `Complete ${protocol.labsRequired?.length || 0} required laboratory tests before starting Phase 1.`, urgency: "high" });
+  nextSteps.push({ number: nextSteps.length + 1, title: "Begin Detox Baths", description: "Start FF Detox Bath protocol 3x per week. Baking soda, bentonite clay, epsom salt, lavender.", urgency: "medium" });
+  nextSteps.push({ number: nextSteps.length + 1, title: "Dietary Transition", description: "Begin DIANE anti-cancer diet: zero sugar, zero GMO, organic only, cruciferous vegetables daily.", urgency: "medium" });
+
+  slides.push({
+    id: "next-steps",
+    type: "next-steps",
+    title: "Next Steps",
+    narration: `Here are your immediate action items. ${nextSteps.slice(0, 3).map(s => `Step ${s.number}: ${s.title}`).join(". ")}. Your Trustee and the ALLIO system will guide you through each step. Remember, this is a partnership. We are committed to your healing, and we need your commitment in return.`,
+    content: {
+      steps: nextSteps,
+      subtitle: `${pn}'s immediate action items to begin healing`
+    }
+  });
+
+  slides.push({
     id: "commitment",
     type: "commitment",
     title: "My Commitment to You",

@@ -140,3 +140,17 @@
   padding-left: 12px;
   transition: all 0.3s ease;
 }
+
+@keyframes flyIn {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-fly-in {
+  animation: flyIn 0.5s ease-out forwards;
+}
+
+@media print {
+  body { background: white !important; }
+  .slide-transition { break-after: page; }
+}

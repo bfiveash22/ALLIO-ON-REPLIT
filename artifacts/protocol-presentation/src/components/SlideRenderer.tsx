@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import type { SlideData } from "../lib/types";
 
 function TitleSlide({ slide }: { slide: SlideData }) {
@@ -670,6 +671,122 @@ function CommitmentSlide({ slide }: { slide: SlideData }) {
   );
 }
 
+function AnimatedCounter({ value, suffix, label, color, delay }: { value: number; suffix?: string; label: string; color: string; delay: number }) {
+  const [count, setCount] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const duration = 1500;
+      const steps = 40;
+      const increment = value / steps;
+      let current = 0;
+      intervalRef.current = setInterval(() => {
+        current += increment;
+        if (current >= value) {
+          setCount(value);
+          if (intervalRef.current) clearInterval(intervalRef.current);
+        } else {
+          setCount(Math.floor(current));
+        }
+      }, duration / steps);
+    }, delay);
+    return () => {
+      clearTimeout(timer);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [value, delay]);
+
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center animate-scale-in" style={{ animationDelay: `${delay}ms` }}>
+      <p className="text-4xl font-bold" style={{ color }}>{count}{suffix}</p>
+      <p className="text-gray-400 text-sm mt-2">{label}</p>
+    </div>
+  );
+}
+
+function EcosystemSlide({ slide }: { slide: SlideData }) {
+  const capabilities = slide.content.capabilities || [];
+  const icons: Record<string, string> = {
+    "Protocol Assembly": "🧬",
+    "Research Engine": "🔬",
+    "Member Portal": "👤",
+    "Trustee Dashboard": "📊",
+    "Drive Library": "📁",
+    "Intake System": "📋",
+    "Lab Tracking": "🧪",
+    "Slide Generator": "📑",
+    "PDF Protocols": "📄",
+    "AI Analysis": "🤖",
+  };
+  return (
+    <div className="h-full p-10 flex flex-col items-center justify-center" style={{ background: "linear-gradient(135deg, #0A1628 0%, #1E3A5F 50%, #0A1628 100%)" }}>
+      <div className="flex items-center gap-4 mb-8">
+        <div className="w-14 h-14 rounded-full border-2 border-[#00D4AA] flex items-center justify-center">
+          <span className="text-[#00D4AA] font-bold text-xl">FF</span>
+        </div>
+        <span className="text-gray-600 text-2xl">+</span>
+        <div className="w-14 h-14 rounded-full border-2 border-[#FFD700] flex items-center justify-center">
+          <span className="text-[#FFD700] font-bold text-lg">ALLIO</span>
+        </div>
+      </div>
+      <h2 className="text-3xl font-bold text-white mb-3 animate-fade-in">{slide.title}</h2>
+      <p className="text-gray-400 text-sm mb-8 max-w-xl text-center">
+        The ALLIO AI ecosystem powers every aspect of your healing journey — from protocol generation to research validation to progress tracking.
+      </p>
+      {slide.content.stats && (
+        <div className="grid grid-cols-4 gap-4 mb-8 w-full max-w-3xl">
+          {slide.content.stats.map((stat: { value: number; suffix?: string; label: string; color: string }, i: number) => (
+            <AnimatedCounter key={i} value={stat.value} suffix={stat.suffix} label={stat.label} color={stat.color} delay={i * 200} />
+          ))}
+        </div>
+      )}
+      <div className="grid grid-cols-5 gap-3 max-w-4xl">
+        {capabilities.map((cap: string, i: number) => (
+          <div key={i} className="bg-white/5 border border-[#00D4AA]/20 rounded-xl p-4 text-center animate-scale-in hover:bg-white/10 transition-all" style={{ animationDelay: `${i * 0.08}s` }}>
+            <span className="text-2xl mb-2 block">{icons[cap] || "⚙️"}</span>
+            <p className="text-gray-300 text-xs font-medium">{cap}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function NextStepsSlide({ slide }: { slide: SlideData }) {
+  const steps = slide.content.steps || [];
+  return (
+    <div className="h-full p-10 flex flex-col" style={{ background: "linear-gradient(135deg, #0A1628 0%, #1E3A5F 50%, #0A1628 100%)" }}>
+      <h2 className="text-3xl font-bold text-white mb-2 animate-fade-in">{slide.title}</h2>
+      <p className="text-gray-400 text-sm mb-8">{slide.content.subtitle || "Your immediate action items to begin healing"}</p>
+      <div className="flex-1 grid grid-cols-2 gap-4">
+        {steps.map((step: { number: number; title: string; description: string; urgency: string }, i: number) => {
+          const urgencyColors: Record<string, string> = { urgent: "#FF6B6B", high: "#FFD700", medium: "#00D4AA", normal: "#4DA6FF" };
+          const color = urgencyColors[step.urgency] || "#00D4AA";
+          return (
+            <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-5 animate-slide-left" style={{ animationDelay: `${i * 0.12}s`, borderLeftColor: color, borderLeftWidth: 4 }}>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: color + "20", color }}>
+                  {step.number}
+                </div>
+                <h3 className="text-white font-semibold text-sm">{step.title}</h3>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">{step.description}</p>
+              <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: color + "15", color }}>
+                {step.urgency}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-6 text-center">
+        <p className="text-[#00D4AA] text-sm font-medium">Your ALLIO team is with you every step of the way.</p>
+        <p className="text-gray-500 text-xs mt-1">Contact your Trustee for questions or schedule adjustments.</p>
+      </div>
+    </div>
+  );
+}
+
 const SLIDE_RENDERERS: Record<string, React.FC<{ slide: SlideData }>> = {
   "title": TitleSlide,
   "summary": SummarySlide,
@@ -697,6 +814,8 @@ const SLIDE_RENDERERS: Record<string, React.FC<{ slide: SlideData }>> = {
   "research": ResearchSlide,
   "drive-links": DriveLinksSlide,
   "commitment": CommitmentSlide,
+  "ecosystem": EcosystemSlide,
+  "next-steps": NextStepsSlide,
 };
 
 export default function SlideRenderer({ slide }: { slide: SlideData }) {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useParams } from "wouter";
 import SlideRenderer from "../components/SlideRenderer";
 import { buildSlides } from "../lib/slide-builder";
 import { buildKathrynSmithDemoData } from "../lib/demo-data";
@@ -12,23 +13,35 @@ export default function Presentation() {
   const [loading, setLoading] = useState(true);
   const [protocolId, setProtocolId] = useState<number | null>(null);
   const [patientName, setPatientName] = useState("");
+  const [transitioning, setTransitioning] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
+  const [narrationText, setNarrationText] = useState("");
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const params = useParams<{ id?: string }>();
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
+    const queryParams = new URLSearchParams(window.location.search);
+    const queryId = queryParams.get("id");
+    const routeId = params.id;
+    const id = routeId || queryId;
 
     if (id) {
-      setProtocolId(parseInt(id));
-      fetchProtocol(parseInt(id));
-    } else {
+      const parsed = parseInt(id);
+      if (!isNaN(parsed)) {
+        setProtocolId(parsed);
+        fetchProtocol(parsed);
+        return;
+      }
+    }
+    {
       const demo = buildKathrynSmithDemoData();
       const builtSlides = buildSlides(demo.protocol, demo.profile, demo.citations, demo.trusteeNotes);
       setSlides(builtSlides);
       setPatientName(demo.protocol.patientName);
       setLoading(false);
     }
-  }, []);
+  }, [params.id]);
 
   async function fetchProtocol(id: number) {
     try {
@@ -66,7 +79,12 @@ export default function Presentation() {
     if (preferred) utterance.voice = preferred;
     utterance.onend = () => {
       if (currentSlide < slides.length - 1) {
-        setCurrentSlide(prev => prev + 1);
+        setTransitioning(true);
+        if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+        transitionTimerRef.current = setTimeout(() => {
+          setCurrentSlide(prev => prev + 1);
+          setTransitioning(false);
+        }, 300);
       } else {
         setIsPlaying(false);
       }
@@ -74,6 +92,12 @@ export default function Presentation() {
     utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
   }, [currentSlide, slides.length]);
+
+  useEffect(() => {
+    if (slides[currentSlide]) {
+      setNarrationText(slides[currentSlide].narration);
+    }
+  }, [currentSlide, slides]);
 
   useEffect(() => {
     if (isPlaying && slides[currentSlide]) {
@@ -92,10 +116,13 @@ export default function Presentation() {
 
   const goToSlide = (index: number) => {
     window.speechSynthesis.cancel();
-    setCurrentSlide(index);
-    if (isPlaying) {
-      setTimeout(() => speak(slides[index]?.narration || ""), 100);
-    }
+    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+    setTransitioning(true);
+    transitionTimerRef.current = setTimeout(() => {
+      setCurrentSlide(index);
+      setNarrationText(slides[index]?.narration || "");
+      setTransitioning(false);
+    }, 300);
   };
 
   const nextSlide = () => {
@@ -120,10 +147,13 @@ export default function Presentation() {
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  });
+  }, [currentSlide, slides.length, isPlaying]);
 
   useEffect(() => {
-    return () => { window.speechSynthesis.cancel(); };
+    return () => {
+      window.speechSynthesis.cancel();
+      if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+    };
   }, []);
 
   if (loading) {
@@ -145,10 +175,20 @@ export default function Presentation() {
     );
   }
 
+  const copyShareLink = () => {
+    const baseUrl = window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, "");
+    const shareUrl = protocolId ? `${baseUrl}/protocol/${protocolId}` : window.location.href;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setShowShareMenu(false);
+    }).catch(() => {
+      setShowShareMenu(false);
+    });
+  };
+
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden" style={{ background: "#0A1628" }}>
       <div className="flex-1 relative overflow-hidden">
-        <div className="absolute inset-0">
+        <div className={`absolute inset-0 slide-transition ${transitioning ? "opacity-0 scale-[0.98]" : "opacity-100 scale-100"}`}>
           <SlideRenderer slide={slides[currentSlide]} />
         </div>
 
@@ -160,6 +200,14 @@ export default function Presentation() {
           className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white disabled:opacity-20 transition-all z-10">
           ▶
         </button>
+
+        {isPlaying && narrationText && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 max-w-2xl z-10">
+            <div className="narration-highlight bg-black/70 backdrop-blur-sm rounded-lg px-4 py-2">
+              <p className="text-gray-300 text-xs leading-relaxed line-clamp-2">{narrationText}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="h-16 bg-black/50 border-t border-white/10 flex items-center px-6 gap-4 shrink-0">
@@ -173,9 +221,26 @@ export default function Presentation() {
           📑 Slides
         </button>
 
+        <div className="relative">
+          <button onClick={() => setShowShareMenu(prev => !prev)}
+            className="px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white bg-white/5 border border-white/10 transition-all">
+            🔗 Share
+          </button>
+          {showShareMenu && (
+            <div className="absolute bottom-12 left-0 bg-gray-900 border border-white/10 rounded-lg p-3 min-w-[200px] z-50 shadow-xl">
+              <button onClick={copyShareLink} className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded transition-all">
+                📋 Copy presentation link
+              </button>
+              <button onClick={() => { window.print(); setShowShareMenu(false); }} className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded transition-all">
+                🖨️ Print / Save as PDF
+              </button>
+            </div>
+          )}
+        </div>
+
         <div className="flex-1 flex items-center gap-2">
           <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-[#00D4AA] rounded-full transition-all" style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }} />
+            <div className="h-full bg-[#00D4AA] rounded-full transition-all duration-500" style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }} />
           </div>
           <span className="text-gray-400 text-xs min-w-[60px] text-right">
             {currentSlide + 1} / {slides.length}

@@ -11,6 +11,7 @@ function App() {
         <Switch>
           <Route path="/" component={Presentation} />
           <Route path="/present" component={Presentation} />
+          <Route path="/protocol/:id" component={Presentation} />
           <Route>
             <div className="h-screen w-screen flex items-center justify-center bg-gray-900">
               <p className="text-gray-400">Page not found</p>
