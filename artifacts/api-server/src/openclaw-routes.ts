@@ -100,7 +100,7 @@ export function registerOpenClawRoutes(app: Express): void {
     }
   });
 
-  app.get('/api/openclaw/status', requireOpenClawAuth, async (_req: Request, res: Response) => {
+  app.get('/api/openclaw/status', requireOpenClawAuth, async (req: Request, res: Response) => {
     try {
       const [pending] = await db.select({ count: count() }).from(openclawMessages).where(eq(openclawMessages.status, 'pending'));
       const [sent] = await db.select({ count: count() }).from(openclawMessages).where(eq(openclawMessages.status, 'sent'));
@@ -124,7 +124,13 @@ export function registerOpenClawRoutes(app: Express): void {
         .orderBy(desc(openclawMessages.createdAt))
         .limit(1);
 
+      const host = req.headers.host || process.env.REPLIT_DEV_DOMAIN || 'localhost';
+      const protocol = host.includes('replit') ? 'https' : req.protocol;
+      const baseUrl = `${protocol}://${host}`;
+
       res.json({
+        gateway: 'OPENCLAW',
+        version: '1.0',
         counts: {
           pending: pending?.count ?? 0,
           sent: sent?.count ?? 0,
@@ -136,10 +142,84 @@ export function registerOpenClawRoutes(app: Express): void {
           lastMessageSent: lastSent?.sentAt ?? null,
           lastMessageDelivered: lastDelivered?.deliveredAt ?? null,
         },
+        endpoints: {
+          webhook: `${baseUrl}/api/openclaw/webhook`,
+          send: `${baseUrl}/api/openclaw/send`,
+          outbox: `${baseUrl}/api/openclaw/outbox`,
+          tasks: `${baseUrl}/api/openclaw/tasks`,
+          response: `${baseUrl}/api/openclaw/response`,
+        },
+        webhookAvailable: true,
+        authentication: 'Bearer token via OPENCLAW_API_KEY',
       });
     } catch (error: any) {
       console.error('[OpenClaw Status] error:', error);
       res.status(500).json({ error: error.message || 'Failed to fetch status' });
+    }
+  });
+
+  app.post('/api/openclaw/webhook', requireOpenClawAuth, async (req: Request, res: Response) => {
+    try {
+      const { sourceAgent, targetAgent, messageType, content, priority, correlationId, metadata } = req.body;
+
+      if (!sourceAgent || typeof sourceAgent !== 'string') {
+        res.status(400).json({ error: 'sourceAgent is required and must be a string' });
+        return;
+      }
+      if (!content || typeof content !== 'string') {
+        res.status(400).json({ error: 'content is required and must be a string (message body)' });
+        return;
+      }
+
+      const validPriorities = ['urgent', 'high', 'normal', 'low'];
+      if (priority && !validPriorities.includes(priority)) {
+        res.status(400).json({ error: `Invalid priority. Must be one of: ${validPriorities.join(', ')}` });
+        return;
+      }
+
+      const [message] = await db.insert(openclawMessages).values({
+        fromAgent: sourceAgent.toUpperCase(),
+        toRecipient: targetAgent?.toUpperCase() || 'SENTINEL',
+        message: content.substring(0, 50000),
+        priority: priority || 'normal',
+        status: 'delivered',
+        deliveredAt: new Date(),
+      }).returning();
+
+      console.log(`[OpenClaw Webhook] Inbound message ${message.id} from ${sourceAgent} to ${targetAgent || 'SENTINEL'} (${messageType || 'general'})`);
+
+      if (messageType === 'task_request' || messageType === 'task') {
+        const [task] = await db.insert(openclawTasks).values({
+          agentId: (targetAgent || sourceAgent).toUpperCase(),
+          taskType: messageType || 'general',
+          description: content.substring(0, 10000),
+          priority: priority || 'normal',
+          status: 'pending',
+          context: metadata || null,
+          callbackUrl: null,
+        }).returning();
+
+        console.log(`[OpenClaw Webhook] Auto-created task ${task.id} from inbound message`);
+
+        res.status(201).json({
+          received: true,
+          messageId: message.id,
+          taskId: task.id,
+          correlationId: correlationId || null,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(201).json({
+        received: true,
+        messageId: message.id,
+        correlationId: correlationId || null,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error('[OpenClaw Webhook] POST error:', error);
+      res.status(500).json({ error: error.message || 'Failed to process webhook' });
     }
   });
 
