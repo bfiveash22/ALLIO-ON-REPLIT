@@ -46,7 +46,7 @@ workspace/
 │   │   │   ├── storage.ts        # Storage abstraction layer
 │   │   │   ├── services/         # 54 service modules (AI, payments, sync, automation, etc.)
 │   │   │   ├── middleware/       # Auth middleware
-│   │   │   ├── seeds/            # 16 database seed files
+│   │   │   ├── seeds/            # 19 database seed files (incl. LBA certification course)
 │   │   │   ├── scripts/          # Utility scripts
 │   │   │   └── reports/          # Generated reports
 │   │   ├── drizzle.config.ts     # Drizzle Kit configuration
@@ -185,6 +185,18 @@ Media: `assemble-launch-video`, `upload-launch-video`, `generate-allio-voiceover
 Infrastructure: `deploy-vps`, `build`, `fetch-openclaw`, `ls-openclaw`, `test-openclaw`, `test-locks`, `test-auto-implementer`, `test-ui-proposal`, `run-auto`, `trigger-daily-enhancement`, `cleanup`
 
 Convenience scripts in `scripts/package.json`: `pnpm --filter @workspace/scripts run <name>`
+
+## LBA Blood Analysis & Certification System
+
+The FFPMA Live Blood Analysis (LBA) system includes:
+- **AI Blood Analysis**: Enhanced system prompt in `huggingface-blood-analysis.ts` integrating pleomorphism, cyclogeny, biological terrain (pH/rH2/resistivity), zeta potential, dry layer oxidative stress testing, and Dumrese/Haefeli dark field methods
+- **Blood Sample Library**: 14 pleomorphic/terrain entries (protits, spermatids, chondrites, dioecotecitas, tecitas, cistaces, rod/spindle forms, crystals, Mucor/Aspergillus endobionts, dry layer patterns, zeta potential markers, fibrin polymerization) in `seeds/lba-blood-samples-seed.ts`
+- **17-Module Certification Course**: Complete LBA Practitioner Certification in `seeds/lba-certification-seed.ts` with sections, key points, and quizzes for each module
+- **100-Question Certification Exam**: Comprehensive final exam in `seeds/lba-certification-exam-seed.ts` (80% passing, 3 attempts max, 2-hour limit)
+- **9 Achievement Badges**: From "Microscopy Initiate" to "LBA Practitioner Certified"
+- **Certification Flow**: `POST /api/certifications/lba/complete` issues numbered FFPMA-LBA certificates with verification codes
+- **Admin Seed Route**: `POST /api/admin/seed/lba-certification` seeds the entire course
+- **Knowledge Base**: Dumrese/Haefeli manual and Biomedx training program in `knowledge-base/`
 
 ## Agent Network
 

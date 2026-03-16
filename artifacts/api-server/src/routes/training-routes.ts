@@ -4,8 +4,9 @@ import { storage } from "../storage";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { trainingModuleSections, trainingModuleKeyPoints, trainingCertifications } from "@shared/schema";
+import { trainingModuleSections, trainingModuleKeyPoints, trainingCertifications, quizAttempts, quizzes, trackModules, moduleQuizzes } from "@shared/schema";
 import { insertUserProgressSchema } from "@shared/schema";
+import { and } from "drizzle-orm";
 import OpenAI from "openai";
 import { cacheMiddleware, CACHE_TTL } from "../lib/cache";
 
@@ -172,6 +173,174 @@ export function registerTrainingRoutes(app: Express): void {
         }
       });
     } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.post("/api/certifications/lba/complete", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id as string;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { attemptId } = req.body;
+      const LBA_CERT_EXAM_ID = "quiz-lba-certification";
+      const LBA_PASSING_SCORE = 80;
+
+      if (!attemptId || typeof attemptId !== "string") {
+        return res.status(400).json({ success: false, error: "Missing attemptId — complete the certification exam first" });
+      }
+
+      const [attempt] = await db.select()
+        .from(quizAttempts)
+        .where(and(
+          eq(quizAttempts.id, attemptId),
+          eq(quizAttempts.userId, userId),
+          eq(quizAttempts.quizId, LBA_CERT_EXAM_ID),
+        ))
+        .limit(1);
+
+      if (!attempt) {
+        return res.status(404).json({ success: false, error: "Exam attempt not found or does not belong to you" });
+      }
+
+      if (!attempt.completedAt) {
+        return res.status(400).json({ success: false, error: "Exam attempt is not yet completed" });
+      }
+
+      const score = attempt.percentage ?? 0;
+
+      const existingCerts = await db.select()
+        .from(trainingCertifications)
+        .where(and(
+          eq(trainingCertifications.userId, userId),
+          eq(trainingCertifications.referenceId, LBA_CERT_EXAM_ID),
+          eq(trainingCertifications.status, "passed"),
+        ))
+        .limit(1);
+
+      if (existingCerts.length > 0) {
+        return res.json({
+          success: true,
+          alreadyCertified: true,
+          certification: existingCerts[0],
+          message: "You are already certified as an FFPMA LBA Practitioner.",
+        });
+      }
+
+      const LBA_TRACK_ID = "track-lba-practitioner";
+      const requiredModules = await db.select()
+        .from(trackModules)
+        .where(and(
+          eq(trackModules.trackId, LBA_TRACK_ID),
+          eq(trackModules.isRequired, true),
+        ));
+
+      const incompleteModules: string[] = [];
+      for (const tm of requiredModules) {
+        const requiredQuizzes = await db.select()
+          .from(moduleQuizzes)
+          .where(and(
+            eq(moduleQuizzes.moduleId, tm.moduleId),
+            eq(moduleQuizzes.isRequired, true),
+          ));
+
+        for (const mq of requiredQuizzes) {
+          const allAttempts = await db.select()
+            .from(quizAttempts)
+            .where(and(
+              eq(quizAttempts.userId, userId),
+              eq(quizAttempts.quizId, mq.quizId),
+            ));
+
+          const hasPassed = allAttempts.some(a => a.completedAt && (a.percentage ?? 0) >= 80);
+          if (!hasPassed) {
+            incompleteModules.push(tm.moduleId);
+            break;
+          }
+        }
+      }
+
+      if (incompleteModules.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: `You must complete all ${requiredModules.length} LBA modules with passing quiz scores before taking the certification exam.`,
+          incompleteModules,
+        });
+      }
+
+      const existingForAttempt = await db.select()
+        .from(trainingCertifications)
+        .where(and(
+          eq(trainingCertifications.userId, userId),
+          eq(trainingCertifications.referenceId, LBA_CERT_EXAM_ID),
+        ));
+
+      const alreadyProcessed = existingForAttempt.some(
+        (c: any) => c.metadata && (c.metadata as any).attemptId === attemptId
+      );
+      if (alreadyProcessed) {
+        const existing = existingForAttempt.find(
+          (c: any) => c.metadata && (c.metadata as any).attemptId === attemptId
+        );
+        return res.json({
+          success: true,
+          passed: existing?.status === "passed",
+          certification: existing,
+          message: "This exam attempt has already been processed.",
+        });
+      }
+
+      const priorAttempts = await db.select()
+        .from(quizAttempts)
+        .where(and(
+          eq(quizAttempts.userId, userId),
+          eq(quizAttempts.quizId, LBA_CERT_EXAM_ID),
+        ));
+
+      if (priorAttempts.length > 3) {
+        return res.status(400).json({
+          success: false,
+          error: "Maximum attempts (3) reached for the LBA Certification Exam.",
+        });
+      }
+
+      const passed = score >= LBA_PASSING_SCORE;
+      const certNumber = passed
+        ? `FFPMA-LBA-${String(Date.now()).slice(-8)}-${String(priorAttempts.length).padStart(4, "0")}`
+        : null;
+      const verificationCode = passed
+        ? `LBA${Math.random().toString(36).substring(2, 10).toUpperCase()}`
+        : null;
+
+      const [certification] = await db.insert(trainingCertifications).values({
+        userId,
+        certificationType: "specialist",
+        referenceId: LBA_CERT_EXAM_ID,
+        referenceTitle: "FFPMA Live Blood Analysis Practitioner",
+        status: passed ? "passed" : "failed",
+        score,
+        passingScore: LBA_PASSING_SCORE,
+        attemptsUsed: priorAttempts.length,
+        maxAttempts: 3,
+        certificateNumber: certNumber,
+        verificationCode,
+        issuedAt: passed ? new Date() : null,
+        expiresAt: passed ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) : null,
+        metadata: { trackId: "track-lba-practitioner", examId: LBA_CERT_EXAM_ID, attemptId },
+      }).returning();
+
+      res.json({
+        success: true,
+        passed,
+        certification,
+        message: passed
+          ? `Congratulations! You have earned your FFPMA LBA Practitioner Certification. Certificate #${certNumber}`
+          : `Score: ${score}%. Passing score is ${LBA_PASSING_SCORE}%. You have ${3 - priorAttempts.length} attempt(s) remaining.`,
+      });
+    } catch (error: any) {
+      console.error("[LBA Certification] Error:", error);
       res.status(500).json({ success: false, error: error.message });
     }
   });

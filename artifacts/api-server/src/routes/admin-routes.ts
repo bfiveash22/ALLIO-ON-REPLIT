@@ -20,6 +20,9 @@ import { seedIvermectinTraining } from "../seeds/ivermectin-training-seed";
 import { seedRemainingModules } from "../seeds/complete-remaining-modules-seed";
 import { enhanceModulesWithMedia, getAvailableMediaAssets } from "../seeds/enhance-modules-with-media";
 import { seedAchievements } from "../seeds/achievements-seed";
+import { seedLBABloodSamples } from "../seeds/lba-blood-samples-seed";
+import { seedLBACertification } from "../seeds/lba-certification-seed";
+import { seedLBACertificationExam } from "../seeds/lba-certification-exam-seed";
 import { getAllIntegrationStatuses, testIntegration } from "../services/integration-registry";
 
 export function registerAdminRoutes(app: Express): void {
@@ -454,6 +457,37 @@ export function registerAdminRoutes(app: Express): void {
       });
     } catch (error: any) {
       console.error("[Admin] Error seeding training content:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.post("/api/admin/seed/lba-certification", requireRole("admin", "trustee"), async (req: Request, res: Response) => {
+    try {
+      const isPreviewMode = validatePreviewMode(req);
+      const userId = req.user?.id as string;
+      if (!userId && !isPreviewMode) {
+        return res.status(401).json({ error: "Admin authentication required" });
+      }
+
+      console.log("[Admin] Seeding LBA Certification Course...");
+      await seedLBABloodSamples();
+      await seedLBACertification();
+      await seedLBACertificationExam();
+
+      res.json({
+        success: true,
+        message: "LBA Certification Course seeded successfully",
+        details: {
+          track: "Live Blood Analysis Practitioner Certification",
+          modules: 17,
+          moduleQuizzes: 17,
+          certificationExam: "100 questions",
+          bloodSamples: "14 pleomorphic/terrain entries",
+          achievements: 9,
+        },
+      });
+    } catch (error: any) {
+      console.error("[Admin] Error seeding LBA certification:", error);
       res.status(500).json({ success: false, error: error.message });
     }
   });
