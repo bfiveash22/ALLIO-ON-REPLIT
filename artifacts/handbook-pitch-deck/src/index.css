@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --ffpma-deep: #1A0D40;
-  --ffpma-primary: #331A80;
-  --ffpma-secondary: #6644BB;
-  --ffpma-accent: #8B6FCC;
-  --ffpma-light: #B8A4E0;
-  --ffpma-gold: #D4A843;
-  --ffpma-gold-light: #E8C977;
-  --ffpma-cream: #F5F0E8;
-  --ffpma-warm-white: #FAF7F2;
-  --ffpma-text: #2A1A4E;
-  --ffpma-text-light: #6B5B8A;
+  --deep-blue: #1E3A5F;
+  --deep-blue-dark: #0F1D30;
+  --deep-blue-light: #2A4F7A;
+  --cyan: #00D4AA;
+  --cyan-light: #33DFBD;
+  --cyan-dark: #00A888;
+  --gold: #FFD700;
+  --gold-light: #FFE44D;
+  --off-white: #F0F4F8;
+  --slate-light: #C8D6E5;
+  --slate-mid: #8395A7;
 
-  font-family: "DM Sans", system-ui, sans-serif;
+  font-family: "Inter", system-ui, sans-serif;
   color-scheme: dark;
 }
 
@@ -26,8 +26,8 @@ body,
 }
 
 body {
-  background: var(--ffpma-deep);
-  color: var(--ffpma-cream);
+  background: var(--deep-blue-dark);
+  color: var(--off-white);
 }
 
 .slide {
@@ -37,9 +37,31 @@ body {
 }
 
 .font-display {
-  font-family: "DM Serif Display", Georgia, serif;
+  font-family: "Playfair Display", Georgia, serif;
 }
 
 .font-body {
-  font-family: "DM Sans", system-ui, sans-serif;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.glass-card {
+  background: rgba(30, 58, 95, 0.45);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 212, 170, 0.2);
+  border-radius: 1vw;
+}
+
+.glass-card-gold {
+  background: rgba(30, 58, 95, 0.45);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 1vw;
+}
+
+.glow-cyan {
+  box-shadow: 0 0 30px rgba(0, 212, 170, 0.15), 0 0 60px rgba(0, 212, 170, 0.05);
+}
+
+.glow-gold {
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.15), 0 0 60px rgba(255, 215, 0, 0.05);
 }
