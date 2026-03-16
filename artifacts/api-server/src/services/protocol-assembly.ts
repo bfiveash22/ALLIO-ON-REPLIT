@@ -25,7 +25,7 @@ import {
   getUncachableSlidesClient,
 } from "./slides";
 import { researchApi } from "./research-api";
-import { generateProtocolPDF } from "./protocol-pdf";
+import { generateProtocolPDF, generateDailySchedulePDF, generatePeptideSchedulePDF } from "./protocol-pdf";
 
 export interface ProtocolCitation {
   title: string;
@@ -116,6 +116,20 @@ export async function generateProtocolPDFBuffer(
   citations?: ProtocolCitation[]
 ): Promise<Buffer> {
   return generateProtocolPDF(protocol, profile, citations);
+}
+
+export async function generateDailySchedulePDFBuffer(
+  protocol: HealingProtocol,
+  profile: PatientProfile
+): Promise<Buffer> {
+  return generateDailySchedulePDF(protocol, profile);
+}
+
+export async function generatePeptideSchedulePDFBuffer(
+  protocol: HealingProtocol,
+  profile: PatientProfile
+): Promise<Buffer> {
+  return generatePeptideSchedulePDF(protocol, profile);
 }
 
 export async function runProtocolQA(protocol: HealingProtocol): Promise<{
@@ -835,6 +849,10 @@ export async function listProtocols(limit: number = 50) {
       slidesWebViewLink: generatedProtocols.slidesWebViewLink,
       pdfDriveFileId: generatedProtocols.pdfDriveFileId,
       pdfDriveWebViewLink: generatedProtocols.pdfDriveWebViewLink,
+      dailySchedulePdfFileId: generatedProtocols.dailySchedulePdfFileId,
+      dailySchedulePdfWebViewLink: generatedProtocols.dailySchedulePdfWebViewLink,
+      peptideSchedulePdfFileId: generatedProtocols.peptideSchedulePdfFileId,
+      peptideSchedulePdfWebViewLink: generatedProtocols.peptideSchedulePdfWebViewLink,
       generatedBy: generatedProtocols.generatedBy,
       reviewedBy: generatedProtocols.reviewedBy,
       reviewedAt: generatedProtocols.reviewedAt,

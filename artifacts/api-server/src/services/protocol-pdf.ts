@@ -5,12 +5,12 @@ import type {
 } from "@shared/types/protocol-assembly";
 
 const COLORS = {
-  primary: "#331A80",
-  secondary: "#6644BB",
-  accent: "#8B6FCC",
+  primary: "#1B2A4A",
+  secondary: "#00B4D8",
+  accent: "#D4A843",
   text: "#222222",
   lightText: "#666666",
-  headerBg: "#F0EBF8",
+  headerBg: "#E8F4F8",
   white: "#FFFFFF",
   border: "#CCCCCC",
 };
@@ -410,6 +410,272 @@ export function generateProtocolPDF(
       doc.moveDown(0.3);
       doc.fontSize(10).fillColor(COLORS.primary).text("— DR. FORMULA", { align: "center" });
 
+      doc.end();
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+function addPdfTitle(doc: PDFKit.PDFDocument, title: string, patientName: string, date: string) {
+  doc
+    .fontSize(24)
+    .fillColor(COLORS.primary)
+    .text("FORGOTTEN FORMULA PMA", { align: "center" });
+  doc.moveDown(0.2);
+  doc
+    .fontSize(18)
+    .fillColor(COLORS.secondary)
+    .text(title, { align: "center" });
+  doc.moveDown(0.3);
+  doc
+    .fontSize(13)
+    .fillColor(COLORS.text)
+    .text(patientName, { align: "center" });
+  doc
+    .fontSize(10)
+    .fillColor(COLORS.lightText)
+    .text(`Generated: ${date}`, { align: "center" });
+  doc.moveDown(0.4);
+  doc
+    .moveTo(55, doc.y)
+    .lineTo(doc.page.width - 55, doc.y)
+    .strokeColor(COLORS.secondary)
+    .lineWidth(2)
+    .stroke();
+  doc.moveDown(0.5);
+}
+
+function addPdfFooter(doc: PDFKit.PDFDocument) {
+  doc.addPage();
+  doc.moveDown(2);
+  doc
+    .fontSize(9)
+    .fillColor(COLORS.lightText)
+    .text(
+      "This document is intended solely for private membership association (PMA) use. " +
+      "All protocols are recommendations subject to Trustee review. " +
+      "Member sovereignty and informed consent are foundational principles of this association.",
+      { align: "center" }
+    );
+  doc.moveDown(0.5);
+  doc.fontSize(10).fillColor(COLORS.primary).text("— FORGOTTEN FORMULA PMA", { align: "center" });
+}
+
+export function generateDailySchedulePDF(
+  protocol: HealingProtocol,
+  profile: PatientProfile
+): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({
+        size: "LETTER",
+        margins: { top: 60, bottom: 60, left: 55, right: 55 },
+        info: {
+          Title: `${protocol.patientName} - Daily Schedule`,
+          Author: "Forgotten Formula PMA - DR. FORMULA",
+          Subject: "Daily Protocol Schedule",
+        },
+      });
+
+      const chunks: Buffer[] = [];
+      doc.on("data", (chunk: Buffer) => chunks.push(chunk));
+      doc.on("end", () => resolve(Buffer.concat(chunks)));
+      doc.on("error", reject);
+
+      addPdfTitle(doc, "Daily Protocol Schedule", protocol.patientName, protocol.generatedDate || new Date().toISOString().split("T")[0]);
+
+      doc
+        .fontSize(9)
+        .fillColor(COLORS.lightText)
+        .text(`Protocol Duration: ${protocol.protocolDurationDays || 90} days`, { align: "center" });
+      doc.moveDown(0.5);
+
+      if (protocol.dailySchedule) {
+        const periods = [
+          { key: "morning" as const, label: "MORNING", icon: "☀️" },
+          { key: "midday" as const, label: "MIDDAY", icon: "🌤️" },
+          { key: "evening" as const, label: "EVENING", icon: "🌅" },
+          { key: "bedtime" as const, label: "BEDTIME", icon: "🌙" },
+        ];
+
+        periods.forEach((period) => {
+          const items = protocol.dailySchedule[period.key];
+          if (items?.length > 0) {
+            checkPage(doc, 80);
+            doc
+              .fontSize(14)
+              .fillColor(COLORS.primary)
+              .text(`${period.icon}  ${period.label}`, { underline: true });
+            doc.moveDown(0.3);
+
+            items.forEach((item) => {
+              checkPage(doc, 30);
+              const timeStr = item.time ? `[${item.time}]` : "";
+              doc
+                .fontSize(11)
+                .fillColor(COLORS.secondary)
+                .text(`  ${timeStr} ${item.item}`, { continued: false });
+              if (item.details) {
+                doc
+                  .fontSize(9)
+                  .fillColor(COLORS.lightText)
+                  .text(`       ${item.details}`);
+              }
+              if (item.frequency) {
+                doc
+                  .fontSize(8)
+                  .fillColor(COLORS.accent)
+                  .text(`       Frequency: ${item.frequency}`);
+              }
+              doc.moveDown(0.2);
+            });
+            doc.moveDown(0.4);
+          }
+        });
+      } else {
+        addBody(doc, "No daily schedule has been defined for this protocol.");
+      }
+
+      if (protocol.lifestyleRecommendations?.length > 0) {
+        doc.addPage();
+        addHeader(doc, "LIFESTYLE RECOMMENDATIONS");
+        protocol.lifestyleRecommendations.forEach((l) => {
+          checkPage(doc, 40);
+          addBullet(doc, `${l.category}: ${l.recommendation}${l.details ? ` — ${l.details}` : ""}`);
+        });
+      }
+
+      if (protocol.dietaryGuidelines?.length > 0) {
+        checkPage(doc, 80);
+        addHeader(doc, "DIETARY GUIDELINES");
+        protocol.dietaryGuidelines.forEach((d) => addBullet(doc, d));
+      }
+
+      addPdfFooter(doc);
+      doc.end();
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+export function generatePeptideSchedulePDF(
+  protocol: HealingProtocol,
+  _profile: PatientProfile
+): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({
+        size: "LETTER",
+        margins: { top: 60, bottom: 60, left: 55, right: 55 },
+        info: {
+          Title: `${protocol.patientName} - Peptide Schedule`,
+          Author: "Forgotten Formula PMA - DR. FORMULA",
+          Subject: "Peptide Protocol Schedule",
+        },
+      });
+
+      const chunks: Buffer[] = [];
+      doc.on("data", (chunk: Buffer) => chunks.push(chunk));
+      doc.on("end", () => resolve(Buffer.concat(chunks)));
+      doc.on("error", reject);
+
+      addPdfTitle(doc, "Peptide Protocol Schedule", protocol.patientName, protocol.generatedDate || new Date().toISOString().split("T")[0]);
+
+      if (protocol.injectablePeptides?.length > 0) {
+        addHeader(doc, "INJECTABLE PEPTIDES");
+        protocol.injectablePeptides.forEach((p) => {
+          checkPage(doc, 100);
+          doc.fontSize(13).fillColor(COLORS.primary).text(p.name);
+          doc.moveDown(0.15);
+
+          const details = [
+            ["Vial Size", p.vialSize],
+            ["Reconstitution", p.reconstitution],
+            ["Dose", p.dose],
+            ["Route", p.route],
+            ["Frequency", p.frequency],
+            ["Duration", p.duration],
+            ["Purpose", p.purpose],
+          ];
+
+          details.forEach(([label, value]) => {
+            if (value) {
+              doc
+                .fontSize(10)
+                .fillColor(COLORS.secondary)
+                .text(`  ${label}: `, { continued: true })
+                .fillColor(COLORS.text)
+                .text(String(value));
+            }
+          });
+
+          if (p.notes) {
+            doc
+              .fontSize(9)
+              .fillColor(COLORS.lightText)
+              .text(`  Note: ${p.notes}`);
+          }
+          doc.moveDown(0.5);
+        });
+      }
+
+      if (protocol.bioregulators?.length > 0) {
+        doc.addPage();
+        addHeader(doc, "PCC BIOREGULATORS (Khavinson Peptides)");
+        protocol.bioregulators.forEach((b) => {
+          checkPage(doc, 70);
+          doc.fontSize(12).fillColor(COLORS.primary).text(b.name);
+          doc.moveDown(0.1);
+          doc
+            .fontSize(10)
+            .fillColor(COLORS.text)
+            .text(`  Target Organ: ${b.targetOrgan || "General"}`);
+          doc.text(`  Dose: ${b.dose} | Frequency: ${b.frequency} | Duration: ${b.duration}`);
+          doc.moveDown(0.4);
+        });
+      }
+
+      if (protocol.oralPeptides?.length > 0) {
+        checkPage(doc, 100);
+        addHeader(doc, "ORAL PEPTIDES");
+        protocol.oralPeptides.forEach((p) => {
+          checkPage(doc, 50);
+          doc.fontSize(11).fillColor(COLORS.primary).text(p.name);
+          doc
+            .fontSize(10)
+            .fillColor(COLORS.text)
+            .text(`  Dose: ${p.dose} | Frequency: ${p.frequency} | Duration: ${p.duration}`);
+          doc.text(`  Purpose: ${p.purpose}`);
+          doc.moveDown(0.3);
+        });
+      }
+
+      if (protocol.imTherapies?.length > 0) {
+        checkPage(doc, 100);
+        addHeader(doc, "IM THERAPIES");
+        protocol.imTherapies.forEach((im) => {
+          checkPage(doc, 50);
+          doc.fontSize(11).fillColor(COLORS.primary).text(im.name);
+          doc
+            .fontSize(10)
+            .fillColor(COLORS.text)
+            .text(`  Dose: ${im.dose} | Frequency: ${im.frequency} — ${im.purpose}`);
+          doc.moveDown(0.3);
+        });
+      }
+
+      if (
+        (!protocol.injectablePeptides || protocol.injectablePeptides.length === 0) &&
+        (!protocol.bioregulators || protocol.bioregulators.length === 0) &&
+        (!protocol.oralPeptides || protocol.oralPeptides.length === 0) &&
+        (!protocol.imTherapies || protocol.imTherapies.length === 0)
+      ) {
+        addBody(doc, "No peptide or injection protocols have been defined for this protocol.");
+      }
+
+      addPdfFooter(doc);
       doc.end();
     } catch (error) {
       reject(error);

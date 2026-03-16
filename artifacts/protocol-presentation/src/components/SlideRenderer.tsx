@@ -28,7 +28,7 @@ function TitleSlide({ slide }: { slide: SlideData }) {
         {slide.content.patientName}
       </p>
       <p className="text-lg text-gray-400 animate-fade-in" style={{ animationDelay: "0.4s" }}>
-        Prepared by: FF Trustee {slide.content.trustee}
+        Prepared by: {slide.content.trustee}
       </p>
       <p className="absolute bottom-12 text-gray-500 italic text-sm max-w-xl">
         "Before you heal someone, ask them if they're willing to give up the things that make them sick"

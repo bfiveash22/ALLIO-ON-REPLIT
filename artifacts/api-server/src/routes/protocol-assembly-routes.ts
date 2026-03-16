@@ -18,6 +18,8 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
     listProtocols,
     fetchProtocolCitations,
     generateProtocolPDFBuffer,
+    generateDailySchedulePDFBuffer,
+    generatePeptideSchedulePDFBuffer,
     runProtocolQA,
   } = await import('../services/protocol-assembly');
 
@@ -146,6 +148,10 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
         slidesWebViewLink: generatedProtocols.slidesWebViewLink,
         pdfDriveFileId: generatedProtocols.pdfDriveFileId,
         pdfDriveWebViewLink: generatedProtocols.pdfDriveWebViewLink,
+        dailySchedulePdfFileId: generatedProtocols.dailySchedulePdfFileId,
+        dailySchedulePdfWebViewLink: generatedProtocols.dailySchedulePdfWebViewLink,
+        peptideSchedulePdfFileId: generatedProtocols.peptideSchedulePdfFileId,
+        peptideSchedulePdfWebViewLink: generatedProtocols.peptideSchedulePdfWebViewLink,
         generatedBy: generatedProtocols.generatedBy,
         reviewedBy: generatedProtocols.reviewedBy,
         reviewedAt: generatedProtocols.reviewedAt,
@@ -199,6 +205,8 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       slidesWebViewLink: generatedProtocols.slidesWebViewLink,
       pdfDriveFileId: generatedProtocols.pdfDriveFileId,
       pdfDriveWebViewLink: generatedProtocols.pdfDriveWebViewLink,
+      dailySchedulePdfWebViewLink: generatedProtocols.dailySchedulePdfWebViewLink,
+      peptideSchedulePdfWebViewLink: generatedProtocols.peptideSchedulePdfWebViewLink,
       generatedBy: generatedProtocols.generatedBy,
       reviewedBy: generatedProtocols.reviewedBy,
       reviewNotes: generatedProtocols.reviewNotes,
@@ -234,6 +242,8 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       slidesWebViewLink: generatedProtocols.slidesWebViewLink,
       pdfDriveFileId: generatedProtocols.pdfDriveFileId,
       pdfDriveWebViewLink: generatedProtocols.pdfDriveWebViewLink,
+      dailySchedulePdfWebViewLink: generatedProtocols.dailySchedulePdfWebViewLink,
+      peptideSchedulePdfWebViewLink: generatedProtocols.peptideSchedulePdfWebViewLink,
       generatedBy: generatedProtocols.generatedBy,
       reviewedBy: generatedProtocols.reviewedBy,
       reviewedAt: generatedProtocols.reviewedAt,
@@ -266,6 +276,8 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       slidesWebViewLink: generatedProtocols.slidesWebViewLink,
       pdfDriveFileId: generatedProtocols.pdfDriveFileId,
       pdfDriveWebViewLink: generatedProtocols.pdfDriveWebViewLink,
+      dailySchedulePdfWebViewLink: generatedProtocols.dailySchedulePdfWebViewLink,
+      peptideSchedulePdfWebViewLink: generatedProtocols.peptideSchedulePdfWebViewLink,
       generatedBy: generatedProtocols.generatedBy,
       reviewedBy: generatedProtocols.reviewedBy,
       reviewNotes: generatedProtocols.reviewNotes,
@@ -327,6 +339,48 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
     } catch (error: any) {
       console.error('[Protocol Assembly] PDF generation error:', error);
       res.status(500).json({ error: 'Failed to generate PDF. Please try again.' });
+    }
+  });
+
+  app.get('/api/protocol-assembly/protocols/:id/pdf/daily-schedule', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+      const record = await getProtocol(id);
+      if (!record) return res.status(404).json({ error: 'Protocol not found' });
+      enforceDoctorOwnership(req, record);
+      const protocol = record.protocol as any;
+      const profile = record.patientProfile as any;
+      const pdfBuffer = await generateDailySchedulePDFBuffer(protocol, profile);
+      const safeName = (protocol.patientName || 'protocol').replace(/[^a-zA-Z0-9_-]/g, '_');
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeName}_Daily_Schedule.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error('[Protocol Assembly] Daily Schedule PDF error:', error);
+      res.status(500).json({ error: 'Failed to generate daily schedule PDF.' });
+    }
+  });
+
+  app.get('/api/protocol-assembly/protocols/:id/pdf/peptide-schedule', requireAuth, requireRole('admin', 'trustee', 'doctor'), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+      const record = await getProtocol(id);
+      if (!record) return res.status(404).json({ error: 'Protocol not found' });
+      enforceDoctorOwnership(req, record);
+      const protocol = record.protocol as any;
+      const profile = record.patientProfile as any;
+      const pdfBuffer = await generatePeptideSchedulePDFBuffer(protocol, profile);
+      const safeName = (protocol.patientName || 'protocol').replace(/[^a-zA-Z0-9_-]/g, '_');
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeName}_Peptide_Schedule.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error('[Protocol Assembly] Peptide Schedule PDF error:', error);
+      res.status(500).json({ error: 'Failed to generate peptide schedule PDF.' });
     }
   });
 
@@ -477,19 +531,44 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
           } catch (citErr: unknown) {
             console.warn(`[Protocol Delivery] Citations fetch failed for protocol ${id}:`, citErr instanceof Error ? citErr.message : String(citErr));
           }
-          const pdfBuffer = await generateProtocolPDFBuffer(protocol, profile, citations);
-          const safeName = (protocol.patientName || 'protocol').replace(/[^a-zA-Z0-9_-]/g, '_');
-          const fileName = `${safeName}_Protocol_${protocol.generatedDate || new Date().toISOString().split('T')[0]}.pdf`;
 
+          const safeName = (protocol.patientName || 'protocol').replace(/[^a-zA-Z0-9_-]/g, '_');
+          const dateStr = protocol.generatedDate || new Date().toISOString().split('T')[0];
           const { uploadProtocolToDrive } = await import('../services/drive');
-          const driveResult = await uploadProtocolToDrive(pdfBuffer, fileName);
-          if (driveResult.success) {
-            uploadedPdfLink = driveResult.webViewLink || null;
-            await db.update(generatedProtocols).set({
-              pdfDriveFileId: driveResult.fileId,
-              pdfDriveWebViewLink: driveResult.webViewLink,
-            }).where(eq(generatedProtocols.id, id));
-            console.log(`[Protocol Delivery] Uploaded protocol ${id} to Drive: ${driveResult.webViewLink}`);
+
+          const [fullPdfBuffer, dailyPdfBuffer, peptidePdfBuffer] = await Promise.all([
+            generateProtocolPDFBuffer(protocol, profile, citations),
+            generateDailySchedulePDFBuffer(protocol, profile),
+            generatePeptideSchedulePDFBuffer(protocol, profile),
+          ]);
+          console.log(`[Protocol Delivery] Generated 3 PDFs for protocol ${id}: Full(${fullPdfBuffer.length}), Daily(${dailyPdfBuffer.length}), Peptide(${peptidePdfBuffer.length})`);
+
+          const [fullDriveResult, dailyDriveResult, peptideDriveResult] = await Promise.all([
+            uploadProtocolToDrive(fullPdfBuffer, `${safeName}_Full_Protocol_${dateStr}.pdf`),
+            uploadProtocolToDrive(dailyPdfBuffer, `${safeName}_Daily_Schedule_${dateStr}.pdf`),
+            uploadProtocolToDrive(peptidePdfBuffer, `${safeName}_Peptide_Schedule_${dateStr}.pdf`),
+          ]);
+
+          const driveUpdateData: Record<string, unknown> = {};
+          if (fullDriveResult.success) {
+            uploadedPdfLink = fullDriveResult.webViewLink || null;
+            driveUpdateData.pdfDriveFileId = fullDriveResult.fileId;
+            driveUpdateData.pdfDriveWebViewLink = fullDriveResult.webViewLink;
+            console.log(`[Protocol Delivery] Full Protocol PDF → Drive: ${fullDriveResult.webViewLink}`);
+          }
+          if (dailyDriveResult.success) {
+            driveUpdateData.dailySchedulePdfFileId = dailyDriveResult.fileId;
+            driveUpdateData.dailySchedulePdfWebViewLink = dailyDriveResult.webViewLink;
+            console.log(`[Protocol Delivery] Daily Schedule PDF → Drive: ${dailyDriveResult.webViewLink}`);
+          }
+          if (peptideDriveResult.success) {
+            driveUpdateData.peptideSchedulePdfFileId = peptideDriveResult.fileId;
+            driveUpdateData.peptideSchedulePdfWebViewLink = peptideDriveResult.webViewLink;
+            console.log(`[Protocol Delivery] Peptide Schedule PDF → Drive: ${peptideDriveResult.webViewLink}`);
+          }
+
+          if (Object.keys(driveUpdateData).length > 0) {
+            await db.update(generatedProtocols).set(driveUpdateData).where(eq(generatedProtocols.id, id));
           }
         } catch (driveErr: unknown) {
           const errMsg = driveErr instanceof Error ? driveErr.message : String(driveErr);
@@ -524,6 +603,10 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
             const slidesLink = record.slidesWebViewLink || 'No presentation available';
             const protocolSummary = protocol.summary || 'See full protocol for details';
 
+            const updatedRecord = await getProtocol(id);
+            const dailyLink = (updatedRecord as any)?.dailySchedulePdfWebViewLink || 'Generating...';
+            const peptideLink = (updatedRecord as any)?.peptideSchedulePdfWebViewLink || 'Generating...';
+
             await db.insert(doctorPatientMessages).values({
               conversationId,
               senderId: 'system',
@@ -535,8 +618,11 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
               subject: `Protocol Approved: ${record.patientName}`,
               content: `The protocol for ${record.patientName} has been reviewed and approved by the Trustee.\n\n` +
                 `**Protocol Summary:** ${protocolSummary}\n\n` +
-                `**PDF:** ${pdfLink}\n` +
-                `**Presentation:** ${slidesLink}\n\n` +
+                `**4 Deliverables:**\n` +
+                `1. Full Protocol PDF: ${pdfLink}\n` +
+                `2. Daily Schedule PDF: ${dailyLink}\n` +
+                `3. Peptide Schedule PDF: ${peptideLink}\n` +
+                `4. Presentation: ${slidesLink}\n\n` +
                 `Please review and share with the member as appropriate.`,
               isUrgent: false,
             });

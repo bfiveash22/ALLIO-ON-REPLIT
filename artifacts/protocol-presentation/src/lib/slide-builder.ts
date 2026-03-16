@@ -8,8 +8,8 @@ export function buildSlides(protocol: any, profile: any, citations: any[], trust
     id: "title",
     type: "title",
     title: "Member Protocol 2026",
-    narration: `Welcome to the Forgotten Formula PMA Member Protocol for ${pn}. This comprehensive 90-day healing protocol has been carefully designed by Trustee Michael Blake and the ALLIO AI system to address the root causes of ${pn}'s health challenges. Before you heal someone, ask them if they're willing to give up the things that make them sick.`,
-    content: { patientName: pn, date: protocol.generatedDate, trustee: "Michael Blake" }
+    narration: `Welcome to the Forgotten Formula PMA Member Protocol for ${pn}. This comprehensive 90-day healing protocol has been carefully designed by the FF PMA Trustee and the ALLIO AI system to address the root causes of ${pn}'s health challenges. Before you heal someone, ask them if they're willing to give up the things that make them sick.`,
+    content: { patientName: pn, date: protocol.generatedDate, trustee: "FF PMA 2026 Protocol" }
   });
 
   slides.push({

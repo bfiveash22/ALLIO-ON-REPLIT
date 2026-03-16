@@ -17,6 +17,8 @@ import {
   generateProtocol,
   fetchProtocolCitations,
   generateProtocolPDFBuffer,
+  generateDailySchedulePDFBuffer,
+  generatePeptideSchedulePDFBuffer,
   runProtocolQA,
   type ProtocolCitation,
 } from "./protocol-assembly";
@@ -438,17 +440,53 @@ export async function rebuildKathrynSmithProtocol(): Promise<{
     qaResult = { error: "QA check failed", details: String(err) };
   }
 
-  console.log("[Kathryn Smith Rebuild] Generating protocol PDF...");
+  console.log("[Kathryn Smith Rebuild] Generating all 3 protocol PDFs...");
   let pdfBuffer: Buffer;
+  let dailyPdfBuffer: Buffer;
+  let peptidePdfBuffer: Buffer;
   let pdfUrl = "";
+  let driveLinks: { full?: string; daily?: string; peptide?: string; fullFileId?: string; dailyFileId?: string; peptideFileId?: string } = {};
   try {
-    pdfBuffer = await generateProtocolPDFBuffer(protocol, profile, citations);
+    [pdfBuffer, dailyPdfBuffer, peptidePdfBuffer] = await Promise.all([
+      generateProtocolPDFBuffer(protocol, profile, citations),
+      generateDailySchedulePDFBuffer(protocol, profile),
+      generatePeptideSchedulePDFBuffer(protocol, profile),
+    ]);
     const dateStr = protocol.generatedDate || new Date().toISOString().split("T")[0];
     pdfUrl = persistPDF(pdfBuffer, protocol.patientName, dateStr);
-    console.log(`[Kathryn Smith Rebuild] PDF generated and saved: ${pdfBuffer.length} bytes at ${pdfUrl}`);
+    console.log(`[Kathryn Smith Rebuild] 3 PDFs generated: Full(${pdfBuffer.length}), Daily(${dailyPdfBuffer.length}), Peptide(${peptidePdfBuffer.length})`);
+
+    try {
+      const { uploadProtocolToDrive } = await import("./drive");
+      const safeName = protocol.patientName.replace(/[^a-zA-Z0-9_-]/g, "_");
+      const [fullResult, dailyResult, peptideResult] = await Promise.all([
+        uploadProtocolToDrive(pdfBuffer, `${safeName}_Full_Protocol_${dateStr}.pdf`),
+        uploadProtocolToDrive(dailyPdfBuffer, `${safeName}_Daily_Schedule_${dateStr}.pdf`),
+        uploadProtocolToDrive(peptidePdfBuffer, `${safeName}_Peptide_Schedule_${dateStr}.pdf`),
+      ]);
+      if (fullResult.success) {
+        driveLinks.full = fullResult.webViewLink || undefined;
+        driveLinks.fullFileId = fullResult.fileId || undefined;
+        console.log(`[Kathryn Smith Rebuild] Full Protocol PDF → Drive: ${fullResult.webViewLink}`);
+      }
+      if (dailyResult.success) {
+        driveLinks.daily = dailyResult.webViewLink || undefined;
+        driveLinks.dailyFileId = dailyResult.fileId || undefined;
+        console.log(`[Kathryn Smith Rebuild] Daily Schedule PDF → Drive: ${dailyResult.webViewLink}`);
+      }
+      if (peptideResult.success) {
+        driveLinks.peptide = peptideResult.webViewLink || undefined;
+        driveLinks.peptideFileId = peptideResult.fileId || undefined;
+        console.log(`[Kathryn Smith Rebuild] Peptide Schedule PDF → Drive: ${peptideResult.webViewLink}`);
+      }
+    } catch (driveErr) {
+      console.warn("[Kathryn Smith Rebuild] Drive upload failed (non-fatal):", driveErr);
+    }
   } catch (err) {
     console.error("[Kathryn Smith Rebuild] PDF generation failed:", err);
     pdfBuffer = Buffer.alloc(0);
+    dailyPdfBuffer = Buffer.alloc(0);
+    peptidePdfBuffer = Buffer.alloc(0);
   }
 
   const PROTOCOL_TYPE = "comprehensive-5r";
@@ -501,6 +539,12 @@ export async function rebuildKathrynSmithProtocol(): Promise<{
         protocol: protocol as unknown as Record<string, unknown>,
         status: "draft",
         generatedBy: "DR_FORMULA",
+        pdfDriveFileId: driveLinks.fullFileId || null,
+        pdfDriveWebViewLink: driveLinks.full || null,
+        dailySchedulePdfFileId: driveLinks.dailyFileId || null,
+        dailySchedulePdfWebViewLink: driveLinks.daily || null,
+        peptideSchedulePdfFileId: driveLinks.peptideFileId || null,
+        peptideSchedulePdfWebViewLink: driveLinks.peptide || null,
       })
       .returning({ id: generatedProtocols.id });
     const genId = genProto.id;
