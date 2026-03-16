@@ -1,19 +1,26 @@
-import { exec } from 'child_process';
+import { exec, execFile } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 let browserUseAvailable: boolean | null = null;
+let browserUsePath: string | null = null;
 
 async function checkBrowserUseInstalled(): Promise<boolean> {
   if (browserUseAvailable !== null) return browserUseAvailable;
   try {
-    await execAsync('which browser-use', { timeout: 5000 });
+    const { stdout } = await execAsync('which browser-use', { timeout: 5000 });
+    browserUsePath = stdout.trim();
     browserUseAvailable = true;
   } catch {
     browserUseAvailable = false;
   }
   return browserUseAvailable;
+}
+
+function getBrowserUsePath(): string {
+  return browserUsePath || 'browser-use';
 }
 
 export class CanvaAgentService {
@@ -25,29 +32,43 @@ export class CanvaAgentService {
     return { valid: true };
   }
 
+  checkBrowserUseApiKey(): { configured: boolean; error?: string } {
+    const apiKey = process.env.BROWSER_USE_API_KEY;
+    if (!apiKey) {
+      return { configured: false, error: 'BROWSER_USE_API_KEY is not configured. Required for remote browser-use execution. Get one at https://browser-use.com/new-api-key' };
+    }
+    return { configured: true };
+  }
+
   async getStatus(): Promise<{
     available: boolean;
     browserUseInstalled: boolean;
+    browserUseApiKeyConfigured: boolean;
     sessionConfigured: boolean;
     sessionId?: string;
     error?: string;
   }> {
     const validation = this.validateCredentials();
     const browserInstalled = await checkBrowserUseInstalled();
+    const apiKeyCheck = this.checkBrowserUseApiKey();
     const errors: string[] = [];
 
     if (!browserInstalled) {
       errors.push('browser-use CLI is not installed');
     }
+    if (!apiKeyCheck.configured && apiKeyCheck.error) {
+      errors.push(apiKeyCheck.error);
+    }
     if (!validation.valid && validation.error) {
       errors.push(validation.error);
     }
 
-    const ready = browserInstalled && validation.valid;
+    const ready = browserInstalled && validation.valid && apiKeyCheck.configured;
 
     return {
       available: ready,
       browserUseInstalled: browserInstalled,
+      browserUseApiKeyConfigured: apiKeyCheck.configured,
       sessionConfigured: validation.valid,
       sessionId: validation.valid ? process.env.CANVA_SESSION_ID?.substring(0, 10) + '...' : undefined,
       error: errors.length > 0 ? errors.join('; ') : undefined,
@@ -64,6 +85,12 @@ export class CanvaAgentService {
       return { success: false, error: `Canva agent unavailable: ${credentialCheck.error}` };
     }
 
+    const apiKeyCheck = this.checkBrowserUseApiKey();
+    if (!apiKeyCheck.configured) {
+      console.error(`[CANVA-AGENT] ${apiKeyCheck.error}`);
+      return { success: false, error: `Canva agent unavailable: ${apiKeyCheck.error}` };
+    }
+
     const browserInstalled = await checkBrowserUseInstalled();
     if (!browserInstalled) {
       console.error('[CANVA-AGENT] browser-use CLI is not installed');
@@ -75,12 +102,17 @@ export class CanvaAgentService {
     try {
       const fullPrompt = `Navigate to Canva. ${prompt}. Once the design is created, copy the share link. Ensure the task is marked as complete and provide the URL in the output.`;
 
-      const escapedPrompt = fullPrompt.replace(/"/g, '\\"');
-      const escapedSessionId = sessionId.replace(/"/g, '\\"');
-      const bashCommand = `browser-use --json -b remote run "${escapedPrompt}" --llm gpt-4o --session-id "${escapedSessionId}"`;
+      const args = [
+        '--json',
+        '-b', 'remote',
+        'run', fullPrompt,
+        '--llm', 'gpt-4o',
+        '--session-id', sessionId,
+      ];
+
       console.log(`[CANVA-AGENT] Running browser-use command...`);
 
-      const { stdout, stderr } = await execAsync(bashCommand, {
+      const { stdout, stderr } = await execFileAsync(getBrowserUsePath(), args, {
         maxBuffer: 1024 * 1024 * 10,
         timeout: 300000,
       });
@@ -109,7 +141,6 @@ export class CanvaAgentService {
           }
         }
       } catch {
-        // Not valid JSON, fall through
       }
 
       console.log(`[CANVA-AGENT] No Canva URL extracted from output.`);
@@ -118,6 +149,10 @@ export class CanvaAgentService {
       console.error(`[CANVA-AGENT] Execution failed: `, error);
       if (error.killed) {
         return { success: false, error: 'browser-use execution timed out after 5 minutes' };
+      }
+      const stderrMsg = error.stderr || '';
+      if (stderrMsg.includes('API Key Required')) {
+        return { success: false, error: 'BROWSER_USE_API_KEY is missing or invalid. Remote browser requires an API key from https://browser-use.com/new-api-key' };
       }
       return { success: false, error: error.message || 'Unknown browser-use execution error' };
     }

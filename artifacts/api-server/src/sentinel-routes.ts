@@ -577,6 +577,7 @@ export function registerSentinelRoutes(app: Express): void {
           error: 'Canva agent is not ready',
           details: status.error,
           browserUseInstalled: status.browserUseInstalled,
+          browserUseApiKeyConfigured: status.browserUseApiKeyConfigured,
           sessionConfigured: status.sessionConfigured,
         });
       }

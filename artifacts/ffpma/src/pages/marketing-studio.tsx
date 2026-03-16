@@ -182,10 +182,10 @@ export default function MarketingStudioPage() {
   };
 
   const handleGenerateVideo = () => {
-    if (!videoTitle.trim() || !selectedTemplate) return;
+    if (!videoTitle.trim()) return;
     setVideoResult(null);
     generateVideoMutation.mutate({
-      templateId: selectedTemplate,
+      templateId: selectedTemplate || undefined,
       title: videoTitle,
       voiceStyle,
       uploadToDrive: true,
@@ -245,11 +245,11 @@ export default function MarketingStudioPage() {
             )}
             {mediaStatus?.videoGeneration ? (
               <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                <Film className="w-3 h-3 mr-1" /> ffmpeg Available
+                <Film className="w-3 h-3 mr-1" /> Video Ready
               </Badge>
             ) : (
               <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                <Film className="w-3 h-3 mr-1" /> ffmpeg Unavailable
+                <Film className="w-3 h-3 mr-1" /> Video Offline
               </Badge>
             )}
             {agentStatus?.available ? (
@@ -414,15 +414,16 @@ export default function MarketingStudioPage() {
                   </div>
 
                   <div>
-                    <label className="text-sm text-slate-300 mb-2 block">Template</label>
+                    <label className="text-sm text-slate-300 mb-2 block">Template (optional)</label>
                     <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
                       <SelectTrigger
                         data-testid="select-video-template"
                         className="bg-slate-800/50 border-slate-700 text-white"
                       >
-                        <SelectValue placeholder="Select a video template..." />
+                        <SelectValue placeholder="Choose a template or leave blank for custom..." />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">No template (custom)</SelectItem>
                         {templates.map((t) => (
                           <SelectItem key={t.id} value={t.id}>
                             <span className="flex items-center gap-2">
@@ -470,7 +471,7 @@ export default function MarketingStudioPage() {
                   <Button
                     data-testid="button-generate-video"
                     onClick={handleGenerateVideo}
-                    disabled={!videoTitle.trim() || !selectedTemplate || generateVideoMutation.isPending}
+                    disabled={!videoTitle.trim() || generateVideoMutation.isPending}
                     className="w-full bg-gradient-to-r from-cyan-600 to-violet-600 hover:from-cyan-700 hover:to-violet-700"
                   >
                     {generateVideoMutation.isPending ? (

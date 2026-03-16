@@ -152,6 +152,7 @@ const integrationRegistry: IntegrationDefinition[] = [
     mode: "live",
     healthCheck: async () => {
       const sessionId = process.env.CANVA_SESSION_ID;
+      const apiKey = process.env.BROWSER_USE_API_KEY;
       const errors: string[] = [];
       try {
         const { execSync } = require('child_process');
@@ -159,13 +160,16 @@ const integrationRegistry: IntegrationDefinition[] = [
       } catch {
         errors.push('browser-use CLI not installed');
       }
+      if (!apiKey) {
+        errors.push('Missing BROWSER_USE_API_KEY (required for remote browser)');
+      }
       if (!sessionId) {
         errors.push('Missing CANVA_SESSION_ID');
       }
       if (errors.length > 0) {
         return { connected: false, error: errors.join('; ') + '. PIXEL agent Canva automation unavailable.' };
       }
-      return { connected: true, sampleData: `Canva session configured (${sessionId!.substring(0, 6)}…), browser-use installed` };
+      return { connected: true, sampleData: `Canva session configured (${sessionId!.substring(0, 6)}…), browser-use installed, API key set` };
     }
   },
   {
