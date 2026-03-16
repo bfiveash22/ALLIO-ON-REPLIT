@@ -768,6 +768,11 @@ INSTRUCTIONS:
         response = completion.choices[0]?.message?.content || "I apologize, I'm unable to respond at the moment.";
       }
 
+      const PMA_DISCLAIMER = "This consultation is provided within the private domain of the Forgotten Formula PMA for educational purposes. Clinical decisions remain at the practitioner's discretion.";
+      if (!response.includes("private domain") && !response.includes("practitioner's discretion")) {
+        response = response + "\n\n---\n*" + PMA_DISCLAIMER + "*";
+      }
+
       res.json({
         success: true,
         response,

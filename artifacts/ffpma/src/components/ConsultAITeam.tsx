@@ -79,8 +79,23 @@ const AGENT_COLORS: Record<string, string> = {
 export function ConsultAITeam({ preselectedAgentId, patientName }: ConsultAITeamProps) {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(preselectedAgentId || null);
   const [messageText, setMessageText] = useState("");
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
-  const [conversationHistories, setConversationHistories] = useState<Record<string, ConversationEntry[]>>({});
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>(() => {
+    try {
+      const stored = sessionStorage.getItem("ai-consult-chat");
+      if (stored) {
+        const parsed = JSON.parse(stored) as ChatMessage[];
+        return parsed.map((m) => ({ ...m, timestamp: new Date(m.timestamp) }));
+      }
+    } catch { /* ignore */ }
+    return [];
+  });
+  const [conversationHistories, setConversationHistories] = useState<Record<string, ConversationEntry[]>>(() => {
+    try {
+      const stored = sessionStorage.getItem("ai-consult-convos");
+      if (stored) return JSON.parse(stored);
+    } catch { /* ignore */ }
+    return {};
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [showContext, setShowContext] = useState(false);
   const [patientContext, setPatientContext] = useState<PatientContext>({
@@ -97,6 +112,14 @@ export function ConsultAITeam({ preselectedAgentId, patientName }: ConsultAITeam
 
   const scienceAgents = agentsData?.agents || [];
   const activeAgent = scienceAgents.find((a) => a.id === selectedAgentId);
+
+  useEffect(() => {
+    try { sessionStorage.setItem("ai-consult-chat", JSON.stringify(chatHistory)); } catch { /* ignore */ }
+  }, [chatHistory]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem("ai-consult-convos", JSON.stringify(conversationHistories)); } catch { /* ignore */ }
+  }, [conversationHistories]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
