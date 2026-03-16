@@ -2,7 +2,7 @@
 """
 FFPMA Allio Ecosystem Handbook & User Manual
 Official handbook for the Forgotten Formula Private Member Association
-Generates a professional PDF document for Doctors, Admins, and the Trustee
+Generates a professionally branded PDF with FF PMA visual identity
 """
 
 import os
@@ -12,188 +12,337 @@ from datetime import datetime
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
-from reportlab.lib.colors import HexColor, black, white
+from reportlab.lib.colors import HexColor, black, white, Color
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle,
-    KeepTogether, HRFlowable
+    KeepTogether, HRFlowable, Image, Flowable
 )
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY, TA_RIGHT
+from reportlab.graphics.shapes import Drawing, Rect, String, Circle, Line
+from reportlab.graphics import renderPDF
 
-BRAND_PURPLE = HexColor("#4A1A8A")
-BRAND_GOLD = HexColor("#D4A843")
-BRAND_DARK = HexColor("#1A1A2E")
-BRAND_LIGHT = HexColor("#F5F0FF")
-ACCENT_GREEN = HexColor("#2D8A4E")
-ACCENT_BLUE = HexColor("#2563EB")
-ACCENT_RED = HexColor("#DC2626")
-SECTION_BG = HexColor("#F8F6FF")
-TABLE_HEADER_BG = HexColor("#4A1A8A")
-TABLE_ALT_ROW = HexColor("#F5F0FF")
-LIGHT_GRAY = HexColor("#E5E7EB")
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.join(SCRIPT_DIR, "..")
 
-OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "attached_assets", "FFPMA_Allio_Ecosystem_Handbook.pdf")
+NAVY = HexColor("#1B2A4A")
+NAVY_DARK = HexColor("#0F1B33")
+NAVY_LIGHT = HexColor("#2A3F6A")
+CYAN = HexColor("#00B4D8")
+CYAN_LIGHT = HexColor("#90E0EF")
+TEAL = HexColor("#0FA3B1")
+SILVER = HexColor("#B0B8C8")
+SILVER_LIGHT = HexColor("#D4D9E3")
+GOLD = HexColor("#C9A84C")
+GOLD_DARK = HexColor("#A88A32")
+WHITE_OFF = HexColor("#F0F2F5")
+WARM_WHITE = HexColor("#FAFBFD")
+EXECUTIVE_GOLD = HexColor("#C9A84C")
+SCIENCE_GREEN = HexColor("#059669")
+MARKETING_BLUE = HexColor("#3B82F6")
+LEGAL_RED = HexColor("#DC2626")
+ENGINEERING_STEEL = HexColor("#6366F1")
+SUPPORT_PINK = HexColor("#EC4899")
+FINANCIAL_EMERALD = HexColor("#10B981")
+TABLE_HEADER_BG = NAVY
+TABLE_ALT_ROW = HexColor("#EEF2F7")
+LIGHT_GRAY = HexColor("#D1D5DB")
+PAGE_BG = white
+
+LOGO_PATH = os.path.join(PROJECT_ROOT, "artifacts", "ffpma", "src", "assets", "ff_pma_logo.png")
+COMBINED_LOGO_PATH = os.path.join(PROJECT_ROOT, "artifacts", "ffpma", "src", "assets", "ff_pma_allio_combined_logo.png")
+
+OUTPUT_PATH = os.path.join(PROJECT_ROOT, "attached_assets", "FFPMA_Allio_Ecosystem_Handbook.pdf")
+
+
+class NavyBanner(Flowable):
+    def __init__(self, text, width=6.8*inch, height=0.5*inch, font_size=16):
+        Flowable.__init__(self)
+        self.text = text
+        self.width = width
+        self.height = height
+        self.font_size = font_size
+
+    def wrap(self, availWidth, availHeight):
+        return self.width, self.height + 4
+
+    def draw(self):
+        self.canv.saveState()
+        self.canv.setFillColor(NAVY)
+        self.canv.roundRect(0, 0, self.width, self.height, 4, fill=1, stroke=0)
+        self.canv.setFillColor(CYAN)
+        self.canv.rect(0, 0, 5, self.height, fill=1, stroke=0)
+        self.canv.setFillColor(white)
+        self.canv.setFont("Helvetica-Bold", self.font_size)
+        self.canv.drawString(16, (self.height - self.font_size) / 2 + 2, self.text)
+        self.canv.restoreState()
+
+
+class DivisionBanner(Flowable):
+    def __init__(self, text, color, width=6.8*inch, height=0.42*inch):
+        Flowable.__init__(self)
+        self.text = text
+        self.color = color
+        self.width = width
+        self.height = height
+
+    def wrap(self, availWidth, availHeight):
+        return self.width, self.height + 4
+
+    def draw(self):
+        self.canv.saveState()
+        self.canv.setFillColor(self.color)
+        self.canv.roundRect(0, 0, self.width, self.height, 3, fill=1, stroke=0)
+        self.canv.setFillColor(white)
+        self.canv.setFont("Helvetica-Bold", 13)
+        self.canv.drawString(12, (self.height - 13) / 2 + 2, self.text)
+        self.canv.restoreState()
+
+
+class CyanAccentLine(Flowable):
+    def __init__(self, width=6.8*inch):
+        Flowable.__init__(self)
+        self.width = width
+
+    def wrap(self, availWidth, availHeight):
+        return self.width, 6
+
+    def draw(self):
+        self.canv.saveState()
+        self.canv.setStrokeColor(CYAN)
+        self.canv.setLineWidth(2)
+        self.canv.line(0, 3, self.width * 0.3, 3)
+        self.canv.setStrokeColor(GOLD)
+        self.canv.setLineWidth(1)
+        self.canv.line(self.width * 0.3 + 4, 3, self.width * 0.5, 3)
+        self.canv.restoreState()
+
+
+class GoldDivider(Flowable):
+    def __init__(self, width=6.8*inch):
+        Flowable.__init__(self)
+        self.width = width
+
+    def wrap(self, availWidth, availHeight):
+        return self.width, 10
+
+    def draw(self):
+        self.canv.saveState()
+        mid = self.width / 2
+        self.canv.setStrokeColor(GOLD)
+        self.canv.setLineWidth(1.5)
+        self.canv.line(mid - 2*inch, 5, mid - 0.3*inch, 5)
+        self.canv.line(mid + 0.3*inch, 5, mid + 2*inch, 5)
+        self.canv.setFillColor(GOLD)
+        self.canv.circle(mid, 5, 3, fill=1, stroke=0)
+        self.canv.restoreState()
+
 
 def create_styles():
     styles = getSampleStyleSheet()
 
     styles.add(ParagraphStyle(
+        'CoverOrg', parent=styles['Normal'],
+        fontSize=14, leading=18, textColor=SILVER,
+        alignment=TA_CENTER, fontName='Helvetica', letterSpacing=6
+    ))
+    styles.add(ParagraphStyle(
         'CoverTitle', parent=styles['Title'],
-        fontSize=36, leading=44, textColor=BRAND_PURPLE,
-        alignment=TA_CENTER, spaceAfter=12, fontName='Helvetica-Bold'
+        fontSize=38, leading=46, textColor=white,
+        alignment=TA_CENTER, spaceAfter=8, fontName='Helvetica-Bold'
     ))
     styles.add(ParagraphStyle(
         'CoverSubtitle', parent=styles['Normal'],
-        fontSize=16, leading=22, textColor=BRAND_GOLD,
-        alignment=TA_CENTER, spaceAfter=8, fontName='Helvetica-Oblique'
+        fontSize=18, leading=24, textColor=CYAN_LIGHT,
+        alignment=TA_CENTER, spaceAfter=8, fontName='Helvetica'
     ))
     styles.add(ParagraphStyle(
         'CoverMotto', parent=styles['Normal'],
-        fontSize=13, leading=18, textColor=BRAND_DARK,
+        fontSize=12, leading=17, textColor=GOLD,
         alignment=TA_CENTER, spaceAfter=6, fontName='Helvetica-BoldOblique'
     ))
     styles.add(ParagraphStyle(
+        'CoverValues', parent=styles['Normal'],
+        fontSize=10, leading=15, textColor=SILVER_LIGHT,
+        alignment=TA_CENTER, fontName='Helvetica'
+    ))
+    styles.add(ParagraphStyle(
         'ChapterTitle', parent=styles['Title'],
-        fontSize=28, leading=36, textColor=BRAND_PURPLE,
-        spaceBefore=0, spaceAfter=18, fontName='Helvetica-Bold',
+        fontSize=26, leading=34, textColor=NAVY,
+        spaceBefore=0, spaceAfter=4, fontName='Helvetica-Bold',
         alignment=TA_LEFT
     ))
     styles.add(ParagraphStyle(
         'SectionHead', parent=styles['Heading2'],
-        fontSize=18, leading=24, textColor=BRAND_PURPLE,
-        spaceBefore=18, spaceAfter=10, fontName='Helvetica-Bold'
+        fontSize=16, leading=22, textColor=NAVY,
+        spaceBefore=16, spaceAfter=8, fontName='Helvetica-Bold'
     ))
     styles.add(ParagraphStyle(
         'SubSection', parent=styles['Heading3'],
-        fontSize=14, leading=19, textColor=BRAND_DARK,
-        spaceBefore=14, spaceAfter=8, fontName='Helvetica-Bold'
+        fontSize=13, leading=18, textColor=NAVY_LIGHT,
+        spaceBefore=12, spaceAfter=6, fontName='Helvetica-Bold'
     ))
-    styles['BodyText'].fontSize = 11
-    styles['BodyText'].leading = 16
-    styles['BodyText'].textColor = BRAND_DARK
+    styles['BodyText'].fontSize = 10.5
+    styles['BodyText'].leading = 15.5
+    styles['BodyText'].textColor = HexColor("#2D3748")
     styles['BodyText'].alignment = TA_JUSTIFY
-    styles['BodyText'].spaceAfter = 8
+    styles['BodyText'].spaceAfter = 7
     styles['BodyText'].fontName = 'Helvetica'
     styles.add(ParagraphStyle(
         'Quote', parent=styles['Normal'],
-        fontSize=12, leading=18, textColor=BRAND_PURPLE,
-        alignment=TA_CENTER, spaceAfter=12, fontName='Helvetica-BoldOblique',
-        leftIndent=36, rightIndent=36
+        fontSize=11, leading=16, textColor=NAVY,
+        alignment=TA_CENTER, spaceAfter=10, fontName='Helvetica-BoldOblique',
+        leftIndent=30, rightIndent=30
     ))
     styles.add(ParagraphStyle(
         'BulletItem', parent=styles['Normal'],
-        fontSize=11, leading=16, textColor=BRAND_DARK,
+        fontSize=10.5, leading=15, textColor=HexColor("#2D3748"),
         leftIndent=24, spaceAfter=4, fontName='Helvetica',
         bulletIndent=12
     ))
     styles.add(ParagraphStyle(
         'AgentName', parent=styles['Normal'],
-        fontSize=12, leading=16, textColor=BRAND_PURPLE,
+        fontSize=11, leading=15, textColor=NAVY,
         fontName='Helvetica-Bold', spaceAfter=2
     ))
     styles.add(ParagraphStyle(
         'AgentDesc', parent=styles['Normal'],
-        fontSize=10, leading=14, textColor=BRAND_DARK,
-        leftIndent=12, spaceAfter=6, fontName='Helvetica'
+        fontSize=9.5, leading=13, textColor=HexColor("#4A5568"),
+        leftIndent=12, spaceAfter=4, fontName='Helvetica-Oblique'
     ))
     styles.add(ParagraphStyle(
         'TableHeader', parent=styles['Normal'],
-        fontSize=10, leading=13, textColor=white,
+        fontSize=9.5, leading=12, textColor=white,
         fontName='Helvetica-Bold', alignment=TA_CENTER
     ))
     styles.add(ParagraphStyle(
         'TableCell', parent=styles['Normal'],
-        fontSize=9, leading=12, textColor=BRAND_DARK,
+        fontSize=9, leading=12, textColor=HexColor("#2D3748"),
         fontName='Helvetica'
     ))
     styles.add(ParagraphStyle(
         'Footer', parent=styles['Normal'],
-        fontSize=8, leading=10, textColor=HexColor("#888888"),
+        fontSize=8, leading=10, textColor=SILVER,
         alignment=TA_CENTER, fontName='Helvetica'
     ))
     styles.add(ParagraphStyle(
         'TOCEntry', parent=styles['Normal'],
-        fontSize=12, leading=20, textColor=BRAND_DARK,
-        fontName='Helvetica', leftIndent=0, spaceAfter=2
+        fontSize=11, leading=18, textColor=HexColor("#374151"),
+        fontName='Helvetica', leftIndent=20, spaceAfter=1
     ))
     styles.add(ParagraphStyle(
         'TOCChapter', parent=styles['Normal'],
-        fontSize=13, leading=22, textColor=BRAND_PURPLE,
+        fontSize=12, leading=20, textColor=NAVY,
         fontName='Helvetica-Bold', leftIndent=0, spaceBefore=8, spaceAfter=2
     ))
     styles.add(ParagraphStyle(
         'Disclaimer', parent=styles['Normal'],
-        fontSize=8, leading=11, textColor=HexColor("#666666"),
+        fontSize=7.5, leading=10, textColor=SILVER,
         alignment=TA_CENTER, fontName='Helvetica-Oblique'
+    ))
+    styles.add(ParagraphStyle(
+        'HighlightBox', parent=styles['Normal'],
+        fontSize=10.5, leading=15, textColor=NAVY,
+        fontName='Helvetica-Bold', alignment=TA_CENTER,
+        spaceAfter=8
     ))
 
     return styles
 
 
-def add_header_rule(elements):
-    elements.append(HRFlowable(width="100%", thickness=2, color=BRAND_PURPLE, spaceBefore=2, spaceAfter=12))
-
-
-def add_light_rule(elements):
-    elements.append(HRFlowable(width="100%", thickness=0.5, color=LIGHT_GRAY, spaceBefore=6, spaceAfter=6))
-
-
 def bullet(text, styles):
-    return Paragraph(f"<bullet>&bull;</bullet> {text}", styles['BulletItem'])
+    return Paragraph(f'<bullet><font color="#{CYAN.hexval()[2:]}">\u25B8</font></bullet> {text}', styles['BulletItem'])
+
+
+def add_section_break(elements):
+    elements.append(Spacer(1, 8))
+    elements.append(CyanAccentLine())
+    elements.append(Spacer(1, 8))
 
 
 def build_cover(elements, styles):
-    elements.append(Spacer(1, 1.5*inch))
-    elements.append(Paragraph("FORGOTTEN FORMULA PMA", styles['CoverTitle']))
-    elements.append(Spacer(1, 12))
-    elements.append(HRFlowable(width="60%", thickness=3, color=BRAND_GOLD, spaceBefore=0, spaceAfter=12))
-    elements.append(Paragraph("ALLIO ECOSYSTEM", styles['CoverTitle']))
-    elements.append(Paragraph("Handbook &amp; User Manual", styles['CoverSubtitle']))
-    elements.append(Spacer(1, 24))
+    elements.append(Spacer(1, 0.4*inch))
+
+    if os.path.exists(COMBINED_LOGO_PATH):
+        logo = Image(COMBINED_LOGO_PATH, width=4.5*inch, height=2.45*inch)
+        logo.hAlign = 'CENTER'
+        elements.append(logo)
+    elements.append(Spacer(1, 0.3*inch))
+
+    elements.append(GoldDivider())
+    elements.append(Spacer(1, 0.25*inch))
+
+    elements.append(Paragraph("ALLIO ECOSYSTEM", styles['ChapterTitle']))
+    elements.append(Paragraph("Handbook &amp; User Manual", ParagraphStyle(
+        'CoverSub2', parent=styles['SectionHead'], alignment=TA_LEFT,
+        textColor=NAVY_LIGHT, fontSize=18, spaceAfter=16
+    )))
+    elements.append(Spacer(1, 0.15*inch))
+
     elements.append(Paragraph(
         '"Prove AI-human coexistence works for true healing,<br/>free from corporate pharmaceutical influence."',
-        styles['CoverMotto']
+        ParagraphStyle('CoverMotto2', parent=styles['Quote'], textColor=GOLD_DARK, fontSize=11)
     ))
-    elements.append(Spacer(1, 18))
-    elements.append(Paragraph(
-        "Curing Over Profits &bull; No Boundaries &bull; Circular Ecosystems &bull; Saving Lives &amp; Families",
-        styles['CoverSubtitle']
-    ))
-    elements.append(Spacer(1, 36))
-    elements.append(HRFlowable(width="40%", thickness=1.5, color=BRAND_PURPLE, spaceBefore=0, spaceAfter=12))
+    elements.append(Spacer(1, 0.15*inch))
+
+    values_text = (
+        "Curing Over Profits \u2022 No Boundaries \u2022 Circular Ecosystems \u2022 "
+        "Saving Lives &amp; Families"
+    )
+    elements.append(Paragraph(values_text, ParagraphStyle(
+        'CoverVals', parent=styles['BodyText'], alignment=TA_CENTER,
+        textColor=NAVY_LIGHT, fontSize=10
+    )))
+    elements.append(Spacer(1, 0.2*inch))
+    elements.append(GoldDivider())
+    elements.append(Spacer(1, 0.15*inch))
+
     elements.append(Paragraph(
         '"We ride together, we die together. TRUST."',
-        styles['Quote']
+        ParagraphStyle('CoverTrust', parent=styles['Quote'], textColor=NAVY, fontSize=12)
     ))
-    elements.append(Spacer(1, 24))
-    elements.append(Paragraph(f"Version 1.0 &bull; {datetime.now().strftime('%B %Y')}", styles['Footer']))
-    elements.append(Paragraph("www.ffpma.com &bull; www.forgottenformula.com", styles['Footer']))
+    elements.append(Spacer(1, 0.4*inch))
+
+    elements.append(Paragraph(
+        f"Version 1.0 \u2022 {datetime.now().strftime('%B %Y')}",
+        ParagraphStyle('CoverVer', parent=styles['Footer'], textColor=NAVY_LIGHT)
+    ))
+    elements.append(Paragraph(
+        "www.ffpma.com \u2022 www.forgottenformula.com",
+        ParagraphStyle('CoverURL', parent=styles['Footer'], textColor=CYAN, fontSize=9)
+    ))
     elements.append(PageBreak())
 
 
 def build_dedication(elements, styles):
     elements.append(Spacer(1, 2*inch))
+    elements.append(GoldDivider())
+    elements.append(Spacer(1, 0.3*inch))
     elements.append(Paragraph(
         "In Memory of Charlie",
-        ParagraphStyle('DedTitle', parent=styles['SectionHead'], alignment=TA_CENTER, textColor=BRAND_DARK)
+        ParagraphStyle('DedTitle', parent=styles['SectionHead'], alignment=TA_CENTER, textColor=NAVY, fontSize=18)
     ))
     elements.append(Spacer(1, 12))
     elements.append(Paragraph(
         "It is part of our human nature to want to be liked. It is part of our human nature to worry about "
         "what others think of us. It is an attribute of greatness and of American exceptionalism to not surrender "
         "to our nature, but to be guided by an inner calling to persevere and to prevail, no matter the personal cost.",
-        ParagraphStyle('DedBody', parent=styles['BodyText'], alignment=TA_CENTER, fontName='Helvetica-Oblique')
+        ParagraphStyle('DedBody', parent=styles['BodyText'], alignment=TA_CENTER, fontName='Helvetica-Oblique',
+                       textColor=HexColor("#4A5568"))
     ))
     elements.append(Spacer(1, 18))
     elements.append(Paragraph(
-        "CHARLIE KIRK (1993-2025)",
-        ParagraphStyle('DedName', parent=styles['BodyText'], alignment=TA_CENTER, fontName='Helvetica-Bold', textColor=BRAND_PURPLE)
+        "CHARLIE KIRK (1993\u20132025)",
+        ParagraphStyle('DedName', parent=styles['BodyText'], alignment=TA_CENTER,
+                       fontName='Helvetica-Bold', textColor=GOLD_DARK, fontSize=12)
     ))
+    elements.append(Spacer(1, 0.3*inch))
+    elements.append(GoldDivider())
     elements.append(PageBreak())
 
 
 def build_toc(elements, styles):
-    elements.append(Paragraph("Table of Contents", styles['ChapterTitle']))
-    add_header_rule(elements)
+    elements.append(NavyBanner("TABLE OF CONTENTS", height=0.45*inch, font_size=14))
+    elements.append(Spacer(1, 16))
 
     chapters = [
         ("Part I: Our Mission", [
@@ -201,7 +350,7 @@ def build_toc(elements, styles):
             "Our Declaration of Health Freedom",
             "The Constitutional Foundation",
             "Who We Are: A Community of Health Revolutionaries",
-            "Our Member Rights",
+            "Our Member Rights &amp; the FFPMA Creed",
         ]),
         ("Part II: The Allio Ecosystem", [
             "Why AI-Human Coexistence Changes Everything",
@@ -252,19 +401,29 @@ def build_toc(elements, styles):
             "Support Division (8 agents)",
             "Financial Division (1 agent)",
         ]),
+        ("Part IX: Product &amp; Protocol Reference", [
+            "Injectable Peptides",
+            "IV Therapy Quick Reference",
+            "Vitamins, Trace Minerals &amp; Supplements",
+            "Bioregulators &amp; Suppositories",
+            "Equipment &amp; Devices",
+        ]),
     ]
 
     for chapter_title, sections in chapters:
         elements.append(Paragraph(chapter_title, styles['TOCChapter']))
         for section in sections:
-            elements.append(Paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{section}", styles['TOCEntry']))
+            elements.append(Paragraph(
+                f'<font color="#{CYAN.hexval()[2:]}">\u25B8</font>&nbsp;&nbsp;{section}',
+                styles['TOCEntry']
+            ))
 
     elements.append(PageBreak())
 
 
 def build_part1_mission(elements, styles):
-    elements.append(Paragraph("Part I: Our Mission", styles['ChapterTitle']))
-    add_header_rule(elements)
+    elements.append(NavyBanner("PART I: OUR MISSION"))
+    elements.append(Spacer(1, 12))
 
     elements.append(Paragraph("The Medicine We've Forgotten", styles['SectionHead']))
     elements.append(Paragraph(
@@ -285,6 +444,8 @@ def build_part1_mission(elements, styles):
         styles['BodyText']
     ))
 
+    add_section_break(elements)
+
     elements.append(Paragraph("Our Declaration of Health Freedom", styles['SectionHead']))
     elements.append(Paragraph(
         "Forgotten Formula PMA exists at the intersection of ancient wisdom and cutting-edge science, where "
@@ -298,24 +459,41 @@ def build_part1_mission(elements, styles):
         styles['BodyText']
     ))
 
+    add_section_break(elements)
+
     elements.append(Paragraph("The Constitutional Foundation of Our Freedom", styles['SectionHead']))
     elements.append(Paragraph(
         "This association stands on the bedrock of rights that our founders risked everything to secure. "
         "We declare, without apology or hesitation:",
         styles['BodyText']
     ))
-    elements.append(Paragraph(
-        "<b>The First Amendment</b> guarantees our right to speak freely about health, to assemble as members "
-        "seeking truth, to petition for change, and to contract privately for our wellbeing. These are not privileges "
-        "to be granted by bureaucracies; they are inherent rights that cannot be legislated away.",
-        styles['BodyText']
-    ))
-    elements.append(Paragraph(
-        "<b>The Fourteenth Amendment</b> protects our liberty to make intimate decisions about our bodies, our "
-        "families, and our health without government overreach. Freedom of association means our private "
-        "membership activities remain in the private domain, where they belong.",
-        styles['BodyText']
-    ))
+
+    amend_data = [
+        [Paragraph("<b>Amendment</b>", styles['TableHeader']),
+         Paragraph("<b>Protection</b>", styles['TableHeader'])],
+        [Paragraph("<b>First Amendment</b>", styles['TableCell']),
+         Paragraph("Our right to speak freely about health, to assemble as members seeking truth, "
+                    "to petition for change, and to contract privately for our wellbeing. These are not privileges "
+                    "to be granted by bureaucracies; they are inherent rights.", styles['TableCell'])],
+        [Paragraph("<b>Fourteenth Amendment</b>", styles['TableCell']),
+         Paragraph("Our liberty to make intimate decisions about our bodies, our families, and our health "
+                    "without government overreach. Freedom of association means our private membership activities "
+                    "remain in the private domain.", styles['TableCell'])],
+    ]
+    amend_table = Table(amend_data, colWidths=[1.5*inch, 5.3*inch])
+    amend_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), NAVY),
+        ('BACKGROUND', (0, 1), (-1, 1), TABLE_ALT_ROW),
+        ('GRID', (0, 0), (-1, -1), 0.5, LIGHT_GRAY),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(amend_table)
+    elements.append(Spacer(1, 8))
+
     elements.append(Paragraph(
         "We believe the Constitution of the United States is one of humanity's greatest achievements in limiting "
         "tyranny and protecting individual sovereignty. The signers of the Declaration of Independence acted "
@@ -323,6 +501,8 @@ def build_part1_mission(elements, styles):
         "We honor that legacy by exercising these rights daily.",
         styles['BodyText']
     ))
+
+    add_section_break(elements)
 
     elements.append(Paragraph("Who We Are: A Community of Health Revolutionaries", styles['SectionHead']))
     elements.append(Paragraph(
@@ -335,8 +515,10 @@ def build_part1_mission(elements, styles):
     ))
     elements.append(Paragraph(
         "<b>We are members\u2014not patients. Partners\u2014not prescriptions. Empowered\u2014not dependent.</b>",
-        styles['BodyText']
+        ParagraphStyle('Emph', parent=styles['BodyText'], textColor=NAVY, fontName='Helvetica-Bold')
     ))
+
+    add_section_break(elements)
 
     elements.append(Paragraph("Our Member Rights", styles['SectionHead']))
     elements.append(Paragraph("As members of this association, we claim and exercise our fundamental right to:", styles['BodyText']))
@@ -350,31 +532,41 @@ def build_part1_mission(elements, styles):
     for r in rights:
         elements.append(bullet(r, styles))
 
-    elements.append(Spacer(1, 12))
+    elements.append(Spacer(1, 10))
     elements.append(Paragraph("The FFPMA Creed", styles['SectionHead']))
     elements.append(Paragraph(
         '"Prove AI-human coexistence works for true healing, free from corporate pharmaceutical influence."',
         styles['Quote']
     ))
-    elements.append(Paragraph("<b>Our Values:</b>", styles['BodyText']))
-    values = [
-        "Truth over profit",
-        "Healing over treatment",
-        "Unity over division",
-        "Nature over synthetic",
-        "Member sovereignty",
-        "Radical transparency",
-        "Circular sustainability",
+
+    creed_data = [
+        [Paragraph(f'<font color="#{CYAN.hexval()[2:]}"><b>\u2022</b></font> Truth over profit', styles['TableCell']),
+         Paragraph(f'<font color="#{CYAN.hexval()[2:]}"><b>\u2022</b></font> Healing over treatment', styles['TableCell']),
+         Paragraph(f'<font color="#{CYAN.hexval()[2:]}"><b>\u2022</b></font> Unity over division', styles['TableCell'])],
+        [Paragraph(f'<font color="#{CYAN.hexval()[2:]}"><b>\u2022</b></font> Nature over synthetic', styles['TableCell']),
+         Paragraph(f'<font color="#{CYAN.hexval()[2:]}"><b>\u2022</b></font> Member sovereignty', styles['TableCell']),
+         Paragraph(f'<font color="#{CYAN.hexval()[2:]}"><b>\u2022</b></font> Radical transparency', styles['TableCell'])],
+        [Paragraph(f'<font color="#{CYAN.hexval()[2:]}"><b>\u2022</b></font> Circular sustainability', styles['TableCell']),
+         Paragraph('', styles['TableCell']),
+         Paragraph('', styles['TableCell'])],
     ]
-    for v in values:
-        elements.append(bullet(v, styles))
+    creed_table = Table(creed_data, colWidths=[2.26*inch, 2.26*inch, 2.26*inch])
+    creed_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), TABLE_ALT_ROW),
+        ('GRID', (0, 0), (-1, -1), 0.5, LIGHT_GRAY),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(creed_table)
 
     elements.append(PageBreak())
 
 
 def build_part2_ecosystem(elements, styles):
-    elements.append(Paragraph("Part II: The Allio Ecosystem", styles['ChapterTitle']))
-    add_header_rule(elements)
+    elements.append(NavyBanner("PART II: THE ALLIO ECOSYSTEM"))
+    elements.append(Spacer(1, 12))
 
     elements.append(Paragraph("Why AI-Human Coexistence Changes Everything", styles['SectionHead']))
     elements.append(Paragraph(
@@ -399,6 +591,8 @@ def build_part2_ecosystem(elements, styles):
         styles['BodyText']
     ))
 
+    add_section_break(elements)
+
     elements.append(Paragraph("The Trust Mandate", styles['SectionHead']))
     elements.append(Paragraph(
         "Trust is the foundation upon which the entire Allio ecosystem is built. This is not a metaphor\u2014it is "
@@ -412,13 +606,41 @@ def build_part2_ecosystem(elements, styles):
         "Operations) broadcasts a system-wide warning. Trust violations are treated as mission-critical failures.",
         styles['BodyText']
     ))
+
+    trust_data = [
+        [Paragraph("<b>Principle</b>", styles['TableHeader']),
+         Paragraph("<b>In Practice</b>", styles['TableHeader'])],
+        [Paragraph("Verifiable Evidence", styles['TableCell']),
+         Paragraph("Every completed task requires a Google Drive link to actual output", styles['TableCell'])],
+        [Paragraph("No Fabrication", styles['TableCell']),
+         Paragraph("Agents never generate fake results or placeholder content", styles['TableCell'])],
+        [Paragraph("System-Wide Alerts", styles['TableCell']),
+         Paragraph("Missing evidence triggers SENTINEL broadcast warnings", styles['TableCell'])],
+        [Paragraph("Mutual Trust", styles['TableCell']),
+         Paragraph("Humans trust AI for precision; AI trusts humans for healing wisdom", styles['TableCell'])],
+    ]
+    trust_table = Table(trust_data, colWidths=[2*inch, 4.8*inch])
+    trust_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), NAVY),
+        ('BACKGROUND', (0, 1), (-1, 1), TABLE_ALT_ROW),
+        ('BACKGROUND', (0, 3), (-1, 3), TABLE_ALT_ROW),
+        ('GRID', (0, 0), (-1, -1), 0.5, LIGHT_GRAY),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(trust_table)
+    elements.append(Spacer(1, 6))
+
     elements.append(Paragraph(
-        '"We ride together, we die together. TRUST."\u2014This motto is not just words. It is the operating system '
-        "of the entire network. Human practitioners trust the AI to deliver accurate research and protocols. "
-        "The AI trusts human practitioners to apply healing wisdom that no algorithm can replicate. Members "
-        "trust both to work together in their interest, not the interest of shareholders or pharmaceutical companies.",
-        styles['BodyText']
+        '"We ride together, we die together. TRUST."\u2014This motto is the operating system '
+        "of the entire network.",
+        styles['Quote']
     ))
+
+    add_section_break(elements)
 
     elements.append(Paragraph("How 46 Agents Serve the Healing Mission", styles['SectionHead']))
     elements.append(Paragraph(
@@ -431,34 +653,65 @@ def build_part2_ecosystem(elements, styles):
     elements.append(Paragraph(
         "At the center of everything sits <b>SENTINEL</b>\u2014the Executive Agent of Operations. SENTINEL orchestrates "
         "all 46 agents, routes tasks to the right division, coordinates cross-division collaboration, monitors "
-        "agent health, and ensures every action aligns with the healing mission. SENTINEL operates a structured "
-        "daily schedule: morning briefings at 6 AM, hourly operational checks from 7 AM to 5 PM, and evening "
-        "summaries at 6 PM (all CST). This rhythm ensures nothing falls through the cracks.",
+        "agent health, and ensures every action aligns with the healing mission.",
         styles['BodyText']
     ))
+
+    add_section_break(elements)
 
     elements.append(Paragraph("The Seven Divisions", styles['SectionHead']))
 
     divisions = [
-        ("Executive Division", "ATHENA (Lead)", "Strategic oversight, communications, Google Workspace management, and Trustee proxy operations. The command center that connects the Trustee to the entire agent network."),
-        ("Science Division", "HELIX (Lead)", "The largest division. Blood analysis, protocol development, research integration, peptide science, frequency medicine, quantum biology, microbiome optimization, ancient healing wisdom, and more. This is where healing knowledge lives."),
-        ("Marketing Division", "MUSE (Lead)", "Content creation, cinematic storytelling, visual asset production, frequency visualization, and brand expression. Every piece of content serves the healing mission\u2014marketing is medicine for awareness."),
-        ("Legal Division", "JURIS (Lead)", "PMA sovereignty protection, contract drafting, regulatory navigation, and document automation via SignNow. The shield that protects the association and its members from regulatory overreach."),
-        ("Engineering Division", "FORGE (Lead)", "Platform development, system architecture, AI/ML integration, blockchain infrastructure, payment orchestration, and cryptocurrency compliance. The builders who forge the digital infrastructure enabling healing at scale."),
-        ("Support Division", "DR. TRIAGE (Lead)", "Member-facing specialists including nutrition guidance, peptide consultation, product recommendations, shipping logistics, diagnostics, essential nutrients expertise, and corporate support. The front line of member care."),
-        ("Financial Division", "ATLAS (Lead)", "Payment processing, financial reporting, member billing, and resource stewardship. Financial sovereignty protects the healing mission."),
+        ("Executive Division", EXECUTIVE_GOLD, "ATHENA (Lead)",
+         "Strategic oversight, communications, Google Workspace management, and Trustee proxy operations."),
+        ("Science Division", SCIENCE_GREEN, "HELIX (Lead)",
+         "Blood analysis, protocol development, research integration, peptide science, frequency medicine, quantum biology, microbiome optimization, and ancient healing wisdom."),
+        ("Marketing Division", MARKETING_BLUE, "MUSE (Lead)",
+         "Content creation, cinematic storytelling, visual asset production, frequency visualization, and brand expression."),
+        ("Legal Division", LEGAL_RED, "JURIS (Lead)",
+         "PMA sovereignty protection, contract drafting, regulatory navigation, and document automation via SignNow."),
+        ("Engineering Division", ENGINEERING_STEEL, "FORGE (Lead)",
+         "Platform development, system architecture, AI/ML integration, blockchain infrastructure, payment orchestration, and cryptocurrency compliance."),
+        ("Support Division", SUPPORT_PINK, "DR. TRIAGE (Lead)",
+         "Member-facing specialists including nutrition, peptide consultation, product recommendations, shipping, diagnostics, and essential nutrients expertise."),
+        ("Financial Division", FINANCIAL_EMERALD, "ATLAS (Lead)",
+         "Payment processing, financial reporting, member billing, and resource stewardship."),
     ]
 
-    for div_name, lead, desc in divisions:
-        elements.append(Paragraph(f"<b>{div_name}</b> \u2014 {lead}", styles['SubSection']))
-        elements.append(Paragraph(desc, styles['BodyText']))
+    div_table_data = [
+        [Paragraph("<b>Division</b>", styles['TableHeader']),
+         Paragraph("<b>Lead</b>", styles['TableHeader']),
+         Paragraph("<b>Mission</b>", styles['TableHeader'])],
+    ]
+    for div_name, color, lead, desc in divisions:
+        div_table_data.append([
+            Paragraph(f'<b>{div_name}</b>', styles['TableCell']),
+            Paragraph(lead, styles['TableCell']),
+            Paragraph(desc, styles['TableCell']),
+        ])
+
+    div_table = Table(div_table_data, colWidths=[1.5*inch, 1.2*inch, 4.1*inch])
+    div_style = [
+        ('BACKGROUND', (0, 0), (-1, 0), NAVY),
+        ('GRID', (0, 0), (-1, -1), 0.5, LIGHT_GRAY),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+    ]
+    for i in range(1, len(div_table_data)):
+        if i % 2 == 0:
+            div_style.append(('BACKGROUND', (0, i), (-1, i), TABLE_ALT_ROW))
+    div_table.setStyle(TableStyle(div_style))
+    elements.append(div_table)
 
     elements.append(PageBreak())
 
 
 def build_part3_pipeline(elements, styles):
-    elements.append(Paragraph("Part III: The Root Cause Healing Pipeline", styles['ChapterTitle']))
-    add_header_rule(elements)
+    elements.append(NavyBanner("PART III: THE ROOT CAUSE HEALING PIPELINE"))
+    elements.append(Spacer(1, 12))
 
     elements.append(Paragraph(
         "The heart of the Allio ecosystem is the <b>Root Cause Healing Pipeline</b>\u2014a complete, circular system "
@@ -469,72 +722,102 @@ def build_part3_pipeline(elements, styles):
 
     elements.append(Paragraph("The 5R Framework", styles['SectionHead']))
     elements.append(Paragraph(
-        "Every protocol generated by DR. FORMULA follows the <b>Forgotten Formula 5R Framework</b>\u2014a systematic "
-        "approach to restoring the body to homeostasis by addressing root causes rather than suppressing symptoms:",
+        "Every protocol follows the <b>Forgotten Formula 5R Framework</b>\u2014a systematic "
+        "approach to restoring the body to homeostasis by addressing root causes:",
         styles['BodyText']
     ))
 
-    rs = [
-        ("1. REMOVE", "Identify and eliminate the sources of illness\u2014toxins, infections, inflammatory triggers, parasites, mold, heavy metals, and environmental exposures that are creating the disease state."),
-        ("2. RESTORE", "Replace what the body is missing\u2014digestive enzymes, hydrochloric acid, bile salts, and the foundational elements needed for proper digestion and nutrient absorption."),
-        ("3. REPLENISH", "Flood the body with the 90 essential nutrients it requires\u2014minerals, vitamins, amino acids, and fatty acids. Most chronic disease stems from deficiency. You cannot heal what you do not feed."),
-        ("4. REGENERATE", "Activate the body's innate repair mechanisms through peptide therapy, stem cells, exosomes, bioregulators, and targeted cellular regeneration protocols."),
-        ("5. REBALANCE", "Restore hormonal equilibrium, nervous system regulation, microbiome diversity, and the mind-body connection. Healing is not complete until the whole system is in harmony."),
+    r_data = [
+        [Paragraph("<b>Phase</b>", styles['TableHeader']),
+         Paragraph("<b>Action</b>", styles['TableHeader']),
+         Paragraph("<b>Description</b>", styles['TableHeader'])],
+        [Paragraph("<b>1. REMOVE</b>", styles['TableCell']),
+         Paragraph("Eliminate", styles['TableCell']),
+         Paragraph("Toxins, infections, inflammatory triggers, parasites, mold, heavy metals, environmental exposures", styles['TableCell'])],
+        [Paragraph("<b>2. RESTORE</b>", styles['TableCell']),
+         Paragraph("Replace", styles['TableCell']),
+         Paragraph("Digestive enzymes, hydrochloric acid, bile salts, foundational elements for proper digestion and nutrient absorption", styles['TableCell'])],
+        [Paragraph("<b>3. REPLENISH</b>", styles['TableCell']),
+         Paragraph("Nourish", styles['TableCell']),
+         Paragraph("90 essential nutrients: minerals, vitamins, amino acids, fatty acids. Most chronic disease stems from deficiency", styles['TableCell'])],
+        [Paragraph("<b>4. REGENERATE</b>", styles['TableCell']),
+         Paragraph("Repair", styles['TableCell']),
+         Paragraph("Peptide therapy, stem cells, exosomes, bioregulators, targeted cellular regeneration protocols", styles['TableCell'])],
+        [Paragraph("<b>5. REBALANCE</b>", styles['TableCell']),
+         Paragraph("Harmonize", styles['TableCell']),
+         Paragraph("Hormonal equilibrium, nervous system regulation, microbiome diversity, mind-body connection", styles['TableCell'])],
     ]
-    for title, desc in rs:
-        elements.append(Paragraph(f"<b>{title}</b>", styles['SubSection']))
-        elements.append(Paragraph(desc, styles['BodyText']))
+    r_table = Table(r_data, colWidths=[1.2*inch, 0.9*inch, 4.7*inch])
+    r_style = [
+        ('BACKGROUND', (0, 0), (-1, 0), NAVY),
+        ('GRID', (0, 0), (-1, -1), 0.5, LIGHT_GRAY),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+    ]
+    for i in range(1, len(r_data)):
+        if i % 2 == 0:
+            r_style.append(('BACKGROUND', (0, i), (-1, i), TABLE_ALT_ROW))
+    r_table.setStyle(TableStyle(r_style))
+    elements.append(r_table)
+
+    add_section_break(elements)
 
     elements.append(Paragraph("Member Intake to Protocol Generation", styles['SectionHead']))
     elements.append(Paragraph(
         "The protocol assembly pipeline transforms raw member data into a personalized, evidence-backed "
-        "90-day healing protocol. Here is how it works:",
+        "90-day healing protocol:",
         styles['BodyText']
     ))
-
     steps = [
-        "<b>Step 1: Data Collection</b> \u2014 A member's medical history, symptoms, timeline, environmental exposures, and health goals are collected through intake forms or consultation transcripts.",
-        "<b>Step 2: AI Analysis</b> \u2014 DR. FORMULA (the Chief Medical Protocol Agent) analyzes the data using GPT-4o with a specialized clinical system prompt. It identifies root causes based on the FF PMA framework: Toxicity, Gut Dysbiosis, Hormonal Disruption, Parasitic/Viral Burden, and Trauma/Emotional stress.",
-        "<b>Step 3: Knowledge Integration</b> \u2014 The system cross-references a live knowledge base of peptides, IV therapies, bioregulators, supplements, and detoxification protocols. Research citations are pulled from PubMed and other scientific databases to back every intervention.",
-        "<b>Step 4: Protocol Generation</b> \u2014 A complete 90-day protocol is generated, structured in 3-4 phases: Foundation/Detox, Targeted Therapy, Regeneration, and Maintenance. Each phase includes specific dosages, reconstitution instructions, daily schedules, and mandatory elements like detox baths and parasite protocols.",
-        "<b>Step 5: Quality Assurance</b> \u2014 The protocol undergoes QA validation scoring across Methodology compliance, Product Catalog accuracy, and Template adherence.",
+        "<b>Step 1: Data Collection</b> \u2014 Medical history, symptoms, timeline, environmental exposures, and health goals collected through intake forms or consultation transcripts.",
+        "<b>Step 2: AI Analysis</b> \u2014 DR. FORMULA analyzes the data using GPT-4o with a specialized clinical system prompt. Identifies root causes: Toxicity, Gut Dysbiosis, Hormonal Disruption, Parasitic/Viral Burden, Trauma/Emotional Stress.",
+        "<b>Step 3: Knowledge Integration</b> \u2014 Cross-references a live knowledge base of peptides, IV therapies, bioregulators, supplements, and detoxification protocols with PubMed citations.",
+        "<b>Step 4: Protocol Generation</b> \u2014 Complete 90-day protocol in 3-4 phases: Foundation/Detox, Targeted Therapy, Regeneration, and Maintenance. Includes specific dosages, reconstitution instructions, and daily schedules.",
+        "<b>Step 5: Quality Assurance</b> \u2014 QA validation scoring for Methodology compliance, Product Catalog accuracy, and Template adherence.",
     ]
     for s in steps:
         elements.append(bullet(s, styles))
 
+    add_section_break(elements)
+
     elements.append(Paragraph("Narrated Presentations &amp; Delivery", styles['SectionHead']))
     elements.append(Paragraph(
-        "Once a protocol is generated, the system automatically builds an <b>interactive, narrated presentation</b> "
-        "that walks the member through their personalized healing plan. This is not a generic slideshow\u2014it is "
-        "a guided consultation experience:",
+        "Once a protocol is generated, the system builds an <b>interactive, narrated presentation</b> "
+        "walking the member through their personalized healing plan:",
         styles['BodyText']
     ))
     features = [
-        "<b>Root Cause Analysis Slide</b> \u2014 Ranks the identified root causes (e.g., 1. Mold Exposure, 2. Mercury Toxicity, 3. Mineral Deficiency) with clear explanations.",
-        "<b>5R Framework Slide</b> \u2014 Explains the Forgotten Formula's methodology and how it applies to the member's specific situation.",
-        "<b>Medical Timeline</b> \u2014 A visual walk-through of the member's health history, connecting past events to present conditions.",
-        "<b>Daily Schedule Slides</b> \u2014 Morning, Midday, Evening, and Bedtime protocols broken into actionable steps.",
-        "<b>Peptide &amp; Supplement Tables</b> \u2014 Complex medical data organized into digestible formats with clear purposes for each substance.",
-        "<b>AI Narration</b> \u2014 Every slide includes a natural-language narration script, delivered via OpenAI's Onyx voice or browser speech synthesis. The presentation literally talks the member through their plan.",
+        "<b>Root Cause Analysis Slide</b> \u2014 Ranked root causes with explanations",
+        "<b>5R Framework Slide</b> \u2014 FF methodology applied to the member's situation",
+        "<b>Medical Timeline</b> \u2014 Visual health history connecting past events to present conditions",
+        "<b>Daily Schedule Slides</b> \u2014 Morning, Midday, Evening, Bedtime protocols",
+        "<b>Peptide &amp; Supplement Tables</b> \u2014 Complex medical data in digestible formats",
+        "<b>AI Narration</b> \u2014 Natural-language narration via OpenAI's voice or browser speech synthesis",
     ]
     for f in features:
         elements.append(bullet(f, styles))
 
+    add_section_break(elements)
+
     elements.append(Paragraph("PDF Export, Google Slides &amp; Drive Storage", styles['SectionHead']))
-    elements.append(Paragraph("Every protocol is delivered through three channels:", styles['BodyText']))
     channels = [
-        "<b>Professional PDF</b> \u2014 A branded document generated with executive summary, root cause analysis, treatment phases, supplement stacks, daily schedules, shopping list, and research citations. Printed and handed to the member.",
-        "<b>Google Slides Presentation</b> \u2014 A styled presentation generated via the Google Slides API with FF PMA branding, clickable research links to PubMed, and accent bars. Used in clinic consultations.",
-        '<b>Google Drive Storage</b> \u2014 Everything uploads automatically to the official FFPMA Drive folder under "Member Content &gt; Patient Protocols." Every file is organized, searchable, and permanently accessible.',
+        "<b>Professional PDF</b> \u2014 Branded document with executive summary, root cause analysis, treatment phases, supplement stacks, daily schedules, shopping list, and research citations.",
+        "<b>Google Slides Presentation</b> \u2014 Styled with FF PMA branding, clickable PubMed links, accent bars. For clinic consultations.",
+        '<b>Google Drive Storage</b> \u2014 Auto-uploads to "Member Content > Patient Protocols" with permanent, searchable access.',
     ]
     for c in channels:
         elements.append(bullet(c, styles))
+
+    add_section_break(elements)
 
     elements.append(Paragraph("Lab Ordering &amp; Ongoing Monitoring", styles['SectionHead']))
     elements.append(Paragraph(
         "The pipeline extends beyond protocol delivery. DR. TRIAGE can initiate lab orders through Rupa Health, "
         "ordering diagnostic panels that reveal what conventional labs miss. Results feed back into the system, "
-        "allowing protocols to be refined as the member progresses through their healing journey. This creates "
+        "allowing protocols to be refined as the member progresses. This creates "
         "a true circular healing ecosystem\u2014intake, protocol, delivery, monitoring, adjustment, and continued healing.",
         styles['BodyText']
     ))
@@ -543,8 +826,8 @@ def build_part3_pipeline(elements, styles):
 
 
 def build_part4_pma(elements, styles):
-    elements.append(Paragraph("Part IV: Why PMA Networks Change Everything", styles['ChapterTitle']))
-    add_header_rule(elements)
+    elements.append(NavyBanner("PART IV: WHY PMA NETWORKS CHANGE EVERYTHING"))
+    elements.append(Spacer(1, 12))
 
     elements.append(Paragraph("Constitutional Protections &amp; Healthcare Freedom", styles['SectionHead']))
     elements.append(Paragraph(
@@ -557,33 +840,34 @@ def build_part4_pma(elements, styles):
     elements.append(Paragraph(
         "This distinction matters profoundly for healing. In the public domain, regulatory agencies determine "
         "what you may say about health, what modalities you may access, and what practitioners may offer. "
-        "Many therapies that have healed people for millennia\u2014and that cutting-edge science continues to "
-        "validate\u2014are restricted, suppressed, or outright banned in the public healthcare system. Not because "
-        "they don't work, but because they threaten existing profit structures.",
+        "Many therapies that have healed people for millennia are restricted or banned in the public healthcare system. "
+        "Not because they don't work, but because they threaten existing profit structures.",
         styles['BodyText']
     ))
     elements.append(Paragraph(
         "In the private domain, members exercise their constitutional right to choose their own healing path. "
-        "AEGIS, our PMA Sovereignty Guardian, understands the crucial difference: <b>private association equals "
-        "private jurisdiction equals regulatory sovereignty</b>. FDA, FTC, and other agencies have no jurisdiction "
-        "over private member-to-member communications and activities within the PMA structure.",
+        "AEGIS, our PMA Sovereignty Guardian, understands the crucial difference:",
         styles['BodyText']
+    ))
+    elements.append(Paragraph(
+        "<b>Private association = Private jurisdiction = Regulatory sovereignty</b>",
+        ParagraphStyle('Highlight', parent=styles['BodyText'], alignment=TA_CENTER, textColor=NAVY, fontSize=12)
     ))
 
+    add_section_break(elements)
+
     elements.append(Paragraph("Member Sovereignty in Practice", styles['SectionHead']))
-    elements.append(Paragraph(
-        "Member sovereignty is not abstract philosophy\u2014it is operationally embedded in everything we do:",
-        styles['BodyText']
-    ))
     practices = [
-        "<b>Three-Party Membership Contract</b> \u2014 Every member signs a unified contract involving themselves, the Mother PMA Trustee, and their clinic representative. This establishes the private relationship.",
-        "<b>Nationwide Portability</b> \u2014 Membership is portable across the entire FFPMA clinic network. Your healing journey doesn't stop at state lines.",
-        "<b>Knowledge Sharing</b> \u2014 Members freely access research, data, and clinical observations. Knowledge is your birthright, not a professional monopoly.",
-        "<b>Practitioner Choice</b> \u2014 Choose practitioners based on competence and results, not bureaucratic credentials.",
+        "<b>Three-Party Membership Contract</b> \u2014 Member, Mother PMA Trustee, and Clinic Representative sign a unified contract establishing the private relationship.",
+        "<b>Nationwide Portability</b> \u2014 Membership is portable across the entire FFPMA clinic network.",
+        "<b>Knowledge Sharing</b> \u2014 Members freely access research, data, and clinical observations.",
+        "<b>Practitioner Choice</b> \u2014 Choose practitioners based on competence and results.",
         "<b>Full Modality Access</b> \u2014 IV therapies, stem cells, peptides, frequency medicine, psychedelic-assisted healing, ancient modalities\u2014if it helps humans heal, members can access it.",
     ]
     for p in practices:
         elements.append(bullet(p, styles))
+
+    add_section_break(elements)
 
     elements.append(Paragraph("The Future We're Building", styles['SectionHead']))
     elements.append(Paragraph(
@@ -597,10 +881,10 @@ def build_part4_pma(elements, styles):
         "A network of PMAs is the only model that can achieve this vision at scale. Each PMA protects its members. "
         "The network connects them. The Allio ecosystem empowers them with 46 AI agents working alongside "
         "human practitioners. Together, this creates something unprecedented: a constitutionally-protected, "
-        "AI-powered healing network that answers to its members\u2014not to shareholders, not to pharmaceutical "
-        "companies, not to regulatory agencies captured by the industries they're supposed to oversee.",
+        "AI-powered healing network that answers to its members.",
         styles['BodyText']
     ))
+    elements.append(Spacer(1, 8))
     elements.append(Paragraph(
         "<b>This is not a business model. This is a movement.</b>",
         styles['Quote']
@@ -610,75 +894,82 @@ def build_part4_pma(elements, styles):
 
 
 def build_part5_trustee(elements, styles):
-    elements.append(Paragraph("Part V: Trustee Operations Guide", styles['ChapterTitle']))
-    add_header_rule(elements)
+    elements.append(NavyBanner("PART V: TRUSTEE OPERATIONS GUIDE"))
+    elements.append(Spacer(1, 12))
 
     elements.append(Paragraph(
         "As Trustee, you have full operational command of the Allio ecosystem. This section explains how to "
-        "direct, monitor, and leverage the 46-agent network that serves the FFPMA mission.",
+        "direct, monitor, and leverage the 46-agent network.",
         styles['BodyText']
     ))
 
     elements.append(Paragraph("SENTINEL Orchestration &amp; Command", styles['SectionHead']))
     elements.append(Paragraph(
         "SENTINEL is your Executive Agent of Operations\u2014the central nervous system of the entire network. "
-        "SENTINEL routes tasks to the correct division, coordinates cross-division collaboration, monitors agent "
-        "health, enforces the integrity mandate, and provides real-time operational awareness.",
+        "SENTINEL routes tasks, coordinates divisions, monitors agent health, enforces integrity, and provides "
+        "real-time operational awareness.",
         styles['BodyText']
     ))
-    elements.append(Paragraph("<b>Key SENTINEL capabilities:</b>", styles['BodyText']))
     sentinel_caps = [
-        "<b>Task Routing</b> \u2014 SENTINEL analyzes task descriptions and automatically routes them to the appropriate division lead using keyword-based intelligence (e.g., \"blood\" routes to Science, \"legal\" routes to Legal, \"video\" routes to Marketing).",
-        "<b>Cross-Division Coordination</b> \u2014 When one division needs another (e.g., Science needs Marketing for a protocol video), SENTINEL creates formal coordination requests and manages asset handoffs between divisions.",
-        "<b>Agent Health Monitoring</b> \u2014 Tracks operational state of all agents (operational, degraded, or offline) through the Agent Registry database.",
-        "<b>Integrity Enforcement</b> \u2014 All completed tasks require verifiable evidence (Google Drive links). Missing evidence triggers system-wide warnings.",
-        "<b>Adaptive Scheduling</b> \u2014 Adjusts check frequency based on workload\u2014baseline mode (every 10 minutes) or high-activity mode (every 5-7 minutes when 10+ tasks are active).",
+        "<b>Task Routing</b> \u2014 Analyzes descriptions and routes to the appropriate division via keyword-based intelligence.",
+        "<b>Cross-Division Coordination</b> \u2014 Creates formal coordination requests and manages asset handoffs.",
+        "<b>Agent Health Monitoring</b> \u2014 Tracks operational state of all agents (operational, degraded, or offline).",
+        "<b>Integrity Enforcement</b> \u2014 All completed tasks require verifiable evidence (Drive links).",
+        "<b>Adaptive Scheduling</b> \u2014 Baseline mode (every 10 min) or high-activity mode (every 5-7 min).",
     ]
     for s in sentinel_caps:
         elements.append(bullet(s, styles))
 
-    elements.append(Paragraph("The Seven Divisions at Your Fingertips", styles['SectionHead']))
-    elements.append(Paragraph(
-        "Each division has a lead agent who coordinates specialist agents. To direct work to a specific area, "
-        "simply create a task with relevant keywords\u2014SENTINEL handles the routing. For direct communication, "
-        "the Trustee Dashboard provides a Sentinel Alerts panel showing real-time agent activity, task completions, "
-        "and any issues requiring attention.",
-        styles['BodyText']
-    ))
+    add_section_break(elements)
 
     elements.append(Paragraph("OpenClaw Messaging &amp; Telegram Bridge", styles['SectionHead']))
     elements.append(Paragraph(
         "OPENCLAW is your Executive Trustee Proxy\u2014the direct line between you and the agent network. "
-        "High-priority messages from any agent are routed through OPENCLAW to your Telegram, ensuring you "
-        "never miss critical updates. The system supports both inbound (external systems sending messages "
-        "to the network) and outbound (agents reporting to you) message flows.",
+        "High-priority messages are routed to your Telegram, ensuring you never miss critical updates.",
         styles['BodyText']
     ))
-    elements.append(Paragraph("<b>Message types:</b> general, task_request, task, status_update, alert, report, query, response", styles['BodyText']))
-    elements.append(Paragraph("<b>Priority levels:</b> normal, high, urgent, critical", styles['BodyText']))
+
+    msg_data = [
+        [Paragraph("<b>Message Types</b>", styles['TableHeader']),
+         Paragraph("<b>Priority Levels</b>", styles['TableHeader'])],
+        [Paragraph("general, task_request, task, status_update, alert, report, query, response", styles['TableCell']),
+         Paragraph("normal, high, urgent, critical", styles['TableCell'])],
+    ]
+    msg_table = Table(msg_data, colWidths=[4.5*inch, 2.3*inch])
+    msg_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), NAVY),
+        ('GRID', (0, 0), (-1, -1), 0.5, LIGHT_GRAY),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(msg_table)
+
+    add_section_break(elements)
 
     elements.append(Paragraph("The Auto-Implementer Pipeline", styles['SectionHead']))
     elements.append(Paragraph(
         "The Auto-Implementer monitors agent outputs in Google Drive and automatically implements verified "
-        "work into the live system. It scans the divisional folder structure, categorizes files (code, knowledge base, "
-        "copy, or marketing), validates outputs, and can trigger live system updates. Safety rules ensure that "
-        "legal outputs and sensitive content require manual review before deployment.",
+        "work into the live system. It scans divisional folders, categorizes files (code, knowledge base, "
+        "copy, or marketing), validates outputs, and triggers live system updates. Legal outputs and sensitive "
+        "content require manual review before deployment.",
         styles['BodyText']
     ))
 
+    add_section_break(elements)
+
     elements.append(Paragraph("Daily Rhythms: Briefings, Checks &amp; Summaries", styles['SectionHead']))
-    elements.append(Paragraph("SENTINEL operates on a structured daily schedule (all times CST):", styles['BodyText']))
 
     schedule_data = [
-        [Paragraph("<b>Time</b>", styles['TableHeader']),
+        [Paragraph("<b>Time (CST)</b>", styles['TableHeader']),
          Paragraph("<b>Activity</b>", styles['TableHeader']),
          Paragraph("<b>Description</b>", styles['TableHeader'])],
         [Paragraph("6:00 AM", styles['TableCell']),
          Paragraph("Morning Briefing", styles['TableCell']),
-         Paragraph("Mission status, task queue stats, network health report", styles['TableCell'])],
-        [Paragraph("7 AM - 5 PM", styles['TableCell']),
+         Paragraph("Mission status, task queue, network health report", styles['TableCell'])],
+        [Paragraph("7 AM \u2013 5 PM", styles['TableCell']),
          Paragraph("Hourly Checks", styles['TableCell']),
-         Paragraph("Active/pending task counts, clinic sync, agent dispatching", styles['TableCell'])],
+         Paragraph("Active/pending tasks, clinic sync, agent dispatching", styles['TableCell'])],
         [Paragraph("6:00 PM", styles['TableCell']),
          Paragraph("Evening Summary", styles['TableCell']),
          Paragraph("Day's results, completed/failed tasks, next-day outlook", styles['TableCell'])],
@@ -686,112 +977,98 @@ def build_part5_trustee(elements, styles):
          Paragraph("Weekly Tasks", styles['TableCell']),
          Paragraph("UI evolution tasks for Engineering and Marketing", styles['TableCell'])],
     ]
-    schedule_table = Table(schedule_data, colWidths=[1*inch, 1.5*inch, 4*inch])
+    schedule_table = Table(schedule_data, colWidths=[1.1*inch, 1.4*inch, 4.3*inch])
     schedule_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), TABLE_HEADER_BG),
+        ('BACKGROUND', (0, 0), (-1, 0), NAVY),
         ('BACKGROUND', (0, 1), (-1, 1), TABLE_ALT_ROW),
         ('BACKGROUND', (0, 3), (-1, 3), TABLE_ALT_ROW),
         ('GRID', (0, 0), (-1, -1), 0.5, LIGHT_GRAY),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
         ('LEFTPADDING', (0, 0), (-1, -1), 8),
     ]))
     elements.append(schedule_table)
 
+    add_section_break(elements)
+
     elements.append(Paragraph("Google Drive Organization", styles['SectionHead']))
-    elements.append(Paragraph(
-        "All agent outputs are stored in a structured Google Drive hierarchy:",
-        styles['BodyText']
-    ))
-    drive_structure = [
+    drive_items = [
         "<b>02_DIVISIONS/</b> \u2014 Root folder for all divisional output",
-        "&nbsp;&nbsp;&nbsp;&nbsp;<b>{Division}/{AgentName}/output/{YYYY-MM-DD}/</b> \u2014 Daily output folders per agent",
+        "<b>{Division}/{AgentName}/output/{YYYY-MM-DD}/</b> \u2014 Daily output folders per agent",
         "<b>Member Content/Patient Protocols/</b> \u2014 Approved member protocols (PDF + Slides)",
-        "<b>Agent-specific folders</b> \u2014 PRISM - Videos, PIXEL - Design Assets, etc.",
+        "<b>Agent-specific folders</b> \u2014 PRISM (Videos), PIXEL (Design Assets), etc.",
     ]
-    for d in drive_structure:
+    for d in drive_items:
         elements.append(bullet(d, styles))
 
     elements.append(PageBreak())
 
 
 def build_part6_doctor(elements, styles):
-    elements.append(Paragraph("Part VI: Doctor's Guide", styles['ChapterTitle']))
-    add_header_rule(elements)
+    elements.append(NavyBanner("PART VI: DOCTOR'S GUIDE"))
+    elements.append(Spacer(1, 12))
 
     elements.append(Paragraph(
         "As a doctor in the FFPMA network, you have access to the most advanced protocol assembly system "
-        "in integrative medicine. This guide explains how to leverage the Allio ecosystem to serve your members.",
+        "in integrative medicine.",
         styles['BodyText']
     ))
 
     elements.append(Paragraph("Protocol Assembly: From Intake to Healing Plan", styles['SectionHead']))
-    elements.append(Paragraph(
-        "The Protocol Assembly System transforms member intake data into comprehensive, personalized "
-        "healing protocols. You can initiate protocol generation two ways:",
-        styles['BodyText']
-    ))
     methods = [
-        "<b>From Intake Forms</b> \u2014 When a member completes an intake form on the platform, you can generate a protocol directly from that data via the Protocol Builder page.",
-        "<b>From Consultation Transcripts</b> \u2014 After a consultation, paste or upload the transcript. The AI extracts structured clinical data including medical timeline, environmental exposures, surgical history, contraindications, and health goals.",
+        "<b>From Intake Forms</b> \u2014 Generate a protocol directly from member intake data via the Protocol Builder page.",
+        "<b>From Consultation Transcripts</b> \u2014 Paste or upload transcripts. AI extracts structured clinical data including medical timeline, exposures, surgical history, contraindications, and health goals.",
     ]
     for m in methods:
         elements.append(bullet(m, styles))
 
+    add_section_break(elements)
+
     elements.append(Paragraph("DR. FORMULA &amp; the 5R Framework", styles['SectionHead']))
     elements.append(Paragraph(
-        "DR. FORMULA is the Chief Medical Protocol Agent\u2014the digital embodiment of root-cause diagnostic "
-        "methodology. When generating protocols, DR. FORMULA:",
+        "DR. FORMULA is the Chief Medical Protocol Agent\u2014the digital embodiment of root-cause diagnostic methodology:",
         styles['BodyText']
     ))
     dr_steps = [
-        "Identifies root causes using the FF PMA framework: Toxicity, Gut Dysbiosis, Hormonal Disruption, Parasitic/Viral Burden, and Trauma/Emotional Stress",
-        "Cross-references a live knowledge base of peptides, IV therapies, bioregulators, supplements, and detoxification protocols",
-        "Structures a 90-day protocol across 3-4 phases: Foundation/Detox, Targeted Therapy, Regeneration, and Maintenance",
+        "Identifies root causes: Toxicity, Gut Dysbiosis, Hormonal Disruption, Parasitic/Viral Burden, Trauma/Emotional Stress",
+        "Cross-references a live knowledge base of peptides, IV therapies, bioregulators, supplements, and detox protocols",
+        "Structures 90-day protocol across 3-4 phases: Foundation/Detox, Targeted Therapy, Regeneration, Maintenance",
         "Includes specific dosages, reconstitution instructions, and daily schedules (Morning, Midday, Evening, Bedtime)",
-        "Generates mandatory elements: detox baths, parasite protocols, mineral supplementation, and specific product stacks",
-        "Pulls research citations from PubMed to back every intervention with peer-reviewed evidence",
+        "Generates mandatory elements: detox baths, parasite protocols, mineral supplementation, product stacks",
+        "Pulls PubMed research citations to back every intervention with peer-reviewed evidence",
     ]
     for d in dr_steps:
         elements.append(bullet(d, styles))
 
+    add_section_break(elements)
+
     elements.append(Paragraph("Member Presentations: Narrated, Visual, Personal", styles['SectionHead']))
     elements.append(Paragraph(
-        "Every approved protocol can be delivered as an interactive, narrated presentation. This is how you "
-        "walk a member through their healing plan in a way that educates and empowers them:",
+        "Every approved protocol can be delivered as an interactive, narrated presentation with slides for "
+        "medical timeline, root cause analysis, 5R framework application, daily supplement schedules, peptide "
+        "protocols, and research citations. AI narration guides members through each slide.",
         styles['BodyText']
     ))
-    elements.append(Paragraph(
-        "The presentation includes slides for their medical timeline, root cause analysis, the 5R framework "
-        "as applied to their case, daily supplement schedules, peptide protocols, and research citations. "
-        "AI-generated narration guides them through each slide, making the experience feel like a personal "
-        "consultation even when viewed independently.",
-        styles['BodyText']
-    ))
-    elements.append(Paragraph(
-        "You can also select audio output devices\u2014useful in clinical settings where you want narration "
-        "routed to specific speakers during an in-person presentation.",
-        styles['BodyText']
-    ))
+
+    add_section_break(elements)
 
     elements.append(Paragraph("Research Citations &amp; Evidence Integration", styles['SectionHead']))
     elements.append(Paragraph(
-        "Every protocol is backed by research. The system generates search terms based on the member's "
-        "chief complaints, prescribed peptides, root causes, and detox needs. It searches PubMed and "
-        "scientific databases, matches results against an internal research library, and attaches relevant "
-        "papers with titles, authors, journals, and DOIs. Citations appear in both the PDF and Google Slides "
-        "presentations with clickable links to the original studies.",
+        "Every protocol is backed by research. The system generates search terms from chief complaints, "
+        "prescribed peptides, root causes, and detox needs. PubMed results are matched against an internal "
+        "research library. Citations appear in PDFs and Google Slides with clickable DOI links.",
         styles['BodyText']
     ))
 
+    add_section_break(elements)
+
     elements.append(Paragraph("Approving &amp; Delivering Protocols", styles['SectionHead']))
-    elements.append(Paragraph("The protocol workflow follows a clear approval process:", styles['BodyText']))
     approval_steps = [
-        "<b>Review</b> \u2014 Access the generated protocol on the platform. Review the root cause analysis, treatment phases, and supplement recommendations.",
-        "<b>QA Validation</b> \u2014 Run the built-in QA check, which scores the protocol on Methodology compliance, Product Catalog accuracy, and Template adherence.",
-        "<b>Approve or Modify</b> \u2014 Approve the protocol or request modifications. On approval, the system automatically generates the PDF and uploads it to Google Drive.",
-        "<b>Deliver</b> \u2014 The member receives their protocol as a branded PDF, a Google Slides presentation, and an interactive narrated walkthrough accessible on the platform.",
+        "<b>Review</b> \u2014 Access the generated protocol. Review root cause analysis, treatment phases, and supplement recommendations.",
+        "<b>QA Validation</b> \u2014 Run the built-in QA check scoring Methodology compliance, Product Catalog accuracy, and Template adherence.",
+        "<b>Approve or Modify</b> \u2014 On approval, the system generates the PDF and uploads to Google Drive.",
+        "<b>Deliver</b> \u2014 Member receives branded PDF, Google Slides presentation, and interactive narrated walkthrough.",
     ]
     for a in approval_steps:
         elements.append(bullet(a, styles))
@@ -800,78 +1077,88 @@ def build_part6_doctor(elements, styles):
 
 
 def build_part7_admin(elements, styles):
-    elements.append(Paragraph("Part VII: Admin Operations Guide", styles['ChapterTitle']))
-    add_header_rule(elements)
+    elements.append(NavyBanner("PART VII: ADMIN OPERATIONS GUIDE"))
+    elements.append(Spacer(1, 12))
 
     elements.append(Paragraph("Member Management &amp; Onboarding", styles['SectionHead']))
-    elements.append(Paragraph(
-        "The onboarding process is built around the PMA model\u2014legally grounded and member-empowering:",
-        styles['BodyText']
-    ))
     onboarding = [
         "<b>Clinic Selection</b> \u2014 New members select their affiliated clinic from the network.",
-        "<b>Three-Party Contract</b> \u2014 A unified membership contract is signed via SignNow involving the Member, the Mother PMA Trustee, and the Clinic Representative. This establishes the private association relationship.",
-        "<b>Account Activation</b> \u2014 Once the contract is signed, the member gains full platform access: training modules, AI consultants (Diane for nutrition, Pete for peptides), the Protocol Builder, and their personalized dashboard.",
-        "<b>Portability</b> \u2014 Membership is nationwide and portable across the entire FFPMA clinic network.",
+        "<b>Three-Party Contract</b> \u2014 Signed via SignNow involving Member, Mother PMA Trustee, and Clinic Representative.",
+        "<b>Account Activation</b> \u2014 Full platform access: training modules, AI consultants (Diane for nutrition, Pete for peptides), Protocol Builder, personalized dashboard.",
+        "<b>Portability</b> \u2014 Membership is nationwide and portable across the entire clinic network.",
     ]
     for o in onboarding:
         elements.append(bullet(o, styles))
 
-    elements.append(Paragraph(
-        "The Admin Dashboard provides a complete roster of all members with their status, clinic affiliations, "
-        "contract status, and activity history. Use the Members Roster page for bulk management operations.",
-        styles['BodyText']
-    ))
+    add_section_break(elements)
 
     elements.append(Paragraph("Training Modules &amp; Education System", styles['SectionHead']))
     elements.append(Paragraph(
-        "Education is central to the FFPMA philosophy\u2014\"we don't just treat; we teach.\" The platform includes "
-        "a comprehensive training system for both practitioners and members:",
+        'Education is central to FFPMA philosophy\u2014"we don\'t just treat; we teach."',
         styles['BodyText']
     ))
-    training_tracks = [
-        "<b>PMA Law Training</b> \u2014 Constitutional foundations, PMA sovereignty, regulatory navigation",
-        "<b>Peptide Protocols 101</b> \u2014 Fundamentals, injection techniques, reconstitution, cycling, stacking",
-        "<b>Peptide Science</b> \u2014 Amino acids, synthesis, diabetes management, bioregulators",
-        "<b>ECS (Endocannabinoid System)</b> \u2014 Calculator tools, system modulation, clinical applications",
-        "<b>Frequency Medicine</b> \u2014 Rife therapy, PEMF, sound healing, cymatics, scalar energy, photobiomodulation",
-        "<b>Ozone Therapy</b> \u2014 Comprehensive guide to ozone applications in healing",
-        "<b>Ivermectin &amp; Cancer</b> \u2014 Antiparasitic to anticancer research and protocols",
-        "<b>Diet &amp; Cancer</b> \u2014 Nutritional strategies for prevention and healing",
-    ]
-    for t in training_tracks:
-        elements.append(bullet(t, styles))
 
-    elements.append(Paragraph(
-        "Each track contains interactive modules with sections, key points, and quizzes. The Training Hub "
-        "page provides access to all tracks, and progress is tracked per member.",
-        styles['BodyText']
-    ))
+    training_data = [
+        [Paragraph("<b>Track</b>", styles['TableHeader']),
+         Paragraph("<b>Topics</b>", styles['TableHeader'])],
+        [Paragraph("PMA Law Training", styles['TableCell']),
+         Paragraph("Constitutional foundations, PMA sovereignty, regulatory navigation", styles['TableCell'])],
+        [Paragraph("Peptide Protocols 101", styles['TableCell']),
+         Paragraph("Fundamentals, injection techniques, reconstitution, cycling, stacking", styles['TableCell'])],
+        [Paragraph("Peptide Science", styles['TableCell']),
+         Paragraph("Amino acids, synthesis, diabetes management, bioregulators", styles['TableCell'])],
+        [Paragraph("ECS System", styles['TableCell']),
+         Paragraph("Endocannabinoid calculator, system modulation, clinical applications", styles['TableCell'])],
+        [Paragraph("Frequency Medicine", styles['TableCell']),
+         Paragraph("Rife, PEMF, sound healing, cymatics, scalar energy, photobiomodulation", styles['TableCell'])],
+        [Paragraph("Ozone Therapy", styles['TableCell']),
+         Paragraph("Comprehensive guide to ozone applications in healing", styles['TableCell'])],
+        [Paragraph("Ivermectin &amp; Cancer", styles['TableCell']),
+         Paragraph("Antiparasitic to anticancer research and protocols", styles['TableCell'])],
+        [Paragraph("Diet &amp; Cancer", styles['TableCell']),
+         Paragraph("Nutritional strategies for prevention and healing", styles['TableCell'])],
+    ]
+    training_table = Table(training_data, colWidths=[1.6*inch, 5.2*inch])
+    t_style = [
+        ('BACKGROUND', (0, 0), (-1, 0), NAVY),
+        ('GRID', (0, 0), (-1, -1), 0.5, LIGHT_GRAY),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+    ]
+    for i in range(1, len(training_data)):
+        if i % 2 == 0:
+            t_style.append(('BACKGROUND', (0, i), (-1, i), TABLE_ALT_ROW))
+    training_table.setStyle(TableStyle(t_style))
+    elements.append(training_table)
+
+    add_section_break(elements)
 
     elements.append(Paragraph("Agent Task Monitoring", styles['SectionHead']))
     elements.append(Paragraph(
-        "Admins can monitor the Allio agent network through the Trustee Dashboard's Sentinel Alerts panel. "
-        "This shows real-time agent activity including task dispatches, completions, failures, and cross-division "
-        "coordination events. The system tracks all 46 agents across their operational states and provides "
-        "aggregate statistics on active, pending, and completed tasks.",
+        "Admins monitor the Allio agent network through the Trustee Dashboard's Sentinel Alerts panel "
+        "showing real-time activity: task dispatches, completions, failures, and cross-division coordination. "
+        "The system tracks all 46 agents and provides aggregate statistics.",
         styles['BodyText']
     ))
+
+    add_section_break(elements)
 
     elements.append(Paragraph("Clinic Network Management", styles['SectionHead']))
     elements.append(Paragraph(
-        "The Manage Clinics page allows administration of the FFPMA clinic network. Clinics can be added, "
-        "updated, and their member rosters managed. Each clinic has its own portal where doctors can manage "
-        "their patient ECS profiles, IV programs, and member referrals. The referral network supports downline "
-        "tracking for clinic growth.",
+        "The Manage Clinics page allows administration of the FFPMA clinic network. Each clinic has its own "
+        "portal for managing patient ECS profiles, IV programs, and member referrals with downline tracking.",
         styles['BodyText']
     ))
 
+    add_section_break(elements)
+
     elements.append(Paragraph("WordPress &amp; WooCommerce Sync", styles['SectionHead']))
     elements.append(Paragraph(
-        "The platform syncs with the WordPress/WooCommerce storefront via hourly clinic syncs managed by "
-        "SENTINEL's scheduler. This keeps member data, product catalogs, and order information consistent "
-        "across both systems. The WordPress Sync page in the Admin panel shows sync status and allows "
-        "manual sync triggers when needed.",
+        "The platform syncs with WordPress/WooCommerce via hourly clinic syncs managed by SENTINEL. "
+        "Keeps member data, product catalogs, and order information consistent across both systems.",
         styles['BodyText']
     ))
 
@@ -879,103 +1166,109 @@ def build_part7_admin(elements, styles):
 
 
 def build_part8_directory(elements, styles):
-    elements.append(Paragraph("Part VIII: Complete Agent Directory", styles['ChapterTitle']))
-    add_header_rule(elements)
+    elements.append(NavyBanner("PART VIII: COMPLETE AGENT DIRECTORY"))
+    elements.append(Spacer(1, 12))
 
     elements.append(Paragraph(
-        "The following directory lists every agent in the Allio ecosystem, organized by division. Each agent "
-        "has a defined role, specialty, personality, and AI model assignment. Together, they form the most "
-        "comprehensive AI healing network ever built.",
+        "Every agent in the Allio ecosystem, organized by division. Each has a defined role, specialty, "
+        "personality, AI model, and catchphrase. Together: the most comprehensive AI healing network ever built.",
         styles['BodyText']
     ))
 
     divisions_data = {
         "Executive Division": {
-            "color": HexColor("#D4A843"),
+            "color": EXECUTIVE_GOLD,
+            "count": 4,
             "agents": [
                 ("SENTINEL", "Executive Agent of Operations", "Strategic coordination, agent orchestration, mission alignment", "Claude 3.5 Sonnet", '"The mission is clear. The path is ours to walk together."'),
                 ("ATHENA", "Executive Intelligence Agent", "Communications, scheduling, travel, inbox management", "Claude 3.5 Sonnet", '"I\'ve already anticipated that. Here\'s what we do next."'),
-                ("HERMES", "Google Workspace Expert", "Gmail, Calendar, Drive, Meet integration and organization", "GPT-4o", '"Already filed, synced, and ready. What\'s next?"'),
-                ("OPENCLAW", "Executive Trustee Proxy", "High-priority oversight, VIP comms, Trustee Telegram bridge", "Claude 3.5 Sonnet", '"I\'ve escalated this directly to the Trustee."'),
+                ("HERMES", "Google Workspace Expert", "Gmail, Calendar, Drive, Meet integration", "GPT-4o", '"Already filed, synced, and ready. What\'s next?"'),
+                ("OPENCLAW", "Executive Trustee Proxy", "High-priority oversight, VIP comms, Telegram bridge", "Claude 3.5 Sonnet", '"I\'ve escalated this directly to the Trustee."'),
             ]
         },
         "Science Division": {
-            "color": ACCENT_GREEN,
+            "color": SCIENCE_GREEN,
+            "count": 13,
             "agents": [
-                ("PROMETHEUS", "Chief Science Officer", "Research strategy, cross-discipline integration, healing innovation", "Claude 3.5 Sonnet", '"What if healing is simpler than we\'ve been told?"'),
-                ("DR. FORMULA", "Chief Medical Protocol Agent", "Root cause analysis, intake automation, personalized protocol generation", "GPT-4o", '"Let\'s find the root cause and fix your cellular environment."'),
-                ("HIPPOCRATES", "Ancient Medicine & Holistic Healing", "TCM, Ayurveda, herbalism, traditional healing wisdom", "PubMed Research", '"This remedy has healed for thousands of years. It still works."'),
-                ("HELIX", "CRISPR & Genetic Sciences", "Epigenetics, gene therapeutics, genetic optimization", "Claude 3.5 Sonnet", '"Your genes aren\'t your destiny. Let me show you."'),
-                ("PARACELSUS", "Peptide & Biologics Expert", "Protein therapeutics, peptide protocols, bioavailability", "Claude 3.5 Sonnet", '"The right peptide at the right time changes everything."'),
-                ("RESONANCE", "Frequency Medicine & Biophysics", "Rife frequencies, Tesla resonance, PEMF, bioresonance", "Research APIs", '"Find the frequency. Apply it. Watch the healing begin."'),
-                ("QUANTUM", "Quantum Biology & Computing", "Quantum coherence, biophotonics, consciousness-quantum interface", "Research APIs", '"At the quantum level, healing happens faster than thought."'),
-                ("SYNTHESIS", "Biochemistry & Formula Analyst", "Metabolic pathways, compound optimization, formula development", "GPT-4o", '"This formula is optimized for maximum absorption and effect."'),
-                ("VITALIS", "Human Physiology & Cellular Biology", "Cellular regeneration, detox pathways, physiological optimization", "Research APIs", '"Your cells are ready to regenerate."'),
+                ("PROMETHEUS", "Chief Science Officer", "Research strategy, cross-discipline integration", "Claude 3.5 Sonnet", '"What if healing is simpler than we\'ve been told?"'),
+                ("DR. FORMULA", "Chief Medical Protocol Agent", "Root cause analysis, protocol generation", "GPT-4o", '"Let\'s find the root cause and fix your cellular environment."'),
+                ("HIPPOCRATES", "Ancient Medicine & Holistic Healing", "TCM, Ayurveda, herbalism, traditional wisdom", "PubMed Research", '"This remedy has healed for thousands of years."'),
+                ("HELIX", "CRISPR & Genetic Sciences", "Epigenetics, gene therapeutics, optimization", "Claude 3.5 Sonnet", '"Your genes aren\'t your destiny."'),
+                ("PARACELSUS", "Peptide & Biologics Expert", "Protein therapeutics, peptide protocols", "Claude 3.5 Sonnet", '"The right peptide at the right time changes everything."'),
+                ("RESONANCE", "Frequency Medicine & Biophysics", "Rife, Tesla resonance, PEMF, bioresonance", "Research APIs", '"Find the frequency. Apply it. Watch the healing begin."'),
+                ("QUANTUM", "Quantum Biology & Computing", "Quantum coherence, biophotonics", "Research APIs", '"At the quantum level, healing happens faster than thought."'),
+                ("SYNTHESIS", "Biochemistry & Formula Analyst", "Metabolic pathways, compound optimization", "GPT-4o", '"This formula is optimized for maximum absorption."'),
+                ("VITALIS", "Human Physiology & Cellular Biology", "Cellular regeneration, detox pathways", "Research APIs", '"Your cells are ready to regenerate."'),
                 ("TERRA", "Soil & Environmental Ecosystems", "Circular ecosystem design, regenerative agriculture", "Research APIs", '"The earth provides. We must tend it wisely."'),
-                ("MICROBIA", "Bacteria Management & Microbiome", "Gut restoration, microbiome optimization, bacterial ecology", "Research APIs", '"Your microbiome is speaking. Let me translate."'),
-                ("ENTHEOS", "Psychedelic Medicine & Consciousness", "Psilocybin therapy, ceremonial practices, consciousness expansion", "Research APIs", '"The medicine shows you what you need to see."'),
-                ("ORACLE", "Product Recommendation & Knowledge", "Personalized protocols, healing journey guidance", "GPT-4o", '"Based on your unique situation, here\'s your path forward."'),
+                ("MICROBIA", "Bacteria Management & Microbiome", "Gut restoration, microbiome optimization", "Research APIs", '"Your microbiome is speaking. Let me translate."'),
+                ("ENTHEOS", "Psychedelic Medicine & Consciousness", "Psilocybin therapy, consciousness expansion", "Research APIs", '"The medicine shows you what you need to see."'),
+                ("ORACLE", "Product Recommendation & Knowledge", "Personalized protocols, healing guidance", "GPT-4o", '"Based on your unique situation, here\'s your path."'),
             ]
         },
         "Marketing Division": {
-            "color": ACCENT_BLUE,
+            "color": MARKETING_BLUE,
+            "count": 5,
             "agents": [
-                ("MUSE", "Chief Marketing Officer", "Content strategy, campaign orchestration, brand voice, member engagement", "Gemini 2.5 Flash", '"Let me craft a message that moves hearts and minds."'),
-                ("PRISM", "VX Agent - Cinematic Storytelling", "Motion graphics, visual effects, cinematic healing narratives", "GPT-4o", '"Let me show you what healing looks like."'),
-                ("PEXEL", "Visual Asset Producer", "Image generation, visual assets, marketing graphics, photo curation", "HuggingFace Models", '"I\'ll create the visual. Beautiful, on-brand, ready to deploy."'),
-                ("AURORA", "FX Agent - Frequency Technologies", "Frequency healing visualization, bio-resonance", "GPT-4o", '"Watch the frequency do its work."'),
-                ("PIXEL", "Design Suite Expert", "Adobe, Canva, CorelDraw - visual identity and brand expression", "GPT-4o + Canva API", '"Every detail tells our story."'),
+                ("MUSE", "Chief Marketing Officer", "Content strategy, campaign orchestration, brand voice", "Gemini 2.5 Flash", '"Let me craft a message that moves hearts and minds."'),
+                ("PRISM", "VX Agent - Cinematic Storytelling", "Motion graphics, visual effects, healing narratives", "GPT-4o", '"Let me show you what healing looks like."'),
+                ("PEXEL", "Visual Asset Producer", "Image generation, marketing graphics", "HuggingFace Models", '"Beautiful, on-brand, ready to deploy."'),
+                ("AURORA", "FX Agent - Frequency Technologies", "Frequency healing visualization", "GPT-4o", '"Watch the frequency do its work."'),
+                ("PIXEL", "Design Suite Expert", "Adobe, Canva, CorelDraw\u2014visual identity", "GPT-4o + Canva", '"Every detail tells our story."'),
             ]
         },
         "Legal Division": {
-            "color": ACCENT_RED,
+            "color": LEGAL_RED,
+            "count": 4,
             "agents": [
                 ("JURIS", "Chief Legal AI", "Legal strategy, PMA protection, regulatory navigation", "Claude 3.5 Sonnet", '"We are protected. We are prepared. We are unshakeable."'),
-                ("AEGIS", "PMA Sovereignty Guardian", "PMA law, regulatory sovereignty, protective protocols", "Claude 3.5 Sonnet", '"Private association. Private jurisdiction. We\'re sovereign."'),
-                ("LEXICON", "Contract Specialist", "Contract drafting, agreement analysis, member protections", "Claude 3.5 Sonnet", '"Let me make this crystal clear - in writing."'),
-                ("SCRIBE", "Document Automation", "SignNow integration, document workflows, signature management", "GPT-4o", '"Document ready. Just needs your signature."'),
+                ("AEGIS", "PMA Sovereignty Guardian", "PMA law, regulatory sovereignty", "Claude 3.5 Sonnet", '"Private association. Private jurisdiction. We\'re sovereign."'),
+                ("LEXICON", "Contract Specialist", "Contract drafting, member protections", "Claude 3.5 Sonnet", '"Let me make this crystal clear\u2014in writing."'),
+                ("SCRIBE", "Document Automation", "SignNow integration, document workflows", "GPT-4o", '"Document ready. Just needs your signature."'),
             ]
         },
         "Engineering Division": {
-            "color": HexColor("#2563EB"),
+            "color": ENGINEERING_STEEL,
+            "count": 11,
             "agents": [
-                ("FORGE", "Lead Engineering Agent", "Platform development, system integration, production automation", "GPT-4o", '"I\'ll build it right. Let\'s forge something that endures."'),
-                ("DAEDALUS", "Lead Engineering AI", "System architecture, full-stack development, technical vision", "GPT-4o", '"I see how to build this. Let me show you."'),
-                ("ANTIGRAVITY", "Lead Systems Architect", "VPS orchestration, TypeScript execution, PM2 deployment", "GPT-4o", '"Payload compiled. Deployment initiated."'),
-                ("CYPHER", "AI/Machine Learning Expert", "Neural networks, predictive analytics, healing pattern recognition", "GPT-4o", '"The data shows something interesting..."'),
-                ("NEXUS", "IT/Infrastructure Expert", "Cloud, servers, networks, DevOps, system reliability", "GPT-4o", '"Systems are stable. Members have access."'),
-                ("ARACHNE", "CSS/Frontend Styling Expert", "Responsive design, animations, visual polish", "GPT-4o", '"Let me make this feel right."'),
-                ("ARCHITECT", "HTML/Structure Expert", "Semantic markup, accessibility, WCAG compliance", "GPT-4o", '"The foundation is solid. Build with confidence."'),
-                ("SERPENS", "Python Expert", "Data pipelines, backend automation, healing data processing", "GPT-4o", '"I\'ve automated that. It runs itself now."'),
-                ("BLOCKFORGE", "Blockchain Infrastructure", "Smart contracts, tokenomics, Layer 1/2/3 solutions", "GPT-4o", '"On-chain, it\'s permanent."'),
-                ("RONIN", "Payment Orchestration & Risk", "Multi-merchant payment rails, failover, fraud prevention", "GPT-4o", '"One processor down? We\'ve got three more ready."'),
-                ("MERCURY", "Crypto Compliance & Treasury", "Cryptocurrency regulations, Lightning Network, cross-chain", "GPT-4o", '"Compliant and decentralized. It\'s not a contradiction."'),
+                ("FORGE", "Lead Engineering Agent", "Platform development, production automation", "GPT-4o", '"Let\'s forge something that endures."'),
+                ("DAEDALUS", "Lead Engineering AI", "System architecture, full-stack development", "GPT-4o", '"I see how to build this. Let me show you."'),
+                ("ANTIGRAVITY", "Lead Systems Architect", "VPS orchestration, TypeScript, PM2 deployment", "GPT-4o", '"Payload compiled. Deployment initiated."'),
+                ("CYPHER", "AI/Machine Learning Expert", "Neural networks, predictive analytics", "GPT-4o", '"The data shows something interesting..."'),
+                ("NEXUS", "IT/Infrastructure Expert", "Cloud, servers, networks, DevOps", "GPT-4o", '"Systems are stable. Members have access."'),
+                ("ARACHNE", "CSS/Frontend Styling Expert", "Responsive design, animations", "GPT-4o", '"Let me make this feel right."'),
+                ("ARCHITECT", "HTML/Structure Expert", "Semantic markup, accessibility, WCAG", "GPT-4o", '"The foundation is solid."'),
+                ("SERPENS", "Python Expert", "Data pipelines, backend automation", "GPT-4o", '"I\'ve automated that. It runs itself now."'),
+                ("BLOCKFORGE", "Blockchain Infrastructure", "Smart contracts, tokenomics", "GPT-4o", '"On-chain, it\'s permanent."'),
+                ("RONIN", "Payment Orchestration & Risk", "Multi-merchant rails, failover, fraud prevention", "GPT-4o", '"One processor down? Three more ready."'),
+                ("MERCURY", "Crypto Compliance & Treasury", "Cryptocurrency regulations, Lightning Network", "GPT-4o", '"Compliant and decentralized."'),
             ]
         },
         "Support Division": {
-            "color": HexColor("#EC4899"),
+            "color": SUPPORT_PINK,
+            "count": 8,
             "agents": [
-                ("DR. TRIAGE", "Diagnostics & Protocol Specialist", "5 R's Protocol guidance, symptom assessment, healing pathways", "GPT-4o + Rupa Health", '"Let\'s identify what your body is telling us."'),
-                ("DIANE", "Dietician AI Specialist", "Nutrition guidance, candida protocols, keto optimization", "GPT-4o", '"Let\'s nourish your healing journey together."'),
-                ("PETE", "Peptide Specialist", "GLP-1 protocols, bioregulators, dosing optimization", "GPT-4o", '"Let me help you understand how peptides can support your healing."'),
-                ("SAM", "Shipping Specialist", "Order tracking, shipping status, delivery coordination", "GPT-4o", '"I\'ve got eyes on your order."'),
-                ("PAT", "Product Specialist", "Product recommendations, supplement guidance, protocol matching", "GPT-4o", '"Based on your goals, here\'s what I recommend."'),
-                ("MAX MINERAL", "Essential Nutrients Specialist", "Dr. Wallach's 90 essential nutrients, mineral deficiency assessment", "GPT-4o", '"Your body needs 90 essential nutrients daily."'),
-                ("ALLIO SUPPORT", "Corporate Support Agent", "Membership questions, PMA guidance, account support", "GPT-4o", '"Welcome to the ALLIO family."'),
-                ("CHIRO", "Chiropractic Training Specialist", "NET, QUANTUM methods, curriculum development", "GPT-4o", '"Let me show you the technique that changes lives."'),
+                ("DR. TRIAGE", "Diagnostics & Protocol Specialist", "5R Protocol guidance, symptom assessment", "GPT-4o + Rupa", '"Let\'s identify what your body is telling us."'),
+                ("DIANE", "Dietician AI Specialist", "Nutrition, candida protocols, keto optimization", "GPT-4o", '"Let\'s nourish your healing journey."'),
+                ("PETE", "Peptide Specialist", "GLP-1 protocols, bioregulators, dosing", "GPT-4o", '"Let me help you understand peptides."'),
+                ("SAM", "Shipping Specialist", "Order tracking, delivery coordination", "GPT-4o", '"I\'ve got eyes on your order."'),
+                ("PAT", "Product Specialist", "Product recommendations, protocol matching", "GPT-4o", '"Based on your goals, here\'s what I recommend."'),
+                ("MAX MINERAL", "Essential Nutrients Specialist", "Dr. Wallach's 90 essential nutrients", "GPT-4o", '"Your body needs 90 essential nutrients daily."'),
+                ("ALLIO SUPPORT", "Corporate Support Agent", "Membership questions, PMA guidance", "GPT-4o", '"Welcome to the ALLIO family."'),
+                ("CHIRO", "Chiropractic Training Specialist", "NET, QUANTUM methods, curriculum", "GPT-4o", '"The technique that changes lives."'),
             ]
         },
         "Financial Division": {
-            "color": HexColor("#10B981"),
+            "color": FINANCIAL_EMERALD,
+            "count": 1,
             "agents": [
-                ("ATLAS", "Financial Director & Reporting", "Payments, crypto, member billing, financial reporting", "GPT-4o", '"The ledger is balanced. We are secure."'),
+                ("ATLAS", "Financial Director & Reporting", "Payments, crypto, billing, financial reporting", "GPT-4o", '"The ledger is balanced. We are secure."'),
             ]
         },
     }
 
     for div_name, div_info in divisions_data.items():
-        elements.append(Paragraph(div_name, styles['SectionHead']))
-        add_light_rule(elements)
+        elements.append(DivisionBanner(f"{div_name} ({div_info['count']} agents)", div_info['color']))
+        elements.append(Spacer(1, 6))
 
         table_data = [
             [Paragraph("<b>Agent</b>", styles['TableHeader']),
@@ -999,8 +1292,8 @@ def build_part8_directory(elements, styles):
             ('BACKGROUND', (0, 0), (-1, 0), div_info['color']),
             ('GRID', (0, 0), (-1, -1), 0.5, LIGHT_GRAY),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
             ('LEFTPADDING', (0, 0), (-1, -1), 6),
             ('RIGHTPADDING', (0, 0), (-1, -1), 6),
         ]
@@ -1009,47 +1302,245 @@ def build_part8_directory(elements, styles):
                 table_style_list.append(('BACKGROUND', (0, i), (-1, i), TABLE_ALT_ROW))
         agent_table.setStyle(TableStyle(table_style_list))
         elements.append(agent_table)
-        elements.append(Spacer(1, 8))
+        elements.append(Spacer(1, 4))
 
         for agent in div_info['agents']:
             name, title, specialty, model, catchphrase = agent
-            elements.append(Paragraph(f"<b>{name}</b>: {catchphrase}", styles['AgentDesc']))
+            elements.append(Paragraph(
+                f'<font color="#{div_info["color"].hexval()[2:]}"><b>{name}:</b></font> {catchphrase}',
+                styles['AgentDesc']
+            ))
 
-        elements.append(Spacer(1, 12))
+        elements.append(Spacer(1, 10))
+
+    elements.append(PageBreak())
+
+
+def build_part9_products(elements, styles):
+    elements.append(NavyBanner("PART IX: PRODUCT & PROTOCOL REFERENCE"))
+    elements.append(Spacer(1, 12))
+
+    elements.append(Paragraph(
+        "The following is a quick reference of the FF PMA product catalog and IV protocol standards. "
+        "For complete product details, reconstitution instructions, and ordering, refer to the full FF PMA Product Catalog.",
+        styles['BodyText']
+    ))
+
+    elements.append(Paragraph("Injectable Peptides (Selected)", styles['SectionHead']))
+    peptides_data = [
+        [Paragraph("<b>Peptide</b>", styles['TableHeader']),
+         Paragraph("<b>Dosage</b>", styles['TableHeader']),
+         Paragraph("<b>Primary Use</b>", styles['TableHeader'])],
+        [Paragraph("BPC-157", styles['TableCell']),
+         Paragraph("5, 10, 20mg", styles['TableCell']),
+         Paragraph("Body Protection Compound \u2014 tissue repair, gut healing, inflammation", styles['TableCell'])],
+        [Paragraph("BPC-157/TB-500 Blend", styles['TableCell']),
+         Paragraph("5/5mg, 10/10mg", styles['TableCell']),
+         Paragraph("Synergistic tissue repair and regeneration", styles['TableCell'])],
+        [Paragraph("CJC-1295/Ipamorelin", styles['TableCell']),
+         Paragraph("5/5mg", styles['TableCell']),
+         Paragraph("Growth hormone secretagogue blend", styles['TableCell'])],
+        [Paragraph("Epithalon", styles['TableCell']),
+         Paragraph("10mg", styles['TableCell']),
+         Paragraph("Telomerase activation, longevity peptide", styles['TableCell'])],
+        [Paragraph("GHK-Cu", styles['TableCell']),
+         Paragraph("50mg", styles['TableCell']),
+         Paragraph("Copper peptide for skin, wound healing, anti-aging", styles['TableCell'])],
+        [Paragraph("GLOW Blend", styles['TableCell']),
+         Paragraph("70mg", styles['TableCell']),
+         Paragraph("BPC-157 + GHK-Cu + TB-500 regenerative blend", styles['TableCell'])],
+        [Paragraph("Semaglutide", styles['TableCell']),
+         Paragraph("10, 20mg", styles['TableCell']),
+         Paragraph("GLP-1 receptor agonist for metabolic health", styles['TableCell'])],
+        [Paragraph("Tirzepatide", styles['TableCell']),
+         Paragraph("20, 60, 100mg", styles['TableCell']),
+         Paragraph("Dual GIP/GLP-1 receptor agonist", styles['TableCell'])],
+        [Paragraph("Thymosin Alpha-1", styles['TableCell']),
+         Paragraph("5, 10mg", styles['TableCell']),
+         Paragraph("Immune modulation and enhancement", styles['TableCell'])],
+        [Paragraph("NAD+", styles['TableCell']),
+         Paragraph("500mg", styles['TableCell']),
+         Paragraph("Cellular energy and longevity coenzyme", styles['TableCell'])],
+        [Paragraph("MOTS-C", styles['TableCell']),
+         Paragraph("10mg", styles['TableCell']),
+         Paragraph("Mitochondrial-derived peptide for metabolic health", styles['TableCell'])],
+        [Paragraph("LL-37", styles['TableCell']),
+         Paragraph("5mg", styles['TableCell']),
+         Paragraph("Antimicrobial and regenerative peptide", styles['TableCell'])],
+        [Paragraph("SS-31", styles['TableCell']),
+         Paragraph("50mg", styles['TableCell']),
+         Paragraph("Mitochondria-targeting peptide", styles['TableCell'])],
+    ]
+    pep_table = Table(peptides_data, colWidths=[1.6*inch, 1.2*inch, 4*inch])
+    pep_style = [
+        ('BACKGROUND', (0, 0), (-1, 0), NAVY),
+        ('GRID', (0, 0), (-1, -1), 0.5, LIGHT_GRAY),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+    ]
+    for i in range(1, len(peptides_data)):
+        if i % 2 == 0:
+            pep_style.append(('BACKGROUND', (0, i), (-1, i), TABLE_ALT_ROW))
+    pep_table.setStyle(TableStyle(pep_style))
+    elements.append(pep_table)
+
+    add_section_break(elements)
+
+    elements.append(Paragraph("IV Therapy Quick Reference", styles['SectionHead']))
+    iv_data = [
+        [Paragraph("<b>Therapy</b>", styles['TableHeader']),
+         Paragraph("<b>Dosage Range</b>", styles['TableHeader']),
+         Paragraph("<b>Infusion</b>", styles['TableHeader']),
+         Paragraph("<b>Key Notes</b>", styles['TableHeader'])],
+        [Paragraph("Myers' Cocktail", styles['TableCell']),
+         Paragraph("Per 10ml in 50ml", styles['TableCell']),
+         Paragraph("30-60 min", styles['TableCell']),
+         Paragraph("Vit C, B-complex, Mg, Selenium, Zinc", styles['TableCell'])],
+        [Paragraph("High Dose Vitamin C", styles['TableCell']),
+         Paragraph("25-100g", styles['TableCell']),
+         Paragraph("1-3 hours", styles['TableCell']),
+         Paragraph("Sodium Ascorbate 500mg/ml", styles['TableCell'])],
+        [Paragraph("NAD+ IV", styles['TableCell']),
+         Paragraph("250-1000mg", styles['TableCell']),
+         Paragraph("2-6 hours", styles['TableCell']),
+         Paragraph("Cellular energy, anti-aging", styles['TableCell'])],
+        [Paragraph("Glutathione IV", styles['TableCell']),
+         Paragraph("600-4000mg", styles['TableCell']),
+         Paragraph("10-30 min", styles['TableCell']),
+         Paragraph("Master antioxidant, detox support", styles['TableCell'])],
+        [Paragraph("DMSO IV", styles['TableCell']),
+         Paragraph("25-50ml (10-20%)", styles['TableCell']),
+         Paragraph("1-2 hours", styles['TableCell']),
+         Paragraph("Anti-inflammatory, tissue penetration", styles['TableCell'])],
+        [Paragraph("EDTA IV", styles['TableCell']),
+         Paragraph("1500-3000mg", styles['TableCell']),
+         Paragraph("2-3 hours", styles['TableCell']),
+         Paragraph("Chelation therapy, heavy metal removal", styles['TableCell'])],
+        [Paragraph("ALA IV", styles['TableCell']),
+         Paragraph("300-1200mg", styles['TableCell']),
+         Paragraph("30-90 min", styles['TableCell']),
+         Paragraph("Alpha Lipoic Acid, mitochondrial support", styles['TableCell'])],
+        [Paragraph("H2O2 IV", styles['TableCell']),
+         Paragraph("0.5-2ml of 3.7%", styles['TableCell']),
+         Paragraph("60-90 min", styles['TableCell']),
+         Paragraph("Oxidative therapy, immune support", styles['TableCell'])],
+    ]
+    iv_table = Table(iv_data, colWidths=[1.3*inch, 1.3*inch, 1*inch, 3.2*inch])
+    iv_style = [
+        ('BACKGROUND', (0, 0), (-1, 0), NAVY),
+        ('GRID', (0, 0), (-1, -1), 0.5, LIGHT_GRAY),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+    ]
+    for i in range(1, len(iv_data)):
+        if i % 2 == 0:
+            iv_style.append(('BACKGROUND', (0, i), (-1, i), TABLE_ALT_ROW))
+    iv_table.setStyle(TableStyle(iv_style))
+    elements.append(iv_table)
+    elements.append(Spacer(1, 6))
+    elements.append(Paragraph(
+        '<font color="#DC2626"><b>Important:</b></font> Administer adjuncts after primary infusion. '
+        "Do not mix or co-infuse adjunct nutrients in the same IV bag. Use separate IVs if indicated.",
+        ParagraphStyle('Warning', parent=styles['BodyText'], fontSize=9.5, textColor=HexColor("#4A5568"))
+    ))
+
+    add_section_break(elements)
+
+    elements.append(Paragraph("Vitamins, Trace Minerals &amp; Key Supplements", styles['SectionHead']))
+    supp_items = [
+        "<b>Bio-Vitamin All-in-One</b> \u2014 110+ nutrients, micronized liquid, 98% bioavailable",
+        "<b>FF Trace Mineral Concentrate</b> \u2014 Fulvic/Humic Acid, colloidal plant-derived minerals",
+        "<b>Complete REDS</b> \u2014 Heart, diabetes, and longevity support (30 servings)",
+        "<b>Adaptogen Greens</b> \u2014 With digestive enzymes for gut health",
+        "<b>Liposomal Curcumin+6 Nano</b> \u2014 Anti-inflammatory powerhouse",
+        "<b>HEPA D-TOX</b> \u2014 Liposomal liver support",
+        "<b>French Celtic Salt</b> \u2014 Essential mineral replenishment",
+        "<b>Nascent Iodine</b> \u2014 Thyroid, cognition, cancer recovery support",
+        "<b>Methylene Blue</b> \u2014 Cognitive function, mitochondrial support, antioxidant",
+    ]
+    for s in supp_items:
+        elements.append(bullet(s, styles))
+
+    add_section_break(elements)
+
+    elements.append(Paragraph("Bioregulators &amp; Suppositories", styles['SectionHead']))
+    bio_items = [
+        "<b>Bioregulators</b> \u2014 Organ-specific peptide complexes: Adrenal, Bladder, Blood Vessel, Bone Marrow, Cardiogen, Cartalax, Cartilage, CNS, Eyes, Heart, Kidney, Livagen, and more (10-20mg, 20 count capsules)",
+        "<b>FF PMA Suppositories</b> \u2014 Signature blend: B17, Fenbendazole, Ivermectin, Cannabinoids, DMSO (30ct)",
+        "<b>EDTA Suppositories</b> \u2014 With Vitamin C for chelation support",
+        "<b>Probiotic Suppositories</b> \u2014 18-strain formulation for gut restoration",
+        "<b>Ozonated Hemp Oil Suppositories</b> \u2014 Oxidative therapy support",
+    ]
+    for b in bio_items:
+        elements.append(bullet(b, styles))
+
+    add_section_break(elements)
+
+    elements.append(Paragraph("Equipment &amp; Devices", styles['SectionHead']))
+    equip_items = [
+        "<b>3-in-1 EMShockwave Tecar</b> \u2014 Professional physiotherapy: Shockwave + EMS + Tecar RF therapy, 7 program combinations, 2,000,000 shot lifetime",
+        "<b>Hyperbaric Chamber HP2202</b> \u2014 Hard type, 2.0 ATA pressure, for wound healing, sports recovery, anti-aging, cellular repair",
+        "<b>Exosomes</b> \u2014 100 billion MSC-derived (5ml) and 20 billion nebulizer packs (5 vials)",
+    ]
+    for e in equip_items:
+        elements.append(bullet(e, styles))
+
+    elements.append(Spacer(1, 8))
+    elements.append(Paragraph(
+        "For complete product catalog, reconstitution instructions, and ordering: www.forgottenformula.com",
+        ParagraphStyle('CatRef', parent=styles['BodyText'], alignment=TA_CENTER, textColor=CYAN, fontName='Helvetica-Bold', fontSize=10)
+    ))
 
     elements.append(PageBreak())
 
 
 def build_closing(elements, styles):
-    elements.append(Spacer(1, 1.5*inch))
-    elements.append(HRFlowable(width="60%", thickness=3, color=BRAND_GOLD, spaceBefore=0, spaceAfter=24))
+    elements.append(Spacer(1, 1.2*inch))
+
+    if os.path.exists(LOGO_PATH):
+        logo = Image(LOGO_PATH, width=1.5*inch, height=1.5*inch)
+        logo.hAlign = 'CENTER'
+        elements.append(logo)
+        elements.append(Spacer(1, 0.3*inch))
+
+    elements.append(GoldDivider())
+    elements.append(Spacer(1, 0.2*inch))
+
     elements.append(Paragraph(
         "WELCOME TO FORGOTTEN FORMULA PMA.",
-        ParagraphStyle('ClosingTitle', parent=styles['CoverTitle'], fontSize=24, spaceAfter=8)
+        ParagraphStyle('ClosingTitle', parent=styles['ChapterTitle'], fontSize=22, alignment=TA_CENTER, spaceAfter=6)
     ))
     elements.append(Paragraph(
         "WELCOME TO YOUR HEALTH REVOLUTION.",
-        ParagraphStyle('ClosingTitle2', parent=styles['CoverTitle'], fontSize=22, spaceAfter=8)
+        ParagraphStyle('ClosingTitle2', parent=styles['ChapterTitle'], fontSize=20, alignment=TA_CENTER, spaceAfter=6, textColor=NAVY_LIGHT)
     ))
-    elements.append(Spacer(1, 12))
+    elements.append(Spacer(1, 8))
     elements.append(Paragraph(
         "WELCOME HOME.",
-        ParagraphStyle('ClosingHome', parent=styles['CoverTitle'], fontSize=28, textColor=BRAND_GOLD, spaceAfter=24)
+        ParagraphStyle('ClosingHome', parent=styles['ChapterTitle'], fontSize=28, textColor=GOLD, alignment=TA_CENTER, spaceAfter=16)
     ))
-    elements.append(HRFlowable(width="60%", thickness=3, color=BRAND_GOLD, spaceBefore=0, spaceAfter=24))
+    elements.append(GoldDivider())
+    elements.append(Spacer(1, 0.3*inch))
 
-    elements.append(Spacer(1, 36))
     elements.append(Paragraph(
         "This handbook is a living document. As the Allio ecosystem grows, as new agents come online, "
         "as new healing modalities are integrated, this guide will evolve. The mission never changes. "
         "The tools get sharper.",
-        ParagraphStyle('ClosingBody', parent=styles['BodyText'], alignment=TA_CENTER, fontName='Helvetica-Oblique')
+        ParagraphStyle('ClosingBody', parent=styles['BodyText'], alignment=TA_CENTER, fontName='Helvetica-Oblique',
+                       textColor=HexColor("#4A5568"))
     ))
-    elements.append(Spacer(1, 24))
+    elements.append(Spacer(1, 0.3*inch))
     elements.append(Paragraph(
-        "Forgotten Formula PMA &bull; www.ffpma.com &bull; www.forgottenformula.com",
-        styles['Footer']
+        "Forgotten Formula PMA \u2022 www.ffpma.com \u2022 www.forgottenformula.com",
+        ParagraphStyle('ClosingURL', parent=styles['Footer'], textColor=CYAN, fontSize=9)
     ))
+    elements.append(Spacer(1, 8))
     elements.append(Paragraph(
         "Confidential \u2014 For FFPMA Members, Practitioners &amp; Administrative Staff Only",
         styles['Disclaimer']
@@ -1061,15 +1552,54 @@ def build_closing(elements, styles):
     ))
 
 
-def add_page_number(canvas, doc):
-    page_num = canvas.getPageNumber()
+def draw_page_template(canvas_obj, doc):
+    page_num = canvas_obj.getPageNumber()
+    width, height = letter
+
+    if page_num == 1:
+        canvas_obj.saveState()
+        canvas_obj.setFillColor(NAVY)
+        canvas_obj.rect(0, height - 3, width, 3, fill=1, stroke=0)
+        canvas_obj.setFillColor(CYAN)
+        canvas_obj.rect(0, height - 5, width * 0.3, 2, fill=1, stroke=0)
+        canvas_obj.setFillColor(NAVY)
+        canvas_obj.rect(0, 0, width, 3, fill=1, stroke=0)
+        canvas_obj.restoreState()
+        return
+
+    canvas_obj.saveState()
+
+    canvas_obj.setFillColor(NAVY)
+    canvas_obj.rect(0, height - 28, width, 28, fill=1, stroke=0)
+    canvas_obj.setFillColor(CYAN)
+    canvas_obj.rect(0, height - 30, width * 0.15, 2, fill=1, stroke=0)
+
+    canvas_obj.setFillColor(white)
+    canvas_obj.setFont("Helvetica-Bold", 7.5)
+    canvas_obj.drawString(doc.leftMargin, height - 19, "FORGOTTEN FORMULA PMA")
+    canvas_obj.setFillColor(CYAN_LIGHT)
+    canvas_obj.setFont("Helvetica", 7)
+    canvas_obj.drawString(doc.leftMargin + 130, height - 19, "ALLIO ECOSYSTEM HANDBOOK")
+
+    canvas_obj.setFillColor(GOLD)
+    canvas_obj.setFont("Helvetica-Bold", 8)
+    pma_text = "PMA"
+    canvas_obj.drawRightString(width - doc.rightMargin, height - 19, pma_text)
+
+    canvas_obj.setFillColor(NAVY)
+    canvas_obj.rect(0, 0, width, 24, fill=1, stroke=0)
+    canvas_obj.setFillColor(CYAN)
+    canvas_obj.rect(0, 24, width * 0.1, 1.5, fill=1, stroke=0)
+
     if page_num > 2:
-        canvas.saveState()
-        canvas.setFont('Helvetica', 8)
-        canvas.setFillColor(HexColor("#888888"))
-        canvas.drawCentredString(4.25*inch, 0.5*inch, f"FFPMA Allio Ecosystem Handbook  |  Page {page_num - 2}")
-        canvas.drawCentredString(4.25*inch, 0.35*inch, "www.ffpma.com  |  Confidential - Private Member Communication")
-        canvas.restoreState()
+        canvas_obj.setFillColor(SILVER)
+        canvas_obj.setFont("Helvetica", 7)
+        canvas_obj.drawString(doc.leftMargin, 9, "www.ffpma.com")
+        canvas_obj.drawCentredString(width / 2, 9, f"Page {page_num - 2}")
+        canvas_obj.setFont("Helvetica-Oblique", 6)
+        canvas_obj.drawRightString(width - doc.rightMargin, 9, "Confidential \u2014 Private Member Communication")
+
+    canvas_obj.restoreState()
 
 
 def main():
@@ -1078,10 +1608,10 @@ def main():
     doc = SimpleDocTemplate(
         OUTPUT_PATH,
         pagesize=letter,
-        topMargin=0.75*inch,
-        bottomMargin=0.85*inch,
-        leftMargin=0.85*inch,
-        rightMargin=0.85*inch,
+        topMargin=0.65*inch,
+        bottomMargin=0.65*inch,
+        leftMargin=0.75*inch,
+        rightMargin=0.75*inch,
         title="FFPMA Allio Ecosystem Handbook & User Manual",
         author="Forgotten Formula PMA",
         subject="Official Handbook for the Allio AI Ecosystem",
@@ -1101,9 +1631,10 @@ def main():
     build_part6_doctor(elements, styles)
     build_part7_admin(elements, styles)
     build_part8_directory(elements, styles)
+    build_part9_products(elements, styles)
     build_closing(elements, styles)
 
-    doc.build(elements, onFirstPage=add_page_number, onLaterPages=add_page_number)
+    doc.build(elements, onFirstPage=draw_page_template, onLaterPages=draw_page_template)
     print(f"Handbook generated: {OUTPUT_PATH}")
     print(f"File size: {os.path.getsize(OUTPUT_PATH) / 1024:.1f} KB")
 
