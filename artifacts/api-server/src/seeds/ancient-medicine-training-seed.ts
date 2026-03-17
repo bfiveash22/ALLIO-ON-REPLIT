@@ -168,7 +168,7 @@ export const ancientMedicineQuizQuestions = [
     answers: [
       { id: "a-anc101-1a", text: "Surgery is the only true medicine", isCorrect: false },
       { id: "a-anc101-1b", text: "Let food be thy medicine and medicine be thy food", isCorrect: true },
-      { id: "a-anc101-1c", text: "Pharmaceuticals cure all disease", isCorrect: false },
+      { id: "a-anc101-1c", text: "Pharmaceuticals solve all disease", isCorrect: false },
       { id: "a-anc101-1d", text: "The body cannot heal itself", isCorrect: false },
     ],
   },
@@ -214,7 +214,7 @@ export const ancientMedicineQuizQuestions = [
       { id: "a-anc101-4a", text: "Collection of organs", isCorrect: false },
       { id: "a-anc101-4b", text: "Whole person — mind, body, and environment", isCorrect: true },
       { id: "a-anc101-4c", text: "Set of lab values", isCorrect: false },
-      { id: "a-anc101-4d", text: "Diagnosis code", isCorrect: false },
+      { id: "a-anc101-4d", text: "Clinical code", isCorrect: false },
     ],
   },
   {

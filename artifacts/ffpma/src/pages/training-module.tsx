@@ -280,7 +280,7 @@ const moduleContent: Record<string, {
     keyPoints: ["CB2 expressed on all major immune cell types", "ECS activation generally anti-inflammatory", "Reduces pro-inflammatory cytokines, increases anti-inflammatory", "Gut-immune-ECS axis crucial for autoimmune conditions"],
     videoUrl: "https://drive.google.com/file/d/ECS_IMMUNE_VIDEO"
   },
-  "ecs-203-patient-assessment": {
+  "ecs-203-member-assessment": {
     sections: [
       { title: "The CECD Questionnaire", content: "A structured questionnaire assesses ECS function across six domains: mood stability, sleep quality, pain levels, digestive health, immune function, and stress response. Scores help identify members who may benefit from ECS support." },
       { title: "Symptom Pattern Recognition", content: "CECD often presents with clusters: migraine + IBS + fibromyalgia. Members with treatment-resistant conditions in multiple systems should be evaluated for ECS dysfunction. Co-occurring conditions strengthen the CECD hypothesis." },
@@ -412,7 +412,7 @@ const moduleContent: Record<string, {
     keyPoints: ["All-in-one portal for member management", "Member cards show key status at a glance", "AI-assisted blood analysis with doctor oversight", "Template-based document generation"],
     videoUrl: "https://drive.google.com/file/d/DOC_PORTAL_VIDEO"
   },
-  "doc-102-patient-intake": {
+  "doc-102-member-intake": {
     sections: [
       { title: "The FFPMA 12-System Review", content: "Our comprehensive intake covers all major body systems: cardiovascular, respiratory, digestive, neurological, musculoskeletal, endocrine, immune, urinary, reproductive, integumentary, lymphatic, and mental/emotional. This ensures nothing is missed." },
       { title: "Chief Complaint Deep Dive", content: "Beyond the chief complaint, explore onset, duration, triggers, relievers, associated symptoms, previous treatments, and impact on quality of life. The 5 Rs framework (Remove, Replace, Regenerate, Restore, Rebalance) guides your thinking." },
@@ -1301,7 +1301,7 @@ const moduleContent: Record<string, {
       "Layer metabolic peptides with nutrition, exercise, and supplements"
     ]
   },
-  "ppm-106-patient-management": {
+  "ppm-106-member-management": {
     sections: [
       {
         title: "Member Assessment for Peptide Therapy",

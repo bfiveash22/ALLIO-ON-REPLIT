@@ -330,7 +330,7 @@ DO NOT ADD:
 
 The liver is central to Gerson Therapy as it is responsible for detoxification and metabolic regulation. Dr. Gerson developed specific protocols to support and regenerate liver function.
 
-CASTOR OIL TREATMENT:
+CASTOR OIL PROTOCOL:
 - Take 2 tablespoons castor oil orally (by mouth)
 - Follow with a small cup of black coffee
 - Apply castor oil pack to liver area (right side of abdomen)

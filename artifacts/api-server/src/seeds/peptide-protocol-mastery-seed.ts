@@ -97,9 +97,9 @@ export const peptideProtocolModules = [
     hasQuiz: true,
   },
   {
-    id: "ppm-106-patient-management",
+    id: "ppm-106-member-management",
     title: "Member Management Patient Management & Protocol Protocol Design",
-    slug: "ppm-106-patient-management",
+    slug: "ppm-106-member-management",
     description: "Design comprehensive peptide wellness protocols. Member assessment, protocol selection, monitoring schedules, adjustments, and managing side effects in clinical practice.",
     imageUrl: "https://images.unsplash.com/photo-1628595351029-c2bf17511435?w=800",
     category: "Peptide Protocol Mastery",

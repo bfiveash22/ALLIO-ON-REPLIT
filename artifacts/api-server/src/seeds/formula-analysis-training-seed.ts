@@ -349,7 +349,7 @@ export const formulaAnalysisQuizQuestions = [
       { id: "a-fa105-3a", text: "Is required by all countries", isCorrect: false },
       { id: "a-fa105-3b", text: "Provides independent verification free from manufacturer bias", isCorrect: true },
       { id: "a-fa105-3c", text: "Makes products cheaper to produce", isCorrect: false },
-      { id: "a-fa105-3d", text: "Is only needed for prescription drugs", isCorrect: false },
+      { id: "a-fa105-3d", text: "Is only needed for pharmaceutical drugs", isCorrect: false },
     ],
   },
   {

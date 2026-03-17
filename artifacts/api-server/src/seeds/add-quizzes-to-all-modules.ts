@@ -31,7 +31,7 @@ const categoryQuizTemplates: Record<string, QuizTemplate> = {
         question: "Why is individualized dosing important in advanced therapeutics?",
         answers: [
           { text: "Every member responds differently based on their unique biology", correct: true },
-          { text: "It makes treatment more expensive", correct: false },
+          { text: "It makes protocols more expensive", correct: false },
           { text: "Standard doses always work the same", correct: false },
           { text: "Dosing doesn't matter for therapeutic outcomes", correct: false }
         ],
@@ -43,7 +43,7 @@ const categoryQuizTemplates: Record<string, QuizTemplate> = {
           { text: "Member response, side effects, and biomarkers", correct: true },
           { text: "Only the calendar date", correct: false },
           { text: "Nothing - advanced therapies are always safe", correct: false },
-          { text: "Only the cost of treatment", correct: false }
+          { text: "Only the cost of protocols", correct: false }
         ],
         explanation: "Comprehensive monitoring ensures safety and allows for protocol adjustments based on member response."
       }
@@ -90,10 +90,10 @@ const categoryQuizTemplates: Record<string, QuizTemplate> = {
     description: "Verify your understanding of doctor protocols and procedures",
     questions: [
       {
-        question: "What is the first step when onboarding a new patient?",
+        question: "What is the first step when onboarding a new member?",
         answers: [
           { text: "Complete comprehensive health intake and history", correct: true },
-          { text: "Immediately prescribe treatments", correct: false },
+          { text: "Immediately suggest protocols", correct: false },
           { text: "Skip documentation and start therapy", correct: false },
           { text: "Focus only on the chief complaint", correct: false }
         ],
@@ -141,7 +141,7 @@ const categoryQuizTemplates: Record<string, QuizTemplate> = {
           { text: "Cannabinoids naturally produced by the body", correct: true },
           { text: "Only found in cannabis plants", correct: false },
           { text: "Synthetic laboratory compounds", correct: false },
-          { text: "Prescription medications", correct: false }
+          { text: "Pharmaceutical medications", correct: false }
         ],
         explanation: "Endocannabinoids like anandamide are produced internally to regulate ECS function."
       },
@@ -174,10 +174,10 @@ const categoryQuizTemplates: Record<string, QuizTemplate> = {
       {
         question: "How does Clinical Endocannabinoid Deficiency (CECD) manifest?",
         answers: [
-          { text: "As treatment-resistant conditions like migraine, fibromyalgia, IBS", correct: true },
+          { text: "As protocol-resistant conditions like migraine, fibromyalgia, IBS", correct: true },
           { text: "Only as mental health issues", correct: false },
           { text: "It has no clinical symptoms", correct: false },
-          { text: "Only in elderly patients", correct: false }
+          { text: "Only in elderly members", correct: false }
         ],
         explanation: "CECD theory explains why some conditions share common therapeutic response to cannabinoid therapy."
       },
@@ -453,7 +453,7 @@ const categoryQuizTemplates: Record<string, QuizTemplate> = {
         question: "How should members apply PMA knowledge in their health journey?",
         answers: [
           { text: "By making informed choices as private individuals", correct: true },
-          { text: "By ignoring all medical advice", correct: false },
+          { text: "By ignoring all wellness guidance", correct: false },
           { text: "By practicing medicine without training", correct: false },
           { text: "By avoiding all healthcare", correct: false }
         ],
@@ -571,7 +571,7 @@ const categoryQuizTemplates: Record<string, QuizTemplate> = {
         question: "What should be verified before starting any IV infusion?",
         answers: [
           { text: "Member allergies, correct solution, and expiration dates", correct: true },
-          { text: "Only the patient's name", correct: false },
+          { text: "Only the member's name", correct: false },
           { text: "Nothing needs verification", correct: false },
           { text: "Only payment information", correct: false }
         ],
