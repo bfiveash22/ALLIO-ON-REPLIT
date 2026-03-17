@@ -674,6 +674,32 @@ export async function seedPrimaryNode(): Promise<{ node: typeof clinicNodes.$inf
   });
 }
 
+let failoverInterval: NodeJS.Timeout | null = null;
+
+export function startFailoverScheduler(intervalMs = 60000): void {
+  if (failoverInterval) return;
+  console.log(`[ClinicNode] Automatic failover scheduler started (interval: ${intervalMs / 1000}s)`);
+  failoverInterval = setInterval(async () => {
+    try {
+      const actions = await checkForFailover();
+      if (actions.length > 0) {
+        console.log(`[ClinicNode] Failover check triggered ${actions.length} action(s)`);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      console.error(`[ClinicNode] Failover check error: ${msg}`);
+    }
+  }, intervalMs);
+}
+
+export function stopFailoverScheduler(): void {
+  if (failoverInterval) {
+    clearInterval(failoverInterval);
+    failoverInterval = null;
+    console.log("[ClinicNode] Automatic failover scheduler stopped");
+  }
+}
+
 export const REPLICATION_TABLES = [
   "users",
   "member_profiles",

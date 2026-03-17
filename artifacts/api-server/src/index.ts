@@ -216,6 +216,8 @@ registerHealthRoutes(app);
   registerAutomationRoutes(app);
   const { registerClinicNodeRoutes } = await import("./routes/clinic-node-routes");
   registerClinicNodeRoutes(app);
+  const { startFailoverScheduler } = await import("./services/clinic-node-service");
+  startFailoverScheduler(60000);
 
   const { requireRole } = await import("./middleware/auth");
   app.get("/api/ai-health", requireRole("admin"), async (_req, res) => {
