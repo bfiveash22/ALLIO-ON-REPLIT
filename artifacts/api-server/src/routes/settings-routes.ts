@@ -253,8 +253,11 @@ export function registerSettingsRoutes(app: Express): void {
         return res.status(401).json({ error: "Invalid or inactive node" });
       }
 
-      const configHash = node.configHash || "";
-      if (apiKey !== configHash) {
+      if (!node.configHash) {
+        return res.status(403).json({ error: "Node has no provisioned API key. Re-register node." });
+      }
+      const incomingHash = crypto.createHash("sha256").update(apiKey).digest("hex");
+      if (!crypto.timingSafeEqual(Buffer.from(incomingHash, "hex"), Buffer.from(node.configHash, "hex"))) {
         return res.status(401).json({ error: "Invalid API key" });
       }
 

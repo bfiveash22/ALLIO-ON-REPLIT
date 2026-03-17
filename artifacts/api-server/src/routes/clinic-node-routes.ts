@@ -1,6 +1,6 @@
 import { Express, Request, Response } from "express";
 import { requireAuth, requireRole } from "../working-auth";
-import { createHash } from "crypto";
+import { createHash, timingSafeEqual } from "crypto";
 import {
   getAllNodes,
   getNodeById,
@@ -25,7 +25,11 @@ import type { HeartbeatMetrics } from "../services/clinic-node-service";
 
 function verifyNodeApiKey(providedKey: string, storedHash: string): boolean {
   const hash = createHash("sha256").update(providedKey).digest("hex");
-  return hash === storedHash;
+  try {
+    return timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(storedHash, "hex"));
+  } catch {
+    return false;
+  }
 }
 
 function getErrorMessage(error: unknown): string {
