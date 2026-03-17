@@ -1087,7 +1087,7 @@ interface PatientInfo {
 
 export async function profileFromIntakeForm(formData: IntakeFormData, patientInfo: PatientInfo): Promise<PatientProfile> {
   const transcript = `
-Patient Name: ${patientInfo.name || "Unknown"}
+Member Name: ${patientInfo.name || "Unknown"}
 Email: ${patientInfo.email || "N/A"}
 Phone: ${patientInfo.phone || "N/A"}
 Age: ${patientInfo.age || "Unknown"}

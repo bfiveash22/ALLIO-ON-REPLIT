@@ -325,7 +325,7 @@ const moduleContent: Record<string, {
       { title: "CYP450 Enzyme System", content: "Cannabinoids, especially CBD, inhibit cytochrome P450 enzymes (CYP3A4, CYP2C19, CYP2D6). These enzymes metabolize ~60% of pharmaceuticals. Inhibition can increase blood levels of other medications." },
       { title: "High-Risk Medications", content: "Exercise caution with: blood thinners (warfarin), anti-epileptics (clobazam), benzodiazepines, opioids, immunosuppressants, and drugs with narrow therapeutic windows. Monitor closely and consider dose adjustments." },
       { title: "Additive Effects", content: "Cannabinoids may have additive effects with sedatives, anxiolytics, and analgesics. This can be therapeutic (allowing lower pharmaceutical doses) but requires monitoring for excessive sedation or other effects." },
-      { title: "Practical Management", content: "Review all medications before starting cannabinoid therapy. Use lower cannabinoid doses when interactions are possible. Monitor drug levels if available. Educate patients to report any changes in medication effects." }
+      { title: "Practical Management", content: "Review all medications before starting cannabinoid therapy. Use lower cannabinoid doses when interactions are possible. Monitor drug levels if available. Educate members to report any changes in medication effects." }
     ],
     keyPoints: ["CBD inhibits CYP450 enzymes that metabolize 60% of drugs", "High-risk: warfarin, clobazam, benzos, opioids, immunosuppressants", "Additive sedation possible with CNS depressants", "Review all meds, start low, monitor closely"],
     videoUrl: "https://drive.google.com/file/d/DRUG_INTERACTIONS_VIDEO"
@@ -417,7 +417,7 @@ const moduleContent: Record<string, {
       { title: "The FFPMA 12-System Review", content: "Our comprehensive intake covers all major body systems: cardiovascular, respiratory, digestive, neurological, musculoskeletal, endocrine, immune, urinary, reproductive, integumentary, lymphatic, and mental/emotional. This ensures nothing is missed." },
       { title: "Chief Complaint Deep Dive", content: "Beyond the chief complaint, explore onset, duration, triggers, relievers, associated symptoms, previous treatments, and impact on quality of life. The 5 Rs framework (Remove, Replace, Regenerate, Restore, Rebalance) guides your thinking." },
       { title: "History Taking", content: "Past medical history, family history, social history (diet, exercise, sleep, stress, environment), medication/supplement review. Look for patterns that suggest root causes." },
-      { title: "Documentation Standards", content: "Use the intake template. Document in the patient's own words where relevant. Note your clinical impressions. Flag red flags immediately. Complete documentation within 24 hours." }
+      { title: "Documentation Standards", content: "Use the intake template. Document in the member's own words where relevant. Note your clinical impressions. Flag red flags immediately. Complete documentation within 24 hours." }
     ],
     keyPoints: ["12-system review ensures comprehensive assessment", "5 Rs framework guides root cause thinking", "Document thoroughly using templates", "Flag red flags immediately"],
     videoUrl: "https://drive.google.com/file/d/PATIENT_INTAKE_VIDEO"

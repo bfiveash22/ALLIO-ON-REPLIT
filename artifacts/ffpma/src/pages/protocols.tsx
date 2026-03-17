@@ -64,7 +64,7 @@ const protocols: Protocol[] = [
     ],
     precautions: [
       "Contraindicated in active infection or fever",
-      "Use caution in patients with bleeding disorders",
+      "Use caution in members with bleeding disorders",
       "Monitor for allergic reactions",
       "Store exosomes at proper temperature until use",
     ],
@@ -137,7 +137,7 @@ const protocols: Protocol[] = [
     precautions: [
       "Do not use if active eye infection present",
       "Remove contact lenses before application",
-      "Do not share between patients",
+      "Do not share between members",
       "Store refrigerated when not in use",
     ],
     postCare: [
