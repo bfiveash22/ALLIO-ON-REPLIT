@@ -176,7 +176,7 @@ export function FoundingFathersAboutSection() {
       <div className="relative overflow-hidden rounded-2xl border border-[#C9A54E]/20 bg-gradient-to-br from-[#1A2440] to-[#0A0E1A] p-8">
         <div className="absolute inset-0 bg-[url('/assets/founding-fathers/founders-banner.png')] bg-cover bg-center opacity-[0.05]" />
         <div className="relative z-10">
-          <div className="grid grid-cols-5 gap-4 mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
             {founders.map((founder) => (
               <div key={founder.name} className="text-center">
                 <div className="relative overflow-hidden rounded-xl border border-[#C9A54E]/20 mb-2 aspect-[3/4]">
