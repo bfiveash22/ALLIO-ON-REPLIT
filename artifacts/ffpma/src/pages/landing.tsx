@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { VideoBackground, PEXELS_VIDEOS } from "@/components/video-background";
 import { motion } from "framer-motion";
+import { FoundingFathersSection } from "@/components/founding-fathers-section";
 
 import allioIntroVideo from "@assets/videos/allio_logo_reveal_1080p.mp4";
 import {
@@ -579,6 +580,7 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+        <FoundingFathersSection />
 
         <VideoBackground
           videoUrl={PEXELS_VIDEOS.abstractLiquid}

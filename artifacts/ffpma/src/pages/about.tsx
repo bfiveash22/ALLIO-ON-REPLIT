@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FoundingFathersAboutSection } from "@/components/founding-fathers-section";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -296,6 +297,7 @@ export default function AboutPage() {
                   </Link>
                 </div>
               </div>
+              <FoundingFathersAboutSection />
             </TabsContent>
 
             <TabsContent value="philosophy" className="space-y-6">
