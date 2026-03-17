@@ -991,9 +991,9 @@ async function runPersonaValidation(
   profile: PatientProfile
 ): Promise<PersonaValidationResult> {
   const protocolSummary = JSON.stringify({
-    patientName: protocol.patientName,
-    diagnoses: profile.currentDiagnoses,
-    complaints: profile.chiefComplaints,
+    memberName: protocol.patientName,
+    conditions: profile.currentDiagnoses,
+    concerns: profile.chiefComplaints,
     injectablePeptides: protocol.injectablePeptides?.map(p => ({ name: p.name, dose: p.dose, frequency: p.frequency })),
     oralPeptides: protocol.oralPeptides?.map(p => ({ name: p.name, dose: p.dose })),
     ivTherapies: protocol.ivTherapies?.map(iv => ({ name: iv.name, frequency: iv.frequency, duration: iv.duration })),
@@ -1010,8 +1010,8 @@ async function runPersonaValidation(
   });
 
   const profileSummary = JSON.stringify({
-    diagnoses: profile.currentDiagnoses,
-    complaints: profile.chiefComplaints,
+    conditions: profile.currentDiagnoses,
+    concerns: profile.chiefComplaints,
     medications: profile.currentMedications,
     environmentalExposures: profile.environmentalExposures,
     gutHealth: profile.gutHealth,

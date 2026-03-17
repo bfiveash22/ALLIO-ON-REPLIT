@@ -1041,7 +1041,7 @@ export async function generateKathrynSmithSlides(): Promise<ProtocolSlideResult>
       '',
       'CRITICAL PERIOD (Ages 6-13):',
       '• Chronic mold exposure — bedroom roof leaked → respiratory infections in both sisters',
-      '• Prescribed tetracycline as child → permanent gray teeth',
+      '• Given tetracycline as child → permanent gray teeth',
       '• Sexual abuse by uncle (ages 6-10) — not disclosed until age 32',
       '• Early puberty at age 10 (trauma → cortisol → estradiol/testosterone disruption)',
       '• Age 13: Family moved to new house (mold exposure resolved)',

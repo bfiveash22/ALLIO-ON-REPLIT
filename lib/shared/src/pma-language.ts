@@ -94,6 +94,8 @@ export const PMA_FORBIDDEN_PATTERNS = [
   /\bdiagnoses\b/i,
   /\bdiagnose\b/i,
   /\bprescribe\b/i,
+  /\bprescribed\b/i,
+  /\bprescribes\b/i,
   /\bprescription\b/i,
   /\bcure\b/i,
   /\bcures\b/i,
