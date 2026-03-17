@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 
 export interface AIProviderResult {
   response: string;
@@ -17,7 +18,7 @@ interface ProviderConfig {
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 async function callOpenAI(prompt: string, systemPrompt?: string, maxTokens?: number): Promise<string> {
-  const messages: any[] = [];
+  const messages: ChatCompletionMessageParam[] = [];
   if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
   messages.push({ role: 'user', content: prompt });
 
@@ -42,8 +43,8 @@ async function callClaude(prompt: string, systemPrompt?: string, maxTokens?: num
     system: systemPrompt || undefined,
     messages: [{ role: 'user', content: prompt }],
   });
-  const textBlock = response.content.find((c: any) => c.type === 'text') as any;
-  return textBlock?.text || '';
+  const textBlock = response.content.find((c) => c.type === 'text');
+  return textBlock && 'text' in textBlock ? textBlock.text : '';
 }
 
 async function callGemini(prompt: string, systemPrompt?: string): Promise<string> {
@@ -70,8 +71,8 @@ async function callSelfHosted(prompt: string, systemPrompt?: string): Promise<st
     throw new Error(`Self-hosted AI returned ${response.status}: ${await response.text()}`);
   }
 
-  const data = await response.json();
-  return data.response || data.text || data.content || '';
+  const data = await response.json() as Record<string, unknown>;
+  return String(data.response || data.text || data.content || '');
 }
 
 async function callAbacus(prompt: string, systemPrompt?: string): Promise<string> {
@@ -187,9 +188,9 @@ export async function callWithFallback(
             fallbackUsed,
           };
         }
-      } catch (err: any) {
-        lastError = err;
-        console.warn(`[AI Fallback] ${provider.name} failed${attempt > 0 ? ` (attempt ${attempt + 1})` : ''}: ${err.message}`);
+      } catch (err: unknown) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+        console.warn(`[AI Fallback] ${provider.name} failed${attempt > 0 ? ` (attempt ${attempt + 1})` : ''}: ${lastError.message}`);
       }
     }
   }

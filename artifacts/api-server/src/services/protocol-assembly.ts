@@ -26,6 +26,7 @@ import {
 } from "./slides";
 import { researchApi } from "./research-api";
 import { generateProtocolPDF, generateDailySchedulePDF, generatePeptideSchedulePDF } from "./protocol-pdf";
+import { callWithFallback } from "./ai-fallback";
 
 export interface ProtocolCitation {
   title: string;
@@ -736,15 +737,15 @@ const DOSING_PATTERNS: Record<string, RegExp> = {
   "cbd": /\d+\s*mg/i,
 };
 
-export async function validateProtocolWithAgents(
+function runDeterministicQAChecks(
   protocol: HealingProtocol,
   profile: PatientProfile
-): Promise<{ valid: boolean; issues: string[]; suggestions: string[]; catalogMatchRate: number }> {
+): { issues: string[]; suggestions: string[]; catalogMatchRate: number } {
   const issues: string[] = [];
   const suggestions: string[] = [];
 
   const allText = JSON.stringify(profile).toLowerCase();
-  const hasCancer = ["cancer","tumor","carcinoma","malignant","HER2","ER+","PR+"].some(k => allText.includes(k.toLowerCase()));
+  const hasCancer = ["cancer","tumor","carcinoma","malignant","her2","er+","pr+"].some(k => allText.includes(k));
   const hasMold = allText.includes("mold") || allText.includes("mycotoxin");
   const hasMercury = allText.includes("mercury") || allText.includes("amalgam");
   const hasTrauma = profile.traumaHistory?.childhoodTrauma || allText.includes("trauma") || allText.includes("ptsd");
@@ -752,54 +753,54 @@ export async function validateProtocolWithAgents(
   const hasAutoimmune = allText.includes("autoimmune") || allText.includes("lupus") || allText.includes("hashimoto");
 
   if (!protocol.suppositories?.length && !protocol.ecsProtocol?.daytimeFormula) {
-    issues.push("HIPPOCRATES: Missing ECS suppository protocol — every FF PMA protocol requires ECS optimization");
+    issues.push("Missing ECS suppository protocol — every FF PMA protocol requires ECS optimization");
   }
   if (!protocol.sirtuinStack?.mitoSTAC) {
-    issues.push("PARACELSUS: Missing MitoSTAC sirtuin stack — required for mitochondrial support");
+    issues.push("Missing MitoSTAC sirtuin stack — required for mitochondrial support");
   }
   if (!protocol.liposomals?.length) {
-    issues.push("PARACELSUS: Missing liposomal supplements — required modality (glutathione, curcumin, D3/K2)");
+    issues.push("Missing liposomal supplements — required modality (glutathione, curcumin, D3/K2)");
   }
   if (!protocol.dietaryProtocol?.phases?.length && (protocol.dietaryGuidelines?.length || 0) < 3) {
-    issues.push("ORACLE: Missing dietary protocol with phased approach — required for every protocol");
+    issues.push("Missing dietary protocol with phased approach — required for every protocol");
   }
   if (!protocol.sirtuinStack?.glyNAC) {
-    issues.push("PARACELSUS: Missing GlyNAC protocol — glycine + NAC required for glutathione synthesis");
+    issues.push("Missing GlyNAC protocol — glycine + NAC required for glutathione synthesis");
   }
   if (!protocol.sirtuinStack?.nadPrecursors) {
-    issues.push("PARACELSUS: Missing NAD+ precursors (NMN/NR) — required for sirtuin activation");
+    issues.push("Missing NAD+ precursors (NMN/NR) — required for sirtuin activation");
   }
   if (hasCancer && !protocol.ivTherapies?.some(iv => iv.name?.toLowerCase().includes("vitamin c"))) {
-    issues.push("HIPPOCRATES: Cancer patient missing high-dose Vitamin C IV — critical for cancer protocol");
+    issues.push("Cancer patient missing high-dose Vitamin C IV — critical for cancer protocol");
   }
   if (hasMold && !protocol.nebulization?.length) {
-    issues.push("HIPPOCRATES: Mold exposure present but no nebulization protocol — nebulized glutathione 3x/week recommended");
+    issues.push("Mold exposure present but no nebulization protocol — nebulized glutathione 3x/week recommended");
   }
   if (hasAutoimmune && !protocol.ivTherapies?.some(iv => iv.name?.toLowerCase().includes("nad"))) {
-    issues.push("HIPPOCRATES: Autoimmune condition present — NAD+ IV therapy recommended");
+    issues.push("Autoimmune condition present — NAD+ IV therapy recommended");
   }
   if (hasMercury && !protocol.detoxProtocols?.some(d => d.name?.toLowerCase().includes("chelat") || d.instructions?.toLowerCase().includes("dmsa") || d.instructions?.toLowerCase().includes("edta"))) {
-    issues.push("HIPPOCRATES: Mercury exposure — chelation protocol (DMSA/EDTA) required in detox");
+    issues.push("Mercury exposure — chelation protocol (DMSA/EDTA) required in detox");
   }
   if (hasTrauma && !protocol.lifestyleRecommendations?.some(l => l.recommendation?.toLowerCase().includes("emdr") || l.recommendation?.toLowerCase().includes("eft"))) {
-    suggestions.push("HIPPOCRATES: Trauma history present — recommend EMDR/EFT/somatic therapy in lifestyle section");
+    suggestions.push("Trauma history present — recommend EMDR/EFT/somatic therapy in lifestyle section");
   }
   if (hasGut && !protocol.oralPeptides?.some(p => p.name?.toLowerCase().includes("bpc"))) {
-    issues.push("PARACELSUS: Gut issues present — oral BPC-157 required for gut lining repair");
+    issues.push("Gut issues present — oral BPC-157 required for gut lining repair");
   }
   if (!protocol.detoxProtocols?.some(d => d.name?.toLowerCase().includes("castor"))) {
-    suggestions.push("PARACELSUS: Add castor oil packs to detox protocols (3x weekly, liver area)");
+    suggestions.push("Add castor oil packs to detox protocols (3x weekly, liver area)");
   }
   if (!protocol.detoxProtocols?.some(d => d.name?.toLowerCase().includes("clay") || d.name?.toLowerCase().includes("bentonite"))) {
-    suggestions.push("PARACELSUS: Add clay/bentonite baths to detox protocols for heavy metal binding");
+    suggestions.push("Add clay/bentonite baths to detox protocols for heavy metal binding");
   }
   if (!protocol.topicals?.length) {
-    suggestions.push("PARACELSUS: Consider topicals (DMSO cream, Kaneh Bosem) for localized treatment");
+    suggestions.push("Consider topicals (DMSO cream, Kaneh Bosem) for localized treatment");
   }
 
   for (const pep of protocol.injectablePeptides || []) {
     if (!pep.dose || pep.dose.toLowerCase().includes("full vial")) {
-      issues.push(`PARACELSUS: Peptide "${pep.name}" has vague dosing ("${pep.dose}") — must specify exact mg and volume`);
+      issues.push(`Peptide "${pep.name}" has vague dosing ("${pep.dose}") — must specify exact mg and volume`);
     }
   }
 
@@ -826,32 +827,173 @@ export async function validateProtocolWithAgents(
   }
   const catalogMatchRate = allProductNames.length > 0 ? Math.round((catalogMatches / allProductNames.length) * 100) : 100;
   if (catalogMatchRate < 60) {
-    issues.push(`ORACLE: Catalog match rate ${catalogMatchRate}% is below 60% threshold — ${nonCatalogItems.length} products not in FF PMA catalog: ${nonCatalogItems.slice(0, 5).join(", ")}`);
+    issues.push(`Catalog match rate ${catalogMatchRate}% is below 60% threshold — ${nonCatalogItems.length} products not in FF PMA catalog: ${nonCatalogItems.slice(0, 5).join(", ")}`);
   } else if (catalogMatchRate < 80) {
-    suggestions.push(`ORACLE: Catalog match rate ${catalogMatchRate}% — consider replacing non-catalog items: ${nonCatalogItems.slice(0, 3).join(", ")}`);
+    suggestions.push(`Catalog match rate ${catalogMatchRate}% — consider replacing non-catalog items: ${nonCatalogItems.slice(0, 3).join(", ")}`);
   }
 
   for (const pep of protocol.injectablePeptides || []) {
     const pepLower = pep.name.toLowerCase();
     for (const [patternName, regex] of Object.entries(DOSING_PATTERNS)) {
       if (pepLower.includes(patternName) && pep.dose && !regex.test(pep.dose)) {
-        suggestions.push(`PARACELSUS: "${pep.name}" dose "${pep.dose}" may not match expected format (e.g., numeric + unit)`);
+        suggestions.push(`"${pep.name}" dose "${pep.dose}" may not match expected format (e.g., numeric + unit)`);
         break;
       }
     }
   }
 
-  const lipoBItems = protocol.imTherapies?.filter(im => im.name?.toLowerCase().includes("lipo-b") || im.name?.toLowerCase().includes("lipo b")) || [];
   const ivLipoB = protocol.ivTherapies?.filter(iv => iv.name?.toLowerCase().includes("lipo-b") || iv.name?.toLowerCase().includes("lipo b")) || [];
   if (ivLipoB.length > 0) {
-    issues.push("HIPPOCRATES: Lipo-B is IM ONLY (216mg/mL) — found in IV section, must be moved to IM");
+    issues.push("Lipo-B is IM ONLY (216mg/mL) — found in IV section, must be moved to IM");
   }
 
+  return { issues, suggestions, catalogMatchRate };
+}
+
+const PERSONA_PROMPTS = {
+  HIPPOCRATES: `You are HIPPOCRATES, a clinical safety reviewer for the Forgotten Formula PMA. Your role is to review healing protocols for patient safety, drug interactions, contraindications, and clinical completeness.
+
+Review the protocol below against the patient profile. Return a JSON object with:
+- "issues": string[] — blocking safety/completeness problems that MUST be fixed
+- "suggestions": string[] — non-blocking improvements
+
+Focus on:
+1. Drug-drug and supplement-drug interactions
+2. Contraindications based on patient conditions, medications, and allergies
+3. Dosing safety (overdose risk, pediatric/geriatric adjustments)
+4. Missing condition-specific treatments (e.g., cancer needs high-dose Vitamin C IV)
+5. Route-of-administration errors (e.g., Lipo-B must be IM, never IV)
+6. ECS suppository protocol presence and correctness
+
+Return ONLY valid JSON. No markdown, no explanation.`,
+
+  PARACELSUS: `You are PARACELSUS, a formulation and dosing specialist for the Forgotten Formula PMA. Your role is to verify that all compounds use correct dosages, routes of administration, frequencies, and formulations from the FF PMA product catalog.
+
+Review the protocol below against the patient profile. Return a JSON object with:
+- "issues": string[] — blocking dosing/formulation errors that MUST be fixed
+- "suggestions": string[] — non-blocking formulation improvements
+
+Focus on:
+1. Peptide dosing accuracy (exact mg, volume, concentration)
+2. IV therapy dosing and infusion rates
+3. Sirtuin stack completeness (MitoSTAC, GlyNAC, NAD+ precursors)
+4. Liposomal supplement inclusion and dosing
+5. Compound-specific route enforcement (IM vs IV vs SubQ vs oral)
+6. Frequency and cycling patterns (5-on/2-off, loading phases)
+
+Return ONLY valid JSON. No markdown, no explanation.`,
+
+  ORACLE: `You are ORACLE, a protocol completeness and methodology auditor for the Forgotten Formula PMA. Your role is to verify the protocol follows FF PMA 2026 methodology, includes all required modalities, and maintains internal consistency.
+
+Review the protocol below against the patient profile. Return a JSON object with:
+- "issues": string[] — blocking methodology violations that MUST be fixed
+- "suggestions": string[] — non-blocking improvements to protocol quality
+
+Focus on:
+1. All mandatory modalities present (ECS suppositories, sirtuin stack, liposomals, dietary protocol)
+2. Condition-appropriate modalities (mold→nebulization, mercury→chelation, cancer→Vitamin C IV)
+3. Dietary protocol has phased approach with clear timelines
+4. Detox protocols present and sequenced properly
+5. Product names match FF PMA catalog
+6. Internal consistency (no contradictory instructions)
+
+Return ONLY valid JSON. No markdown, no explanation.`,
+};
+
+interface PersonaValidationResult {
+  issues: string[];
+  suggestions: string[];
+}
+
+async function runPersonaValidation(
+  personaName: string,
+  systemPrompt: string,
+  protocol: HealingProtocol,
+  profile: PatientProfile
+): Promise<PersonaValidationResult> {
+  const protocolSummary = JSON.stringify({
+    patientName: protocol.patientName,
+    diagnoses: profile.currentDiagnoses,
+    complaints: profile.chiefComplaints,
+    injectablePeptides: protocol.injectablePeptides?.map(p => ({ name: p.name, dose: p.dose, frequency: p.frequency })),
+    oralPeptides: protocol.oralPeptides?.map(p => ({ name: p.name, dose: p.dose })),
+    ivTherapies: protocol.ivTherapies?.map(iv => ({ name: iv.name, frequency: iv.frequency, duration: iv.duration })),
+    imTherapies: protocol.imTherapies?.map(im => ({ name: im.name, dose: im.dose })),
+    supplements: protocol.supplements?.map(s => ({ name: s.name, dose: s.dose })),
+    liposomals: protocol.liposomals?.map(l => ({ name: l.name, dose: l.dose })),
+    nebulization: protocol.nebulization?.map(n => ({ name: n.name, dose: n.dose })),
+    suppositories: protocol.suppositories?.map(s => ({ name: s.name, timing: s.timing, formula: s.formula })),
+    topicals: protocol.topicals?.map(t => ({ name: t.name })),
+    ecsProtocol: protocol.ecsProtocol ? { daytime: !!protocol.ecsProtocol.daytimeFormula, nighttime: !!protocol.ecsProtocol.nighttimeFormula } : null,
+    sirtuinStack: protocol.sirtuinStack ? { mitoSTAC: !!protocol.sirtuinStack.mitoSTAC, glyNAC: !!protocol.sirtuinStack.glyNAC, nadPrecursors: !!protocol.sirtuinStack.nadPrecursors } : null,
+    dietaryProtocol: protocol.dietaryProtocol ? { phases: protocol.dietaryProtocol.phases?.length || 0 } : null,
+    detoxProtocols: protocol.detoxProtocols?.map(d => ({ name: d.name })),
+  });
+
+  const profileSummary = JSON.stringify({
+    diagnoses: profile.currentDiagnoses,
+    complaints: profile.chiefComplaints,
+    medications: profile.currentMedications,
+    environmentalExposures: profile.environmentalExposures,
+    gutHealth: profile.gutHealth,
+    traumaHistory: profile.traumaHistory ? { childhood: profile.traumaHistory.childhoodTrauma } : null,
+  });
+
+  const prompt = `PATIENT PROFILE:\n${profileSummary}\n\nPROTOCOL:\n${protocolSummary}\n\nReview this protocol and return your validation as JSON.`;
+
+  try {
+    const result = await callWithFallback(prompt, {
+      systemPrompt,
+      maxTokens: 2048,
+      maxRetries: 1,
+    });
+
+    const cleaned = result.response.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    const parsed = JSON.parse(cleaned) as Record<string, unknown>;
+    const rawIssues = Array.isArray(parsed.issues) ? parsed.issues.filter((i): i is string => typeof i === 'string') : [];
+    const rawSuggestions = Array.isArray(parsed.suggestions) ? parsed.suggestions.filter((s): s is string => typeof s === 'string') : [];
+    return {
+      issues: rawIssues.map(i => `${personaName}: ${i}`),
+      suggestions: rawSuggestions.map(s => `${personaName}: ${s}`),
+    };
+  } catch (err) {
+    console.warn(`[QA Agent] ${personaName} persona validation failed:`, err instanceof Error ? err.message : err);
+    return { issues: [], suggestions: [`${personaName}: Persona validation unavailable — review manually`] };
+  }
+}
+
+export async function validateProtocolWithAgents(
+  protocol: HealingProtocol,
+  profile: PatientProfile
+): Promise<{ valid: boolean; issues: string[]; suggestions: string[]; catalogMatchRate: number }> {
+  const deterministic = runDeterministicQAChecks(protocol, profile);
+
+  const personaResults = await Promise.allSettled([
+    runPersonaValidation("HIPPOCRATES", PERSONA_PROMPTS.HIPPOCRATES, protocol, profile),
+    runPersonaValidation("PARACELSUS", PERSONA_PROMPTS.PARACELSUS, protocol, profile),
+    runPersonaValidation("ORACLE", PERSONA_PROMPTS.ORACLE, protocol, profile),
+  ]);
+
+  const allIssues = [...deterministic.issues];
+  const allSuggestions = [...deterministic.suggestions];
+
+  for (const result of personaResults) {
+    if (result.status === "fulfilled") {
+      allIssues.push(...result.value.issues);
+      allSuggestions.push(...result.value.suggestions);
+    }
+  }
+
+  const dedupedIssues = [...new Set(allIssues)];
+  const dedupedSuggestions = [...new Set(allSuggestions)];
+
+  console.log(`[QA Agent] Validation complete — ${dedupedIssues.length} issues, ${dedupedSuggestions.length} suggestions, catalog match: ${deterministic.catalogMatchRate}%`);
+
   return {
-    valid: issues.length === 0,
-    issues,
-    suggestions,
-    catalogMatchRate,
+    valid: dedupedIssues.length === 0,
+    issues: dedupedIssues,
+    suggestions: dedupedSuggestions,
+    catalogMatchRate: deterministic.catalogMatchRate,
   };
 }
 
