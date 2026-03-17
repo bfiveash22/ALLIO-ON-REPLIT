@@ -506,6 +506,207 @@ export function generateProtocolPDF(
         }
       }
 
+      if (protocol.ecsProtocol?.overview) {
+        newPage(doc, pn);
+        drawSectionHeader(doc, "ECS Protocol — Endocannabinoid System Optimization", "#2E7D32");
+        drawBody(doc, protocol.ecsProtocol.overview);
+        doc.moveDown(0.5);
+
+        drawSubheader(doc, "Daytime Suppository Formula");
+        const df = protocol.ecsProtocol.daytimeFormula;
+        if (df) {
+          drawLabelValue(doc, "CBD", df.CBD || "N/A");
+          drawLabelValue(doc, "CBG", df.CBG || "N/A");
+          if (df.CBN) drawLabelValue(doc, "CBN", df.CBN);
+          if (df.THC) drawLabelValue(doc, "THC", df.THC);
+          drawLabelValue(doc, "DMSO", df.DMSO || "N/A");
+          drawLabelValue(doc, "Base", df.base || "cacao butter");
+          drawLabelValue(doc, "Delivery", df.deliveryMethod || "suppository");
+        }
+        doc.moveDown(0.3);
+
+        drawSubheader(doc, "Nighttime Suppository Formula");
+        const nf = protocol.ecsProtocol.nighttimeFormula;
+        if (nf) {
+          drawLabelValue(doc, "CBD", nf.CBD || "N/A");
+          if (nf.CBG) drawLabelValue(doc, "CBG", nf.CBG);
+          drawLabelValue(doc, "CBN", nf.CBN || "N/A");
+          drawLabelValue(doc, "THC", nf.THC || "N/A");
+          drawLabelValue(doc, "DMSO", nf.DMSO || "N/A");
+          drawLabelValue(doc, "Base", nf.base || "cacao butter");
+        }
+        doc.moveDown(0.3);
+
+        if (protocol.ecsProtocol.tincture) {
+          drawSubheader(doc, `Tincture: ${protocol.ecsProtocol.tincture.name}`);
+          drawLabelValue(doc, "Cannabinoids", protocol.ecsProtocol.tincture.cannabinoids?.join(", ") || "Full spectrum");
+          drawLabelValue(doc, "Dose", protocol.ecsProtocol.tincture.dose || "1-2 mL");
+          drawLabelValue(doc, "Frequency", protocol.ecsProtocol.tincture.frequency || "2x daily sublingual");
+        }
+
+        if (protocol.ecsProtocol.targetedRatios?.length > 0) {
+          doc.moveDown(0.3);
+          drawSubheader(doc, "Condition-Specific Cannabinoid Ratios");
+          protocol.ecsProtocol.targetedRatios.forEach(tr => {
+            checkPage(doc, 25);
+            doc.fontSize(10).fillColor(COLORS.secondary).text(`${tr.condition}:`, 65, doc.y, { continued: true });
+            doc.fillColor(COLORS.text).text(` ${tr.ratio} — ${tr.rationale}`);
+          });
+        }
+
+        if (protocol.ecsProtocol.molecularTargets?.length > 0) {
+          doc.moveDown(0.3);
+          drawSubheader(doc, "Molecular Targets");
+          protocol.ecsProtocol.molecularTargets.forEach(t => drawBullet(doc, t));
+        }
+      }
+
+      if (protocol.suppositories?.length > 0) {
+        checkPage(doc, 100);
+        drawSectionHeader(doc, "Suppository Protocols", "#2E7D32");
+        protocol.suppositories.forEach(s => {
+          checkPage(doc, 60);
+          doc.fontSize(11).fillColor(COLORS.primary).text(`${s.name} (${s.timing})`, 65);
+          drawLabelValue(doc, "Formula", s.formula);
+          if (s.cannabinoids?.CBD) drawLabelValue(doc, "CBD", s.cannabinoids.CBD);
+          if (s.cannabinoids?.CBG) drawLabelValue(doc, "CBG", s.cannabinoids.CBG);
+          if (s.cannabinoids?.CBN) drawLabelValue(doc, "CBN", s.cannabinoids.CBN);
+          if (s.cannabinoids?.THC) drawLabelValue(doc, "THC", s.cannabinoids.THC);
+          if (s.cannabinoids?.DMSO) drawLabelValue(doc, "DMSO", s.cannabinoids.DMSO);
+          drawLabelValue(doc, "Base", s.base);
+          drawLabelValue(doc, "Frequency", s.frequency);
+          drawLabelValue(doc, "Purpose", s.purpose);
+          doc.moveDown(0.3);
+        });
+      }
+
+      if (protocol.sirtuinStack?.mitoSTAC) {
+        newPage(doc, pn);
+        drawSectionHeader(doc, "Sirtuin & Mitochondrial Support", "#6A1B9A");
+        const ss = protocol.sirtuinStack;
+
+        drawSubheader(doc, "MitoSTAC Complex (Sirtuin Activation)");
+        drawLabelValue(doc, "Resveratrol", ss.mitoSTAC.resveratrol);
+        drawLabelValue(doc, "Pterostilbene", ss.mitoSTAC.pterostilbene);
+        drawLabelValue(doc, "Quercetin", ss.mitoSTAC.quercetin);
+        drawLabelValue(doc, "Fisetin", ss.mitoSTAC.fisetin);
+        doc.moveDown(0.3);
+
+        drawSubheader(doc, "NAD+ Precursors");
+        drawLabelValue(doc, ss.nadPrecursors.compound, `${ss.nadPrecursors.dose} — ${ss.nadPrecursors.frequency}`);
+        doc.moveDown(0.3);
+
+        drawSubheader(doc, "GlyNAC Protocol");
+        drawLabelValue(doc, "Glycine", ss.glyNAC.glycine);
+        drawLabelValue(doc, "NAC", ss.glyNAC.nac);
+        drawLabelValue(doc, "Frequency", ss.glyNAC.frequency);
+        doc.moveDown(0.3);
+
+        if (ss.mitochondrialSupport?.length > 0) {
+          drawSubheader(doc, "Mitochondrial Support Stack");
+          ss.mitochondrialSupport.forEach(m => {
+            checkPage(doc, 20);
+            doc.fontSize(10).fillColor(COLORS.teal).text(`\u2022 ${m.name}`, 65, doc.y, { continued: true });
+            doc.fillColor(COLORS.text).text(` — ${m.dose} (${m.purpose})`);
+          });
+        }
+
+        if (ss.methylationSupport?.length > 0) {
+          doc.moveDown(0.3);
+          drawSubheader(doc, "Methylation Support");
+          ss.methylationSupport.forEach(m => {
+            drawBullet(doc, `${m.name}: ${m.dose}`);
+          });
+        }
+      }
+
+      if (protocol.liposomals?.length > 0) {
+        checkPage(doc, 100);
+        drawSectionHeader(doc, "Liposomal Supplements", "#00838F");
+        protocol.liposomals.forEach(l => {
+          checkPage(doc, 35);
+          doc.fontSize(10).fillColor(COLORS.teal).text(`\u2022 ${l.name}`, 65, doc.y, { continued: true });
+          doc.fillColor(COLORS.text).text(` — ${l.dose} (${l.timing})`);
+          doc.fontSize(9).fillColor(COLORS.lightText).text(`    Purpose: ${l.purpose}`, 70);
+        });
+      }
+
+      if (protocol.nebulization?.length > 0) {
+        checkPage(doc, 100);
+        drawSectionHeader(doc, "Nebulization Protocols", "#4527A0");
+        protocol.nebulization.forEach(n => {
+          checkPage(doc, 60);
+          doc.fontSize(11).fillColor(COLORS.primary).text(n.name, 65);
+          drawLabelValue(doc, "Solution", n.solution);
+          drawLabelValue(doc, "Dose", n.dose);
+          drawLabelValue(doc, "Frequency", n.frequency);
+          drawLabelValue(doc, "Duration", n.duration);
+          drawLabelValue(doc, "Purpose", n.purpose);
+          doc.moveDown(0.3);
+        });
+      }
+
+      if (protocol.topicals?.length > 0) {
+        checkPage(doc, 100);
+        drawSectionHeader(doc, "Topical Protocols", "#EF6C00");
+        protocol.topicals.forEach(t => {
+          checkPage(doc, 40);
+          doc.fontSize(11).fillColor(COLORS.primary).text(`${t.name} (${t.form})`, 65);
+          drawLabelValue(doc, "Application", t.application);
+          drawLabelValue(doc, "Frequency", t.frequency);
+          drawLabelValue(doc, "Purpose", t.purpose);
+          doc.moveDown(0.3);
+        });
+      }
+
+      if (protocol.exosomes?.length > 0) {
+        checkPage(doc, 100);
+        drawSectionHeader(doc, "Exosome Therapy", "#880E4F");
+        protocol.exosomes.forEach(e => {
+          checkPage(doc, 60);
+          doc.fontSize(11).fillColor(COLORS.primary).text(e.name, 65);
+          drawLabelValue(doc, "Source", e.source);
+          drawLabelValue(doc, "Concentration", e.concentration);
+          drawLabelValue(doc, "Route", e.route);
+          drawLabelValue(doc, "Frequency", e.frequency);
+          drawLabelValue(doc, "Purpose", e.purpose);
+          if (e.notes) doc.fontSize(9).fillColor(COLORS.lightText).text(`Note: ${e.notes}`, 65);
+          doc.moveDown(0.3);
+        });
+      }
+
+      if (protocol.dietaryProtocol?.phases?.length > 0) {
+        newPage(doc, pn);
+        drawSectionHeader(doc, "Dietary Protocol");
+        protocol.dietaryProtocol.phases.forEach((phase, idx) => {
+          checkPage(doc, 80);
+          const phaseColors = ["#C62828", "#EF6C00", "#2E7D32"];
+          const startY = doc.y;
+          doc.rect(55, startY, doc.page.width - 110, 22).fill(phaseColors[idx] || COLORS.primary);
+          doc.fontSize(11).fillColor(COLORS.white).text(`${phase.name} (${phase.duration})`, 65, startY + 4);
+          doc.y = startY + 28;
+          doc.fontSize(10).fillColor(COLORS.text).text(phase.focus, 65, undefined, { width: doc.page.width - 130 });
+          doc.moveDown(0.2);
+          if (phase.eliminate?.length > 0) {
+            doc.fontSize(9).fillColor(COLORS.urgentRed).text("ELIMINATE:", 65);
+            phase.eliminate.forEach(e => drawBullet(doc, e, 10));
+          }
+          if (phase.emphasize?.length > 0) {
+            doc.fontSize(9).fillColor("#2E7D32").text("EMPHASIZE:", 65);
+            phase.emphasize.forEach(e => drawBullet(doc, e, 10));
+          }
+          doc.moveDown(0.4);
+        });
+
+        if (protocol.dietaryProtocol.intermittentFasting) {
+          drawSubheader(doc, "Intermittent Fasting");
+          const fast = protocol.dietaryProtocol.intermittentFasting;
+          drawLabelValue(doc, "Protocol", fast.protocol);
+          drawLabelValue(doc, "Schedule", fast.schedule);
+          drawLabelValue(doc, "Purpose", fast.purpose);
+        }
+      }
+
       if (protocol.contraindications?.length > 0) {
         checkPage(doc, 80);
         drawSectionHeader(doc, "Contraindications & Warnings", COLORS.urgentRed);
@@ -524,6 +725,11 @@ export function generateProtocolPDF(
       protocol.imTherapies?.forEach(im => allProducts.push({ name: im.name, category: "IM Therapy", dose: im.dose }));
       protocol.detoxProtocols?.forEach(d => allProducts.push({ name: d.name, category: "Detox" }));
       protocol.parasiteAntiviralProtocols?.forEach(p => allProducts.push({ name: p.name, category: "Antiparasitic/Antiviral", dose: p.dose }));
+      protocol.suppositories?.forEach(s => allProducts.push({ name: s.name, category: "Suppository" }));
+      protocol.liposomals?.forEach(l => allProducts.push({ name: l.name, category: "Liposomal", dose: l.dose }));
+      protocol.exosomes?.forEach(e => allProducts.push({ name: e.name, category: "Exosome" }));
+      protocol.topicals?.forEach(t => allProducts.push({ name: t.name, category: "Topical" }));
+      protocol.nebulization?.forEach(n => allProducts.push({ name: n.name, category: "Nebulization" }));
 
       drawInfoBox(doc, `Total items in protocol: ${allProducts.length} | Shop at: ${FF_SHOP}`);
       doc.moveDown(0.3);
@@ -903,6 +1109,54 @@ export function generatePeptideSchedulePDF(
           if (iv.notes) {
             doc.fontSize(9).fillColor(COLORS.lightText).text(`Note: ${iv.notes}`, 70, undefined, { width: doc.page.width - 140 });
           }
+          doc.moveDown(0.4);
+        });
+      }
+
+      if (protocol.suppositories?.length > 0) {
+        checkPage(doc, 100);
+        drawSectionHeader(doc, "ECS Suppository Protocols", "#2E7D32");
+        drawInfoBox(doc, "Suppositories bypass first-pass metabolism for higher bioavailability. Store refrigerated, insert rectally.");
+        doc.moveDown(0.3);
+
+        protocol.suppositories.forEach(s => {
+          checkPage(doc, 80);
+          doc.fontSize(12).fillColor(COLORS.primary).text(`${s.name} (${s.timing})`, 65);
+          drawLabelValue(doc, "Formula", s.formula);
+          drawLabelValue(doc, "Base", s.base);
+          drawLabelValue(doc, "Frequency", s.frequency);
+          drawLabelValue(doc, "Purpose", s.purpose);
+          doc.moveDown(0.4);
+        });
+      }
+
+      if (protocol.exosomes?.length > 0) {
+        checkPage(doc, 100);
+        drawSectionHeader(doc, "Exosome Therapy", "#880E4F");
+        protocol.exosomes.forEach(e => {
+          checkPage(doc, 80);
+          doc.fontSize(12).fillColor(COLORS.primary).text(e.name, 65);
+          drawLabelValue(doc, "Source", e.source);
+          drawLabelValue(doc, "Concentration", e.concentration);
+          drawLabelValue(doc, "Route", e.route);
+          drawLabelValue(doc, "Frequency", e.frequency);
+          drawLabelValue(doc, "Purpose", e.purpose);
+          if (e.notes) doc.fontSize(9).fillColor(COLORS.lightText).text(`Note: ${e.notes}`, 70, undefined, { width: doc.page.width - 140 });
+          doc.moveDown(0.4);
+        });
+      }
+
+      if (protocol.nebulization?.length > 0) {
+        checkPage(doc, 100);
+        drawSectionHeader(doc, "Nebulization Protocols", "#4527A0");
+        protocol.nebulization.forEach(n => {
+          checkPage(doc, 80);
+          doc.fontSize(12).fillColor(COLORS.primary).text(n.name, 65);
+          drawLabelValue(doc, "Solution", n.solution);
+          drawLabelValue(doc, "Dose", n.dose);
+          drawLabelValue(doc, "Frequency", n.frequency);
+          drawLabelValue(doc, "Duration", n.duration);
+          drawLabelValue(doc, "Purpose", n.purpose);
           doc.moveDown(0.4);
         });
       }

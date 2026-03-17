@@ -11,6 +11,14 @@ import type {
   PatientProfile,
   HealingProtocol,
   ProtocolPhase,
+  SuppositoryProtocol,
+  LiposomalProtocol,
+  ExosomeProtocol,
+  TopicalProtocol,
+  NebulizationProtocol,
+  ECSProtocol,
+  SirtuinProtocol,
+  DietaryProtocol,
 } from "@shared/types/protocol-assembly";
 import {
   analyzeTranscript,
@@ -273,6 +281,162 @@ function enforce5RPhases(protocol: HealingProtocol): HealingProtocol {
   };
 }
 
+function enforceAllModalities(protocol: HealingProtocol, ecsProfile: ECSProfile): HealingProtocol {
+  const ecsProtocol: ECSProtocol = {
+    overview: ecsProfile.overview,
+    daytimeFormula: {
+      CBD: "25-50mg",
+      CBG: "10-25mg",
+      CBN: "5-10mg",
+      DMSO: "5-10%",
+      base: "cacao butter",
+      deliveryMethod: "suppository",
+    },
+    nighttimeFormula: {
+      CBD: "50-100mg",
+      CBN: "10-20mg",
+      THC: "10-25mg",
+      DMSO: "5-10%",
+      base: "cacao butter",
+      deliveryMethod: "suppository",
+    },
+    tincture: {
+      name: "Elixir for Everything",
+      cannabinoids: ["CBD", "CBG", "CBC", "CBDV", "CBN", "THCV", "CBDA", "CBGA", "CBCA", "THCA", "CBDVA", "CBCVA"],
+      dose: "1-2 mL",
+      frequency: "2x daily sublingual, hold 60 seconds",
+    },
+    targetedRatios: [
+      { condition: "Breast Cancer (ER+, HER2+)", ratio: "THC:CBD 1:1", rationale: "High-dose THC for apoptosis induction" },
+      { condition: "Inflammation/Mold Recovery", ratio: "CBD-dominant full spectrum", rationale: "NF-kB suppression, immune modulation" },
+      { condition: "Trauma/Anxiety", ratio: "CBD:THC 20:1", rationale: "Anxiolysis without psychoactive overload" },
+      { condition: "Pain/Tissue Repair", ratio: "CBD:THC 1:1 or 2:1", rationale: "Balanced analgesic and anti-inflammatory" },
+    ],
+    ecsSupport: ecsProfile.ecsSupport,
+    molecularTargets: ecsProfile.molecularTargets,
+  };
+
+  const suppositories: SuppositoryProtocol[] = [
+    {
+      name: "ECS Daytime Suppository",
+      timing: "daytime",
+      formula: "CBD 25-50mg + CBG 10-25mg + CBN 5-10mg + DMSO 5-10%",
+      cannabinoids: { CBD: "25-50mg", CBG: "10-25mg", CBN: "5-10mg", DMSO: "5-10%" },
+      base: "cacao butter",
+      frequency: "1x daily (morning with breakfast)",
+      purpose: "Anti-inflammatory, anti-proliferative, mood stabilization without sedation",
+    },
+    {
+      name: "ECS Nighttime Suppository",
+      timing: "nighttime",
+      formula: "CBD 50-100mg + THC 10-25mg + CBN 10-20mg + DMSO 5-10%",
+      cannabinoids: { CBD: "50-100mg", THC: "10-25mg", CBN: "10-20mg", DMSO: "5-10%" },
+      base: "cacao butter",
+      frequency: "1x daily (bedtime)",
+      purpose: "Deep sleep, overnight immune activation, CB2-mediated anti-tumor activity",
+    },
+  ];
+
+  const sirtuinStack: SirtuinProtocol = {
+    mitoSTAC: {
+      resveratrol: "500mg daily",
+      pterostilbene: "100mg daily",
+      quercetin: "500mg 2x daily",
+      fisetin: "100mg daily",
+    },
+    nadPrecursors: {
+      compound: "NMN",
+      dose: "500-1000mg daily",
+      frequency: "Daily with morning meal",
+    },
+    glyNAC: {
+      glycine: "2-3g 2x daily",
+      nac: "600mg 2x daily",
+      frequency: "Daily, split AM/PM",
+    },
+    mitochondrialSupport: [
+      { name: "CoQ10 (Ubiquinol)", dose: "200-400mg daily", purpose: "Electron transport chain, ATP production" },
+      { name: "L-Carnitine", dose: "1000-2000mg daily", purpose: "Fatty acid transport into mitochondria" },
+      { name: "PQQ", dose: "20mg daily", purpose: "Mitochondrial biogenesis (new mitochondria)" },
+      { name: "D-Ribose", dose: "5g 2x daily", purpose: "ATP precursor, cellular energy" },
+    ],
+    methylationSupport: [
+      { name: "TMG", dose: "500-1000mg daily" },
+      { name: "Methylfolate", dose: "1000mcg daily" },
+      { name: "Methylcobalamin", dose: "1000-5000mcg daily" },
+    ],
+  };
+
+  const liposomals: LiposomalProtocol[] = [
+    { name: "Liposomal Glutathione", dose: "500mg", frequency: "Daily", timing: "Morning, empty stomach", purpose: "Master antioxidant, mercury + mold detox support" },
+    { name: "Liposomal Curcumin", dose: "1000mg", frequency: "2x daily", timing: "With meals", purpose: "Anti-inflammatory, anti-cancer (NF-kB, COX-2 inhibition)" },
+    { name: "Liposomal Vitamin C", dose: "2000mg", frequency: "Daily", timing: "Morning", purpose: "Immune support, antioxidant, collagen synthesis" },
+  ];
+
+  const nebulization: NebulizationProtocol[] = [
+    { name: "Nebulized Glutathione", solution: "200mg/mL glutathione in saline", dose: "3mL per session", frequency: "3x weekly", duration: "15-20 minutes", purpose: "Direct lung support for chronic cough, mold mycotoxin clearance, respiratory healing" },
+    { name: "Nebulized Colloidal Silver", solution: "10ppm colloidal silver", dose: "5mL per session", frequency: "As needed for respiratory symptoms", duration: "10-15 minutes", purpose: "Antimicrobial support for sinus/respiratory infections" },
+  ];
+
+  const topicals: TopicalProtocol[] = [
+    { name: "CBD/CBG Topical Cream", form: "cream", application: "Apply to breast area (right breast, tumor site)", frequency: "Daily", purpose: "Localized CB2 activation at tumor site" },
+    { name: "Castor Oil Pack", form: "pack", application: "Over liver and breast area, warm compress 45-60 min", frequency: "3x weekly", purpose: "Lymphatic drainage, detoxification, immune stimulation" },
+    { name: "DMSO + Magnesium Oil", form: "topical spray", application: "Apply to joints and areas of pain", frequency: "As needed", purpose: "Transdermal magnesium absorption, anti-inflammatory" },
+  ];
+
+  const exosomes: ExosomeProtocol[] = [
+    { name: "Mesenchymal Stem Cell Exosomes", source: "Umbilical cord MSC-derived", concentration: "50 billion particles/dose", route: "IV infusion", frequency: "Monthly for 3 months, then quarterly", purpose: "Immune modulation, tissue regeneration, anti-inflammatory signaling", notes: "Schedule after initial detox phase (week 8+)" },
+  ];
+
+  const dietaryProtocol: DietaryProtocol = {
+    phases: [
+      {
+        name: "Phase 1: Anti-Inflammatory Detox",
+        duration: "Weeks 1-4",
+        focus: "Eliminate inflammatory triggers, support detoxification pathways",
+        eliminate: ["Processed foods", "Sugar", "Gluten", "Dairy", "Soy", "Alcohol", "Caffeine", "Xenoestrogens (plastics, conventional produce, hormone-laden meat)"],
+        emphasize: ["Organic vegetables (50% raw/50% cooked) — cruciferous priority", "Wild-caught fish (salmon, sardines, mackerel)", "Grass-fed/pastured meats (moderate)", "Healthy fats (avocado, olive oil, coconut oil, ghee, MCT oil)", "Fermented foods (kefir, sauerkraut, kimchi)", "Bone broth 2-3 cups daily"],
+      },
+      {
+        name: "Phase 2: Anti-Estrogen Nutrition",
+        duration: "Weeks 5-8",
+        focus: "Critical for ER+ cancer — optimize estrogen metabolism",
+        eliminate: ["All Phase 1 eliminations continue", "Flax-free for first 2 weeks (then introduce ground flaxseed)"],
+        emphasize: ["Cruciferous vegetables daily (natural DIM, I3C)", "Ground flaxseed 2 tbsp daily (lignans)", "Green tea 3-4 cups daily (EGCG)", "Turmeric 1-2 tsp daily in food"],
+      },
+      {
+        name: "Phase 3: Cancer-Starving Modified Keto",
+        duration: "Weeks 9+",
+        focus: "Metabolic pressure on cancer cells via ketosis",
+        eliminate: ["Carbs above 50-100g daily (vegetables only)"],
+        emphasize: ["High healthy fat 60-70% calories", "Moderate protein 0.8-1g/lb bodyweight", "Continued cruciferous, fermented foods, bone broth"],
+      },
+    ],
+    intermittentFasting: {
+      protocol: "16:8",
+      schedule: "Eat 12pm-8pm, fast 8pm-12pm",
+      purpose: "Autophagy, cellular cleanup, cancer suppression",
+    },
+    specialConsiderations: [
+      "ER+/PR+ cancer requires strict avoidance of xenoestrogens",
+      "Copper-rich foods emphasized (organ meats, dark chocolate, nuts) for p53 restoration",
+      "No microwave use (EMF exposure, nutrient destruction)",
+    ],
+  };
+
+  return {
+    ...protocol,
+    ecsProtocol: protocol.ecsProtocol || ecsProtocol,
+    suppositories: protocol.suppositories?.length ? protocol.suppositories : suppositories,
+    sirtuinStack: protocol.sirtuinStack || sirtuinStack,
+    liposomals: protocol.liposomals?.length ? protocol.liposomals : liposomals,
+    nebulization: protocol.nebulization?.length ? protocol.nebulization : nebulization,
+    topicals: protocol.topicals?.length ? protocol.topicals : topicals,
+    exosomes: protocol.exosomes?.length ? protocol.exosomes : exosomes,
+    dietaryProtocol: protocol.dietaryProtocol || dietaryProtocol,
+  };
+}
+
 function persistPDF(pdfBuffer: Buffer, patientName: string, dateStr: string): string {
   const sanitizedName = patientName.replace(/[^a-zA-Z0-9_-]/g, "_");
   const filename = `${sanitizedName}_protocol_${dateStr}.pdf`;
@@ -387,7 +551,8 @@ export async function rebuildKathrynSmithProtocol(): Promise<{
   console.log("[Kathryn Smith Rebuild] Protocol generated and 5R phases enforced");
 
   const ecsProfile = buildECSProfile();
-  console.log("[Kathryn Smith Rebuild] ECS optimization profile built");
+  protocol = enforceAllModalities(protocol, ecsProfile);
+  console.log("[Kathryn Smith Rebuild] ECS optimization + all modalities enforced");
 
   console.log("[Kathryn Smith Rebuild] Fetching research citations...");
   let citations: ProtocolCitation[] = [];

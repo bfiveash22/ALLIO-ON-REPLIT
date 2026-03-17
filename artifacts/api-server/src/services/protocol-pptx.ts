@@ -80,6 +80,30 @@ export async function generateProtocolPPTX(
   if (protocol.parasiteAntiviralProtocols?.length) {
     slideParasite(pres, protocol);
   }
+  if (protocol.ecsProtocol?.overview) {
+    slideECS(pres, protocol);
+  }
+  if (protocol.suppositories?.length) {
+    slideSuppositories(pres, protocol);
+  }
+  if (protocol.sirtuinStack?.mitoSTAC) {
+    slideSirtuinMito(pres, protocol);
+  }
+  if (protocol.liposomals?.length) {
+    slideLiposomals(pres, protocol);
+  }
+  if (protocol.nebulization?.length) {
+    slideNebulization(pres, protocol);
+  }
+  if (protocol.topicals?.length) {
+    slideTopicals(pres, protocol);
+  }
+  if (protocol.exosomes?.length) {
+    slideExosomes(pres, protocol);
+  }
+  if (protocol.dietaryProtocol?.phases?.length) {
+    slideDietaryProtocol(pres, protocol);
+  }
   if (protocol.lifestyleRecommendations?.length || protocol.dietaryGuidelines?.length) {
     slideLifestyle(pres, protocol);
   }
@@ -995,4 +1019,323 @@ function slideCommitment(pres: PptxPresentation) {
     x: 1, y: 5.1, w: 8, h: 0.4,
     fontSize: 9, fontFace: BODY_FONT, color: "777777", align: "center", italic: true,
   });
+}
+
+function slideECS(pres: PptxPresentation, protocol: HealingProtocol) {
+  const sectionSlide = pres.addSlide();
+  sectionSlide.background = { color: "0B3D2E" };
+  sectionSlide.addText("ECS PROTOCOL", {
+    x: 0, y: 1.8, w: 10, h: 0.8,
+    fontSize: 36, fontFace: HEADER_FONT, color: WHITE, align: "center", bold: true,
+  });
+  sectionSlide.addText("Endocannabinoid System Optimization — Suppositories, Tinctures & Targeted Ratios", {
+    x: 1, y: 2.6, w: 8, h: 0.6,
+    fontSize: 14, fontFace: BODY_FONT, color: TEAL, align: "center",
+  });
+
+  const slide = pres.addSlide();
+  slide.background = { color: LIGHT_GRAY };
+  slide.addText("ECS Protocol — Endocannabinoid System", {
+    x: 0.5, y: 0.2, w: 9, h: 0.5,
+    fontSize: 22, fontFace: HEADER_FONT, color: PRIMARY, bold: true,
+  });
+
+  const ecs = protocol.ecsProtocol!;
+  slide.addText(ecs.overview || "", {
+    x: 0.5, y: 0.75, w: 9, h: 0.5,
+    fontSize: 10, fontFace: BODY_FONT, color: TEXT_MED,
+  });
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 0.3, y: 1.4, w: 4.5, h: 1.8,
+    fill: { color: WHITE }, shadow: makeShadow(),
+  });
+  const df = ecs.daytimeFormula;
+  const dayItems: Array<{text: string; options: Record<string, unknown>}> = [
+    { text: "DAYTIME SUPPOSITORY", options: { bold: true, color: PRIMARY, fontSize: 12, breakLine: true } },
+    { text: `CBD: ${df?.CBD || "25-50mg"}`, options: { fontSize: 10, color: TEXT_DARK, breakLine: true } },
+    { text: `CBG: ${df?.CBG || "10-25mg"}`, options: { fontSize: 10, color: TEXT_DARK, breakLine: true } },
+    { text: `DMSO: ${df?.DMSO || "5-10%"}`, options: { fontSize: 10, color: TEXT_DARK, breakLine: true } },
+    { text: `Base: ${df?.base || "cacao butter"}`, options: { fontSize: 9, color: TEXT_MED, breakLine: true } },
+    { text: `Delivery: ${df?.deliveryMethod || "suppository"}`, options: { fontSize: 9, color: TEXT_MED } },
+  ];
+  slide.addText(dayItems, { x: 0.5, y: 1.5, w: 4.1, h: 1.6, fontFace: BODY_FONT, valign: "top" });
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 5.2, y: 1.4, w: 4.5, h: 1.8,
+    fill: { color: WHITE }, shadow: makeShadow(),
+  });
+  const nf = ecs.nighttimeFormula;
+  const nightItems: Array<{text: string; options: Record<string, unknown>}> = [
+    { text: "NIGHTTIME SUPPOSITORY", options: { bold: true, color: PRIMARY, fontSize: 12, breakLine: true } },
+    { text: `CBD: ${nf?.CBD || "50-100mg"}`, options: { fontSize: 10, color: TEXT_DARK, breakLine: true } },
+    { text: `THC: ${nf?.THC || "10-25mg"}`, options: { fontSize: 10, color: TEXT_DARK, breakLine: true } },
+    { text: `CBN: ${nf?.CBN || "10-20mg"}`, options: { fontSize: 10, color: TEXT_DARK, breakLine: true } },
+    { text: `DMSO: ${nf?.DMSO || "5-10%"}`, options: { fontSize: 9, color: TEXT_MED, breakLine: true } },
+    { text: `Base: ${nf?.base || "cacao butter"}`, options: { fontSize: 9, color: TEXT_MED } },
+  ];
+  slide.addText(nightItems, { x: 5.4, y: 1.5, w: 4.1, h: 1.6, fontFace: BODY_FONT, valign: "top" });
+
+  if (ecs.tincture) {
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x: 0.3, y: 3.4, w: 9.4, h: 0.7,
+      fill: { color: WHITE }, shadow: makeShadow(),
+    });
+    slide.addText([
+      { text: `${ecs.tincture.name || "Elixir for Everything"}: `, options: { bold: true, color: PRIMARY, fontSize: 11 } },
+      { text: `${ecs.tincture.dose || "1-2 mL"} ${ecs.tincture.frequency || "2x daily sublingual"} — ${ecs.tincture.cannabinoids?.join(", ") || "12 cannabinoids"}`, options: { color: TEXT_DARK, fontSize: 10 } },
+    ], { x: 0.5, y: 3.45, w: 9.0, h: 0.6, fontFace: BODY_FONT, valign: "middle" });
+  }
+
+  if (ecs.targetedRatios?.length > 0) {
+    const ratioItems = ecs.targetedRatios.map(tr => ([
+      { text: `${tr.condition}: `, options: { bold: true, color: SECONDARY, fontSize: 10, breakLine: false } },
+      { text: `${tr.ratio} — ${tr.rationale}`, options: { color: TEXT_DARK, fontSize: 9, breakLine: true } },
+    ])).flat();
+
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x: 0.3, y: 4.3, w: 9.4, h: 1.1,
+      fill: { color: WHITE }, shadow: makeShadow(),
+    });
+    slide.addText([
+      { text: "TARGETED CANNABINOID RATIOS", options: { bold: true, color: PRIMARY, fontSize: 11, breakLine: true } },
+      ...ratioItems,
+    ], { x: 0.5, y: 4.35, w: 9.0, h: 1.0, fontFace: BODY_FONT, valign: "top" });
+  }
+}
+
+function slideSuppositories(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = pres.addSlide();
+  slide.background = { color: LIGHT_GRAY };
+  slide.addText("Suppository Protocols", {
+    x: 0.5, y: 0.2, w: 9, h: 0.5,
+    fontSize: 22, fontFace: HEADER_FONT, color: PRIMARY, bold: true,
+  });
+
+  const items = (protocol.suppositories || []).map(s => ([
+    { text: `${s.name} (${s.timing})`, options: { bold: true, color: PRIMARY, fontSize: 11, breakLine: true } },
+    { text: `Formula: ${s.formula} | Base: ${s.base} | Freq: ${s.frequency}`, options: { color: TEXT_DARK, fontSize: 9, breakLine: true } },
+    { text: `Purpose: ${s.purpose}`, options: { color: TEXT_MED, fontSize: 9, breakLine: true } },
+    { text: "", options: { fontSize: 4, breakLine: true } },
+  ])).flat();
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 0.5, y: 0.8, w: 9, h: 4.5,
+    fill: { color: WHITE }, shadow: makeShadow(),
+  });
+  slide.addText(items, { x: 0.7, y: 0.9, w: 8.6, h: 4.3, fontFace: BODY_FONT, valign: "top" });
+}
+
+function slideSirtuinMito(pres: PptxPresentation, protocol: HealingProtocol) {
+  const sectionSlide = pres.addSlide();
+  sectionSlide.background = { color: "1A0A3E" };
+  sectionSlide.addText("MITOCHONDRIAL & SIRTUIN SUPPORT", {
+    x: 0, y: 1.8, w: 10, h: 0.8,
+    fontSize: 32, fontFace: HEADER_FONT, color: WHITE, align: "center", bold: true,
+  });
+  sectionSlide.addText("NAD+, GlyNAC, MitoSTAC Complex, Methylation, Cellular Energy Restoration", {
+    x: 1, y: 2.6, w: 8, h: 0.6,
+    fontSize: 14, fontFace: BODY_FONT, color: "B39DDB", align: "center",
+  });
+
+  const slide = pres.addSlide();
+  slide.background = { color: LIGHT_GRAY };
+  slide.addText("Sirtuin & Mitochondrial Stack", {
+    x: 0.5, y: 0.2, w: 9, h: 0.5,
+    fontSize: 22, fontFace: HEADER_FONT, color: PRIMARY, bold: true,
+  });
+
+  const ss = protocol.sirtuinStack!;
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 0.3, y: 0.8, w: 4.5, h: 1.8,
+    fill: { color: WHITE }, shadow: makeShadow(),
+  });
+  slide.addText([
+    { text: "MitoSTAC Complex (Sirtuin Activation)", options: { bold: true, color: PURPLE_ACCENT, fontSize: 11, breakLine: true } },
+    { text: `Resveratrol: ${ss.mitoSTAC.resveratrol}`, options: { fontSize: 10, color: TEXT_DARK, breakLine: true } },
+    { text: `Pterostilbene: ${ss.mitoSTAC.pterostilbene}`, options: { fontSize: 10, color: TEXT_DARK, breakLine: true } },
+    { text: `Quercetin: ${ss.mitoSTAC.quercetin}`, options: { fontSize: 10, color: TEXT_DARK, breakLine: true } },
+    { text: `Fisetin: ${ss.mitoSTAC.fisetin}`, options: { fontSize: 10, color: TEXT_DARK } },
+  ], { x: 0.5, y: 0.9, w: 4.1, h: 1.6, fontFace: BODY_FONT, valign: "top" });
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 5.2, y: 0.8, w: 4.5, h: 1.8,
+    fill: { color: WHITE }, shadow: makeShadow(),
+  });
+  slide.addText([
+    { text: "NAD+ & GlyNAC", options: { bold: true, color: PURPLE_ACCENT, fontSize: 11, breakLine: true } },
+    { text: `${ss.nadPrecursors.compound}: ${ss.nadPrecursors.dose} — ${ss.nadPrecursors.frequency}`, options: { fontSize: 10, color: TEXT_DARK, breakLine: true } },
+    { text: "", options: { fontSize: 4, breakLine: true } },
+    { text: "GlyNAC Protocol:", options: { bold: true, fontSize: 10, color: TEXT_DARK, breakLine: true } },
+    { text: `Glycine: ${ss.glyNAC.glycine}`, options: { fontSize: 10, color: TEXT_DARK, breakLine: true } },
+    { text: `NAC: ${ss.glyNAC.nac}`, options: { fontSize: 10, color: TEXT_DARK, breakLine: true } },
+    { text: `Frequency: ${ss.glyNAC.frequency}`, options: { fontSize: 9, color: TEXT_MED } },
+  ], { x: 5.4, y: 0.9, w: 4.1, h: 1.6, fontFace: BODY_FONT, valign: "top" });
+
+  if (ss.mitochondrialSupport?.length > 0) {
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x: 0.3, y: 2.8, w: 9.4, h: 1.4,
+      fill: { color: WHITE }, shadow: makeShadow(),
+    });
+    const mitoItems: Array<{text: string; options: Record<string, unknown>}> = [
+      { text: "Mitochondrial Support Stack", options: { bold: true, color: PURPLE_ACCENT, fontSize: 11, breakLine: true } },
+    ];
+    ss.mitochondrialSupport.forEach(m => {
+      mitoItems.push({ text: `${m.name}: ${m.dose} — ${m.purpose}`, options: { fontSize: 9, color: TEXT_DARK, breakLine: true } });
+    });
+    slide.addText(mitoItems, { x: 0.5, y: 2.85, w: 9.0, h: 1.3, fontFace: BODY_FONT, valign: "top" });
+  }
+
+  if (ss.methylationSupport?.length > 0) {
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x: 0.3, y: 4.4, w: 9.4, h: 0.9,
+      fill: { color: WHITE }, shadow: makeShadow(),
+    });
+    const methItems: Array<{text: string; options: Record<string, unknown>}> = [
+      { text: "Methylation Support: ", options: { bold: true, color: PURPLE_ACCENT, fontSize: 11 } },
+    ];
+    const methStr = ss.methylationSupport.map(m => `${m.name} ${m.dose}`).join(" | ");
+    methItems.push({ text: methStr, options: { fontSize: 10, color: TEXT_DARK } });
+    slide.addText(methItems, { x: 0.5, y: 4.45, w: 9.0, h: 0.8, fontFace: BODY_FONT, valign: "top" });
+  }
+}
+
+function slideLiposomals(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = pres.addSlide();
+  slide.background = { color: LIGHT_GRAY };
+  slide.addText("Liposomal Supplements", {
+    x: 0.5, y: 0.2, w: 9, h: 0.5,
+    fontSize: 22, fontFace: HEADER_FONT, color: PRIMARY, bold: true,
+  });
+
+  const items = (protocol.liposomals || []).map(l => ([
+    { text: `${l.name}`, options: { bold: true, color: PRIMARY, fontSize: 11, breakLine: false } },
+    { text: ` — ${l.dose} (${l.timing})`, options: { color: TEXT_DARK, fontSize: 10, breakLine: true } },
+    { text: `   Purpose: ${l.purpose}`, options: { color: TEXT_MED, fontSize: 9, breakLine: true } },
+  ])).flat();
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 0.5, y: 0.8, w: 9, h: 4.5,
+    fill: { color: WHITE }, shadow: makeShadow(),
+  });
+  slide.addText(items, { x: 0.7, y: 0.9, w: 8.6, h: 4.3, fontFace: BODY_FONT, valign: "top" });
+}
+
+function slideNebulization(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = pres.addSlide();
+  slide.background = { color: LIGHT_GRAY };
+  slide.addText("Nebulization Protocols", {
+    x: 0.5, y: 0.2, w: 9, h: 0.5,
+    fontSize: 22, fontFace: HEADER_FONT, color: PRIMARY, bold: true,
+  });
+
+  const items = (protocol.nebulization || []).map(n => ([
+    { text: n.name, options: { bold: true, color: PRIMARY, fontSize: 11, breakLine: true } },
+    { text: `Solution: ${n.solution} | Dose: ${n.dose}`, options: { color: TEXT_DARK, fontSize: 10, breakLine: true } },
+    { text: `Frequency: ${n.frequency} | Duration: ${n.duration}`, options: { color: TEXT_DARK, fontSize: 10, breakLine: true } },
+    { text: `Purpose: ${n.purpose}`, options: { color: TEXT_MED, fontSize: 9, breakLine: true } },
+    { text: "", options: { fontSize: 4, breakLine: true } },
+  ])).flat();
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 0.5, y: 0.8, w: 9, h: 4.5,
+    fill: { color: WHITE }, shadow: makeShadow(),
+  });
+  slide.addText(items, { x: 0.7, y: 0.9, w: 8.6, h: 4.3, fontFace: BODY_FONT, valign: "top" });
+}
+
+function slideTopicals(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = pres.addSlide();
+  slide.background = { color: LIGHT_GRAY };
+  slide.addText("Topical Protocols", {
+    x: 0.5, y: 0.2, w: 9, h: 0.5,
+    fontSize: 22, fontFace: HEADER_FONT, color: PRIMARY, bold: true,
+  });
+
+  const items = (protocol.topicals || []).map(t => ([
+    { text: `${t.name} (${t.form})`, options: { bold: true, color: PRIMARY, fontSize: 11, breakLine: true } },
+    { text: `Application: ${t.application} | Frequency: ${t.frequency}`, options: { color: TEXT_DARK, fontSize: 10, breakLine: true } },
+    { text: `Purpose: ${t.purpose}`, options: { color: TEXT_MED, fontSize: 9, breakLine: true } },
+    { text: "", options: { fontSize: 4, breakLine: true } },
+  ])).flat();
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 0.5, y: 0.8, w: 9, h: 4.5,
+    fill: { color: WHITE }, shadow: makeShadow(),
+  });
+  slide.addText(items, { x: 0.7, y: 0.9, w: 8.6, h: 4.3, fontFace: BODY_FONT, valign: "top" });
+}
+
+function slideExosomes(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = pres.addSlide();
+  slide.background = { color: LIGHT_GRAY };
+  slide.addText("Exosome Therapy", {
+    x: 0.5, y: 0.2, w: 9, h: 0.5,
+    fontSize: 22, fontFace: HEADER_FONT, color: PRIMARY, bold: true,
+  });
+
+  const items = (protocol.exosomes || []).map(e => ([
+    { text: e.name, options: { bold: true, color: PRIMARY, fontSize: 11, breakLine: true } },
+    { text: `Source: ${e.source} | ${e.concentration} | Route: ${e.route}`, options: { color: TEXT_DARK, fontSize: 10, breakLine: true } },
+    { text: `Frequency: ${e.frequency}`, options: { color: TEXT_DARK, fontSize: 10, breakLine: true } },
+    { text: `Purpose: ${e.purpose}`, options: { color: TEXT_MED, fontSize: 9, breakLine: true } },
+    { text: "", options: { fontSize: 4, breakLine: true } },
+  ])).flat();
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 0.5, y: 0.8, w: 9, h: 4.5,
+    fill: { color: WHITE }, shadow: makeShadow(),
+  });
+  slide.addText(items, { x: 0.7, y: 0.9, w: 8.6, h: 4.3, fontFace: BODY_FONT, valign: "top" });
+}
+
+function slideDietaryProtocol(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = pres.addSlide();
+  slide.background = { color: LIGHT_GRAY };
+  slide.addText("Dietary Protocol", {
+    x: 0.5, y: 0.2, w: 9, h: 0.5,
+    fontSize: 22, fontFace: HEADER_FONT, color: PRIMARY, bold: true,
+  });
+
+  const dp = protocol.dietaryProtocol!;
+  const phaseColors = [RED_ACCENT, ORANGE_ACCENT, GREEN_ACCENT];
+  let yPos = 0.8;
+
+  dp.phases?.forEach((phase, idx) => {
+    const cardH = 1.3;
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x: 0.5, y: yPos, w: 9, h: cardH,
+      fill: { color: WHITE }, shadow: makeShadow(),
+    });
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x: 0.5, y: yPos, w: 0.06, h: cardH,
+      fill: { color: phaseColors[idx] || PRIMARY },
+    });
+
+    const phaseItems: Array<{text: string; options: Record<string, unknown>}> = [
+      { text: `${phase.name} (${phase.duration})`, options: { bold: true, color: PRIMARY, fontSize: 11, breakLine: true } },
+      { text: phase.focus, options: { color: TEXT_MED, fontSize: 9, breakLine: true } },
+    ];
+    if (phase.eliminate?.length > 0) {
+      phaseItems.push({ text: `Eliminate: ${phase.eliminate.join(", ")}`, options: { color: RED_ACCENT, fontSize: 9, breakLine: true } });
+    }
+    if (phase.emphasize?.length > 0) {
+      phaseItems.push({ text: `Emphasize: ${phase.emphasize.join(", ")}`, options: { color: GREEN_ACCENT, fontSize: 9, breakLine: true } });
+    }
+
+    slide.addText(phaseItems, { x: 0.7, y: yPos + 0.05, w: 8.6, h: cardH - 0.1, fontFace: BODY_FONT, valign: "top" });
+    yPos += cardH + 0.1;
+  });
+
+  if (dp.intermittentFasting) {
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x: 0.5, y: yPos, w: 9, h: 0.6,
+      fill: { color: WHITE }, shadow: makeShadow(),
+    });
+    slide.addText([
+      { text: `Intermittent Fasting: ${dp.intermittentFasting.protocol} `, options: { bold: true, color: PRIMARY, fontSize: 10 } },
+      { text: `— ${dp.intermittentFasting.schedule} (${dp.intermittentFasting.purpose})`, options: { color: TEXT_DARK, fontSize: 9 } },
+    ], { x: 0.7, y: yPos + 0.05, w: 8.6, h: 0.5, fontFace: BODY_FONT, valign: "middle" });
+  }
 }

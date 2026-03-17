@@ -405,12 +405,7 @@ export async function generateProtocol(
   const knowledgeBase = buildKnowledgeBase();
   const detoxKnowledge = loadDetoxKnowledge();
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      {
-        role: "system",
-        content: `You are the Forgotten Formula Protocol Architect. Given a patient profile, generate a comprehensive 90-day healing protocol.
+  const systemPrompt = `You are DR. FORMULA, the Forgotten Formula Protocol Architect. Given a patient profile, generate a comprehensive 90-day healing protocol with FULL MODALITY COVERAGE.
 
 ${knowledgeBase}
 
@@ -444,37 +439,242 @@ PROTOCOL STRUCTURE (output as valid JSON matching HealingProtocol):
   "dietaryGuidelines": [string],
   "followUpPlan": [{weekNumber, action, details?}],
   "contraindications": [string],
-  "labsRequired": [string]
+  "labsRequired": [string],
+  "suppositories": [{name, timing ("daytime"|"nighttime"|"as-needed"), formula, cannabinoids: {CBD?, CBG?, CBN?, THC?, DMSO?}, base, frequency, purpose, notes?}],
+  "liposomals": [{name, dose, frequency, timing, purpose}],
+  "exosomes": [{name, source, concentration, route, frequency, purpose, notes?}],
+  "topicals": [{name, form, application, frequency, purpose}],
+  "nebulization": [{name, solution, dose, frequency, duration, purpose}],
+  "ecsProtocol": {
+    "overview": string,
+    "daytimeFormula": {CBD, CBG, CBN?, THC?, DMSO, base, deliveryMethod},
+    "nighttimeFormula": {CBD, CBG?, CBN, THC, DMSO, base, deliveryMethod},
+    "tincture": {name, cannabinoids[], dose, frequency},
+    "targetedRatios": [{condition, ratio, rationale}],
+    "ecsSupport": [string],
+    "molecularTargets": [string]
+  },
+  "sirtuinStack": {
+    "mitoSTAC": {resveratrol, pterostilbene, quercetin, fisetin},
+    "nadPrecursors": {compound, dose, frequency},
+    "glyNAC": {glycine, nac, frequency},
+    "mitochondrialSupport": [{name, dose, purpose}],
+    "methylationSupport": [{name, dose}]
+  },
+  "dietaryProtocol": {
+    "phases": [{name, duration, focus, eliminate[], emphasize[], notes?}],
+    "intermittentFasting": {protocol, schedule, purpose},
+    "specialConsiderations": [string]
+  }
 }
+
+ROOT-CAUSE-TO-TREATMENT MAPPING (MANDATORY):
+- Mycotoxin/Mercury exposure → Glutathione IV + EDTA chelation + clay baths + castor oil packs + infrared sauna + nebulized glutathione
+- Cancer → High-dose Vitamin C IV (50-100g) + mistletoe + ozone + modified keto diet + DIM/I3C + fenbendazole + ECS suppositories (THC:CBD 1:1)
+- Gut/Immune dysfunction → ECS suppository rotation + probiotics (100B+ CFU) + BPC-157 oral + L-glutamine + colostrum
+- Trauma/PTSD → ECS CBD:THC 20:1 + EMDR + EFT + somatic experiencing + cortisol management
+- Mold illness → Nebulized glutathione 3x/week + infrared sauna + Beyond Fasting protocol + mycotoxin binders
+- Autoimmune → NAD+ IV + Myers' cocktail + LDN + ECS anti-inflammatory protocol
+- Hormone disruption → Iodine + selenium + DIM + bioidentical support + ECS hormone modulation
+- Parasite burden → Ivermectin + fenbendazole + black walnut/wormwood/clove + biofilm disruptors (serrapeptase, nattokinase)
+
+MANDATORY INCLUSIONS FOR EVERY PROTOCOL:
+1. ECS Protocol with daytime AND nighttime suppository formulas (CBD, CBG, CBN, THC, DMSO in cacao butter base)
+2. Elixir for Everything tincture (12 non-psychoactive cannabinoids: CBD, CBG, CBC, CBDV, CBN, THCV, CBDA, CBGA, CBCA, THCA, CBDVA, CBCVA)
+3. Sirtuin/MitoSTAC stack (resveratrol, pterostilbene, quercetin, fisetin)
+4. GlyNAC protocol (glycine + NAC)
+5. NAD+ precursors (NMN or NR)
+6. Mitochondrial support (CoQ10/ubiquinol, PQQ, D-ribose, L-carnitine)
+7. Comprehensive detox toolkit: clay baths, castor oil packs, infrared sauna, coffee enemas, epsom salt baths, dry brushing
+8. 90 Essential Nutrients framework + targeted mineral repletion matching deficiencies
+9. Liposomal supplements (glutathione, curcumin, D3/K2, astaxanthin)
+10. Dietary protocol with elimination phase, anti-inflammatory phase, and condition-specific nutrition
+11. Frequency healing (solfeggio 528 Hz DNA repair, 396 Hz grounding, 741 Hz detox)
+12. 5R Framework phases: REMOVE, RESTORE, REPLENISH, REGENERATE, REBALANCE
 
 RULES:
 1. ONLY select therapies from the available knowledge base above
-2. Include specific dosages, reconstitution instructions, and syringe sizes
-3. Structure as 3-4 phases (Foundation/Detox → Targeted Therapy → Regeneration → Maintenance)
-4. Daily schedule must include exact products and timing
-5. Always include: detox baths (3x/week min), parasite protocols, hydration guidance
-6. Include MitoStac, Reds + Greens, Elixir, Bio-Vitamin, and Mighty Blue in supplement stack when appropriate
-7. Include ECS suppository rotation when gut/immune issues present
-8. Nebulization protocol (saline + peroxide + iodine) 3x weekly when respiratory issues present
-9. Follow the FF PMA Trustee daily schedule format (Morning/Midday/Evening/Bedtime blocks)
+2. Include specific dosages, reconstitution instructions, and syringe sizes for peptides
+3. Structure as 5 phases following the 5R Framework
+4. Daily schedule must include exact products and timing (Morning 6AM / Midday 12PM / Evening 6PM / Bedtime 9:30PM)
+5. Always include: comprehensive detox toolkit (not just "epsom bath"), parasite protocols, hydration guidance
+6. Include MitoStac, Reds + Greens, Elixir, Bio-Vitamin, and Mighty Blue in supplement stack
+7. ECS suppositories MUST be included with specific cannabinoid ratios per condition
+8. Nebulization protocol when respiratory/mold issues present
+9. IV therapies must be root-cause-targeted from the 16 IV protocols in catalog
 10. Be clinically aggressive - these are PMA member protocols
+11. Lipo-B is IM ONLY (216mg/mL total) - never list it under IV section
+12. Include topicals (DMSO cream, Kaneh Bosem) when applicable
 
-Return ONLY valid JSON, no markdown.`,
-      },
-      {
-        role: "user",
-        content: `PATIENT PROFILE:\n${JSON.stringify(profile, null, 2)}`,
-      },
-    ],
-    response_format: { type: "json_object" },
-    max_tokens: 8000,
-    temperature: 0.4,
-  });
+Return ONLY valid JSON, no markdown.`;
 
-  const content = response.choices[0]?.message?.content;
-  if (!content) throw new Error("Failed to generate protocol");
+  const userPrompt = `PATIENT PROFILE:\n${JSON.stringify(profile, null, 2)}`;
 
-  return JSON.parse(content) as HealingProtocol;
+  let content: string | null = null;
+
+  const abacusKey = process.env.ABACUSAI_API_KEY;
+  if (abacusKey) {
+    try {
+      console.log("[Protocol Assembly] Trying Abacus AI (gpt-4.1-mini) as primary...");
+      const abacusResponse = await fetch("https://api.abacus.ai/api/v0/predict", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${abacusKey}`,
+        },
+        body: JSON.stringify({
+          deploymentId: "dr-formula-protocol",
+          queryData: {
+            systemPrompt,
+            userMessage: userPrompt,
+            model: "gpt-4.1-mini",
+            maxTokens: 12000,
+            temperature: 0.4,
+            responseFormat: "json",
+          },
+        }),
+      });
+
+      if (abacusResponse.ok) {
+        const abacusData = await abacusResponse.json() as Record<string, unknown>;
+        const rawResult = (abacusData as Record<string, unknown>).result || (abacusData as Record<string, unknown>).prediction || (abacusData as Record<string, unknown>).response;
+        if (typeof rawResult === "string" && rawResult.length > 100) {
+          content = rawResult;
+          console.log(`[Protocol Assembly] Abacus AI success, response length: ${content.length}`);
+        }
+      }
+    } catch (abacusErr) {
+      console.warn("[Protocol Assembly] Abacus AI failed, falling back to OpenAI:", abacusErr);
+    }
+  }
+
+  if (!content) {
+    console.log("[Protocol Assembly] Using OpenAI gpt-4o as fallback...");
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 12000,
+      temperature: 0.4,
+    });
+    content = response.choices[0]?.message?.content;
+  }
+
+  if (!content) throw new Error("Failed to generate protocol from any provider");
+
+  const parsed = JSON.parse(content) as HealingProtocol;
+
+  if (!parsed.suppositories) parsed.suppositories = [];
+  if (!parsed.liposomals) parsed.liposomals = [];
+  if (!parsed.exosomes) parsed.exosomes = [];
+  if (!parsed.topicals) parsed.topicals = [];
+  if (!parsed.nebulization) parsed.nebulization = [];
+  if (!parsed.ecsProtocol) {
+    parsed.ecsProtocol = {
+      overview: "ECS optimization protocol — pending condition-specific customization",
+      daytimeFormula: { CBD: "25-50mg", CBG: "10-25mg", DMSO: "5-10%", base: "cacao butter", deliveryMethod: "suppository" },
+      nighttimeFormula: { CBD: "50-100mg", CBN: "10-20mg", THC: "10-25mg", DMSO: "5-10%", base: "cacao butter", deliveryMethod: "suppository" },
+      tincture: { name: "Elixir for Everything", cannabinoids: ["CBD","CBG","CBC","CBDV","CBN","THCV","CBDA","CBGA","CBCA","THCA","CBDVA","CBCVA"], dose: "1-2 mL", frequency: "2x daily sublingual" },
+      targetedRatios: [],
+      ecsSupport: ["Omega-3 fatty acids 2-4g EPA/DHA daily","PEA 600mg 2x daily","Dark chocolate 85%+ cacao"],
+      molecularTargets: [],
+    };
+  }
+  if (!parsed.sirtuinStack) {
+    parsed.sirtuinStack = {
+      mitoSTAC: { resveratrol: "500mg daily", pterostilbene: "100mg daily", quercetin: "500mg 2x daily", fisetin: "100mg daily" },
+      nadPrecursors: { compound: "NMN", dose: "500-1000mg daily", frequency: "Morning" },
+      glyNAC: { glycine: "2-3g 2x daily", nac: "600mg 2x daily", frequency: "Morning and evening" },
+      mitochondrialSupport: [
+        { name: "CoQ10 (Ubiquinol)", dose: "200-400mg daily", purpose: "Electron transport chain, ATP production" },
+        { name: "PQQ", dose: "20mg daily", purpose: "Mitochondrial biogenesis" },
+        { name: "D-Ribose", dose: "5g 2x daily", purpose: "ATP precursor" },
+        { name: "L-Carnitine", dose: "1000-2000mg daily", purpose: "Fatty acid transport into mitochondria" },
+      ],
+      methylationSupport: [
+        { name: "TMG", dose: "500-1000mg daily" },
+        { name: "Methylfolate", dose: "1000mcg daily" },
+        { name: "Methylcobalamin", dose: "1000-5000mcg daily" },
+      ],
+    };
+  }
+  if (!parsed.dietaryProtocol) {
+    parsed.dietaryProtocol = {
+      phases: [
+        { name: "Phase 1: Elimination", duration: "Weeks 1-3", focus: "Remove inflammatory triggers", eliminate: ["Gluten","Dairy","Sugar","Processed foods","Alcohol","Caffeine"], emphasize: ["Organic vegetables","Wild-caught fish","Bone broth","Healthy fats"], },
+        { name: "Phase 2: Anti-Inflammatory", duration: "Weeks 3-8", focus: "Reduce systemic inflammation", eliminate: ["Refined carbohydrates","Seed oils","Nightshades if sensitive"], emphasize: ["Cruciferous vegetables","Fermented foods","Omega-3 rich foods","Turmeric/ginger"], },
+        { name: "Phase 3: Condition-Specific", duration: "Weeks 8+", focus: "Targeted nutrition for primary condition", eliminate: [], emphasize: ["Condition-specific nutrition"], },
+      ],
+      intermittentFasting: { protocol: "16:8", schedule: "Eat 12pm-8pm, fast 8pm-12pm", purpose: "Autophagy, cellular cleanup, immune optimization" },
+      specialConsiderations: [],
+    };
+  }
+
+  return parsed;
+}
+
+export async function validateProtocolWithAgents(
+  protocol: HealingProtocol,
+  profile: PatientProfile
+): Promise<{ valid: boolean; issues: string[]; suggestions: string[] }> {
+  const issues: string[] = [];
+  const suggestions: string[] = [];
+
+  const allText = JSON.stringify(profile).toLowerCase();
+  const hasCancer = ["cancer","tumor","carcinoma","malignant","HER2","ER+","PR+"].some(k => allText.includes(k.toLowerCase()));
+  const hasMold = allText.includes("mold") || allText.includes("mycotoxin");
+  const hasMercury = allText.includes("mercury") || allText.includes("amalgam");
+  const hasTrauma = profile.traumaHistory?.childhoodTrauma || allText.includes("trauma") || allText.includes("ptsd");
+  const hasGut = (profile.gutHealth?.digestiveIssues?.length || 0) > 0 || allText.includes("gut") || allText.includes("dysbiosis");
+
+  if (!protocol.suppositories?.length && !protocol.ecsProtocol?.daytimeFormula) {
+    issues.push("HIPPOCRATES: Missing ECS suppository protocol — every FF PMA protocol requires ECS optimization");
+  }
+  if (!protocol.sirtuinStack?.mitoSTAC) {
+    issues.push("PARACELSUS: Missing MitoSTAC sirtuin stack — required for mitochondrial support");
+  }
+  if (!protocol.liposomals?.length) {
+    suggestions.push("PARACELSUS: Consider adding liposomal supplements (glutathione, curcumin) for enhanced bioavailability");
+  }
+  if (hasCancer && !protocol.ivTherapies?.some(iv => iv.name?.toLowerCase().includes("vitamin c"))) {
+    issues.push("HIPPOCRATES: Cancer patient missing high-dose Vitamin C IV — critical for cancer protocol");
+  }
+  if (hasMold && !protocol.nebulization?.length) {
+    issues.push("HIPPOCRATES: Mold exposure present but no nebulization protocol — nebulized glutathione 3x/week recommended");
+  }
+  if (hasMercury && !protocol.detoxProtocols?.some(d => d.name?.toLowerCase().includes("chelat") || d.instructions?.toLowerCase().includes("dmsa"))) {
+    suggestions.push("HIPPOCRATES: Mercury exposure — ensure chelation protocol (DMSA/EDTA) is included in detox");
+  }
+  if (hasTrauma && !protocol.lifestyleRecommendations?.some(l => l.recommendation?.toLowerCase().includes("emdr") || l.recommendation?.toLowerCase().includes("eft"))) {
+    suggestions.push("HIPPOCRATES: Trauma history present — recommend EMDR/EFT/somatic therapy in lifestyle section");
+  }
+  if (hasGut && !protocol.oralPeptides?.some(p => p.name?.toLowerCase().includes("bpc"))) {
+    suggestions.push("PARACELSUS: Gut issues present — consider oral BPC-157 for gut lining repair");
+  }
+  if (!protocol.detoxProtocols?.some(d => d.name?.toLowerCase().includes("castor"))) {
+    suggestions.push("PARACELSUS: Add castor oil packs to detox protocols (3x weekly, liver area)");
+  }
+  if (!protocol.detoxProtocols?.some(d => d.name?.toLowerCase().includes("clay") || d.name?.toLowerCase().includes("bentonite"))) {
+    suggestions.push("PARACELSUS: Add clay/bentonite baths to detox protocols for heavy metal binding");
+  }
+  if ((protocol.dietaryGuidelines?.length || 0) < 3 && !protocol.dietaryProtocol?.phases?.length) {
+    suggestions.push("ORACLE: Dietary protocol needs more detail — include elimination phase and condition-specific nutrition");
+  }
+
+  for (const pep of protocol.injectablePeptides || []) {
+    if (!pep.dose || pep.dose.toLowerCase().includes("full vial")) {
+      issues.push(`PARACELSUS: Peptide "${pep.name}" has vague dosing ("${pep.dose}") — must specify exact mg and volume`);
+    }
+  }
+
+  return {
+    valid: issues.length === 0,
+    issues,
+    suggestions,
+  };
 }
 
 interface IntakeFormData {

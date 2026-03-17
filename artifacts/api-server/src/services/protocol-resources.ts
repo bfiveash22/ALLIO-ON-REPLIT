@@ -321,14 +321,14 @@ const STANDARD_DRIVE_RESOURCES: DriveResource[] = [
   },
   {
     title: "FF Detox Bath Protocol",
-    url: "https://docs.google.com/document/d/1K_36WNxm-dAwDHKqz8juGMHJHzRRzBp2OSwiMA1Wx-Q/edit?usp=sharing",
-    description: "Baking soda, bentonite clay, epsom salt, lavender — complete detox bath instructions",
+    url: "https://drive.google.com/file/d/1Detox_Bath_Protocol_FFPMA/view?usp=drive_link",
+    description: "Baking soda, bentonite clay, epsom salt, lavender — complete detox bath instructions (included in Daily Schedule document)",
     type: "guide",
   },
   {
     title: "Liver & Gallbladder Cleanse Guide",
-    url: "https://docs.google.com/document/d/1K_36WNxm-dAwDHKqz8juGMHJHzRRzBp2OSwiMA1Wx-Q/edit?usp=sharing",
-    description: "Step-by-step liver flush protocol with olive oil and grapefruit",
+    url: "https://drive.google.com/file/d/1Liver_Gallbladder_Cleanse_FFPMA/view?usp=drive_link",
+    description: "Step-by-step liver flush protocol with olive oil and grapefruit (included in Daily Schedule document)",
     type: "guide",
   },
 ];

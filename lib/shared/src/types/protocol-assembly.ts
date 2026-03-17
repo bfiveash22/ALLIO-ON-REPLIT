@@ -124,6 +124,22 @@ export interface HealingProtocol {
   contraindications: string[];
 
   labsRequired: string[];
+
+  suppositories: SuppositoryProtocol[];
+
+  liposomals: LiposomalProtocol[];
+
+  exosomes: ExosomeProtocol[];
+
+  topicals: TopicalProtocol[];
+
+  nebulization: NebulizationProtocol[];
+
+  ecsProtocol: ECSProtocol;
+
+  sirtuinStack: SirtuinProtocol;
+
+  dietaryProtocol: DietaryProtocol;
 }
 
 export interface ProtocolPhase {
@@ -224,4 +240,136 @@ export interface FollowUpItem {
   weekNumber: number;
   action: string;
   details?: string;
+}
+
+export interface SuppositoryProtocol {
+  name: string;
+  timing: 'daytime' | 'nighttime' | 'as-needed';
+  formula: string;
+  cannabinoids: {
+    CBD?: string;
+    CBG?: string;
+    CBN?: string;
+    THC?: string;
+    DMSO?: string;
+  };
+  base: string;
+  frequency: string;
+  purpose: string;
+  notes?: string;
+}
+
+export interface LiposomalProtocol {
+  name: string;
+  dose: string;
+  frequency: string;
+  timing: string;
+  purpose: string;
+}
+
+export interface ExosomeProtocol {
+  name: string;
+  source: string;
+  concentration: string;
+  route: string;
+  frequency: string;
+  purpose: string;
+  notes?: string;
+}
+
+export interface TopicalProtocol {
+  name: string;
+  form: string;
+  application: string;
+  frequency: string;
+  purpose: string;
+}
+
+export interface NebulizationProtocol {
+  name: string;
+  solution: string;
+  dose: string;
+  frequency: string;
+  duration: string;
+  purpose: string;
+}
+
+export interface ECSProtocol {
+  overview: string;
+  daytimeFormula: {
+    CBD: string;
+    CBG: string;
+    CBN?: string;
+    THC?: string;
+    DMSO: string;
+    base: string;
+    deliveryMethod: string;
+  };
+  nighttimeFormula: {
+    CBD: string;
+    CBG?: string;
+    CBN: string;
+    THC: string;
+    DMSO: string;
+    base: string;
+    deliveryMethod: string;
+  };
+  tincture: {
+    name: string;
+    cannabinoids: string[];
+    dose: string;
+    frequency: string;
+  };
+  targetedRatios: Array<{
+    condition: string;
+    ratio: string;
+    rationale: string;
+  }>;
+  ecsSupport: string[];
+  molecularTargets: string[];
+}
+
+export interface SirtuinProtocol {
+  mitoSTAC: {
+    resveratrol: string;
+    pterostilbene: string;
+    quercetin: string;
+    fisetin: string;
+  };
+  nadPrecursors: {
+    compound: string;
+    dose: string;
+    frequency: string;
+  };
+  glyNAC: {
+    glycine: string;
+    nac: string;
+    frequency: string;
+  };
+  mitochondrialSupport: Array<{
+    name: string;
+    dose: string;
+    purpose: string;
+  }>;
+  methylationSupport: Array<{
+    name: string;
+    dose: string;
+  }>;
+}
+
+export interface DietaryProtocol {
+  phases: Array<{
+    name: string;
+    duration: string;
+    focus: string;
+    eliminate: string[];
+    emphasize: string[];
+    notes?: string;
+  }>;
+  intermittentFasting: {
+    protocol: string;
+    schedule: string;
+    purpose: string;
+  };
+  specialConsiderations: string[];
 }
