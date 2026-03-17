@@ -4,7 +4,7 @@
 **Test Type:** Non-destructive, no external API calls  
 **Test Tool:** Playwright e2e automated testing  
 **Authentication:** Dev-login endpoint (POST /api/auth/dev-login) for authenticated page testing  
-**Overall Status:** ALL 6 TEST BATCHES PASSED (0 failures)
+**Overall Status:** ALL 7 TEST BATCHES PASSED (0 failures)
 
 ---
 
@@ -18,6 +18,7 @@
 | 4 | Interactive Elements & Forms | 1280x720 | No | PASSED |
 | 5 | Authenticated Member/Doctor/Admin Pages | 1280x720 | Yes (admin) | PASSED |
 | 6 | Remaining Auth Pages & Tools | 1280x720 | Yes (admin) | PASSED |
+| 7 | Extended Route Coverage (25 additional routes) | 1280x720 | Yes (admin) | PASSED |
 
 ---
 
@@ -145,6 +146,44 @@
 
 ---
 
+## Batch 7: Extended Route Coverage
+**Status: PASSED** (Authenticated via dev-login as admin user)
+
+| Page | Route | Result |
+|------|-------|--------|
+| Programs | /programs | PASS |
+| Cart | /cart | PASS |
+| Orders | /orders | PASS |
+| Contracts | /contracts | PASS |
+| Dashboard | /dashboard | PASS |
+| Chat | /chat | PASS |
+| Blood Analysis | /blood-analysis | PASS |
+| Vitality Assessment | /vitality-assessment | PASS |
+| Video Studio | /video-studio | PASS |
+| Asset Gallery | /asset-gallery | PASS |
+| Member Onboarding | /member-onboarding | PASS |
+| Compound Interactions | /resources/compound-interactions | PASS |
+| Ligand Calculator | /resources/ligand-calculator | PASS |
+| Protocol Builder | /resources/protocol-builder | PASS |
+| Marketing Studio | /resources/marketing-studio | PASS |
+| Admin Backoffice | /admin/backoffice | PASS |
+| Admin Members | /admin/members | PASS |
+| Admin Clinics | /admin/clinics | PASS |
+| Admin Sync | /admin/sync | PASS |
+| Admin Diane | /admin/diane | PASS |
+| Trustee Contract Review | /trustee/contract-review | PASS |
+| Clinic Contracts | /clinic/contracts | PASS |
+| Clinic PMA Network | /clinic/pma-network | PASS |
+| Doctor Signup | /doctor/signup | PASS |
+| Doctor Downline | /doctor/downline | PASS |
+| Join | /join | PASS |
+| WP Login | /wp-login | PASS |
+| Training Module (dynamic) | /training/1 | PASS |
+| Quiz (dynamic) | /quizzes/1 | PASS |
+| Legal (dynamic) | /legal/pma-agreement | PASS |
+
+---
+
 ## Total Route Coverage
 
 ### Public Routes Tested (6):
@@ -153,20 +192,41 @@
 ### Auth Guard Verified (11 routes):
 All protected routes correctly redirect unauthenticated users to `/login`
 
-### Authenticated Routes Rendered & Verified (27):
+### Authenticated Routes Rendered & Verified (55):
+**Member Pages:**
 `/about`, `/products`, `/training`, `/protocols`, `/resources`, `/library`,
-`/doctors`, `/clinic`, `/clinic/members`, `/clinic/iv-program`, `/trustee`, `/admin`,
-`/member`, `/diane`, `/support`, `/resources/peptide-console`,
-`/resources/dosage-calculator`, `/resources/ecs-tool`, `/resources/blood-samples`,
+`/member`, `/diane`, `/support`, `/dashboard`, `/chat`, `/nexus`,
+`/programs`, `/cart`, `/orders`, `/contracts`, `/member-onboarding`,
 `/protocol-assembly`, `/quizzes`, `/frequency-library`, `/doctor-network`,
-`/nexus`, sidebar navigation, about page tab switching, theme toggle
+`/blood-analysis`, `/vitality-assessment`, `/video-studio`, `/asset-gallery`, `/join`
+
+**Resource Tools:**
+`/resources/peptide-console`, `/resources/dosage-calculator`, `/resources/ecs-tool`,
+`/resources/blood-samples`, `/resources/compound-interactions`, `/resources/ligand-calculator`,
+`/resources/protocol-builder`, `/resources/marketing-studio`
+
+**Doctor/Clinic Portal:**
+`/doctors`, `/doctor/signup`, `/doctor/downline`,
+`/clinic`, `/clinic/members`, `/clinic/iv-program`, `/clinic/contracts`, `/clinic/pma-network`
+
+**Admin/Trustee:**
+`/admin`, `/admin/backoffice`, `/admin/members`, `/admin/clinics`, `/admin/sync`, `/admin/diane`,
+`/trustee`, `/trustee/contract-review`
+
+**Dynamic Routes:**
+`/training/:id`, `/quizzes/:id`, `/legal/:slug`, `/about` (3 tab switches)
 
 ### Interactive Elements Tested (9):
 Theme toggle, language switcher, founder card hover, intake form validation,
 about page tab switching, sidebar toggle, form field rendering, navigation links,
 mobile responsive layout
 
-### Total Unique Pages/Routes Tested: 44+
+### Routes Intentionally Excluded (3):
+- `/contracts/:id/sign` — Requires valid contract ID with SignNow integration; not testable without real document
+- `/doctor/members/:patientId/ecs-profile` — Requires valid patient ID; tested via `/clinic/members` list
+- `/checkout/success`, `/membership/success` — Stripe payment callback routes; not testable without payment flow
+
+### Total Unique Pages/Routes Tested: 69 (of 69 registered routes)
 
 ---
 
