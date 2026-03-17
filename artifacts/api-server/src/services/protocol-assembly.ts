@@ -781,7 +781,7 @@ const DOSING_PATTERNS: Record<string, RegExp> = {
   "cbd": /\d+\s*mg/i,
 };
 
-function runDeterministicQAChecks(
+export function runDeterministicQAChecks(
   protocol: HealingProtocol,
   profile: PatientProfile
 ): { issues: string[]; suggestions: string[]; catalogMatchRate: number } {

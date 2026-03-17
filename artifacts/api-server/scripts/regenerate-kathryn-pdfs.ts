@@ -8,6 +8,7 @@ import {
   generateProtocolPDFBuffer,
   generateDailySchedulePDFBuffer,
   generatePeptideSchedulePDFBuffer,
+  runDeterministicQAChecks,
 } from "../src/services/protocol-assembly";
 import { generateProtocolPPTX } from "../src/services/protocol-pptx";
 import type { HealingProtocol, PatientProfile } from "@shared/types/protocol-assembly";
@@ -47,6 +48,18 @@ async function main() {
   console.log(`[Regen] Protocol: ${protocol.patientName}, ${protocol.protocolDurationDays} days`);
   console.log(`[Regen] ${protocol.injectablePeptides?.length || 0} injectables, ${protocol.supplements?.length || 0} supplements`);
   console.log(`[Regen] ${protocol.bioregulators?.length || 0} bioregulators, ${protocol.oralPeptides?.length || 0} oral peptides`);
+
+  console.log("[Regen] Running deterministic QA checks...");
+  const qa = runDeterministicQAChecks(protocol, profile);
+  console.log(`[Regen] QA: ${qa.issues.length} issues, ${qa.suggestions.length} suggestions, catalog match: ${(qa.catalogMatchRate * 100).toFixed(0)}%`);
+  if (qa.issues.length > 0) {
+    for (const issue of qa.issues) {
+      console.warn(`[Regen] QA ISSUE: ${issue}`);
+    }
+    console.warn(`[Regen] WARNING: ${qa.issues.length} QA issue(s) detected — regenerating with known gaps`);
+  } else {
+    console.log("[Regen] All QA checks passed");
+  }
 
   console.log("[Regen] Generating Full Protocol PDF...");
   const fullPdf = await generateProtocolPDFBuffer(protocol, profile);

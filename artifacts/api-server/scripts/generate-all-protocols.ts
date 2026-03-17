@@ -8,6 +8,7 @@ import {
   generateProtocolPDFBuffer,
   generateDailySchedulePDFBuffer,
   generatePeptideSchedulePDFBuffer,
+  runDeterministicQAChecks,
 } from "../src/services/protocol-assembly";
 import { generateProtocolPPTX } from "../src/services/protocol-pptx";
 import { buildKathrynSmithProfile } from "../src/services/kathryn-smith-protocol";
@@ -17,6 +18,7 @@ import {
   buildBreastCancer75FProfile,
 } from "../src/services/backlog-member-protocols";
 import type { HealingProtocol, PatientProfile } from "@shared/types/protocol-assembly";
+import type { InsertGeneratedProtocol } from "@shared/schema";
 
 const OUTPUT_DIR = path.resolve(process.cwd(), "generated-protocols");
 const DOCTOR_ID = "trustee-michael-blake";
@@ -74,14 +76,14 @@ async function storeProtocolInDB(
   profile: PatientProfile,
   protocol: HealingProtocol,
 ): Promise<number> {
-  const mapped = {
+  const mapped: InsertGeneratedProtocol = {
     patientName: profile.name,
     patientAge: profile.age,
     sourceType: "batch_generate",
     doctorId: DOCTOR_ID,
-    status: "approved" as const,
-    patientProfile: profile as any,
-    protocol: protocol as any,
+    status: "approved",
+    patientProfile: profile as Record<string, unknown>,
+    protocol: protocol as Record<string, unknown>,
     generatedBy: "batch-generate",
     notes: `Batch generated: ${protocol.injectablePeptides?.length || 0} injectables, ${protocol.supplements?.length || 0} supplements, ${protocol.bioregulators?.length || 0} bioregulators`,
   };
@@ -162,9 +164,30 @@ async function processMember(config: MemberConfig): Promise<void> {
     console.log(`  [Protocol]   ECS protocol: ${protocol.ecsProtocol ? "Yes" : "No"}`);
     console.log(`  [Protocol]   Sirtuin stack: ${protocol.sirtuinStack ? "Yes" : "No"}`);
 
+    console.log(`  [QA] Running deterministic QA checks...`);
+    const qa = runDeterministicQAChecks(protocol, profile);
+    console.log(`  [QA] Issues: ${qa.issues.length}, Suggestions: ${qa.suggestions.length}, Catalog match: ${(qa.catalogMatchRate * 100).toFixed(0)}%`);
+    if (qa.issues.length > 0) {
+      for (const issue of qa.issues) {
+        console.log(`  [QA] ISSUE: ${issue}`);
+      }
+      console.warn(`  [QA] WARNING: ${qa.issues.length} QA issue(s) detected — protocol generated with known gaps`);
+    }
+
     console.log(`  [Protocol] Storing in database...`);
     const recordId = await storeProtocolInDB(profile, protocol);
     console.log(`  [Protocol] Stored as record id=${recordId}`);
+  }
+
+  console.log(`  [QA] Running pre-deliverable QA validation...`);
+  const finalQA = runDeterministicQAChecks(protocol, profile);
+  if (finalQA.issues.length > 0) {
+    console.warn(`  [QA] ${finalQA.issues.length} issue(s) in final protocol — generating deliverables with warnings`);
+    for (const issue of finalQA.issues) {
+      console.warn(`  [QA]   - ${issue}`);
+    }
+  } else {
+    console.log(`  [QA] All deterministic checks passed`);
   }
 
   const paths = await generateDeliverables(protocol, profile, config.filePrefix);
