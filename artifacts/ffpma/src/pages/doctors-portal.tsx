@@ -845,7 +845,7 @@ export default function DoctorsPortal() {
                       size="sm"
                       className={`text-slate-400 hover:text-white border-white/10 ${showFilterPanel ? 'bg-cyan-500/20 border-cyan-400 text-white' : ''}`}
                       onClick={() => setShowFilterPanel(!showFilterPanel)}
-                      data-testid="button-filter-patients"
+                      data-testid="button-filter-members"
                     >
                       <Filter className="w-4 h-4 mr-2" />
                       Filter
@@ -859,7 +859,7 @@ export default function DoctorsPortal() {
                     <Button 
                       className="bg-cyan-500 hover:bg-cyan-600" 
                       onClick={() => setIsEnrollModalOpen(true)}
-                      data-testid="button-add-patient"
+                      data-testid="button-add-member"
                     >
                       <UserPlus className="w-4 h-4 mr-2" />
                       Enroll New Member
@@ -879,7 +879,7 @@ export default function DoctorsPortal() {
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         {/* Search Input */}
                         <div className="md:col-span-4">
-                          <label className="text-sm text-white/50 mb-2 block">Search Patients</label>
+                          <label className="text-sm text-white/50 mb-2 block">Search Members</label>
                           <Input
                             placeholder="Search by name, email, or phone..."
                             value={filters.searchQuery}
@@ -951,7 +951,7 @@ export default function DoctorsPortal() {
 
                       {/* Results Count */}
                       <div className="mt-4 pt-4 border-t border-white/10 text-sm text-white/50">
-                        Showing <span className="text-white font-semibold">{filteredMembers.length}</span> of <span className="text-white font-semibold">{enrolledMembers.length}</span> patients
+                        Showing <span className="text-white font-semibold">{filteredMembers.length}</span> of <span className="text-white font-semibold">{enrolledMembers.length}</span> members
                       </div>
                     </motion.div>
                   )}
@@ -1079,13 +1079,13 @@ export default function DoctorsPortal() {
                                   className="text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    window.open(`/api/doctor/patients/${member.id}/healing-report/pdf`, '_blank');
+                                    window.open(`/api/doctor/members/${member.id}/healing-report/pdf`, '_blank');
                                   }}
                                 >
                                   <Download className="w-4 h-4 mr-2" />
                                   Healing Report PDF
                                 </Button>
-                                <Link href={`/doctor/patients/${member.id}/ecs-profile`} onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                                <Link href={`/doctor/members/${member.id}/ecs-profile`} onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -1115,7 +1115,7 @@ export default function DoctorsPortal() {
                     <h4 className="font-bold text-amber-300 mb-1">PMA Educational Notice</h4>
                     <p className="text-sm text-white/70">
                       All AI analysis tools are provided for <strong>research and educational purposes only</strong> within our Private Membership Association. 
-                      These tools support functional medicine practitioners in pattern recognition and do not constitute medical diagnosis. 
+                      These tools support functional medicine practitioners in pattern recognition and do not constitute a clinical assessment. 
                       Members retain full responsibility for their health decisions under PMA guidelines.
                     </p>
                   </div>
@@ -1132,11 +1132,11 @@ export default function DoctorsPortal() {
                   }}
                 />
 
-                {/* Medical Imaging Analysis */}
+                {/* Wellness Imaging Analysis */}
                 <Card className="bg-black/20 border-white/10 p-6">
                   <h3 className="font-bold flex items-center gap-2 mb-4">
                     <Waves className="w-5 h-5 text-violet-400" />
-                    Medical Imaging Analysis
+                    Wellness Imaging Analysis
                   </h3>
                   <p className="text-sm text-white/60 mb-4">AI-powered analysis for educational pattern recognition</p>
                   
@@ -1319,7 +1319,7 @@ export default function DoctorsPortal() {
                       ].map((p, idx) => (
                         <div key={idx} className="flex items-center justify-between">
                           <span className="text-sm">{p.name}</span>
-                          <Badge variant="outline" className="border-white/20">{p.count} patients</Badge>
+                          <Badge variant="outline" className="border-white/20">{p.count} members</Badge>
                         </div>
                       ))}
                     </div>

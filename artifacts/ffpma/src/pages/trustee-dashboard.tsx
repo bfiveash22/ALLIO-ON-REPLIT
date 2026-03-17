@@ -917,8 +917,8 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
   const [newPatient, setNewPatient] = useState({ name: "", email: "", phone: "", dateOfBirth: "" });
   const [activeSubTab, setActiveSubTab] = useState("roster");
 
-  const { data: patientsData, refetch: refetchPatients } = useQuery<{ success: boolean; patients: PatientRecord[] }>({
-    queryKey: ["/api/doctor/patients"],
+  const { data: patientsData, refetch: refetchPatients } = useQuery<{ success: boolean; members: PatientRecord[] }>({
+    queryKey: ["/api/doctor/members"],
     retry: false,
   });
 
@@ -932,7 +932,7 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
     retry: false,
   });
 
-  const patients = patientsData?.patients || [];
+  const patients = patientsData?.members || [];
   const protocols = protocolsData?.protocols || [];
   const conversations = conversationsData?.conversations || [];
 
@@ -946,7 +946,7 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
 
   const addPatientMutation = useMutation({
     mutationFn: async (data: typeof newPatient) => {
-      const res = await apiRequest("POST", "/api/doctor/patients", data);
+      const res = await apiRequest("POST", "/api/doctor/members", data);
       return res.json();
     },
     onSuccess: () => {
@@ -979,7 +979,7 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
                 size="sm"
                 className="border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10"
                 onClick={() => setShowAddPatient(true)}
-                data-testid="button-add-patient"
+                data-testid="button-add-member"
               >
                 <Plus className="w-4 h-4 mr-1" /> Add Member
               </Button>
@@ -1031,11 +1031,11 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
                     value={patientSearch}
                     onChange={(e) => setPatientSearch(e.target.value)}
                     className="pl-10 bg-white/5 border-white/10"
-                    data-testid="input-patient-search"
+                    data-testid="input-member-search"
                   />
                 </div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[150px] bg-white/5 border-white/10" data-testid="select-patient-status">
+                  <SelectTrigger className="w-[150px] bg-white/5 border-white/10" data-testid="select-member-status">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1104,7 +1104,7 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
                           </div>
                           <div>
                             <p className="font-medium">{protocol.protocolName}</p>
-                            <p className="text-xs text-white/50">Patient: {protocol.patientRecordId}</p>
+                            <p className="text-xs text-white/50">Member: {protocol.patientRecordId}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
@@ -1253,7 +1253,7 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
                 value={newPatient.name}
                 onChange={(e) => setNewPatient(prev => ({ ...prev, name: e.target.value }))}
                 className="bg-white/5 border-white/10"
-                data-testid="input-patient-name"
+                data-testid="input-member-name"
               />
             </div>
             <div className="space-y-2">
@@ -1264,7 +1264,7 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
                 value={newPatient.email}
                 onChange={(e) => setNewPatient(prev => ({ ...prev, email: e.target.value }))}
                 className="bg-white/5 border-white/10"
-                data-testid="input-patient-email"
+                data-testid="input-member-email"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -1275,7 +1275,7 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
                   value={newPatient.phone}
                   onChange={(e) => setNewPatient(prev => ({ ...prev, phone: e.target.value }))}
                   className="bg-white/5 border-white/10"
-                  data-testid="input-patient-phone"
+                  data-testid="input-member-phone"
                 />
               </div>
               <div className="space-y-2">
@@ -1285,7 +1285,7 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
                   value={newPatient.dateOfBirth}
                   onChange={(e) => setNewPatient(prev => ({ ...prev, dateOfBirth: e.target.value }))}
                   className="bg-white/5 border-white/10"
-                  data-testid="input-patient-dob"
+                  data-testid="input-member-dob"
                 />
               </div>
             </div>
@@ -1296,7 +1296,7 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
               className="bg-emerald-500 hover:bg-emerald-600"
               onClick={() => addPatientMutation.mutate(newPatient)}
               disabled={!newPatient.name || addPatientMutation.isPending}
-              data-testid="button-submit-patient"
+              data-testid="button-submit-member"
             >
               {addPatientMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
               Add Member

@@ -169,8 +169,8 @@ function AdminPatientManagementPanel() {
   const [newPatient, setNewPatient] = useState({ name: "", email: "", phone: "", dateOfBirth: "" });
   const [activeSubTab, setActiveSubTab] = useState("roster");
 
-  const { data: patientsData, refetch: refetchPatients } = useQuery<{ success: boolean; patients: AdminPatientRecord[] }>({
-    queryKey: ["/api/doctor/patients"],
+  const { data: patientsData, refetch: refetchPatients } = useQuery<{ success: boolean; members: AdminPatientRecord[] }>({
+    queryKey: ["/api/doctor/members"],
     retry: false,
   });
 
@@ -184,7 +184,7 @@ function AdminPatientManagementPanel() {
     retry: false,
   });
 
-  const patients = patientsData?.patients || [];
+  const patients = patientsData?.members || [];
   const protocols = protocolsData?.protocols || [];
   const conversations = conversationsData?.conversations || [];
 
@@ -198,7 +198,7 @@ function AdminPatientManagementPanel() {
 
   const addPatientMutation = useMutation({
     mutationFn: async (data: typeof newPatient) => {
-      const res = await apiRequest("POST", "/api/doctor/patients", data);
+      const res = await apiRequest("POST", "/api/doctor/members", data);
       return res.json();
     },
     onSuccess: () => {
@@ -424,7 +424,7 @@ function AdminPatientManagementPanel() {
                           </div>
                           <div>
                             <p className="font-medium">{protocol.protocolName || protocol.name || `Protocol ${protocol.id}`}</p>
-                            <p className="text-xs text-white/50">Patient: {protocol.patientRecordId || 'N/A'}</p>
+                            <p className="text-xs text-white/50">Member: {protocol.patientRecordId || 'N/A'}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">

@@ -656,7 +656,7 @@ function Router() {
           </AppLayout>
         </RoleProtectedRoute>
       )} />
-      <Route path="/doctor/patients/:patientId/ecs-profile" component={() => (
+      <Route path="/doctor/members/:patientId/ecs-profile" component={() => (
         <RoleProtectedRoute allowedRoles={["admin", "doctor"]}>
           <AppLayout>
             <PatientECSProfile />

@@ -980,7 +980,7 @@ const moduleContent: Record<string, {
       },
       {
         title: "Modern Applications of Hippocratic Wisdom",
-        content: "Hippocratic principles map directly to modern integrative medicine: nutrition as therapy (functional nutrition), the body's self-healing capacity (regenerative medicine), individualized treatment (personalized medicine), and the importance of the patient-practitioner relationship (therapeutic alliance)."
+        content: "Hippocratic principles map directly to modern integrative medicine: nutrition as therapy (functional nutrition), the body's self-healing capacity (regenerative medicine), individualized protocols (personalized medicine), and the importance of the member-practitioner relationship (therapeutic alliance)."
       }
     ],
     keyPoints: [

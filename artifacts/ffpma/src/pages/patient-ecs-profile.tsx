@@ -90,7 +90,7 @@ export default function PatientECSProfile() {
   const { data, isLoading, error } = useQuery<{ success: boolean; profile: ECSProfile }>({
     queryKey: ["ecs-profile", patientId],
     queryFn: async () => {
-      const res = await fetch(`/api/doctor/patients/${patientId}/ecs-profile`);
+      const res = await fetch(`/api/doctor/members/${patientId}/ecs-profile`);
       if (!res.ok) throw new Error("Failed to load ECS profile");
       return res.json();
     },

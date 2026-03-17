@@ -24,7 +24,7 @@ function isAdmin(req: Request): boolean {
 
 export function registerAutomationRoutes(app: Express): void {
   app.get(
-    "/api/doctor/patients/:patientId/healing-report",
+    "/api/doctor/members/:patientId/healing-report",
     requireRole("admin", "doctor"),
     asyncHandler(async (req: Request, res: Response) => {
       const doctorId = (req as any).user?.id as string;
@@ -36,7 +36,7 @@ export function registerAutomationRoutes(app: Express): void {
   );
 
   app.get(
-    "/api/doctor/patients/:patientId/healing-report/pdf",
+    "/api/doctor/members/:patientId/healing-report/pdf",
     requireRole("admin", "doctor"),
     asyncHandler(async (req: Request, res: Response) => {
       const doctorId = (req as any).user?.id as string;
@@ -59,7 +59,7 @@ export function registerAutomationRoutes(app: Express): void {
   );
 
   app.get(
-    "/api/doctor/patients/:patientId/ecs-profile",
+    "/api/doctor/members/:patientId/ecs-profile",
     requireRole("admin", "doctor"),
     asyncHandler(async (req: Request, res: Response) => {
       const doctorId = (req as any).user?.id as string;
@@ -69,6 +69,16 @@ export function registerAutomationRoutes(app: Express): void {
       res.json({ success: true, profile });
     })
   );
+
+  app.get("/api/doctor/patients/:patientId/healing-report", (req: Request, res: Response) => {
+    res.redirect(301, `/api/doctor/members/${req.params.patientId}/healing-report`);
+  });
+  app.get("/api/doctor/patients/:patientId/healing-report/pdf", (req: Request, res: Response) => {
+    res.redirect(301, `/api/doctor/members/${req.params.patientId}/healing-report/pdf`);
+  });
+  app.get("/api/doctor/patients/:patientId/ecs-profile", (req: Request, res: Response) => {
+    res.redirect(301, `/api/doctor/members/${req.params.patientId}/ecs-profile`);
+  });
 
   app.post(
     "/api/enrollment/:enrollmentId/welcome",

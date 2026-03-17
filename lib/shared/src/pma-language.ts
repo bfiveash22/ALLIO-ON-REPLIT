@@ -54,8 +54,16 @@ export function sanitizePmaLanguage(text: string): string {
       if (match === "PATIENT") return "MEMBER";
       return "member";
     })
+    .replace(/\bdiagnosis\b/gi, (match) => match[0] === match[0].toUpperCase() ? "Assessment" : "assessment")
+    .replace(/\bdiagnoses\b/gi, (match) => match[0] === match[0].toUpperCase() ? "Assessments" : "assessments")
+    .replace(/\bdiagnosed\b/gi, "assessed")
+    .replace(/\bprescribe\b/gi, (match) => match[0] === match[0].toUpperCase() ? "Suggest" : "suggest")
+    .replace(/\bprescribed\b/gi, (match) => match[0] === match[0].toUpperCase() ? "Suggested" : "suggested")
+    .replace(/\bprescription\b/gi, (match) => match[0] === match[0].toUpperCase() ? "Recommendation" : "recommendation")
+    .replace(/\bcure\b/gi, (match) => match[0] === match[0].toUpperCase() ? "Restore" : "restore")
     .replace(/\bTreatment Phases\b/g, "Wellness Phases")
     .replace(/\btreatment plan\b/gi, "wellness protocol")
+    .replace(/\btreatment protocol\b/gi, "wellness protocol")
     .replace(/\bmedical advice\b/gi, "wellness guidance")
     .replace(/\bdoctor-patient\b/gi, "trustee-member")
     .replace(/\bpatient overview\b/gi, "member overview")
@@ -81,4 +89,11 @@ export const PMA_FORBIDDEN_PATTERNS = [
   /\btreatment plan\b/i,
   /\bmedical advice\b/i,
   /\bdoctor-patient\b/i,
+  /\bdiagnosis\b/i,
+  /\bdiagnoses\b/i,
+  /\bdiagnose\b/i,
+  /\bprescribe\b/i,
+  /\bprescription\b/i,
+  /\bcure\b/i,
+  /\bcures\b/i,
 ] as const;

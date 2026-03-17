@@ -495,7 +495,7 @@ export function registerDoctorRoutes(app: Express): void {
             confidence,
             abcdeCriteria,
             findings,
-            disclaimer: "This AI analysis is for educational purposes only within the PMA. It does not constitute medical advice or diagnosis. Skin lesion assessment should always be performed by a qualified dermatologist or healthcare practitioner. The ABCDE criteria annotations are AI-estimated and must be confirmed through clinical examination."
+            disclaimer: "This AI analysis is for educational and research purposes only within the PMA. It does not constitute wellness guidance or clinical assessment. Skin lesion assessment should always be performed by a qualified practitioner. The ABCDE criteria annotations are AI-estimated and must be confirmed through clinical examination."
           },
           processingTimeMs
         };
@@ -531,7 +531,7 @@ export function registerDoctorRoutes(app: Express): void {
           model: modelId,
           result: {
             findings,
-            disclaimer: "This AI analysis is for educational purposes only within the PMA. It does not constitute medical advice. All findings should be reviewed by a qualified healthcare practitioner."
+            disclaimer: "This AI analysis is for educational and research purposes only within the PMA. It does not constitute wellness guidance. All findings should be reviewed by a qualified practitioner."
           },
           processingTimeMs
         };
@@ -577,12 +577,12 @@ export function registerDoctorRoutes(app: Express): void {
       if (patientId && patientId !== "unassigned") {
         const patient = await storage.getPatientRecord(patientId);
         if (!patient) {
-          return res.status(404).json({ success: false, error: "Patient record not found." });
+          return res.status(404).json({ success: false, error: "Member record not found." });
         }
         if (patient.doctorId !== requestedBy) {
           const isPrivileged = isPrivilegedUser(req);
           if (!isPrivileged) {
-            return res.status(403).json({ success: false, error: "You do not have access to this patient." });
+            return res.status(403).json({ success: false, error: "You do not have access to this member." });
           }
         }
       }
@@ -660,7 +660,7 @@ export function registerDoctorRoutes(app: Express): void {
         model: modelId,
         result: {
           findings,
-          disclaimer: "This AI analysis is for educational purposes only within the PMA. It does not constitute medical advice. All findings should be reviewed by a qualified healthcare practitioner."
+          disclaimer: "This AI analysis is for educational and research purposes only within the PMA. It does not constitute wellness guidance. All findings should be reviewed by a qualified practitioner."
         },
         processingTimeMs,
         driveLink,
@@ -720,7 +720,7 @@ export function registerDoctorRoutes(app: Express): void {
 
       const patient = await storage.getPatientRecord(patientId);
       if (!patient) {
-        return res.status(404).json({ success: false, error: "Patient not found", analyses: [] });
+        return res.status(404).json({ success: false, error: "Member not found", analyses: [] });
       }
       if (patient.doctorId !== requestedBy) {
         const isPrivileged = isPrivilegedUser(req);
@@ -755,8 +755,8 @@ export function registerDoctorRoutes(app: Express): void {
         : await storage.getDoctorProtocols(req.user?.id as string);
 
       const analytics = {
-        totalPatients: patients.length,
-        activePatients: patients.filter(p => p.status === "active").length,
+        totalMembers: patients.length,
+        activeMembers: patients.filter(p => p.status === "active").length,
         totalProtocols: protocols.length,
         activeProtocols: protocols.filter(p => p.status === "active").length,
         completedProtocols: protocols.filter(p => p.status === "completed").length,
