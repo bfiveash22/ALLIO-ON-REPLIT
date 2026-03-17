@@ -163,13 +163,14 @@ export function registerSettingsRoutes(app: Express): void {
   app.post("/api/intake/submit", async (req: Request, res: Response) => {
     try {
       const { submitIntakeForm } = await import("../services/intake");
-      const { patientInfo, formData } = req.body;
+      const memberInfo = req.body.memberInfo || req.body.patientInfo;
+      const { formData } = req.body;
 
-      if (!patientInfo || !patientInfo.name || !patientInfo.email) {
+      if (!memberInfo || !memberInfo.name || !memberInfo.email) {
         return res.status(400).json({ success: false, error: "Missing required member info (name, email)" });
       }
 
-      const result = await submitIntakeForm(patientInfo, formData);
+      const result = await submitIntakeForm(memberInfo, formData);
       res.json(result);
     } catch (error: any) {
       console.error("[Intake] Submit error:", error);
@@ -180,22 +181,23 @@ export function registerSettingsRoutes(app: Express): void {
   app.post("/api/intake/save-draft", async (req: Request, res: Response) => {
     try {
       const { intakeForms } = await import("@shared/schema");
-      const { patientInfo, formData, draftId } = req.body;
+      const memberInfo = req.body.memberInfo || req.body.patientInfo;
+      const { formData, draftId } = req.body;
       let existingId = draftId;
 
       if (!existingId) {
         const [draft] = await db.insert(intakeForms).values({
-          patientName: patientInfo?.name || "Draft",
-          patientEmail: patientInfo?.email || "draft@ffpma.com",
+          patientName: memberInfo?.name || "Draft",
+          patientEmail: memberInfo?.email || "draft@ffpma.com",
           formData: formData || {},
           status: "draft"
         }).returning();
         existingId = draft.id;
       } else {
         await db.update(intakeForms).set({
-          patientName: patientInfo?.name || "Draft",
-          patientEmail: patientInfo?.email || "draft@ffpma.com",
-          patientPhone: patientInfo?.phone,
+          patientName: memberInfo?.name || "Draft",
+          patientEmail: memberInfo?.email || "draft@ffpma.com",
+          patientPhone: memberInfo?.phone,
           formData: formData || {},
           updatedAt: new Date()
         }).where(eq(intakeForms.id, existingId));

@@ -67,7 +67,7 @@ export function DoctorPatientMessaging({ doctorId, preselectedPatientId }: Docto
   const sendMessageMutation = useMutation({
     mutationFn: async (text: string) => {
       if (!selectedPatientId) throw new Error("No member selected");
-      const res = await apiRequest("POST", `/api/doctor/messages/${selectedPatientId}`, {
+      const res = await apiRequest("POST", `/api/doctor/member-messages/${selectedPatientId}`, {
         messageText: text
       });
       return res.json();

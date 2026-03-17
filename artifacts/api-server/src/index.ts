@@ -330,6 +330,7 @@ registerHealthRoutes(app);
       'artifacts/ffpma/src/pages/protocol-assembly.tsx',
       'artifacts/ffpma/src/components/ConsultAITeam.tsx',
       'artifacts/ffpma/src/components/XRayAnalysisUpload.tsx',
+      'artifacts/ffpma/src/components/DoctorPatientMessaging.tsx',
       'artifacts/ffpma/src/locales/en/common.json',
       'artifacts/ffpma/src/locales/es/common.json',
     ];
@@ -360,6 +361,8 @@ registerHealthRoutes(app);
       if (/sanitize(PmaLanguage|TextInput)|addSanitizedSlide/.test(line)) return true;
       if (/generatedProtocols\.patient/.test(line)) return true;
       if (/"patients":|"newPatient":|"patientManagement":/.test(line)) return true;
+      if (/patientName:|patientEmail:|patientPhone:|patientUploadId/.test(line)) return true;
+      if (/selectedPatientId|DoctorPatientMessaging/.test(line)) return true;
       if (/totalMembers:\s*patients|activeMembers:\s*patients/.test(line)) return true;
       if (/profit model|cured nothing|poison to cure|not a cure/.test(line)) return true;
       if (/YOU ARE NOT YOUR/.test(line)) return true;

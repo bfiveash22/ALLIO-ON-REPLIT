@@ -24,11 +24,11 @@ function isAdmin(req: Request): boolean {
 
 export function registerAutomationRoutes(app: Express): void {
   app.get(
-    "/api/doctor/members/:patientId/healing-report",
+    "/api/doctor/members/:memberId/healing-report",
     requireRole("admin", "doctor"),
     asyncHandler(async (req: Request, res: Response) => {
       const doctorId = (req as any).user?.id as string;
-      const { patientId } = req.params;
+      const patientId = req.params.memberId;
 
       const data = await aggregateHealingProgress(patientId, doctorId, isAdmin(req));
       res.json({ success: true, data });
@@ -36,11 +36,11 @@ export function registerAutomationRoutes(app: Express): void {
   );
 
   app.get(
-    "/api/doctor/members/:patientId/healing-report/pdf",
+    "/api/doctor/members/:memberId/healing-report/pdf",
     requireRole("admin", "doctor"),
     asyncHandler(async (req: Request, res: Response) => {
       const doctorId = (req as any).user?.id as string;
-      const { patientId } = req.params;
+      const patientId = req.params.memberId;
 
       const data = await aggregateHealingProgress(patientId, doctorId, isAdmin(req));
       const pdfBuffer = await generateHealingProgressPDF(data);
@@ -59,11 +59,11 @@ export function registerAutomationRoutes(app: Express): void {
   );
 
   app.get(
-    "/api/doctor/members/:patientId/ecs-profile",
+    "/api/doctor/members/:memberId/ecs-profile",
     requireRole("admin", "doctor"),
     asyncHandler(async (req: Request, res: Response) => {
       const doctorId = (req as any).user?.id as string;
-      const { patientId } = req.params;
+      const patientId = req.params.memberId;
 
       const profile = await buildECSProfile(patientId, doctorId, isAdmin(req));
       res.json({ success: true, profile });

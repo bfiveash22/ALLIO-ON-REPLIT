@@ -307,10 +307,14 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.get("/api/doctor/messages/:patientId", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
+  app.get("/api/doctor/messages/:patientId", requireRole("admin", "trustee", "doctor"), (req: Request, res: Response) => {
+    res.redirect(301, `/api/doctor/member-messages/${req.params.patientId}`);
+  });
+
+  app.get("/api/doctor/member-messages/:memberId", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const doctorId = req.user?.id as string;
-      const patientId = req.params.patientId;
+      const patientId = req.params.memberId;
       const isPrivileged = isPrivilegedUser(req);
       if (!isPrivileged) {
         const authorized = await isDoctorsMember(doctorId, patientId);
@@ -325,10 +329,14 @@ export function registerDoctorRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/doctor/messages/:patientId", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
+  app.post("/api/doctor/messages/:patientId", requireRole("admin", "trustee", "doctor"), (req: Request, res: Response) => {
+    res.redirect(307, `/api/doctor/member-messages/${req.params.patientId}`);
+  });
+
+  app.post("/api/doctor/member-messages/:memberId", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const doctorId = req.user?.id as string;
-      const patientId = req.params.patientId;
+      const patientId = req.params.memberId;
       const isPrivileged = isPrivilegedUser(req);
       if (!isPrivileged) {
         const authorized = await isDoctorsMember(doctorId, patientId);
