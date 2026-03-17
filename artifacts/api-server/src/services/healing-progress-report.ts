@@ -27,15 +27,8 @@ export interface HealingProgressData {
     dateOfBirth?: Date | null;
     createdAt?: Date | null;
   };
-  patient: {
-    id: string;
-    name: string;
-    email?: string | null;
-    status?: string | null;
-    primaryConcerns?: string[] | null;
-    dateOfBirth?: Date | null;
-    createdAt?: Date | null;
-  };
+  /** @deprecated Use member key instead */
+  _legacyPatientKey?: never;
   protocols: Array<{
     id: string;
     protocolName: string;
@@ -182,7 +175,6 @@ export async function aggregateHealingProgress(
   };
   return {
     member: memberInfo,
-    patient: memberInfo,
     protocols,
     uploads,
     labData,
