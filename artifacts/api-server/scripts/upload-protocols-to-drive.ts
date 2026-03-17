@@ -10,6 +10,12 @@ import {
 const PROTOCOLS_DIR = path.join(process.cwd(), 'generated-protocols');
 
 const MEMBER_FILES: Record<string, string[]> = {
+  'Kathryn Smith': [
+    'Kathryn_Smith_Full_Protocol.pdf',
+    'Kathryn_Smith_Peptide_Schedule.pdf',
+    'Kathryn_Smith_Daily_Schedule.pdf',
+    'Kathryn_Smith_Protocol_Presentation.pptx',
+  ],
   'Annette Gomer': [
     'Annette_Gomer_Full_Protocol.pdf',
     'Annette_Gomer_Peptide_Schedule.pdf',
@@ -100,7 +106,16 @@ async function main() {
     }
   }
 
-  console.log(`\n[Upload] Complete: ${totalUploaded} uploaded, ${totalFailed} failed`);
+  const totalExpected = Object.values(MEMBER_FILES).flat().length;
+  console.log(`\n[Upload] ═══════════════════════════════════════════`);
+  console.log(`[Upload] VERIFICATION: ${totalUploaded}/${totalExpected} files uploaded, ${totalFailed} failed`);
+  if (totalUploaded === totalExpected && totalFailed === 0) {
+    console.log(`[Upload] ALL ${totalExpected} DELIVERABLES VERIFIED ✓`);
+  } else {
+    console.error(`[Upload] INCOMPLETE: expected ${totalExpected}, got ${totalUploaded} uploaded`);
+    process.exit(1);
+  }
+  console.log(`[Upload] ═══════════════════════════════════════════`);
 }
 
 main().catch(err => {

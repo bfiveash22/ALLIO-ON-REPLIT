@@ -11,7 +11,7 @@ import {
 } from "../src/services/drive";
 
 const MEMBER_NAME = "Kathryn Smith";
-const OUTPUT_DIR = path.resolve(process.cwd(), "..", "..", "public", "protocols");
+const OUTPUT_DIR = path.resolve(process.cwd(), "generated-protocols");
 
 const DELIVERABLE_FILES = [
   { fileName: "Kathryn_Smith_Full_Protocol.pdf", dbField: "pdfDriveFileId" as const, dbLinkField: "pdfDriveWebViewLink" as const },

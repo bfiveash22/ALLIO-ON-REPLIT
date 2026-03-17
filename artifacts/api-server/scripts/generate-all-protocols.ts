@@ -182,9 +182,14 @@ async function processMember(config: MemberConfig): Promise<void> {
   console.log(`  [QA] Running pre-deliverable QA validation...`);
   const finalQA = runDeterministicQAChecks(protocol, profile);
   if (finalQA.issues.length > 0) {
-    console.warn(`  [QA] ${finalQA.issues.length} issue(s) in final protocol — generating deliverables with warnings`);
     for (const issue of finalQA.issues) {
-      console.warn(`  [QA]   - ${issue}`);
+      console.error(`  [QA] FAIL: ${issue}`);
+    }
+    const skipQA = process.env.SKIP_QA_GATE === "true";
+    if (skipQA) {
+      console.warn(`  [QA] SKIP_QA_GATE=true — proceeding despite ${finalQA.issues.length} issue(s)`);
+    } else {
+      throw new Error(`QA HARD FAIL: ${finalQA.issues.length} deterministic issue(s) found for ${config.name}. Set SKIP_QA_GATE=true to override.`);
     }
   } else {
     console.log(`  [QA] All deterministic checks passed`);

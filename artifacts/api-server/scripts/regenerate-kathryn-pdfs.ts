@@ -14,7 +14,7 @@ import { generateProtocolPPTX } from "../src/services/protocol-pptx";
 import type { HealingProtocol, PatientProfile } from "@shared/types/protocol-assembly";
 
 const MEMBER_NAME = "Kathryn Smith";
-const OUTPUT_DIR = path.resolve(process.cwd(), "..", "..", "public", "protocols");
+const OUTPUT_DIR = path.resolve(process.cwd(), "generated-protocols");
 
 async function findProtocolRecord(): Promise<{ id: number; protocol: HealingProtocol; profile: PatientProfile }> {
   const records = await db
@@ -54,9 +54,15 @@ async function main() {
   console.log(`[Regen] QA: ${qa.issues.length} issues, ${qa.suggestions.length} suggestions, catalog match: ${(qa.catalogMatchRate * 100).toFixed(0)}%`);
   if (qa.issues.length > 0) {
     for (const issue of qa.issues) {
-      console.warn(`[Regen] QA ISSUE: ${issue}`);
+      console.error(`[Regen] QA FAIL: ${issue}`);
     }
-    console.warn(`[Regen] WARNING: ${qa.issues.length} QA issue(s) detected — regenerating with known gaps`);
+    const skipQA = process.env.SKIP_QA_GATE === "true";
+    if (skipQA) {
+      console.warn(`[Regen] SKIP_QA_GATE=true — proceeding despite ${qa.issues.length} issue(s)`);
+    } else {
+      console.error(`[Regen] QA HARD FAIL: ${qa.issues.length} deterministic issue(s) found. Set SKIP_QA_GATE=true to override.`);
+      process.exit(1);
+    }
   } else {
     console.log("[Regen] All QA checks passed");
   }
