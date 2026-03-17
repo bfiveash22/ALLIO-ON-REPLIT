@@ -36,10 +36,6 @@ const LEGAL_REFERENCE_KEYWORDS = [
   "compliance", "framework", "handbook",
 ];
 
-const EXPECTED_DIVISION_FOLDERS = [
-  "Executive", "Legal", "Financial", "Marketing", "Science", "Engineering", "Support",
-];
-
 const EXPECTED_TOP_LEVEL = new Set([
   "02_DIVISIONS", "Legal Compliance", "Member Contracts", "Member Content",
   "Protocols", "Agent_Libraries", "Brand Assets", "Agent Collaboration",
@@ -68,6 +64,7 @@ interface AuditResult {
   category: "contract" | "legal_reference" | "uncategorized";
   suggestedLocation: string;
   memberName?: string;
+  fileDate?: string;
 }
 
 function extractMemberName(filename: string): string | null {
@@ -81,6 +78,27 @@ function extractMemberName(filename: string): string | null {
     return match[1].replace(/[_]/g, " ").split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
   }
   return null;
+}
+
+function extractFileDate(filename: string, createdTime?: string): string {
+  const datePatterns = [
+    /(\d{4})[_-](\d{2})[_-](\d{2})/,
+    /(\d{2})[_-](\d{2})[_-](\d{4})/,
+    /(\d{4})(\d{2})(\d{2})/,
+  ];
+  for (const pattern of datePatterns) {
+    const match = filename.match(pattern);
+    if (match) {
+      if (match[3] && match[3].length === 4) {
+        return `${match[3]}-${match[1]}-${match[2]}`;
+      }
+      return `${match[1]}-${match[2]}-${match[3]}`;
+    }
+  }
+  if (createdTime) {
+    return createdTime.slice(0, 7);
+  }
+  return new Date().toISOString().slice(0, 7);
 }
 
 function categorizeFile(name: string, path: string): "contract" | "legal_reference" | "uncategorized" {
@@ -111,12 +129,13 @@ async function scanFolder(
       const category = categorizeFile(item.name, folderPath);
       let suggestedLocation = folderPath;
       let memberName: string | null = null;
+      let fileDate: string | undefined;
 
       if (category === "contract") {
         memberName = extractMemberName(item.name);
-        suggestedLocation = memberName
-          ? `ALLIO/${MEMBER_CONTRACTS_FOLDER}/${memberName}/`
-          : `ALLIO/${MEMBER_CONTRACTS_FOLDER}/Unassigned/`;
+        fileDate = extractFileDate(item.name, item.createdTime);
+        const memberLabel = memberName || "Unassigned";
+        suggestedLocation = `ALLIO/${MEMBER_CONTRACTS_FOLDER}/${memberLabel}/${fileDate}/`;
       } else if (category === "legal_reference") {
         if (item.name.toLowerCase().includes("constitutional") || item.name.toLowerCase().includes("amendment")) {
           suggestedLocation = "ALLIO/Legal Compliance/Constitutional Law/";
@@ -134,6 +153,7 @@ async function scanFolder(
         category,
         suggestedLocation,
         memberName: memberName || undefined,
+        fileDate,
       });
     }
   }
@@ -189,6 +209,43 @@ async function ensureLegalFolderStructure(allioId: string): Promise<Record<strin
   return folderIds;
 }
 
+async function getOrCreateMemberDateFolder(
+  memberContractsId: string,
+  memberName: string,
+  dateStr: string,
+  folderIds: Record<string, string>,
+): Promise<string> {
+  const memberKey = `${MEMBER_CONTRACTS_FOLDER}/${memberName}`;
+  let memberFolderId = folderIds[memberKey];
+
+  if (!memberFolderId) {
+    let existing = await findFolderByName(memberContractsId, memberName);
+    if (!existing) {
+      const folder = await createSubfolder(memberContractsId, memberName);
+      existing = folder.id;
+      console.log(`[Legal] Dynamically created "${MEMBER_CONTRACTS_FOLDER}/${memberName}"`);
+    }
+    memberFolderId = existing;
+    folderIds[memberKey] = memberFolderId;
+  }
+
+  const dateKey = `${memberKey}/${dateStr}`;
+  let dateFolderId = folderIds[dateKey];
+
+  if (!dateFolderId) {
+    let existing = await findFolderByName(memberFolderId, dateStr);
+    if (!existing) {
+      const folder = await createSubfolder(memberFolderId, dateStr);
+      existing = folder.id;
+      console.log(`[Legal] Created "${memberKey}/${dateStr}"`);
+    }
+    dateFolderId = existing;
+    folderIds[dateKey] = dateFolderId;
+  }
+
+  return dateFolderId;
+}
+
 async function moveFile(fileId: string, currentParentId: string, newParentId: string): Promise<boolean> {
   try {
     const drive = await getUncachableGoogleDriveClient();
@@ -210,6 +267,7 @@ interface DriveWideIssue {
   path: string;
   file?: DriveFile;
   detail: string;
+  fixable: boolean;
 }
 
 async function driveWideCleanupAudit(allioId: string): Promise<DriveWideIssue[]> {
@@ -225,6 +283,7 @@ async function driveWideCleanupAudit(allioId: string): Promise<DriveWideIssue[]>
       path: "ALLIO/",
       file: f,
       detail: `File "${f.name}" is at ALLIO root level (should be in a subfolder)`,
+      fixable: false,
     });
   }
 
@@ -239,6 +298,7 @@ async function driveWideCleanupAudit(allioId: string): Promise<DriveWideIssue[]>
         type: "duplicate_folder",
         path: `ALLIO/${name}`,
         detail: `Folder "${name}" appears ${count} times at ALLIO root level (should be consolidated)`,
+        fixable: false,
       });
     }
   }
@@ -249,14 +309,8 @@ async function driveWideCleanupAudit(allioId: string): Promise<DriveWideIssue[]>
         type: "unknown_folder",
         path: `ALLIO/${folder.name}`,
         detail: `Unknown folder "${folder.name}" not in expected ALLIO structure`,
+        fixable: false,
       });
-    }
-  }
-
-  for (const divName of EXPECTED_DIVISION_FOLDERS) {
-    const divFolders = topLevelFolders.filter(f => f.name === divName);
-    if (divFolders.length === 0) {
-      console.log(`[Cleanup] Division folder "${divName}" not found at top level (may be in 02_DIVISIONS)`);
     }
   }
 
@@ -271,6 +325,7 @@ async function driveWideCleanupAudit(allioId: string): Promise<DriveWideIssue[]>
           path: `ALLIO/02_DIVISIONS/`,
           file: f,
           detail: `File "${f.name}" is directly in 02_DIVISIONS (should be in a division subfolder)`,
+          fixable: false,
         });
       }
 
@@ -284,6 +339,7 @@ async function driveWideCleanupAudit(allioId: string): Promise<DriveWideIssue[]>
             path: `ALLIO/02_DIVISIONS/${divSub.name}/`,
             file: f,
             detail: `File "${f.name}" is directly in division "${divSub.name}" (should be in agent/output subfolder)`,
+            fixable: false,
           });
         }
       }
@@ -307,7 +363,7 @@ async function main() {
   const folderIds = await ensureLegalFolderStructure(allioFolder.id);
   console.log(`[Legal] Folder structure: ${Object.keys(folderIds).length} folders verified\n`);
 
-  console.log("[Legal] Phase 2: Scanning Legal Compliance folder...");
+  console.log("[Legal] Phase 2: Scanning legal folders...");
   const legalId = folderIds["Legal Compliance"];
   const results: AuditResult[] = [];
   await scanFolder(legalId, "ALLIO/Legal Compliance", results);
@@ -342,6 +398,7 @@ async function main() {
       console.log(`  ${c.file.name}`);
       console.log(`    Current: ${c.path}`);
       console.log(`    Member: ${c.memberName || "Unassigned"}`);
+      console.log(`    Date: ${c.fileDate || "unknown"}`);
       console.log(`    Suggested: ${c.suggestedLocation}`);
     }
   }
@@ -409,14 +466,20 @@ async function main() {
     console.log(`\n[Legal] Phase 4: Executing file reorganization...`);
     let moved = 0;
     let failed = 0;
+    const memberContractsId = folderIds[MEMBER_CONTRACTS_FOLDER];
 
     for (const c of contracts) {
-      const memberKey = c.memberName
-        ? `${MEMBER_CONTRACTS_FOLDER}/${c.memberName}`
-        : `${MEMBER_CONTRACTS_FOLDER}/Unassigned`;
-      const targetFolderId = folderIds[memberKey];
-      if (targetFolderId && !c.path.includes(memberKey)) {
-        console.log(`[Legal] Moving "${c.file.name}" from ${c.path} → ${memberKey}/`);
+      const memberLabel = c.memberName || "Unassigned";
+      const dateStr = c.fileDate || new Date().toISOString().slice(0, 7);
+      const targetFolderId = await getOrCreateMemberDateFolder(
+        memberContractsId,
+        memberLabel,
+        dateStr,
+        folderIds,
+      );
+      const targetPath = `${MEMBER_CONTRACTS_FOLDER}/${memberLabel}/${dateStr}`;
+      if (!c.path.includes(targetPath)) {
+        console.log(`[Legal] Moving "${c.file.name}" from ${c.path} → ${targetPath}/`);
         const ok = await moveFile(c.file.id, c.parentFolderId, targetFolderId);
         if (ok) moved++;
         else failed++;

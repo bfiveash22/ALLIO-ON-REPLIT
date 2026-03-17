@@ -390,4 +390,63 @@ export function registerDriveRoutes(app: Express): void {
       res.status(500).json({ success: false, error: error.message });
     }
   });
+
+  app.post("/api/hermes/drive-hierarchy-enforce", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { findFolderByName: findFolder, createSubfolder: createSub } = await import("../services/drive");
+      const allioFolder = await findAllioFolder();
+      if (!allioFolder) {
+        return res.status(404).json({ success: false, error: "ALLIO folder not found" });
+      }
+
+      const actions: string[] = [];
+      const contents = await listFolderContents(allioFolder.id);
+      const topLevelFolders = contents.filter((f: any) => f.mimeType === "application/vnd.google-apps.folder");
+
+      const requiredFolders = ["Legal Compliance", "Member Contracts", "Member Content", "Protocols"];
+      for (const required of requiredFolders) {
+        if (!topLevelFolders.some((f: any) => f.name === required)) {
+          await createSub(allioFolder.id, required);
+          actions.push(`Created missing folder: ${required}`);
+        }
+      }
+
+      const legalComplianceFolder = topLevelFolders.find((f: any) => f.name === "Legal Compliance");
+      if (legalComplianceFolder) {
+        const legalContents = await listFolderContents(legalComplianceFolder.id);
+        const legalSubNames = legalContents.filter((f: any) => f.mimeType === "application/vnd.google-apps.folder").map((f: any) => f.name);
+        const requiredLegalSubs = ["Constitutional Law", "Case Law", "Reference Materials", "PMA Formation Documents"];
+        for (const sub of requiredLegalSubs) {
+          if (!legalSubNames.includes(sub)) {
+            await createSub(legalComplianceFolder.id, sub);
+            actions.push(`Created missing legal subfolder: Legal Compliance/${sub}`);
+          }
+        }
+      }
+
+      const memberContractsFolder = topLevelFolders.find((f: any) => f.name === "Member Contracts");
+      if (memberContractsFolder) {
+        const mcContents = await listFolderContents(memberContractsFolder.id);
+        const mcSubNames = mcContents.filter((f: any) => f.mimeType === "application/vnd.google-apps.folder").map((f: any) => f.name);
+        const requiredMembers = ["Kathryn Smith", "Annette Gomer", "John D.", "Margaret R.", "Unassigned"];
+        for (const member of requiredMembers) {
+          if (!mcSubNames.includes(member)) {
+            await createSub(memberContractsFolder.id, member);
+            actions.push(`Created missing member folder: Member Contracts/${member}`);
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        agent: "HERMES",
+        mode: "enforce",
+        timestamp: new Date().toISOString(),
+        actionsPerformed: actions.length,
+        actions,
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
 }
