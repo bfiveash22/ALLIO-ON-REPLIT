@@ -537,10 +537,10 @@ Return ONLY valid JSON, no markdown.`;
       console.error(`[Protocol Assembly] Terminal failure: ${err.message}`);
       try {
         await db.insert(generatedProtocols).values({
-          memberName: profile.name || "Unknown",
-          memberAge: profile.age || 0,
+          patientName: profile.name || "Unknown",
+          patientAge: profile.age || 0,
           sourceType: "intake_form",
-          memberProfile: profile as unknown as Record<string, unknown>,
+          patientProfile: profile as unknown as Record<string, unknown>,
           protocol: {} as Record<string, unknown>,
           status: "ai_failed",
           generatedBy: "system",
@@ -558,7 +558,16 @@ Return ONLY valid JSON, no markdown.`;
 
   if (!content || content.length < 100) throw new Error("Failed to generate protocol from any provider");
 
-  const parsed = JSON.parse(content) as HealingProtocol;
+  const raw = JSON.parse(content);
+  if (raw.memberName && !raw.patientName) {
+    raw.patientName = raw.memberName;
+    delete raw.memberName;
+  }
+  if (raw.memberAge && !raw.patientAge) {
+    raw.patientAge = raw.memberAge;
+    delete raw.memberAge;
+  }
+  const parsed = raw as HealingProtocol;
 
   enforceRequiredModalities(parsed, profile);
 
@@ -1394,7 +1403,7 @@ export async function saveProtocol(
       intakeFormId: profile.intakeFormId || null,
       memberId: memberId || null,
       doctorId: doctorId || null,
-      memberProfile: profile as unknown as Record<string, unknown>,
+      patientProfile: profile as unknown as Record<string, unknown>,
       protocol: protocol as unknown as Record<string, unknown>,
       status: status || "draft",
       generatedBy: generatedBy || "system",
