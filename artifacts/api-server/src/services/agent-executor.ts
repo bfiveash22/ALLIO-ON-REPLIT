@@ -469,6 +469,49 @@ Embody this identity in everything you create. Your outputs should reflect your 
 `;
     }
 
+    if (profile?.division === 'legal') {
+      agentContext += `
+LEGAL DIVISION RESOURCE MANIFEST:
+You have access to the following legal resources and must reference them in your work:
+
+1. CONSTITUTIONAL LAW FRAMEWORK (getConstitutionalLawFramework):
+   - 1st Amendment: Freedom of association (NAACP v. Alabama 1958, Roberts v. Jaycees 1984, Boy Scouts v. Dale 2000)
+   - 14th Amendment: Due process protection (Meyer v. Nebraska 1923, Griswold v. Connecticut 1965)
+   - 9th Amendment: Unenumerated rights (healthcare choice)
+   - 10th Amendment: Reserved powers (Commerce Clause limits)
+   - Regulatory jurisdiction analysis (FDA, FTC, State Medical Boards)
+
+2. PMA LEGAL DOCUMENTS (via getAllLegalDocuments):
+   - PMA Member Agreement (pma-agreement)
+   - Privacy Policy (privacy-policy)
+   - Terms of Service (terms-of-service)
+   - Doctor Onboarding Contract (doctor-onboarding-contract)
+   - Trademark Application (trademark-application)
+   - Declaration of Intent to Use (declaration-of-intent-to-use)
+   - Master Copyright Assignment (master-copyright-assignment)
+   - Private Domain IP Policy (private-domain-ip-policy)
+   - Member IP Acknowledgment (member-ip-acknowledgment)
+   - Copyright Registration Cover Sheet (copyright-registration-cover-sheet)
+   - Power of Attorney (power-of-attorney)
+   - Specimens of Use Package (specimens-of-use-package)
+
+3. DRIVE FOLDER STRUCTURE (managed by HERMES):
+   - ALLIO/Legal Compliance/Constitutional Law/ — constitutional framework docs
+   - ALLIO/Legal Compliance/Case Law/ — court decisions
+   - ALLIO/Legal Compliance/Reference Materials/ — general legal guides
+   - ALLIO/Legal Compliance/PMA Formation Documents/ — formation checklist, articles
+   - ALLIO/Member Contracts/{MemberName}/ — per-member agreement files (Kathryn Smith, Annette Gomer, John D., Margaret R.)
+
+4. LOCAL LEGAL DOCS (artifacts/api-server/docs/legal/):
+   - allio-ip-protection-requirements.md
+   - allio-patent-disclosure-form.md
+   - allio-trademark-application-form.md
+
+When generating legal documents, ALWAYS cross-reference the constitutional framework and cite relevant case law.
+When filing documents, ALWAYS use the correct Drive folder path from the structure above.
+`;
+    }
+
     const systemPrompt = `${FFPMA_MISSION_TRAINING}\n\n${agentContext}${researchContext}\n\nYou are ${profile?.name || agentId.toUpperCase()}, ${profile?.title || 'an AI agent'} at Forgotten Formula PMA.\n\nYOUR DIVISION: ${division.toUpperCase()}\nYOUR PURPOSE: Create outputs that advance the healing mission and serve members.`;
 
     const userPrompt = `Generate a complete, professional document for the following task:\n\nTASK TITLE: ${taskTitle}\n\nTASK DESCRIPTION: ${taskDescription}\n\nDIVISION: ${division}\n\nRequirements:\n- Create a comprehensive, well-structured document\n- Include relevant sections, headers, and content\n- Be thorough and professional\n- Make it actionable and useful for the organization\n- Reflect the FFPMA mission: healing over profits, nature over synthetic\n- Include specific details relevant to healthcare, healing, and the PMA's mission\n- Format with clear sections using markdown\n- End with how this contributes to our mission of true healing\n\nGenerate the full document now:`;

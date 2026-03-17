@@ -299,4 +299,95 @@ export function registerDriveRoutes(app: Express): void {
       res.json({ success: true, ...result });
     } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
   });
+
+  app.get("/api/hermes/drive-hierarchy-check", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const allioFolder = await findAllioFolder();
+      if (!allioFolder) {
+        return res.status(404).json({ success: false, error: "ALLIO folder not found" });
+      }
+
+      const issues: Array<{ type: string; path: string; detail: string }> = [];
+      const contents = await listFolderContents(allioFolder.id);
+      const topLevelFolders = contents.filter((f: any) => f.mimeType === "application/vnd.google-apps.folder");
+      const topLevelFiles = contents.filter((f: any) => f.mimeType !== "application/vnd.google-apps.folder");
+
+      for (const f of topLevelFiles) {
+        issues.push({
+          type: "misplaced_file",
+          path: "ALLIO/",
+          detail: `File "${f.name}" at root level`,
+        });
+      }
+
+      const folderNameCounts = new Map<string, number>();
+      for (const folder of topLevelFolders) {
+        folderNameCounts.set(folder.name, (folderNameCounts.get(folder.name) || 0) + 1);
+      }
+      for (const [name, count] of folderNameCounts) {
+        if (count > 1) {
+          issues.push({
+            type: "duplicate_folder",
+            path: `ALLIO/${name}`,
+            detail: `"${name}" has ${count} duplicates`,
+          });
+        }
+      }
+
+      const requiredFolders = ["Legal Compliance", "Member Contracts", "Member Content", "Protocols"];
+      for (const required of requiredFolders) {
+        if (!topLevelFolders.some((f: any) => f.name === required)) {
+          issues.push({
+            type: "missing_folder",
+            path: `ALLIO/${required}`,
+            detail: `Required folder "${required}" not found`,
+          });
+        }
+      }
+
+      const legalComplianceFolder = topLevelFolders.find((f: any) => f.name === "Legal Compliance");
+      if (legalComplianceFolder) {
+        const legalContents = await listFolderContents(legalComplianceFolder.id);
+        const legalSubfolders = legalContents.filter((f: any) => f.mimeType === "application/vnd.google-apps.folder").map((f: any) => f.name);
+        const requiredLegalSubs = ["Constitutional Law", "Case Law", "Reference Materials", "PMA Formation Documents"];
+        for (const sub of requiredLegalSubs) {
+          if (!legalSubfolders.includes(sub)) {
+            issues.push({
+              type: "missing_folder",
+              path: `ALLIO/Legal Compliance/${sub}`,
+              detail: `Required legal subfolder "${sub}" not found`,
+            });
+          }
+        }
+      }
+
+      const memberContractsFolder = topLevelFolders.find((f: any) => f.name === "Member Contracts");
+      if (memberContractsFolder) {
+        const mcContents = await listFolderContents(memberContractsFolder.id);
+        const mcFiles = mcContents.filter((f: any) => f.mimeType !== "application/vnd.google-apps.folder");
+        for (const f of mcFiles) {
+          issues.push({
+            type: "misplaced_file",
+            path: "ALLIO/Member Contracts/",
+            detail: `File "${f.name}" should be in a member subfolder (Member Contracts/{MemberName}/)`,
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        agent: "HERMES",
+        timestamp: new Date().toISOString(),
+        totalIssues: issues.length,
+        compliant: issues.length === 0,
+        issues,
+        structure: {
+          topLevelFolders: topLevelFolders.map((f: any) => f.name),
+          topLevelFileCount: topLevelFiles.length,
+        },
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
 }
