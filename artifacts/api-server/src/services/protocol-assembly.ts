@@ -574,10 +574,49 @@ Return ONLY valid JSON, no markdown.`;
   return parsed;
 }
 
+const CATALOG_PRODUCTS = [
+  "bpc-157", "thymosin alpha-1", "ta-1", "tb-500", "thymosin beta-4", "kpv", "ghk-cu",
+  "ipamorelin", "cjc-1295", "sermorelin", "tesamorelin", "glp-1", "semaglutide", "tirzepatide",
+  "pt-141", "bremelanotide", "mots-c", "humanin", "ss-31", "epithalon", "epitalon",
+  "selank", "semax", "dihexa", "cerebrolysin", "oxytocin", "gonadorelin", "kisspeptin",
+  "aod-9604", "fragment 176-191", "snap-8", "argireline",
+  "glutathione", "nad+", "nad", "nicotinamide", "myers", "meyer", "vitamin c",
+  "high-dose vitamin c", "alpha lipoic acid", "ala", "chelation", "edta", "dmso",
+  "hydrogen peroxide", "ozone", "phosphatidylcholine", "plaquex",
+  "lipo-b", "methyl-b12", "b12", "testosterone", "progesterone", "estradiol",
+  "resveratrol", "pterostilbene", "quercetin", "fisetin", "coq10", "ubiquinol",
+  "pqq", "d-ribose", "l-carnitine", "nmn", "nr", "nicotinamide riboside",
+  "glycine", "nac", "n-acetyl cysteine",
+  "cbd", "cbg", "cbn", "thc", "cbdv", "thcv", "cbda", "cbga",
+  "mitoguard", "mitostac", "bio-vitamin", "mighty blue", "reds", "greens",
+  "elixir for everything", "elixir", "kaneh bosem",
+  "ivermectin", "fenbendazole", "albendazole", "mebendazole",
+  "liposomal glutathione", "liposomal curcumin", "liposomal d3", "liposomal k2",
+  "astaxanthin", "dim", "i3c", "indole-3-carbinol",
+  "colostrum", "l-glutamine", "probiotics", "digestive enzymes",
+  "iodine", "selenium", "zinc", "magnesium", "copper",
+];
+
+const DOSING_PATTERNS: Record<string, RegExp> = {
+  "bpc-157": /\d+\s*(mcg|µg|ug)/i,
+  "thymosin alpha-1": /\d+\s*(mg|mcg)/i,
+  "tb-500": /\d+\s*(mg|mcg)/i,
+  "kpv": /\d+\s*(mcg|µg)/i,
+  "ghk-cu": /\d+\s*(mg|mcg)/i,
+  "ipamorelin": /\d+\s*(mcg|µg)/i,
+  "cjc-1295": /\d+\s*(mcg|µg)/i,
+  "glutathione": /\d+\s*(mg|g|ml)/i,
+  "vitamin c": /\d+\s*(mg|g)/i,
+  "resveratrol": /\d+\s*mg/i,
+  "nmn": /\d+\s*mg/i,
+  "coq10": /\d+\s*mg/i,
+  "cbd": /\d+\s*mg/i,
+};
+
 export async function validateProtocolWithAgents(
   protocol: HealingProtocol,
   profile: PatientProfile
-): Promise<{ valid: boolean; issues: string[]; suggestions: string[] }> {
+): Promise<{ valid: boolean; issues: string[]; suggestions: string[]; catalogMatchRate: number }> {
   const issues: string[] = [];
   const suggestions: string[] = [];
 
@@ -587,6 +626,7 @@ export async function validateProtocolWithAgents(
   const hasMercury = allText.includes("mercury") || allText.includes("amalgam");
   const hasTrauma = profile.traumaHistory?.childhoodTrauma || allText.includes("trauma") || allText.includes("ptsd");
   const hasGut = (profile.gutHealth?.digestiveIssues?.length || 0) > 0 || allText.includes("gut") || allText.includes("dysbiosis");
+  const hasAutoimmune = allText.includes("autoimmune") || allText.includes("lupus") || allText.includes("hashimoto");
 
   if (!protocol.suppositories?.length && !protocol.ecsProtocol?.daytimeFormula) {
     issues.push("HIPPOCRATES: Missing ECS suppository protocol — every FF PMA protocol requires ECS optimization");
@@ -595,7 +635,16 @@ export async function validateProtocolWithAgents(
     issues.push("PARACELSUS: Missing MitoSTAC sirtuin stack — required for mitochondrial support");
   }
   if (!protocol.liposomals?.length) {
-    suggestions.push("PARACELSUS: Consider adding liposomal supplements (glutathione, curcumin) for enhanced bioavailability");
+    issues.push("PARACELSUS: Missing liposomal supplements — required modality (glutathione, curcumin, D3/K2)");
+  }
+  if (!protocol.dietaryProtocol?.phases?.length && (protocol.dietaryGuidelines?.length || 0) < 3) {
+    issues.push("ORACLE: Missing dietary protocol with phased approach — required for every protocol");
+  }
+  if (!protocol.sirtuinStack?.glyNAC) {
+    issues.push("PARACELSUS: Missing GlyNAC protocol — glycine + NAC required for glutathione synthesis");
+  }
+  if (!protocol.sirtuinStack?.nadPrecursors) {
+    issues.push("PARACELSUS: Missing NAD+ precursors (NMN/NR) — required for sirtuin activation");
   }
   if (hasCancer && !protocol.ivTherapies?.some(iv => iv.name?.toLowerCase().includes("vitamin c"))) {
     issues.push("HIPPOCRATES: Cancer patient missing high-dose Vitamin C IV — critical for cancer protocol");
@@ -603,14 +652,17 @@ export async function validateProtocolWithAgents(
   if (hasMold && !protocol.nebulization?.length) {
     issues.push("HIPPOCRATES: Mold exposure present but no nebulization protocol — nebulized glutathione 3x/week recommended");
   }
-  if (hasMercury && !protocol.detoxProtocols?.some(d => d.name?.toLowerCase().includes("chelat") || d.instructions?.toLowerCase().includes("dmsa"))) {
-    suggestions.push("HIPPOCRATES: Mercury exposure — ensure chelation protocol (DMSA/EDTA) is included in detox");
+  if (hasAutoimmune && !protocol.ivTherapies?.some(iv => iv.name?.toLowerCase().includes("nad"))) {
+    issues.push("HIPPOCRATES: Autoimmune condition present — NAD+ IV therapy recommended");
+  }
+  if (hasMercury && !protocol.detoxProtocols?.some(d => d.name?.toLowerCase().includes("chelat") || d.instructions?.toLowerCase().includes("dmsa") || d.instructions?.toLowerCase().includes("edta"))) {
+    issues.push("HIPPOCRATES: Mercury exposure — chelation protocol (DMSA/EDTA) required in detox");
   }
   if (hasTrauma && !protocol.lifestyleRecommendations?.some(l => l.recommendation?.toLowerCase().includes("emdr") || l.recommendation?.toLowerCase().includes("eft"))) {
     suggestions.push("HIPPOCRATES: Trauma history present — recommend EMDR/EFT/somatic therapy in lifestyle section");
   }
   if (hasGut && !protocol.oralPeptides?.some(p => p.name?.toLowerCase().includes("bpc"))) {
-    suggestions.push("PARACELSUS: Gut issues present — consider oral BPC-157 for gut lining repair");
+    issues.push("PARACELSUS: Gut issues present — oral BPC-157 required for gut lining repair");
   }
   if (!protocol.detoxProtocols?.some(d => d.name?.toLowerCase().includes("castor"))) {
     suggestions.push("PARACELSUS: Add castor oil packs to detox protocols (3x weekly, liver area)");
@@ -618,8 +670,8 @@ export async function validateProtocolWithAgents(
   if (!protocol.detoxProtocols?.some(d => d.name?.toLowerCase().includes("clay") || d.name?.toLowerCase().includes("bentonite"))) {
     suggestions.push("PARACELSUS: Add clay/bentonite baths to detox protocols for heavy metal binding");
   }
-  if ((protocol.dietaryGuidelines?.length || 0) < 3 && !protocol.dietaryProtocol?.phases?.length) {
-    suggestions.push("ORACLE: Dietary protocol needs more detail — include elimination phase and condition-specific nutrition");
+  if (!protocol.topicals?.length) {
+    suggestions.push("PARACELSUS: Consider topicals (DMSO cream, Kaneh Bosem) for localized treatment");
   }
 
   for (const pep of protocol.injectablePeptides || []) {
@@ -628,10 +680,55 @@ export async function validateProtocolWithAgents(
     }
   }
 
+  const allProductNames: string[] = [
+    ...(protocol.injectablePeptides || []).map(p => p.name),
+    ...(protocol.oralPeptides || []).map(p => p.name),
+    ...(protocol.supplements || []).map(s => s.name),
+    ...(protocol.ivTherapies || []).map(iv => iv.name),
+    ...(protocol.imTherapies || []).map(im => im.name),
+    ...(protocol.liposomals || []).map(l => l.name),
+    ...(protocol.nebulization || []).map(n => n.name),
+  ];
+
+  let catalogMatches = 0;
+  const nonCatalogItems: string[] = [];
+  for (const productName of allProductNames) {
+    const lower = productName.toLowerCase();
+    const matched = CATALOG_PRODUCTS.some(cp => lower.includes(cp) || cp.includes(lower));
+    if (matched) {
+      catalogMatches++;
+    } else {
+      nonCatalogItems.push(productName);
+    }
+  }
+  const catalogMatchRate = allProductNames.length > 0 ? Math.round((catalogMatches / allProductNames.length) * 100) : 100;
+  if (catalogMatchRate < 60) {
+    issues.push(`ORACLE: Catalog match rate ${catalogMatchRate}% is below 60% threshold — ${nonCatalogItems.length} products not in FF PMA catalog: ${nonCatalogItems.slice(0, 5).join(", ")}`);
+  } else if (catalogMatchRate < 80) {
+    suggestions.push(`ORACLE: Catalog match rate ${catalogMatchRate}% — consider replacing non-catalog items: ${nonCatalogItems.slice(0, 3).join(", ")}`);
+  }
+
+  for (const pep of protocol.injectablePeptides || []) {
+    const pepLower = pep.name.toLowerCase();
+    for (const [patternName, regex] of Object.entries(DOSING_PATTERNS)) {
+      if (pepLower.includes(patternName) && pep.dose && !regex.test(pep.dose)) {
+        suggestions.push(`PARACELSUS: "${pep.name}" dose "${pep.dose}" may not match expected format (e.g., numeric + unit)`);
+        break;
+      }
+    }
+  }
+
+  const lipoBItems = protocol.imTherapies?.filter(im => im.name?.toLowerCase().includes("lipo-b") || im.name?.toLowerCase().includes("lipo b")) || [];
+  const ivLipoB = protocol.ivTherapies?.filter(iv => iv.name?.toLowerCase().includes("lipo-b") || iv.name?.toLowerCase().includes("lipo b")) || [];
+  if (ivLipoB.length > 0) {
+    issues.push("HIPPOCRATES: Lipo-B is IM ONLY (216mg/mL) — found in IV section, must be moved to IM");
+  }
+
   return {
     valid: issues.length === 0,
     issues,
     suggestions,
+    catalogMatchRate,
   };
 }
 

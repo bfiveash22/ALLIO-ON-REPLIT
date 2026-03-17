@@ -960,6 +960,90 @@ export function generateDailySchedulePDF(
         });
       }
 
+      if (protocol.ecsProtocol?.daytimeFormula || protocol.suppositories?.length) {
+        newPage(doc, pn);
+        drawSectionHeader(doc, "ECS Protocol — Daily Suppository Schedule");
+        if (protocol.ecsProtocol?.overview) {
+          drawInfoBox(doc, protocol.ecsProtocol.overview);
+          doc.moveDown(0.3);
+        }
+        if (protocol.ecsProtocol?.daytimeFormula) {
+          const df = protocol.ecsProtocol.daytimeFormula;
+          checkPage(doc, 50);
+          doc.fontSize(11).fillColor(COLORS.secondary).text("Daytime Formula", 65, doc.y);
+          doc.fontSize(10).fillColor(COLORS.text).text(
+            `CBD: ${df.CBD || "N/A"} | CBG: ${df.CBG || "N/A"}${df.CBN ? ` | CBN: ${df.CBN}` : ""}${df.DMSO ? ` | DMSO: ${df.DMSO}` : ""} — ${df.base || "cacao butter"} ${df.deliveryMethod || "suppository"}`,
+            75, undefined, { width: doc.page.width - 150 }
+          );
+          doc.moveDown(0.3);
+        }
+        if (protocol.ecsProtocol?.nighttimeFormula) {
+          const nf = protocol.ecsProtocol.nighttimeFormula;
+          checkPage(doc, 50);
+          doc.fontSize(11).fillColor(COLORS.secondary).text("Nighttime Formula", 65, doc.y);
+          doc.fontSize(10).fillColor(COLORS.text).text(
+            `CBD: ${nf.CBD || "N/A"}${nf.CBN ? ` | CBN: ${nf.CBN}` : ""} | THC: ${nf.THC || "N/A"}${nf.DMSO ? ` | DMSO: ${nf.DMSO}` : ""} — ${nf.base || "cacao butter"} ${nf.deliveryMethod || "suppository"}`,
+            75, undefined, { width: doc.page.width - 150 }
+          );
+          doc.moveDown(0.3);
+        }
+        if (protocol.ecsProtocol?.tincture) {
+          checkPage(doc, 40);
+          doc.fontSize(11).fillColor(COLORS.secondary).text("Tincture", 65, doc.y);
+          doc.fontSize(10).fillColor(COLORS.text).text(
+            `${protocol.ecsProtocol.tincture.name}: ${protocol.ecsProtocol.tincture.dose} — ${protocol.ecsProtocol.tincture.frequency}`,
+            75, undefined, { width: doc.page.width - 150 }
+          );
+          doc.moveDown(0.5);
+        }
+      }
+
+      if (protocol.sirtuinStack?.mitoSTAC || protocol.sirtuinStack?.nadPrecursors) {
+        checkPage(doc, 100);
+        drawSectionHeader(doc, "Sirtuin & Mitochondrial Support — Daily");
+        if (protocol.sirtuinStack?.mitoSTAC) {
+          const m = protocol.sirtuinStack.mitoSTAC;
+          drawBullet(doc, `Resveratrol: ${m.resveratrol}`);
+          drawBullet(doc, `Pterostilbene: ${m.pterostilbene}`);
+          drawBullet(doc, `Quercetin: ${m.quercetin}`);
+          drawBullet(doc, `Fisetin: ${m.fisetin}`);
+        }
+        if (protocol.sirtuinStack?.nadPrecursors) {
+          drawBullet(doc, `NAD+: ${protocol.sirtuinStack.nadPrecursors.compound} ${protocol.sirtuinStack.nadPrecursors.dose} — ${protocol.sirtuinStack.nadPrecursors.frequency}`);
+        }
+        if (protocol.sirtuinStack?.glyNAC) {
+          drawBullet(doc, `GlyNAC: Glycine ${protocol.sirtuinStack.glyNAC.glycine} + NAC ${protocol.sirtuinStack.glyNAC.nac} — ${protocol.sirtuinStack.glyNAC.frequency}`);
+        }
+        doc.moveDown(0.3);
+      }
+
+      if (protocol.liposomals?.length) {
+        checkPage(doc, 60);
+        drawSectionHeader(doc, "Liposomal Supplements — Daily");
+        protocol.liposomals.forEach(l => {
+          drawBullet(doc, `${l.name}: ${l.dose} — ${l.frequency} (${l.timing || "with meals"})`);
+        });
+        doc.moveDown(0.3);
+      }
+
+      if (protocol.nebulization?.length) {
+        checkPage(doc, 60);
+        drawSectionHeader(doc, "Nebulization Protocol");
+        protocol.nebulization.forEach(n => {
+          drawBullet(doc, `${n.name}: ${n.solution || n.dose} — ${n.frequency}${n.duration ? `, ${n.duration}` : ""}`);
+        });
+        doc.moveDown(0.3);
+      }
+
+      if (protocol.topicals?.length) {
+        checkPage(doc, 60);
+        drawSectionHeader(doc, "Topical Applications");
+        protocol.topicals.forEach(t => {
+          drawBullet(doc, `${t.name} (${t.form || "topical"}): ${t.application} — ${t.frequency}`);
+        });
+        doc.moveDown(0.3);
+      }
+
       newPage(doc, pn);
       drawSectionHeader(doc, "Resources & Guides");
       doc.fontSize(10).fillColor(COLORS.text).text(
