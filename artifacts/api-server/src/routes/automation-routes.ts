@@ -45,7 +45,7 @@ export function registerAutomationRoutes(app: Express): void {
       const data = await aggregateHealingProgress(patientId, doctorId, isAdmin(req));
       const pdfBuffer = await generateHealingProgressPDF(data);
 
-      const safeName = data.patient.name.replace(/[^a-zA-Z0-9]/g, "_");
+      const safeName = data.member.name.replace(/[^a-zA-Z0-9]/g, "_");
       const dateStr = new Date().toISOString().split("T")[0];
 
       res.setHeader("Content-Type", "application/pdf");

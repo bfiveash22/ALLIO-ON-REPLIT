@@ -236,7 +236,7 @@ export function generateHealingProgressPDF(
         size: "LETTER",
         margins: { top: 60, bottom: 60, left: 55, right: 55 },
         info: {
-          Title: `${data.patient.name} - Healing Progress Report`,
+          Title: `${data.member.name} - Healing Progress Report`,
           Author: "Forgotten Formula PMA",
           Subject: "Member Healing Progress Report",
         },
@@ -261,12 +261,12 @@ export function generateHealingProgressPDF(
       doc
         .fontSize(14)
         .fillColor(COLORS.text)
-        .text(data.patient.name, { align: "center" });
+        .text(data.member.name, { align: "center" });
       doc
         .fontSize(10)
         .fillColor(COLORS.lightText)
         .text(
-          `Generated: ${new Date().toLocaleDateString()} | Status: ${data.patient.status || "Active"}`,
+          `Generated: ${new Date().toLocaleDateString()} | Status: ${data.member.status || "Active"}`,
           { align: "center" }
         );
       doc.moveDown(0.5);
@@ -280,17 +280,17 @@ export function generateHealingProgressPDF(
       doc.moveDown(0.8);
 
       addHeader(doc, "Member Overview");
-      if (data.patient.primaryConcerns?.length) {
+      if (data.member.primaryConcerns?.length) {
         addBody(doc, "Primary Concerns:");
-        for (const concern of data.patient.primaryConcerns) {
+        for (const concern of data.member.primaryConcerns) {
           addBullet(doc, concern);
         }
       }
-      if (data.patient.createdAt) {
+      if (data.member.createdAt) {
         doc.moveDown(0.2);
         addBody(
           doc,
-          `Member Since: ${data.patient.createdAt.toLocaleDateString()}`
+          `Member Since: ${data.member.createdAt.toLocaleDateString()}`
         );
       }
 
