@@ -33,12 +33,12 @@ export const PMA_TERMS = {
 } as const;
 
 export const PMA_DISCLAIMER =
-  "This document is intended solely for private membership association (PMA) use and does not constitute medical advice, " +
-  "diagnosis, or treatment in the public domain. All protocols are wellness suggestions subject to Trustee review and refinement. " +
+  "This document is intended solely for private membership association (PMA) use and does not constitute wellness guidance, " +
+  "assessment, or protocol recommendations in the public domain. All protocols are wellness suggestions subject to Trustee review and refinement. " +
   "Members retain full sovereignty over their health decisions under constitutional law (1st and 14th Amendments).";
 
 export const PMA_PDF_FOOTER =
-  "Forgotten Formula PMA — Private Member Association | Not medical advice. For PMA members only.";
+  "Forgotten Formula PMA — Private Member Association | Wellness guidance for PMA members only.";
 
 export function sanitizePmaLanguage(text: string): string {
   return text

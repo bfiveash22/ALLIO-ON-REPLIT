@@ -616,7 +616,7 @@ export function registerDoctorRoutes(app: Express): void {
         driveFileId: driveFileId || null,
         mimeType: req.file.mimetype,
         fileSize: req.file.size,
-        description: `X-ray upload for patient ${patientRecordId}`,
+        description: `X-ray upload for member ${patientRecordId}`,
       }).returning();
 
       let findings: Array<{ area: string; description: string; confidence: number; annotation?: { region: string; severity: string } }> = [];
@@ -802,7 +802,7 @@ export function registerDoctorRoutes(app: Express): void {
 
       let patientInfo = "";
       if (patientContext) {
-        patientInfo = `\nPATIENT CONTEXT PROVIDED BY DOCTOR:\n- Patient Name: ${patientContext.name || "Not specified"}\n- Conditions: ${patientContext.conditions || "Not specified"}\n- Notes: ${patientContext.notes || "None"}\n`;
+        patientInfo = `\nMEMBER CONTEXT PROVIDED BY TRUSTEE:\n- Member Name: ${patientContext.name || "Not specified"}\n- Conditions: ${patientContext.conditions || "Not specified"}\n- Notes: ${patientContext.notes || "None"}\n`;
       }
 
       const systemPrompt = `You are ${agent.name}, the ${agent.title} at Forgotten Formula PMA's Science Division.
@@ -819,7 +819,7 @@ CATCHPHRASE: "${agent.catchphrase}"
 
 CONTEXT:
 - You are consulting with Dr. ${doctorName}, a licensed practitioner affiliated with the Forgotten Formula PMA.
-- You are providing AI-assisted analysis to help inform their clinical decision-making.
+- You are providing AI-assisted analysis to help inform their wellness protocol decisions.
 - Your role is advisory — the doctor makes all final decisions.
 ${patientInfo}
 INSTRUCTIONS:
