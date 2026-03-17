@@ -166,7 +166,7 @@ const protocols: Protocol[] = [
       { title: "Equipment Setup", description: "Ensure nebulizer is clean and functioning. Attach fresh nebulizer cup and appropriate mask/mouthpiece." },
       { title: "Solution Preparation", description: "Add exosome solution to nebulizer cup. Dilute with sterile saline to appropriate volume (typically 3-5ml total)." },
       { title: "Member Preparation", description: "Position member comfortably upright. Take baseline oxygen saturation. Instruct on slow, deep breathing." },
-      { title: "Treatment", description: "Begin nebulization. Have patient breathe slowly and deeply through mouth. Continue until solution is nebulized (10-15 min)." },
+      { title: "Treatment", description: "Begin nebulization. Have member breathe slowly and deeply through mouth. Continue until solution is nebulized (10-15 min)." },
       { title: "Monitoring", description: "Monitor for coughing or bronchospasm. Check oxygen saturation periodically. Stop if adverse reaction occurs." },
       { title: "Completion", description: "Have member rest briefly. Recheck vitals. Clean and disinfect equipment." },
     ],
@@ -342,7 +342,7 @@ const protocols: Protocol[] = [
     title: "Pre & Post Treatment Guidelines",
     category: "guidelines",
     icon: <ClipboardList className="h-5 w-5" />,
-    description: "General guidelines for patient preparation and aftercare to optimize exosome protocol outcomes.",
+    description: "General guidelines for member preparation and aftercare to optimize exosome protocol outcomes.",
     targetAudience: ["doctor", "clinic", "member"],
     materials: [],
     steps: [

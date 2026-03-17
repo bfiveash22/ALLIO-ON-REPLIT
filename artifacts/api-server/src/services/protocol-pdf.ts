@@ -3,6 +3,7 @@ import type {
   HealingProtocol,
   PatientProfile,
 } from "@shared/types/protocol-assembly";
+import { sanitizePmaLanguage, PMA_PDF_FOOTER } from "@shared/pma-language";
 import { getPatientResources, type PatientResources } from "./protocol-resources";
 
 const COLORS = {

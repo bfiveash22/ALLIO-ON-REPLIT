@@ -425,7 +425,7 @@ const moduleContent: Record<string, {
   "doc-103-lba-basics": {
     sections: [
       { title: "What is Live Blood Analysis?", content: "LBA examines fresh, unstained blood under dark field microscopy at 1000x magnification. Unlike conventional blood tests, LBA shows living cells in real-time, revealing morphology, behavior, and plasma quality." },
-      { title: "Ordering and Collecting", content: "LBA can be done in-office or at designated collection sites. Finger prick technique, immediate slide preparation, analysis within 15-20 minutes. Patient should fast 8-12 hours for best results." },
+      { title: "Ordering and Collecting", content: "LBA can be done in-office or at designated collection sites. Finger prick technique, immediate slide preparation, analysis within 15-20 minutes. Member should fast 8-12 hours for best results." },
       { title: "AI-Assisted Interpretation", content: "Upload images/videos to Allio for HIPPOCRATES and PARACELSUS analysis. AI identifies patterns: rouleaux, echinocytes, crystals, fibrin, WBC activity. You receive a structured report with confidence scores." },
       { title: "Clinical Integration", content: "LBA findings correlate with symptoms and other tests. Use for baseline assessment, progress monitoring, and member education. The visual nature motivates compliance." }
     ],
@@ -446,10 +446,10 @@ const moduleContent: Record<string, {
     sections: [
       { title: "Member Referrals", content: "When members you've enrolled make purchases, you earn referral credits. Your unique doctor code tracks referrals. Share your signup link: forgottenformula.com/join/[your-code]." },
       { title: "Doctor-to-Doctor Referrals", content: "Refer members to specialists in the network. Orthopedic cases to our joint specialists, complex cases to experienced practitioners. Network collaboration improves outcomes." },
-      { title: "Building Your Practice", content: "The network supports your practice growth. Marketing materials, educational content, and AI tools are available. Focus on patient outcomes; referrals follow naturally." },
+      { title: "Building Your Practice", content: "The network supports your practice growth. Marketing materials, educational content, and AI tools are available. Focus on member outcomes; referrals follow naturally." },
       { title: "Revenue Sharing", content: "Understand the compensation structure: membership fees, product purchases, protocol fees. Transparency builds trust. All earnings are documented in your portal." }
     ],
-    keyPoints: ["Unique doctor code tracks your member referrals", "Network collaboration improves patient outcomes", "Focus on outcomes; referrals follow naturally", "All earnings documented in your portal"],
+    keyPoints: ["Unique doctor code tracks your member referrals", "Network collaboration improves member outcomes", "Focus on outcomes; referrals follow naturally", "All earnings documented in your portal"],
     videoUrl: "https://drive.google.com/file/d/REFERRAL_NETWORK_VIDEO"
   },
   "doc-106-ai-agents": {
@@ -457,7 +457,7 @@ const moduleContent: Record<string, {
       { title: "The Agent Network", content: "ALLIO's multi-agent system supports your practice. HIPPOCRATES provides protocol guidance, PARACELSUS offers diagnostic insights, SYNTHESIS integrates findings, and specialized agents handle specific domains." },
       { title: "Using AI Appropriately", content: "AI agents provide suggestions, not directives. You are the licensed practitioner making clinical decisions. Use AI for research, pattern recognition, and second opinions. Document when AI informed your decision-making." },
       { title: "Blood Analysis AI", content: "Upload LBA images/videos for AI analysis. HIPPOCRATES identifies morphological patterns. PARACELSUS correlates findings with symptoms. You receive a structured report to inform your assessment." },
-      { title: "Protocol Assistance", content: "Describe a case to receive protocol suggestions. AI considers condition, patient factors, and current research. Use as a starting point for your clinical reasoning." }
+      { title: "Protocol Assistance", content: "Describe a case to receive protocol suggestions. AI considers condition, member factors, and current research. Use as a starting point for your clinical reasoning." }
     ],
     keyPoints: ["AI provides suggestions; you make clinical decisions", "HIPPOCRATES: protocols, PARACELSUS: diagnostics", "Document when AI informed decision-making", "Use as starting point for clinical reasoning"],
     videoUrl: "https://drive.google.com/file/d/AI_AGENTS_VIDEO"
@@ -466,7 +466,7 @@ const moduleContent: Record<string, {
     sections: [
       { title: "PMA Structure for Doctors", content: "As a network physician, you operate within the PMA framework. You're providing private services to association members under constitutional protections. This is not a replacement for proper licensing in your jurisdiction." },
       { title: "Scope of Practice", content: "Practice within your license. The PMA structure doesn't expand your legal scope. If you're not licensed to prescribe in your state, the PMA doesn't change that. When in doubt, refer." },
-      { title: "Documentation Requirements", content: "Thorough documentation protects you and the patient. Use provided templates. Document informed consent, recommendations, and patient acknowledgments. Maintain records per your state requirements." },
+      { title: "Documentation Requirements", content: "Thorough documentation protects you and the member. Use provided templates. Document informed consent, recommendations, and member acknowledgments. Maintain records per your state requirements." },
       { title: "Liability Protection", content: "The PMA structure provides some protection, but it's not absolute. Maintain your malpractice coverage. Practice within guidelines. Document thoroughly. When uncertain, escalate." }
     ],
     keyPoints: ["PMA doesn't expand your legal scope of practice", "Practice within your license; refer when uncertain", "Thorough documentation protects everyone", "Maintain malpractice coverage"],
@@ -475,7 +475,7 @@ const moduleContent: Record<string, {
   "doc-108-certification-exam": {
     sections: [
       { title: "Exam Overview", content: "The Doctor Certification Quiz consists of 40 questions covering all onboarding modules. You have 45 minutes. Passing score is 85% (34 correct). This certifies you for full network participation." },
-      { title: "Topics Covered", content: "Portal navigation, patient intake, LBA basics, protocol prescribing, referral network, AI usage, and compliance/legal. Review each module's key points." },
+      { title: "Topics Covered", content: "Portal navigation, member intake, LBA basics, protocol guidance, referral network, AI usage, and compliance/legal. Review each module's key points." },
       { title: "Clinical Scenarios", content: "Many questions present clinical scenarios. Apply your knowledge to member situations. Think through the appropriate response before selecting an answer." },
       { title: "After Certification", content: "Upon passing, you're fully credentialed in the network. Your profile is activated for member assignments. You'll receive your Doctor Certificate and can begin accepting members immediately." }
     ],

@@ -18,8 +18,8 @@ const GERSON_THERAPY_DATA: GersonEntry[] = [
   {
     category: "therapy_protocol",
     title: "Gerson Therapy Overview",
-    summary: "A comprehensive metabolic therapy developed by Dr. Max Gerson for cancer and chronic disease treatment through diet, juicing, and detoxification.",
-    content: `The Gerson Therapy is a natural treatment system developed by Dr. Max Gerson (1881-1959) that activates the body's extraordinary ability to heal itself. The therapy is based on the role of minerals, enzymes, and other nutrients in healing.
+    summary: "A comprehensive metabolic therapy developed by Dr. Max Gerson for cancer and chronic disease support through diet, juicing, and detoxification.",
+    content: `The Gerson Therapy is a natural wellness system developed by Dr. Max Gerson (1881-1959) that activates the body's extraordinary ability to heal itself. The therapy is based on the role of minerals, enzymes, and other nutrients in healing.
 
 KEY PRINCIPLES:
 1. DETOXIFICATION - Coffee enemas to detoxify the liver and eliminate toxic buildup
@@ -99,7 +99,7 @@ Instructions:
 4. Use a two-stage juicer (masticating grinder + hydraulic press)
 5. Grind carrots and apple together
 6. Press immediately using hydraulic press
-7. Add potassium compound as prescribed
+7. Add potassium compound as directed
 8. Drink immediately
 
 FREQUENCY: 4-5 glasses per day, alternating with green juice
@@ -113,7 +113,7 @@ THERAPEUTIC BENEFITS:
 
 IMPORTANT NOTES:
 - Only use organically grown produce
-- Never add anything except prescribed supplements
+- Never add anything except directed supplements
 - Temperature should be room temperature
 - Must be consumed within 20 minutes of pressing`,
     sourceDocument: "A Cancer Therapy: Results of Fifty Cases by Dr. Max Gerson",
@@ -250,7 +250,7 @@ SUPPLEMENTS (taken with juices):
 - Potassium compound: Added to 10 juices
 - Thyroid: 5 grains daily (split doses)
 - Lugol's solution: 3 drops 3x daily
-- Liver capsules/injection: As prescribed
+- Liver capsules/injection: As directed
 - Pancreatin: 3 tablets 4x daily
 - Acidol pepsin: With meals
 - Niacin: 50mg 6x daily

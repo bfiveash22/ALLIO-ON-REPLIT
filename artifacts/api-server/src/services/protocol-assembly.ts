@@ -27,6 +27,7 @@ import {
 import { researchApi } from "./research-api";
 import { generateProtocolPDF, generateDailySchedulePDF, generatePeptideSchedulePDF } from "./protocol-pdf";
 import { callWithFallback } from "./ai-fallback";
+import { sanitizePmaLanguage } from "@shared/pma-language";
 
 export interface ProtocolCitation {
   title: string;

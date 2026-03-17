@@ -113,7 +113,7 @@ export function DoctorScheduling({ doctorId }: DoctorSchedulingProps) {
             </DialogHeader>
             <div className="space-y-4 pt-4">
               <div>
-                <label className="text-sm text-white/60 mb-1 block">Patient</label>
+                <label className="text-sm text-white/60 mb-1 block">Member</label>
                 <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
                   <SelectTrigger className="bg-white/5 border-white/10">
                     <SelectValue placeholder="Select a member" />

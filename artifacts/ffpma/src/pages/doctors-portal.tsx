@@ -1183,12 +1183,12 @@ export default function DoctorsPortal() {
             <TabsContent value="protocols" className="space-y-6">
               <AssignedProtocolsSection />
 
-              {/* Active Patient Protocols */}
+              {/* Active Member Protocols */}
               <Card className="bg-gradient-to-br from-cyan-500/5 to-blue-500/5 border-cyan-500/20 p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-lg flex items-center gap-2">
                     <ClipboardList className="w-5 h-5 text-cyan-400" />
-                    Active Patient Protocols
+                    Active Member Protocols
                   </h3>
                   <Button className="bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30" data-testid="button-assign-protocol">
                     <Plus className="w-4 h-4 mr-2" />
@@ -1282,7 +1282,7 @@ export default function DoctorsPortal() {
                     { label: "Active Protocols", value: "23", change: "+5", color: "cyan" },
                     { label: "Avg Compliance", value: "84%", change: "+3%", color: "emerald" },
                     { label: "Protocol Completions", value: "8", change: "+2", color: "violet" },
-                    { label: "Patient Outcomes", value: "92%", change: "+4%", color: "amber" }
+                    { label: "Member Outcomes", value: "92%", change: "+4%", color: "amber" }
                   ].map((stat, idx) => (
                     <div key={idx} className="p-4 rounded-lg bg-white/5 text-center">
                       <p className="text-2xl font-bold">{stat.value}</p>
@@ -1429,11 +1429,11 @@ export default function DoctorsPortal() {
                       <Brain className="w-6 h-6 text-emerald-400" />
                       Root Cause Analysis Framework
                     </h2>
-                    <p className="text-white/60 text-sm mt-1">Functional medicine approach to patient healing</p>
+                    <p className="text-white/60 text-sm mt-1">Functional medicine approach to member healing</p>
                   </div>
                   <Button className="bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30">
                     <Plus className="w-4 h-4 mr-2" />
-                    New Patient Assessment
+                    New Member Assessment
                   </Button>
                 </div>
 
@@ -1450,7 +1450,7 @@ export default function DoctorsPortal() {
                         <div className="w-3 h-3 rounded-full bg-emerald-400 mt-1.5" />
                         <div className="flex-1">
                           <p className="font-medium text-sm">Initial Symptom Onset</p>
-                          <p className="text-xs text-white/50">When did the patient first notice issues?</p>
+                          <p className="text-xs text-white/50">When did the member first notice issues?</p>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">

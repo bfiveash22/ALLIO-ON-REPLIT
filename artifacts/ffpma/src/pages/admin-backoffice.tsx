@@ -449,7 +449,7 @@ function AdminPatientManagementPanel() {
                   <div className="text-center py-12">
                     <MessageSquare className="w-12 h-12 mx-auto mb-3 text-white/20" />
                     <p className="text-white/60">No conversations yet</p>
-                    <p className="text-sm text-white/40 mt-1">Patient-doctor conversations will appear here</p>
+                    <p className="text-sm text-white/40 mt-1">Member-trustee conversations will appear here</p>
                     <Link href="/doctors">
                       <Button variant="outline" className="mt-4 border-white/10">
                         <MessageSquare className="w-4 h-4 mr-2" /> Open Messaging in Doctor Portal

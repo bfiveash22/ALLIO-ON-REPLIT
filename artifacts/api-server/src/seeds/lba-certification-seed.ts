@@ -36,7 +36,7 @@ const LBA_MODULES = [
 
 Bechamp's work was largely overshadowed by Pasteur's germ theory, which became the dominant paradigm in medicine. However, pleomorphic thinking continued through researchers like Gunther Enderlein (1872-1968), who developed a comprehensive theory of cyclogeny — the developmental cycle of microorganisms from primitive colloidal forms (protits) through bacterial stages to fungal culmination.
 
-Dark field microscopy, which illuminates specimens against a dark background to reveal structures invisible in bright field, became the primary tool for observing these pleomorphic phenomena in living blood. Practitioners like Gaston Naessens, Robert O. Young, and the Dumrese/Haefeli school further developed the diagnostic and therapeutic applications of live blood observation.
+Dark field microscopy, which illuminates specimens against a dark background to reveal structures invisible in bright field, became the primary tool for observing these pleomorphic phenomena in living blood. Practitioners like Gaston Naessens, Robert O. Young, and the Dumrese/Haefeli school further developed the assessment and wellness applications of live blood observation.
 
 Today, LBA is practiced within integrative, naturopathic, and functional medicine settings as a real-time assessment tool providing visual feedback about nutritional status, oxidative stress, immune function, and biological terrain. Within the FFPMA framework, LBA serves as a cornerstone of the nature-first diagnostic approach.`,
       },
@@ -45,7 +45,7 @@ Today, LBA is practiced within integrative, naturopathic, and functional medicin
         content: `Live Blood Analysis examines fresh, unfixed blood under a high-powered dark field or phase contrast microscope to observe living cells in real-time. Unlike conventional blood tests that analyze dried, stained, and fixed samples, LBA preserves the dynamic state of blood components.
 
 Key Scientific Principles:
-- Blood Composition: Plasma (55%), red blood cells (44%), white blood cells and platelets (1%). Each component provides diagnostic information.
+- Blood Composition: Plasma (55%), red blood cells (44%), white blood cells and platelets (1%). Each component provides assessment information.
 - Cellular Morphology: The shape, size, and behavior of blood cells reflects underlying physiological conditions.
 - Terrain Theory vs Germ Theory: LBA practitioners work with the understanding that the body's internal terrain (pH, oxidation-reduction potential, mineral balance) determines health status and microbial behavior.
 - Pleomorphism: The observation that microorganisms can change form based on environmental conditions — a foundational concept for interpreting LBA findings.
@@ -54,7 +54,7 @@ Differences from Conventional Hematology:
 Conventional hematology uses Wright-Giemsa staining on dried blood films and automated analyzers. LBA uses unstained, living blood in dark field. Conventional provides quantitative counts; LBA provides qualitative morphological and dynamic assessment. Both approaches provide complementary information.
 
 Research Support:
-While LBA is not considered a standard diagnostic tool in conventional medicine, peer-reviewed research supports many of its individual observations: rouleaux formation correlating with inflammation, echinocyte formation with oxidative stress, fibrin activity with coagulation abnormalities, and crystalline formations with metabolic disorders.`,
+While LBA is not considered a standard assessment tool in conventional medicine, peer-reviewed research supports many of its individual observations: rouleaux formation correlating with inflammation, echinocyte formation with oxidative stress, fibrin activity with coagulation abnormalities, and crystalline formations with metabolic disorders.`,
       },
       {
         title: "Equipment and Setup",
@@ -72,7 +72,7 @@ While LBA is not considered a standard diagnostic tool in conventional medicine,
 - High-resolution digital camera adapted for microscopy
 - Live video feed capability for member education
 - Image capture software for documentation
-- Monitor for real-time display to patients
+- Monitor for real-time display to members
 - Storage system for before/after comparisons
 
 3. Sample Collection Supplies:
@@ -231,7 +231,7 @@ Documentation at Each Zone:
 - Photograph/video capture
 - Written notes with standardized terminology
 - Severity grading (mild/moderate/severe)
-- Comparison with patient's previous sessions
+- Comparison with member's previous sessions
 - Time stamp for dynamic observations`,
       },
     ],
@@ -652,8 +652,8 @@ LBA findings should always be correlated with:
   },
   {
     id: "lba-mod-08",
-    title: "Treatment Protocols & Monitoring",
-    slug: "lba-treatment-monitoring",
+    title: "Wellness Protocols Treatment Protocols & Monitoring Monitoring",
+    slug: "lba-wellness-monitoring",
     description: "Baseline documentation, progress monitoring, protocol adjustments based on LBA observations, and before/after comparison techniques.",
     category: "lba-certification",
     sortOrder: 8,
@@ -665,7 +665,7 @@ LBA findings should always be correlated with:
     isInteractive: true,
     sections: [
       {
-        title: "Treatment Monitoring with LBA",
+        title: "Wellness Monitoring with LBA",
         content: `Baseline Documentation Protocol:
 Every new patient/member should receive a baseline LBA session with:
 1. Standardized collection conditions (fasting, hydrated, same time of day)
@@ -714,7 +714,7 @@ Refer to conventional medical evaluation when:
     id: "lba-mod-09",
     title: "AI-Enhanced Blood Analysis",
     slug: "lba-ai-integration",
-    description: "Using the ALLIO AI blood analysis platform for pattern recognition, second opinions, treatment suggestions, and documentation automation.",
+    description: "Using the ALLIO AI blood analysis platform for pattern recognition, second opinions, wellness suggestions, and documentation automation.",
     category: "lba-certification",
     sortOrder: 9,
     duration: "4 hours",
@@ -748,11 +748,11 @@ The ALLIO platform integrates AI-powered blood analysis to support practitioners
    - Provides similarity scores and explanations
    - Helps identify rare or unusual findings
 
-4. Treatment Integration:
+4. Wellness Integration:
    - AI suggests relevant protocols based on findings
    - Cross-references with the FFPMA 2026 Protocol database
    - Provides nutritional and supplemental recommendations
-   - Documents treatment rationale
+   - Documents protocol rationale
 
 5. Documentation Automation:
    - AI generates structured reports from observations
@@ -773,7 +773,7 @@ Human Oversight Requirements:
       "Confidence scores indicate reliability — low scores require manual verification",
       "AI is a support tool, never a replacement for practitioner clinical judgment",
       "Automated documentation saves time while maintaining standardized reporting",
-      "AI treatment suggestions should always be reviewed within the clinical context",
+      "AI wellness suggestions should always be reviewed within the clinical context",
     ],
   },
   {
@@ -815,7 +815,7 @@ Exam Content Distribution:
 - Plasma Analysis: 8 questions
 - Platelet Assessment: 5 questions
 - Clinical Correlation: 8 questions
-- Treatment Monitoring: 5 questions
+- Wellness Monitoring: 5 questions
 - AI Integration: 4 questions
 - Dry Layer Testing: 8 questions
 - Biological Terrain: 6 questions
@@ -828,7 +828,7 @@ Exam Content Distribution:
 Practitioner Agreement:
 Upon certification, practitioners agree to:
 - Operate within PMA guidelines
-- Present LBA as educational assessment, not medical diagnosis
+- Present LBA as educational assessment, not medical assessment
 - Maintain documentation standards
 - Continue education requirements
 - Uphold ethical standards of the FFPMA`,
@@ -958,7 +958,7 @@ Testing pH, rH2, and resistivity in blood, saliva, and urine creates a comprehen
 | r | Mineral status | Digestive minerals | Mineral excretion |
 
 Clinical Interpretation:
-- Terrain assessment guides treatment: acidic terrain needs alkalinizing, oxidized terrain needs antioxidants, mineral-depleted terrain needs supplementation
+- Terrain assessment guides protocol: acidic terrain needs alkalinizing, oxidized terrain needs antioxidants, mineral-depleted terrain needs supplementation
 - Terrain correlates with LBA findings: acidic + oxidized terrain typically shows echinocytes, rouleaux, and advanced pleomorphic forms
 - Vincent's research showed specific terrain patterns associated with cancer risk, cardiovascular disease, and degenerative conditions`,
       },
@@ -969,7 +969,7 @@ Clinical Interpretation:
       "Acidic terrain promotes upward microbial development and mineral loss",
       "Elevated rH2 indicates oxidative stress — correlates with echinocytes in LBA",
       "Resistivity reflects mineral concentration — low r suggests excess minerals or toxic metals",
-      "Terrain assessment guides treatment: alkalize, reduce oxidative stress, optimize minerals",
+      "Terrain assessment guides protocol: alkalize, reduce oxidative stress, optimize minerals",
     ],
   },
   {
@@ -1137,7 +1137,7 @@ Recognizing Mycotic Progression:
 - Advanced: Branching structures, spore-like formations
 - Severe: Visible fungal hyphae, extensive mycotic involvement
 
-Treatment Philosophy:
+Wellness Philosophy:
 The goal is not to "kill" the endobiont (which would theoretically be impossible as it exists at the protit level in all blood) but to shift it back downward to its symbiotic phase through terrain correction and isopathic therapy.`,
       },
     ],
@@ -1146,7 +1146,7 @@ The goal is not to "kill" the endobiont (which would theoretically be impossible
       "Mucor racemosus cycle: relates to coagulation and vascular health",
       "Aspergillus niger cycle: relates to calcium metabolism and skeletal health",
       "Progression: symbiont (helpful) to parasite (disruptive) to fungus (pathological)",
-      "Treatment goal: shift organisms downward to symbiotic phase through terrain correction",
+      "Wellness goal: shift organisms downward to symbiotic phase through terrain correction",
       "Isopathic remedies (Mucokehl, Nigersan) are specific to each endobiont cycle",
     ],
   },
@@ -1265,7 +1265,7 @@ In the pleomorphic/Enderlein framework, the concept of parasitism extends beyond
 - Endobiont organisms shifting from symbiotic to parasitic phases
 - The internal terrain determining whether organisms behave as symbionts or parasites
 - The cyclogeny stages representing different levels of parasitic behavior
-- Treatment focusing on terrain correction rather than solely organism elimination
+- Approach focusing on terrain correction rather than solely organism elimination
 
 Practical Identification Tips:
 - Use both dark field and phase contrast when available
@@ -1691,7 +1691,7 @@ const LBA_QUIZ_DATA_MODULES_8_17: typeof LBA_QUIZ_DATA = [
     slug: "lba-practice-quiz",
     description: "Test your knowledge of practice management and legal compliance.",
     questions: [
-      { id: "q-lba17-01", text: "How should LBA be presented within the PMA framework?", explanation: "LBA must be presented as an educational assessment tool, not as medical diagnosis, within the PMA member-to-member context.", answers: [{ text: "As an educational assessment tool, not medical diagnosis", isCorrect: true }, { text: "As a replacement for all medical testing", isCorrect: false }, { text: "As a diagnostic procedure", isCorrect: false }, { text: "As a treatment modality", isCorrect: false }] },
+      { id: "q-lba17-01", text: "How should LBA be presented within the PMA framework?", explanation: "LBA must be presented as an educational assessment tool, not as medical diagnosis, within the PMA member-to-member context.", answers: [{ text: "As an educational assessment tool, not medical assessment", isCorrect: true }, { text: "As a replacement for all medical testing", isCorrect: false }, { text: "As a diagnostic procedure", isCorrect: false }, { text: "As a treatment modality", isCorrect: false }] },
       { id: "q-lba17-02", text: "What type of language should be used in LBA reports?", explanation: "Use observation language ('observations suggest' not 'diagnosis shows'), educational suggestions not prescriptions.", answers: [{ text: "Observation language, not diagnostic language", isCorrect: true }, { text: "Medical diagnostic terminology", isCorrect: false }, { text: "Legal terminology", isCorrect: false }, { text: "Any language is acceptable", isCorrect: false }] },
       { id: "q-lba17-03", text: "What must be obtained before every LBA session?", explanation: "Member consent must be obtained and documented before every session, including understanding of LBA's educational nature.", answers: [{ text: "Member consent with understanding of LBA's educational nature", isCorrect: true }, { text: "Insurance authorization", isCorrect: false }, { text: "Medical referral", isCorrect: false }, { text: "Nothing is required", isCorrect: false }] },
       { id: "q-lba17-04", text: "What data storage standard must LBA records comply with?", explanation: "All member images and records must be stored in HIPAA-compliant systems with proper security measures.", answers: [{ text: "HIPAA-compliant storage", isCorrect: true }, { text: "No storage requirements", isCorrect: false }, { text: "Public cloud storage", isCorrect: false }, { text: "Paper records only", isCorrect: false }] },

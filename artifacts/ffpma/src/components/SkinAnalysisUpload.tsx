@@ -293,7 +293,7 @@ export function SkinAnalysisUpload({ patientId: propPatientId }: SkinAnalysisUpl
 
         <div className="grid grid-cols-1 gap-4 mt-4">
           <div className="space-y-2">
-            <Label className="text-white/70">Patient/Member ID (optional)</Label>
+            <Label className="text-white/70">Member ID (optional)</Label>
             <Input
               placeholder="e.g., MEM-001 or Member Name"
               value={patientId}

@@ -269,7 +269,7 @@ export function XRayAnalysisUpload({ onAnalysisComplete, patientId: propPatientI
         </div>
 
         <div className="mt-4 space-y-2">
-          <Label className="text-white/70">Patient/Member ID</Label>
+          <Label className="text-white/70">Member ID</Label>
           <Input
             placeholder="e.g., MEM-001 or Member Name"
             value={patientId}

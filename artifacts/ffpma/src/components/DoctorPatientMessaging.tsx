@@ -66,7 +66,7 @@ export function DoctorPatientMessaging({ doctorId, preselectedPatientId }: Docto
 
   const sendMessageMutation = useMutation({
     mutationFn: async (text: string) => {
-      if (!selectedPatientId) throw new Error("No patient selected");
+      if (!selectedPatientId) throw new Error("No member selected");
       const res = await apiRequest("POST", `/api/doctor/messages/${selectedPatientId}`, {
         messageText: text
       });
@@ -100,13 +100,13 @@ export function DoctorPatientMessaging({ doctorId, preselectedPatientId }: Docto
             <MessageSquare className="w-6 h-6 text-blue-400" />
             Member Messaging
           </h2>
-          <p className="text-white/60 text-sm mt-1">Secure communication with your patients</p>
+          <p className="text-white/60 text-sm mt-1">Secure communication with your members</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-3 max-h-[500px] overflow-y-auto pr-2">
-          <h3 className="font-medium text-white/80 mb-3">Your Patients</h3>
+          <h3 className="font-medium text-white/80 mb-3">Your Members</h3>
           {membersData?.members?.map((member) => (
             <div 
               key={member.id} 
@@ -120,7 +120,7 @@ export function DoctorPatientMessaging({ doctorId, preselectedPatientId }: Docto
             </div>
           ))}
           {!membersData?.members?.length && (
-             <div className="text-center p-4 text-white/50 text-sm">No patients found.</div>
+             <div className="text-center p-4 text-white/50 text-sm">No members found.</div>
           )}
         </div>
 
@@ -134,7 +134,7 @@ export function DoctorPatientMessaging({ doctorId, preselectedPatientId }: Docto
                   </div>
                   <div>
                     <p className="font-medium">
-                      {selectedMember?.name || "Patient"}
+                      {selectedMember?.name || "Member"}
                     </p>
                     <p className="text-xs text-white/50">Secure Thread</p>
                   </div>
