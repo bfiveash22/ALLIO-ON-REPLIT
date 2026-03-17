@@ -510,60 +510,18 @@ Return ONLY valid JSON, no markdown.`;
 
   const userPrompt = `PATIENT PROFILE:\n${JSON.stringify(profile, null, 2)}`;
 
-  let content: string | null = null;
+  const { callWithFallback } = await import("./ai-fallback");
+  console.log("[Protocol Assembly] Generating protocol via AI fallback chain (Abacus → OpenAI → Claude → Gemini)...");
+  const aiResult = await callWithFallback(userPrompt, {
+    systemPrompt,
+    preferredProvider: "abacus",
+    maxRetries: 1,
+    maxTokens: 12000,
+  });
+  const content = aiResult.response;
+  console.log(`[Protocol Assembly] Protocol generated via ${aiResult.provider} (${aiResult.model})${aiResult.fallbackUsed ? " [fallback]" : ""}, length: ${content.length}`);
 
-  const abacusKey = process.env.ABACUSAI_API_KEY;
-  if (abacusKey) {
-    try {
-      console.log("[Protocol Assembly] Trying Abacus AI (gpt-4.1-mini) as primary...");
-      const abacusResponse = await fetch("https://api.abacus.ai/api/v0/predict", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${abacusKey}`,
-        },
-        body: JSON.stringify({
-          deploymentId: "dr-formula-protocol",
-          queryData: {
-            systemPrompt,
-            userMessage: userPrompt,
-            model: "gpt-4.1-mini",
-            maxTokens: 12000,
-            temperature: 0.4,
-            responseFormat: "json",
-          },
-        }),
-      });
-
-      if (abacusResponse.ok) {
-        const abacusData = await abacusResponse.json() as Record<string, unknown>;
-        const rawResult = (abacusData as Record<string, unknown>).result || (abacusData as Record<string, unknown>).prediction || (abacusData as Record<string, unknown>).response;
-        if (typeof rawResult === "string" && rawResult.length > 100) {
-          content = rawResult;
-          console.log(`[Protocol Assembly] Abacus AI success, response length: ${content.length}`);
-        }
-      }
-    } catch (abacusErr) {
-      console.warn("[Protocol Assembly] Abacus AI failed, falling back to OpenAI:", abacusErr);
-    }
-  }
-
-  if (!content) {
-    console.log("[Protocol Assembly] Using OpenAI gpt-4o as fallback...");
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      response_format: { type: "json_object" },
-      max_tokens: 12000,
-      temperature: 0.4,
-    });
-    content = response.choices[0]?.message?.content;
-  }
-
-  if (!content) throw new Error("Failed to generate protocol from any provider");
+  if (!content || content.length < 100) throw new Error("Failed to generate protocol from any provider");
 
   const parsed = JSON.parse(content) as HealingProtocol;
 
