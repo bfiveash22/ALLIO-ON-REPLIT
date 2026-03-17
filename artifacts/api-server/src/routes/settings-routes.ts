@@ -249,12 +249,12 @@ export function registerSettingsRoutes(app: Express): void {
       const { clinicNodes } = await import("@shared/schema");
       const [node] = await db.select().from(clinicNodes).where(eq(clinicNodes.id, nodeId)).limit(1);
 
-      if (!node || !node.isActive) {
+      if (!node || node.status === "decommissioned") {
         return res.status(401).json({ error: "Invalid or inactive node" });
       }
 
-      const isValid = await bcrypt.compare(apiKey, node.apiKeyHash);
-      if (!isValid) {
+      const configHash = node.configHash || "";
+      if (apiKey !== configHash) {
         return res.status(401).json({ error: "Invalid API key" });
       }
 
@@ -264,7 +264,7 @@ export function registerSettingsRoutes(app: Express): void {
       }
 
       await db.update(clinicNodes)
-        .set({ lastSyncAt: new Date(), status: 'active' })
+        .set({ lastSyncAt: new Date(), status: 'online' })
         .where(eq(clinicNodes.id, nodeId));
 
       res.status(200).json({

@@ -387,19 +387,16 @@ export function requireRole(...roles: string[]) {
       }
     }
 
-    // Hardcoded constraint: only blake should have exclusive trustee access
-    // if 'trustee' is one of the allowed roles AND the user doesn't already have
-    // an admin/trustee role mapped above, check if they are blake.
-    // If the route explicitly requires ONLY 'trustee' (and not 'admin'), then 
-    // further restrict it to blake. But if they already passed the role check
-    // (e.g. they are an admin and the route allows 'admin' or 'trustee'), don't break it.
-    if (roles.includes('trustee') && !roles.includes('admin')) {
-      const email = req.user?.email || '';
-      const isBlake = email.toLowerCase().includes('blake');
-      if (isBlake) {
-        hasRole = true;
-      } else if (!userRoles.includes('administrator')) {
-        hasRole = false; // Only Blake or WP Administrators get Trustee if ONLY trustee is asked for
+    const email = (req.user?.email || '').toLowerCase();
+    const TRUSTEE_EMAILS = ['blake@forgottenformula.com'];
+    const isTrustee = TRUSTEE_EMAILS.includes(email);
+    if (isTrustee && (roles.includes('admin') || roles.includes('trustee'))) {
+      hasRole = true;
+    }
+
+    if (!hasRole && roles.includes('trustee') && !roles.includes('admin')) {
+      if (!userRoles.includes('administrator')) {
+        hasRole = false;
       }
     }
 

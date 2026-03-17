@@ -88,6 +88,17 @@ Includes an AI agent network with:
 - **API Endpoint**: `/api/legal/documents/constitutional-law-framework` (auth required).
 - **Scripts**: `legal-drive-audit.ts` (folder audit + reorganization), `upload-constitutional-framework.ts` (uploads framework + PMA formation checklist to Drive).
 
+### Clinic Node Infrastructure & Global Expansion
+- **Architecture**: Distributed network of autonomous clinic nodes, each running the full FFPMA stack (PostgreSQL, Node.js, React, Redis, Nginx).
+- **Failover**: 60-second heartbeat protocol with automatic failover. Nodes missing 5min of heartbeats trigger traffic rerouting to nearest online node.
+- **Replication**: PostgreSQL streaming replication (WAL-based) with 11 core tables replicated. Target lag <5 seconds.
+- **Health Dashboard**: Admin page at `/admin/clinic-nodes` showing node status, metrics (CPU/RAM/disk), events, and global jurisdictions.
+- **Global Jurisdictions**: 10 common law countries mapped with constitutional basis, health freedom scores (0-100), PMA viability assessment, and risk factors. US (92), Canada (78), NZ (76), India (75), Jamaica (74), UK (72), Ireland (71), Australia (70), South Africa (68), Kenya (65).
+- **API**: `GET/POST /api/clinic-nodes/*`, `POST /api/clinic-nodes/heartbeat` (no auth), `GET/POST /api/jurisdictions`, `POST /api/clinic-nodes/seed`.
+- **Schema**: `clinic_nodes`, `clinic_node_events`, `global_jurisdictions`, `node_replication_logs` tables.
+- **Deployment**: 10-step provisioning checklist from infrastructure through Trustee go-live approval.
+- **Documentation**: `docs/architecture/clinic-node-architecture.md`.
+
 ## External Dependencies
 
 - **AI Services**: OpenAI, Anthropic, Google Gemini, HuggingFace

@@ -214,6 +214,8 @@ registerHealthRoutes(app);
   registerVitalityRoutes(app);
   const { registerAutomationRoutes } = await import("./routes/automation-routes");
   registerAutomationRoutes(app);
+  const { registerClinicNodeRoutes } = await import("./routes/clinic-node-routes");
+  registerClinicNodeRoutes(app);
 
   const { requireRole } = await import("./middleware/auth");
   app.get("/api/ai-health", requireRole("admin"), async (_req, res) => {

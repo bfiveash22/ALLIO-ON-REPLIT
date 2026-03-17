@@ -26,6 +26,7 @@ import {
   Sparkles,
   Radio,
   Droplets,
+  Network,
 } from "lucide-react";
 
 import {
@@ -124,6 +125,7 @@ const adminMenuItems = [
   { title: "Members Roster", url: "/admin/members", icon: Users },
   { title: "WordPress Sync", url: "/admin/sync", icon: RefreshCw },
   { title: "Manage Clinics", url: "/admin/clinics", icon: Building2 },
+  { title: "Clinic Nodes", url: "/admin/clinic-nodes", icon: Network },
   { title: "Contract Review", url: "/trustee/contract-review", icon: Scale },
 ];
 

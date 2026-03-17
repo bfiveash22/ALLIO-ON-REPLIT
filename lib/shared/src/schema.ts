@@ -2104,23 +2104,7 @@ export const insertOpenclawTaskSchema = createInsertSchema(openclawTasks).omit({
 export type InsertOpenclawTask = z.infer<typeof insertOpenclawTaskSchema>;
 export type OpenclawTask = typeof openclawTasks.$inferSelect;
 
-// Clinic Nodes - Distributed Allio Architecture
-export const clinicNodes = pgTable("clinic_nodes", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  clinicId: varchar("clinic_id").notNull(),
-  name: varchar("name").notNull(),
-  apiKeyHash: varchar("api_key_hash").notNull(),
-  status: varchar("status").default("active"),
-  lastSyncAt: timestamp("last_sync_at"),
-  version: varchar("version"),
-  ipAddress: varchar("ip_address"),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const insertClinicNodeSchema = createInsertSchema(clinicNodes).omit({ id: true, createdAt: true });
-export type InsertClinicNode = z.infer<typeof insertClinicNodeSchema>;
-export type ClinicNode = typeof clinicNodes.$inferSelect;
+// Clinic Nodes - Distributed Allio Architecture (Enhanced for global expansion)
 
 export const implementedStatusEnum = pgEnum("implemented_status", ["pending_review", "deployed_successfully", "deployment_failed", "rolled_back", "ignored"]);
 
@@ -2381,3 +2365,98 @@ export const agentLibraryFiles = pgTable("agent_library_files", {
 
 export type AgentLibraryChunk = typeof agentLibraryChunks.$inferSelect;
 export type AgentLibraryFile = typeof agentLibraryFiles.$inferSelect;
+
+export const clinicNodeStatusEnum = pgEnum("clinic_node_status", ["online", "degraded", "offline", "provisioning", "decommissioned"]);
+export const replicationStateEnum = pgEnum("replication_state", ["synced", "syncing", "stale", "error"]);
+export const jurisdictionStatusEnum = pgEnum("jurisdiction_status", ["active", "researching", "approved", "restricted", "blocked"]);
+
+export const clinicNodes = pgTable("clinic_nodes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clinicId: varchar("clinic_id").references(() => clinics.id),
+  nodeIdentifier: varchar("node_identifier").notNull().unique(),
+  displayName: varchar("display_name").notNull(),
+  status: clinicNodeStatusEnum("status").default("provisioning"),
+  region: varchar("region").notNull(),
+  jurisdictionId: varchar("jurisdiction_id"),
+  endpoint: varchar("endpoint"),
+  internalIp: varchar("internal_ip"),
+  externalIp: varchar("external_ip"),
+  version: varchar("version"),
+  lastHeartbeatAt: timestamp("last_heartbeat_at"),
+  lastSyncAt: timestamp("last_sync_at"),
+  replicationState: replicationStateEnum("replication_state").default("stale"),
+  replicationLag: integer("replication_lag").default(0),
+  cpuUsage: decimal("cpu_usage", { precision: 5, scale: 2 }),
+  memoryUsage: decimal("memory_usage", { precision: 5, scale: 2 }),
+  diskUsage: decimal("disk_usage", { precision: 5, scale: 2 }),
+  activeConnections: integer("active_connections").default(0),
+  memberCount: integer("member_count").default(0),
+  failoverPriority: integer("failover_priority").default(100),
+  failoverTargetId: varchar("failover_target_id"),
+  isPrimary: boolean("is_primary").default(false),
+  canAcceptFailover: boolean("can_accept_failover").default(true),
+  sslCertExpiry: timestamp("ssl_cert_expiry"),
+  configHash: varchar("config_hash"),
+  metadata: jsonb("metadata"),
+  provisionedAt: timestamp("provisioned_at"),
+  decommissionedAt: timestamp("decommissioned_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const clinicNodeEvents = pgTable("clinic_node_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  nodeId: varchar("node_id").notNull().references(() => clinicNodes.id),
+  eventType: varchar("event_type").notNull(),
+  severity: varchar("severity").notNull().default("info"),
+  message: text("message").notNull(),
+  details: jsonb("details"),
+  acknowledgedAt: timestamp("acknowledged_at"),
+  acknowledgedBy: varchar("acknowledged_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const globalJurisdictions = pgTable("global_jurisdictions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  countryCode: varchar("country_code").notNull(),
+  countryName: varchar("country_name").notNull(),
+  legalSystem: varchar("legal_system").notNull(),
+  constitutionalBasis: text("constitutional_basis"),
+  associationFreedom: varchar("association_freedom"),
+  healthFreedomScore: integer("health_freedom_score"),
+  pmaViability: varchar("pma_viability"),
+  status: jurisdictionStatusEnum("jurisdiction_status").default("researching"),
+  keyStatutes: jsonb("key_statutes"),
+  caseReferences: jsonb("case_references"),
+  riskFactors: jsonb("risk_factors"),
+  expansionNotes: text("expansion_notes"),
+  primaryLanguage: varchar("primary_language"),
+  timezone: varchar("timezone"),
+  regulatoryBodies: jsonb("regulatory_bodies"),
+  dataPrivacyLaw: varchar("data_privacy_law"),
+  crossBorderDataRules: text("cross_border_data_rules"),
+  researchedBy: varchar("researched_by"),
+  approvedBy: varchar("approved_by"),
+  approvedAt: timestamp("approved_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const nodeReplicationLogs = pgTable("node_replication_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sourceNodeId: varchar("source_node_id").notNull(),
+  targetNodeId: varchar("target_node_id").notNull(),
+  tableName: varchar("table_name").notNull(),
+  recordCount: integer("record_count").default(0),
+  bytesTransferred: integer("bytes_transferred").default(0),
+  status: varchar("status").notNull().default("pending"),
+  errorMessage: text("error_message"),
+  startedAt: timestamp("started_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
+export type ClinicNode = typeof clinicNodes.$inferSelect;
+export type InsertClinicNode = typeof clinicNodes.$inferInsert;
+export type ClinicNodeEvent = typeof clinicNodeEvents.$inferSelect;
+export type GlobalJurisdiction = typeof globalJurisdictions.$inferSelect;
+export type NodeReplicationLog = typeof nodeReplicationLogs.$inferSelect;

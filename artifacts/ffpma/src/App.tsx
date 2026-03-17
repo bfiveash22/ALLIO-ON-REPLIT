@@ -56,6 +56,7 @@ import AdminDashboardPage from "@/pages/admin-dashboard";
 import AdminSyncPage from "@/pages/admin-sync";
 import AdminMembersPage from "@/pages/admin-members";
 import AdminClinicsPage from "@/pages/admin-clinics";
+import AdminClinicNodesPage from "@/pages/admin-clinic-nodes";
 import CartPage from "@/pages/cart";
 import CheckoutSuccessPage from "@/pages/checkout-success";
 import DoctorDownlinePage from "@/pages/doctor-downline";
@@ -601,6 +602,13 @@ function Router() {
         <RoleProtectedRoute allowedRoles={["admin"]}>
           <AppLayout>
             <AdminClinicsPage />
+          </AppLayout>
+        </RoleProtectedRoute>
+      )} />
+      <Route path="/admin/clinic-nodes" component={() => (
+        <RoleProtectedRoute allowedRoles={["admin"]}>
+          <AppLayout>
+            <AdminClinicNodesPage />
           </AppLayout>
         </RoleProtectedRoute>
       )} />
