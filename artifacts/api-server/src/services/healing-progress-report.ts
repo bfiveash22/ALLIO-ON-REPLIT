@@ -18,6 +18,15 @@ export interface HealingMilestone {
 }
 
 export interface HealingProgressData {
+  member: {
+    id: string;
+    name: string;
+    email?: string | null;
+    status?: string | null;
+    primaryConcerns?: string[] | null;
+    dateOfBirth?: Date | null;
+    createdAt?: Date | null;
+  };
   patient: {
     id: string;
     name: string;
@@ -72,11 +81,11 @@ export async function aggregateHealingProgress(
 ): Promise<HealingProgressData> {
   const patient = await storage.getPatientRecord(patientRecordId);
   if (!patient) {
-    throw new Error("Patient record not found");
+    throw new Error("Member record not found");
   }
 
   if (!isAdmin && patient.doctorId !== doctorId) {
-    throw new Error("Unauthorized: patient does not belong to this doctor");
+    throw new Error("Unauthorized: member does not belong to this practitioner");
   }
 
   const protocols = await storage.getPatientProtocols(patientRecordId);
@@ -107,7 +116,7 @@ export async function aggregateHealingProgress(
     milestones.push({
       date: patient.createdAt.toISOString().split("T")[0],
       type: "enrollment",
-      description: "Patient record created and initial assessment begun",
+      description: "Member record created and initial assessment begun",
     });
   }
 
@@ -162,16 +171,18 @@ export async function aggregateHealingProgress(
     achievementsEarned = [];
   }
 
+  const memberInfo = {
+    id: patient.id,
+    name: patient.memberName,
+    email: patient.memberEmail,
+    status: patient.status,
+    primaryConcerns: patient.primaryConcerns,
+    dateOfBirth: patient.dateOfBirth,
+    createdAt: patient.createdAt,
+  };
   return {
-    patient: {
-      id: patient.id,
-      name: patient.memberName,
-      email: patient.memberEmail,
-      status: patient.status,
-      primaryConcerns: patient.primaryConcerns,
-      dateOfBirth: patient.dateOfBirth,
-      createdAt: patient.createdAt,
-    },
+    member: memberInfo,
+    patient: memberInfo,
     protocols,
     uploads,
     labData,
@@ -276,7 +287,7 @@ export function generateHealingProgressPDF(
         .stroke();
       doc.moveDown(0.8);
 
-      addHeader(doc, "Patient Overview");
+      addHeader(doc, "Member Overview");
       if (data.patient.primaryConcerns?.length) {
         addBody(doc, "Primary Concerns:");
         for (const concern of data.patient.primaryConcerns) {

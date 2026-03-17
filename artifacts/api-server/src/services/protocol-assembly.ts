@@ -48,7 +48,7 @@ export async function fetchProtocolCitations(
     const searchTerms: string[] = [];
 
     if (profile.chiefComplaints?.length > 0) {
-      searchTerms.push(profile.chiefComplaints.slice(0, 2).join(" ") + " treatment protocol");
+      searchTerms.push(profile.chiefComplaints.slice(0, 2).join(" ") + " wellness protocol");
     }
 
     if (protocol.injectablePeptides?.length > 0) {
@@ -648,7 +648,7 @@ function enforceRequiredModalities(protocol: HealingProtocol, profile: PatientPr
       method: "IV Chelation",
       frequency: "Weekly during Phase 1-2",
       duration: "8-12 sessions",
-      instructions: "EDTA IV chelation — must be administered at clinic. Pre-treatment with glutathione IV. Monitor kidney function and mineral levels throughout."
+      instructions: "EDTA IV chelation — must be administered at clinic. Pre-session with glutathione IV. Monitor kidney function and mineral levels throughout."
     });
     console.log("[Protocol Enforcer] Injected EDTA chelation for mercury exposure");
   }

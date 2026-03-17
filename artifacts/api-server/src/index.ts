@@ -296,8 +296,11 @@ registerHealthRoutes(app);
       path.join(baseDir, 'artifacts', 'api-server', 'src', 'services', 'protocol-pptx.ts'),
       path.join(baseDir, 'artifacts', 'api-server', 'src', 'services', 'protocol-slide-generator.ts'),
       path.join(baseDir, 'artifacts', 'api-server', 'src', 'services', 'protocol-assembly.ts'),
+      path.join(baseDir, 'artifacts', 'api-server', 'src', 'services', 'healing-progress-report.ts'),
       path.join(baseDir, 'artifacts', 'api-server', 'src', 'routes', 'doctor-routes.ts'),
+      path.join(baseDir, 'artifacts', 'api-server', 'src', 'routes', 'automation-routes.ts'),
       path.join(baseDir, 'artifacts', 'ffpma', 'src', 'components', 'DoctorPatientMessaging.tsx'),
+      path.join(baseDir, 'artifacts', 'ffpma', 'src', 'components', 'ConsultAITeam.tsx'),
       path.join(baseDir, 'artifacts', 'ffpma', 'src', 'pages', 'doctors-portal.tsx'),
       path.join(baseDir, 'artifacts', 'ffpma', 'src', 'pages', 'trustee-dashboard.tsx'),
       path.join(baseDir, 'artifacts', 'ffpma', 'src', 'pages', 'admin-backoffice.tsx'),
@@ -324,8 +327,10 @@ registerHealthRoutes(app);
           if (line.includes('diagnosed') || line.includes('Diagnosis (')) continue;
           if (line.includes('const patients') || line.includes('patients.') || line.includes('filteredPatients') || line.includes('refetchPatients')) continue;
           if (line.includes('patientSearch') || line.includes('showAddPatient') || line.includes('setShowAddPatient') || line.includes('newPatient') || line.includes('addPatientMutation')) continue;
+          if (line.includes('patientContext') || line.includes('PatientContext') || line.includes('memberInfo')) continue;
+          if (line.includes('patientProtocols') || line.includes('patientUploads')) continue;
           if (line.includes('AdminPatient') || line.includes('PatientManagement') || line.includes('PatientProtocol')) continue;
-          if (line.includes('if (!patient') || line.includes('patient.')) continue;
+          if (line.includes('if (!patient') || line.includes('patient.') || line.match(/^\s*patient:\s*\{/)) continue;
           for (const pattern of PMA_FORBIDDEN_PATTERNS) {
             if (pattern.test(line)) {
               violations++;

@@ -212,7 +212,7 @@ export function ConsultAITeam({ preselectedAgentId, patientName }: ConsultAITeam
       .join("<br/><br/>");
     const printWindow = window.open("", "_blank");
     if (printWindow) {
-      printWindow.document.write(`<html><head><title>AI Consultation - ${activeAgent?.name}</title><style>body{font-family:sans-serif;padding:20px;line-height:1.6;max-width:800px;margin:0 auto;}</style></head><body><h2>AI Consultation: ${activeAgent?.name} - ${activeAgent?.title}</h2><p style="color:#666;">Patient: ${patientContext.name || "Not specified"}</p><hr/>${text}<br/><hr/><p style="color:#999;font-size:12px;">This consultation is provided within the private domain of the Forgotten Formula PMA for educational purposes. Clinical decisions remain at the practitioner's discretion.</p></body></html>`);
+      printWindow.document.write(`<html><head><title>AI Consultation - ${activeAgent?.name}</title><style>body{font-family:sans-serif;padding:20px;line-height:1.6;max-width:800px;margin:0 auto;}</style></head><body><h2>AI Consultation: ${activeAgent?.name} - ${activeAgent?.title}</h2><p style="color:#666;">Member: ${patientContext.name || "Not specified"}</p><hr/>${text}<br/><hr/><p style="color:#999;font-size:12px;">This consultation is provided within the private domain of the Forgotten Formula PMA for educational purposes. Clinical decisions remain at the practitioner's discretion.</p></body></html>`);
       printWindow.document.close();
       printWindow.focus();
       setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);

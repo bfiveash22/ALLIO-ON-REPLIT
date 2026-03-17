@@ -667,7 +667,7 @@ LBA findings should always be correlated with:
       {
         title: "Wellness Monitoring with LBA",
         content: `Baseline Documentation Protocol:
-Every new patient/member should receive a baseline LBA session with:
+Every new member should receive a baseline LBA session with:
 1. Standardized collection conditions (fasting, hydrated, same time of day)
 2. Full 5-Zone assessment with photographs at each zone
 3. Vitality score documentation at 0, 5, 10, 15, 20 minutes
@@ -1566,7 +1566,7 @@ const LBA_QUIZ_DATA_MODULES_8_17: typeof LBA_QUIZ_DATA = [
       { id: "q-lba08-06", text: "What retest interval is used for acute protocols?", explanation: "Acute protocols warrant retesting at 2 weeks to assess rapid response.", answers: [{ text: "2 weeks", isCorrect: true }, { text: "24 hours", isCorrect: false }, { text: "3 months", isCorrect: false }, { text: "6 months", isCorrect: false }] },
       { id: "q-lba08-07", text: "What does a stable vitality score suggest?", explanation: "A stable but not improving vitality score may indicate the need for dose adjustment or additional interventions.", answers: [{ text: "May need dose adjustment or additional interventions", isCorrect: true }, { text: "Complete success", isCorrect: false }, { text: "Treatment should stop", isCorrect: false }, { text: "Equipment is miscalibrated", isCorrect: false }] },
       { id: "q-lba08-08", text: "What is the maintenance retest interval?", explanation: "Maintenance retesting every 3-6 months monitors ongoing health status and protocol adherence.", answers: [{ text: "3-6 months", isCorrect: true }, { text: "Daily", isCorrect: false }, { text: "Weekly", isCorrect: false }, { text: "Annually", isCorrect: false }] },
-      { id: "q-lba08-09", text: "Why is visual comparison important for patients?", explanation: "Showing patients before/after images of their own blood provides powerful motivation for protocol adherence.", answers: [{ text: "Provides motivation for protocol adherence", isCorrect: true }, { text: "Has no patient benefit", isCorrect: false }, { text: "Only for insurance documentation", isCorrect: false }, { text: "Required by law", isCorrect: false }] },
+      { id: "q-lba08-09", text: "Why is visual comparison important for members?", explanation: "Showing members before/after images of their own blood provides powerful motivation for protocol adherence.", answers: [{ text: "Provides motivation for protocol adherence", isCorrect: true }, { text: "Has no member benefit", isCorrect: false }, { text: "Only for insurance documentation", isCorrect: false }, { text: "Required by law", isCorrect: false }] },
       { id: "q-lba08-10", text: "What should happen when new findings appear during monitoring?", explanation: "New findings that weren't present at baseline should be addressed with additional targeted interventions.", answers: [{ text: "Address with additional targeted interventions", isCorrect: true }, { text: "Ignore them", isCorrect: false }, { text: "Stop all treatment", isCorrect: false }, { text: "Repeat baseline only", isCorrect: false }] },
     ],
   },
