@@ -38,7 +38,7 @@ function sanitizeTextInput(text: string | PptxGenJS.TextProps[]): string | PptxG
 }
 
 function addSanitizedSlide(pres: PptxPresentation) {
-  const slide = addSanitizedSlide(pres);
+  const slide = pres.addSlide();
   const originalAddText = slide.addText.bind(slide);
   slide.addText = ((text: string | PptxGenJS.TextProps[], opts?: Record<string, unknown>) => {
     return originalAddText(sanitizeTextInput(text) as string, opts);
