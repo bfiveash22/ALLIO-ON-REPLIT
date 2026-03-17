@@ -271,6 +271,55 @@ export function setupWorkingAuth(app: any) {
     }
   });
 
+  if (process.env.NODE_ENV !== 'production') {
+    app.post('/api/auth/dev-login', async (req: any, res: any) => {
+      try {
+        const { userId, email } = req.body;
+        if (!userId && !email) {
+          return res.status(400).json({ success: false, error: 'userId or email required' });
+        }
+
+        let userQuery;
+        if (userId) {
+          userQuery = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [userId]);
+        } else {
+          userQuery = await pool.query('SELECT * FROM users WHERE email = $1 LIMIT 1', [email]);
+        }
+
+        if (userQuery.rows.length === 0) {
+          return res.status(404).json({ success: false, error: 'User not found' });
+        }
+
+        const dbUser = userQuery.rows[0];
+        let parsedRoles: string[] = [];
+        if (typeof dbUser.wp_roles === 'string') {
+          try { parsedRoles = JSON.parse(dbUser.wp_roles); } catch { parsedRoles = []; }
+        } else if (Array.isArray(dbUser.wp_roles)) {
+          parsedRoles = dbUser.wp_roles;
+        }
+
+        req.session.userId = dbUser.id;
+        req.session.user = {
+          id: dbUser.id,
+          email: dbUser.email,
+          firstName: dbUser.first_name,
+          lastName: dbUser.last_name,
+          wpUserId: dbUser.wp_user_id,
+          wpRoles: parsedRoles,
+        };
+
+        await new Promise((resolve, reject) => {
+          req.session.save((err: any) => { if (err) reject(err); else resolve(true); });
+        });
+
+        res.json({ success: true, user: req.session.user });
+      } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+    console.log('[AUTH] Dev login endpoint enabled (non-production only)');
+  }
+
   console.log('[AUTH] Working auth system initialized');
 }
 
