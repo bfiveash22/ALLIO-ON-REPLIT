@@ -7,6 +7,7 @@ import type {
   PatientProfile,
 } from "@shared/types/protocol-assembly";
 import { getPatientResources } from "./protocol-resources";
+import { sanitizePmaLanguage } from "@shared/pma-language";
 
 const PRIMARY = "1B2A4A";
 const SECONDARY = "00B4D8";
@@ -22,6 +23,28 @@ const RED_ACCENT = "C62828";
 const GREEN_ACCENT = "2E7D32";
 const ORANGE_ACCENT = "EF6C00";
 const PURPLE_ACCENT = "6A1B9A";
+
+function sanitizeTextInput(text: string | PptxGenJS.TextProps[]): string | PptxGenJS.TextProps[] {
+  if (typeof text === 'string') return sanitizePmaLanguage(text);
+  if (Array.isArray(text)) {
+    return text.map(item => {
+      if (typeof item === 'object' && item !== null && 'text' in item && typeof item.text === 'string') {
+        return { ...item, text: sanitizePmaLanguage(item.text) };
+      }
+      return item;
+    });
+  }
+  return text;
+}
+
+function addSanitizedSlide(pres: PptxPresentation) {
+  const slide = addSanitizedSlide(pres);
+  const originalAddText = slide.addText.bind(slide);
+  slide.addText = ((text: string | PptxGenJS.TextProps[], opts?: Record<string, unknown>) => {
+    return originalAddText(sanitizeTextInput(text) as string, opts);
+  }) as typeof slide.addText;
+  return slide;
+}
 
 const FF_WEBSITE = "https://www.forgottenformula.com";
 const FF_SHOP = `${FF_WEBSITE}/shop`;
@@ -166,7 +189,7 @@ export async function generateProtocolPPTX(
 }
 
 function slideCover(pres: PptxPresentation, protocol: HealingProtocol, date: string, isCancer: boolean) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: DARK_BG };
 
   slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: SECONDARY } });
@@ -217,7 +240,7 @@ function slideCover(pres: PptxPresentation, protocol: HealingProtocol, date: str
 }
 
 function slideSummary(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Presentation Summary", {
@@ -258,7 +281,7 @@ function slideSummary(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideMemberInfo(pres: PptxPresentation, protocol: HealingProtocol, profile: PatientProfile, resources: ReturnType<typeof getPatientResources>) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Member Information", {
@@ -348,7 +371,7 @@ function slideMemberInfo(pres: PptxPresentation, protocol: HealingProtocol, prof
 }
 
 function slideTimeline(pres: PptxPresentation, profile: PatientProfile) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Member Timeline", {
@@ -382,7 +405,7 @@ function slideTimeline(pres: PptxPresentation, profile: PatientProfile) {
 }
 
 function slideTrusteeAnalysis(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Trustee's Analysis", {
@@ -404,7 +427,7 @@ function slideTrusteeAnalysis(pres: PptxPresentation, protocol: HealingProtocol)
 function slideRootCauses(pres: PptxPresentation, protocol: HealingProtocol) {
   if (!protocol.rootCauseAnalysis?.length) return;
 
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Root Cause Analysis", {
@@ -445,7 +468,7 @@ function slideRootCauses(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slide5Rs(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: DARK_BG };
 
   slide.addText("5 R's to Healing at FF PMA", {
@@ -484,7 +507,7 @@ function slide5Rs(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideDailySchedule(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Daily Schedule", {
@@ -540,7 +563,7 @@ function slideDailySchedule(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideProductsFF(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Therapeutics: Forgotten Formula Products", {
@@ -576,7 +599,7 @@ function slideProductsFF(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideInjectablePeptides(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: DARK_BG };
 
   slide.addText("Therapeutics: Injectable Peptide Protocol", {
@@ -617,7 +640,7 @@ function slideInjectablePeptides(pres: PptxPresentation, protocol: HealingProtoc
 }
 
 function slideOralPeptides(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Therapeutics: Oral Peptides", {
@@ -645,7 +668,7 @@ function slideOralPeptides(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideBioregulators(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Therapeutics: Forgotten Formula Oral Bioregulators", {
@@ -676,7 +699,7 @@ function slideBioregulators(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideSupplements(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Some of your Supplements Explained", {
@@ -703,7 +726,7 @@ function slideSupplements(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideSupplementTiming(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Supplement Timing Guide", {
@@ -787,7 +810,7 @@ function slideSupplementTiming(pres: PptxPresentation, protocol: HealingProtocol
 }
 
 function slideIVIM(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Therapeutics: IV & IM Therapy Schedule", {
@@ -840,7 +863,7 @@ function slideIVIM(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideDetox(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Detox & Pathogen Support", {
@@ -867,7 +890,7 @@ function slideDetox(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideParasite(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Parasite & Antiviral Protocols", {
@@ -894,7 +917,7 @@ function slideParasite(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideLifestyle(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Lifestyle & Dietary Guidelines", {
@@ -948,7 +971,7 @@ function slideLifestyle(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideFollowUp(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Follow-Up Plan & Lab Orders", {
@@ -1000,7 +1023,7 @@ function slideFollowUp(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideBooks(pres: PptxPresentation, resources: ReturnType<typeof getPatientResources>) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Recommended Reading", {
@@ -1038,7 +1061,7 @@ function slideBooks(pres: PptxPresentation, resources: ReturnType<typeof getPati
 }
 
 function slideResearchLinks(pres: PptxPresentation, resources: ReturnType<typeof getPatientResources>) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Research Backing Our Protocols", {
@@ -1065,7 +1088,7 @@ function slideResearchLinks(pres: PptxPresentation, resources: ReturnType<typeof
 }
 
 function slideDriveLinks(pres: PptxPresentation, resources: ReturnType<typeof getPatientResources>) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
   slide.addText("Additional Research and Google Drive Links", {
@@ -1114,7 +1137,7 @@ function slideDriveLinks(pres: PptxPresentation, resources: ReturnType<typeof ge
 }
 
 function slideCommitment(pres: PptxPresentation) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: DARK_BG };
 
   slide.addText("My Commitment to You", {
@@ -1149,7 +1172,7 @@ function slideCommitment(pres: PptxPresentation) {
 }
 
 function slideECS(pres: PptxPresentation, protocol: HealingProtocol) {
-  const sectionSlide = pres.addSlide();
+  const sectionSlide = addSanitizedSlide(pres);
   sectionSlide.background = { color: "0B3D2E" };
   sectionSlide.addText("ECS PROTOCOL", {
     x: 0, y: 1.8, w: 10, h: 0.8,
@@ -1160,7 +1183,7 @@ function slideECS(pres: PptxPresentation, protocol: HealingProtocol) {
     fontSize: 14, fontFace: BODY_FONT, color: TEAL, align: "center",
   });
 
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
   slide.addText("ECS Protocol — Endocannabinoid System", {
     x: 0.5, y: 0.2, w: 9, h: 0.5,
@@ -1232,7 +1255,7 @@ function slideECS(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideSuppositories(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
   slide.addText("Suppository Protocols", {
     x: 0.5, y: 0.2, w: 9, h: 0.5,
@@ -1254,7 +1277,7 @@ function slideSuppositories(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideSirtuinMito(pres: PptxPresentation, protocol: HealingProtocol) {
-  const sectionSlide = pres.addSlide();
+  const sectionSlide = addSanitizedSlide(pres);
   sectionSlide.background = { color: "1A0A3E" };
   sectionSlide.addText("MITOCHONDRIAL & SIRTUIN SUPPORT", {
     x: 0, y: 1.8, w: 10, h: 0.8,
@@ -1265,7 +1288,7 @@ function slideSirtuinMito(pres: PptxPresentation, protocol: HealingProtocol) {
     fontSize: 14, fontFace: BODY_FONT, color: "B39DDB", align: "center",
   });
 
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
   slide.addText("Sirtuin & Mitochondrial Stack", {
     x: 0.5, y: 0.2, w: 9, h: 0.5,
@@ -1329,7 +1352,7 @@ function slideSirtuinMito(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideLiposomals(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
   slide.addText("Liposomal Supplements", {
     x: 0.5, y: 0.2, w: 9, h: 0.5,
@@ -1350,7 +1373,7 @@ function slideLiposomals(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideNebulization(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
   slide.addText("Nebulization Protocols", {
     x: 0.5, y: 0.2, w: 9, h: 0.5,
@@ -1373,7 +1396,7 @@ function slideNebulization(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideTopicals(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
   slide.addText("Topical Protocols", {
     x: 0.5, y: 0.2, w: 9, h: 0.5,
@@ -1395,7 +1418,7 @@ function slideTopicals(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideExosomes(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
   slide.addText("Exosome Therapy", {
     x: 0.5, y: 0.2, w: 9, h: 0.5,
@@ -1418,7 +1441,7 @@ function slideExosomes(pres: PptxPresentation, protocol: HealingProtocol) {
 }
 
 function slideDietaryProtocol(pres: PptxPresentation, protocol: HealingProtocol) {
-  const slide = pres.addSlide();
+  const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
   slide.addText("Dietary Protocol", {
     x: 0.5, y: 0.2, w: 9, h: 0.5,

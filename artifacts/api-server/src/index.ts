@@ -309,6 +309,7 @@ registerHealthRoutes(app);
       'artifacts/api-server/src/services/protocol-pdf.ts',
       'artifacts/api-server/src/services/protocol-slide-generator.ts',
       'artifacts/api-server/src/services/protocol-assembly.ts',
+      'artifacts/api-server/src/services/protocol-pptx.ts',
       'artifacts/api-server/src/services/healing-progress-report.ts',
       'artifacts/api-server/src/routes/doctor-routes.ts',
       'artifacts/api-server/src/routes/automation-routes.ts',
@@ -340,7 +341,7 @@ registerHealthRoutes(app);
       if (/showAddPatient|newPatient|addPatient|patientSearch/.test(line)) return true;
       if (/console\.|data-testid|sanitize|PMA_|redirect|Redirect/.test(line)) return true;
       if (/app\.(get|post|put|delete)\(/.test(line)) return true;
-      if (/currentDiag|diagnoses:|\.diagnoses/.test(line)) return true;
+      if (/currentDiag|diagnoses\b|\.diagnoses/.test(line)) return true;
       if (/if \(!patient|patient\.\w|patient\)/.test(line)) return true;
       if (/const patient\b|let patient\b|patient =|const patients\b|let patients\b/.test(line)) return true;
       if (/patients\.(length|filter|map|find|forEach|reduce|some|every)/.test(line)) return true;
@@ -351,6 +352,10 @@ registerHealthRoutes(app);
       if (/@deprecated/.test(line)) return true;
       if (/createPatientProtocolsFolder/.test(line)) return true;
       if (/res\.redirect\(30[17]/.test(line)) return true;
+      if (/protocol\.patientName|protocol\.patientAge/.test(line)) return true;
+      if (/getPatientResources|PatientProfile|PatientInfo|profileFromIntakeForm/.test(line)) return true;
+      if (/sanitize(PmaLanguage|TextInput)|addSanitizedSlide/.test(line)) return true;
+      if (/generatedProtocols\.patient/.test(line)) return true;
       if (/totalMembers:\s*patients|activeMembers:\s*patients/.test(line)) return true;
       if (/profit model|cured nothing|poison to cure|not a cure/.test(line)) return true;
       if (/YOU ARE NOT YOUR/.test(line)) return true;

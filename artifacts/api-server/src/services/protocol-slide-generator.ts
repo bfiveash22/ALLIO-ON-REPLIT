@@ -315,15 +315,15 @@ export async function generateAnnetteGomerSlides(): Promise<ProtocolSlideResult>
   // SLIDE 3: Medical Timeline
   // ═══════════════════════════════════════════
   buildContentSlide(
-    'MEDICAL TIMELINE',
+    'HEALTH TIMELINE',
     [
       '1950s-1970s: 7-9 Silver Amalgam fillings placed — chronic mercury exposure begins',
       '1967: Appendix removed → Microbiome dysregulation begins',
       '1995: Divorce → 5 years chronic stress → HPA axis dysregulation, immune suppression',
       '2002: Hysterectomy (no HRT started) → Hormone cascade disruption',
       '2007: Gallbladder removed → Fat/nutrient malabsorption',
-      '2007: Melanoma diagnosed and removed',
-      '2007: Metastatic Adenocarcinoma of Unknown Primary diagnosed (residual tumor remains)',
+      '2007: Melanoma identified and removed',
+      '2007: Metastatic Adenocarcinoma of Unknown Primary identified (residual tumor remains)',
       '2009: Omeprazole started for hiatal hernia → Blocks mineral absorption, increases infection risk',
       '2013: Bilateral knee replacements (titanium) → Potential metal sensitivity added',
       '2026: FFPMA protocol initiated — root cause approach begins',
@@ -1032,11 +1032,11 @@ export async function generateKathrynSmithSlides(): Promise<ProtocolSlideResult>
   );
 
   buildContentSlide(
-    'MEDICAL TIMELINE',
+    'HEALTH TIMELINE',
     [
       'BIRTH & EARLY CHILDHOOD:',
       '• Natural birth (not breastfed) — born San Diego, CA (father in Navy)',
-      '• Age 1: Heart murmur diagnosed → Age 14 months: Surgery to close hole in heart (successful)',
+      '• Age 1: Heart murmur identified → Age 14 months: Surgery to close hole in heart (successful)',
       '• Chickenpox (very young)',
       '',
       'CRITICAL PERIOD (Ages 6-13):',

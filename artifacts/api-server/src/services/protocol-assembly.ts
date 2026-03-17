@@ -419,8 +419,8 @@ ${detoxKnowledge}
 
 PROTOCOL STRUCTURE (output as valid JSON matching HealingProtocol):
 {
-  "patientName": string,
-  "patientAge": number,
+  "memberName": string,
+  "memberAge": number,
   "generatedDate": "YYYY-MM-DD",
   "protocolDurationDays": 90,
   "summary": "2-3 sentence protocol overview",
@@ -528,7 +528,7 @@ Return ONLY valid JSON, no markdown.`;
       callType: "protocol-generation",
       startTier: "economy",
       expectedFields: [
-        "patientName", "summary", "rootCauseAnalysis", "phases",
+        "memberName", "summary", "rootCauseAnalysis", "phases",
         "dailySchedule", "injectablePeptides", "supplements",
       ],
     });
@@ -537,15 +537,15 @@ Return ONLY valid JSON, no markdown.`;
       console.error(`[Protocol Assembly] Terminal failure: ${err.message}`);
       try {
         await db.insert(generatedProtocols).values({
-          patientName: profile.name || "Unknown",
-          patientAge: profile.age || 0,
+          memberName: profile.name || "Unknown",
+          memberAge: profile.age || 0,
           sourceType: "intake_form",
-          patientProfile: profile as unknown as Record<string, unknown>,
+          memberProfile: profile as unknown as Record<string, unknown>,
           protocol: {} as Record<string, unknown>,
           status: "ai_failed",
           generatedBy: "system",
         });
-        console.log(`[Protocol Assembly] Saved failed attempt to DB for retry (patient: ${profile.name || "Unknown"})`);
+        console.log(`[Protocol Assembly] Saved failed attempt to DB for retry (member: ${profile.name || "Unknown"})`);
       } catch (dbErr) {
         console.error("[Protocol Assembly] Could not persist terminal failure to DB:", dbErr);
       }
@@ -1394,7 +1394,7 @@ export async function saveProtocol(
       intakeFormId: profile.intakeFormId || null,
       memberId: memberId || null,
       doctorId: doctorId || null,
-      patientProfile: profile as unknown as Record<string, unknown>,
+      memberProfile: profile as unknown as Record<string, unknown>,
       protocol: protocol as unknown as Record<string, unknown>,
       status: status || "draft",
       generatedBy: generatedBy || "system",
