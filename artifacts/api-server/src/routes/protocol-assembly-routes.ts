@@ -21,6 +21,7 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
     generateDailySchedulePDFBuffer,
     generatePeptideSchedulePDFBuffer,
     runProtocolQA,
+    validateProtocolWithAgents,
   } = await import('../services/protocol-assembly');
 
   const DOCTOR_ROLE_NAMES = ['doctor', 'physician', 'ff_doctor', 'ff_healer', 'healer', 'practitioner', 'um_doctor', 'um_healer', 'um_practitioner', 'wellness_practitioner', 'healthcare_provider'];
@@ -57,6 +58,18 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       }
       const profile = await analyzeTranscript(transcript);
       const protocol = await generateProtocol(profile);
+
+      let agentValidation: { valid: boolean; issues: string[]; suggestions: string[] } | null = null;
+      try {
+        agentValidation = await validateProtocolWithAgents(protocol, profile);
+        if (!agentValidation.valid) {
+          console.warn(`[Protocol Assembly] Agent QA flagged ${agentValidation.issues.length} issues:`);
+          agentValidation.issues.forEach(issue => console.warn(`  - ${issue}`));
+        }
+      } catch (qaErr) {
+        console.warn('[Protocol Assembly] Agent QA validation failed (non-fatal):', qaErr);
+      }
+
       const creatorId = getUserId(req);
       const creatorDoctorId = isDoctorOnly(req) ? creatorId : undefined;
       const protocolId = await saveProtocol(profile, protocol, 'transcript', (req.user as { username?: string })?.username, memberId as string | undefined, creatorDoctorId);
@@ -65,11 +78,11 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
         try {
           slides = await generateProtocolSlides(protocol, profile);
           await updateProtocolSlides(protocolId, slides.presentationId, slides.webViewLink);
-        } catch (slideError: any) {
-          console.error('[Protocol Assembly] Slide generation failed:', slideError.message);
+        } catch (slideError) {
+          console.error('[Protocol Assembly] Slide generation failed:', (slideError as Error).message);
         }
       }
-      res.json({ id: protocolId, profile, protocol, slides });
+      res.json({ id: protocolId, profile, protocol, slides, agentValidation });
     } catch (error: any) {
       console.error('[Protocol Assembly] Generate error:', error);
       res.status(500).json({ error: 'Failed to generate protocol. Please try again.' });
@@ -94,6 +107,18 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       const profile = await profileFromIntakeForm(formData, patientInfo);
       profile.intakeFormId = intakeId;
       const protocol = await generateProtocol(profile);
+
+      let agentValidation: { valid: boolean; issues: string[]; suggestions: string[] } | null = null;
+      try {
+        agentValidation = await validateProtocolWithAgents(protocol, profile);
+        if (!agentValidation.valid) {
+          console.warn(`[Protocol Assembly] Agent QA flagged ${agentValidation.issues.length} issues:`);
+          agentValidation.issues.forEach(issue => console.warn(`  - ${issue}`));
+        }
+      } catch (qaErr) {
+        console.warn('[Protocol Assembly] Agent QA validation failed (non-fatal):', qaErr);
+      }
+
       const creatorId2 = getUserId(req);
       const creatorDoctorId2 = isDoctorOnly(req) ? creatorId2 : undefined;
       const protocolId = await saveProtocol(profile, protocol, 'intake_form', (req.user as { username?: string })?.username, req.body?.memberId as string | undefined, creatorDoctorId2);
@@ -103,11 +128,11 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
         try {
           slides = await generateProtocolSlides(protocol, profile);
           await updateProtocolSlides(protocolId, slides.presentationId, slides.webViewLink);
-        } catch (slideError: any) {
-          console.error('[Protocol Assembly] Slide generation failed:', slideError.message);
+        } catch (slideError) {
+          console.error('[Protocol Assembly] Slide generation failed:', (slideError as Error).message);
         }
       }
-      res.json({ id: protocolId, profile, protocol, slides });
+      res.json({ id: protocolId, profile, protocol, slides, agentValidation });
     } catch (error: any) {
       console.error('[Protocol Assembly] Generate from intake error:', error);
       res.status(500).json({ error: 'Failed to generate protocol from intake. Please try again.' });

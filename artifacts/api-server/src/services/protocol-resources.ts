@@ -319,18 +319,6 @@ const STANDARD_DRIVE_RESOURCES: DriveResource[] = [
     description: "Master daily routine template — Gallbladder/Liver Cleanse instructions and Detox Bath protocol included",
     type: "document",
   },
-  {
-    title: "FF Detox Bath Protocol",
-    url: "https://docs.google.com/document/d/1K_36WNxm-dAwDHKqz8juGMHJHzRRzBp2OSwiMA1Wx-Q/edit?usp=sharing",
-    description: "Baking soda, bentonite clay, epsom salt, lavender — complete detox bath instructions (included in Daily Schedule document above)",
-    type: "guide",
-  },
-  {
-    title: "Liver & Gallbladder Cleanse Guide",
-    url: "https://docs.google.com/document/d/1K_36WNxm-dAwDHKqz8juGMHJHzRRzBp2OSwiMA1Wx-Q/edit?usp=sharing",
-    description: "Step-by-step liver flush protocol with olive oil and grapefruit (included in Daily Schedule document above)",
-    type: "guide",
-  },
 ];
 
 const STANDARD_YOUTUBE_RESOURCES: YouTubeResource[] = [
