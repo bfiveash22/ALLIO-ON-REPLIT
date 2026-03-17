@@ -376,6 +376,7 @@ function buildSearchText(protocol: HealingProtocol, profile: PatientProfile): st
 }
 
 export function getPatientResources(protocol: HealingProtocol, profile: PatientProfile): PatientResources {
+  console.log(`[Resources] Building resource bundle for ${protocol.patientName}`);
   const allText = buildSearchText(protocol, profile);
 
   const isCancer = matchesCondition(allText, CANCER_KEYWORDS);

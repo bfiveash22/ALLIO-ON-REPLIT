@@ -37,6 +37,7 @@ export async function generateProtocolPPTX(
   protocol: HealingProtocol,
   profile: PatientProfile
 ): Promise<Buffer> {
+  console.log(`[PPTX] Generating presentation for ${protocol.patientName}`);
   const pres = new PptxCtor() as PptxPresentation;
   pres.layout = "LAYOUT_16x9";
   pres.author = "Forgotten Formula PMA — DR. FORMULA";
@@ -118,6 +119,8 @@ export async function generateProtocolPPTX(
   slideDriveLinks(pres, resources);
   slideCommitment(pres);
 
+  const slideCount = (pres as unknown as { slides: unknown[] }).slides?.length || 0;
+  console.log(`[PPTX] Generated ${slideCount} slides for ${protocol.patientName} — modalities: ECS=${!!protocol.ecsProtocol}, sirtuin=${!!protocol.sirtuinStack}, liposomals=${protocol.liposomals?.length || 0}, nebulization=${protocol.nebulization?.length || 0}, topicals=${protocol.topicals?.length || 0}, exosomes=${protocol.exosomes?.length || 0}`);
   const data = await pres.write({ outputType: "nodebuffer" });
   return Buffer.from(data as ArrayBuffer);
 }
