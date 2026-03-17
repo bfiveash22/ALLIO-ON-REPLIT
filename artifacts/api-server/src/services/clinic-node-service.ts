@@ -1,6 +1,15 @@
 import { db } from "../db";
 import { clinicNodes, clinicNodeEvents, globalJurisdictions, nodeReplicationLogs } from "@shared/schema";
 import { eq, desc, and, lt, sql, isNull } from "drizzle-orm";
+import { randomBytes, createHash } from "crypto";
+
+function generateNodeApiKey(): string {
+  return randomBytes(32).toString("hex");
+}
+
+function hashApiKey(key: string): string {
+  return createHash("sha256").update(key).digest("hex");
+}
 
 const HEARTBEAT_TIMEOUT_MS = 5 * 60 * 1000;
 const DEGRADED_THRESHOLD_MS = 2 * 60 * 1000;
@@ -48,16 +57,20 @@ export async function registerNode(data: {
   version?: string;
   isPrimary?: boolean;
   failoverPriority?: number;
-}) {
+}): Promise<{ node: typeof clinicNodes.$inferSelect; apiKey: string }> {
+  const rawApiKey = generateNodeApiKey();
+  const hashedKey = hashApiKey(rawApiKey);
+
   const [node] = await db.insert(clinicNodes).values({
     ...data,
     status: "provisioning",
     replicationState: "stale",
+    configHash: hashedKey,
     provisionedAt: new Date(),
   }).returning();
 
   await logNodeEvent(node.id, "node_registered", "info", `Node ${data.displayName} registered in region ${data.region}`);
-  return node;
+  return { node, apiKey: rawApiKey };
 }
 
 export async function updateNodeStatus(nodeId: string, status: "online" | "degraded" | "offline" | "provisioning" | "decommissioned") {
@@ -76,7 +89,7 @@ export async function updateNodeStatus(nodeId: string, status: "online" | "degra
   return updated;
 }
 
-export async function processHeartbeat(nodeIdentifier: string, metrics: {
+export interface HeartbeatMetrics {
   cpuUsage?: number;
   memoryUsage?: number;
   diskUsage?: number;
@@ -84,8 +97,9 @@ export async function processHeartbeat(nodeIdentifier: string, metrics: {
   memberCount?: number;
   version?: string;
   replicationLag?: number;
-  configHash?: string;
-}) {
+}
+
+export async function processHeartbeat(nodeIdentifier: string, metrics: HeartbeatMetrics) {
   const node = await getNodeByIdentifier(nodeIdentifier);
   if (!node) return null;
 
@@ -118,7 +132,6 @@ export async function processHeartbeat(nodeIdentifier: string, metrics: {
     version: metrics.version,
     replicationLag: metrics.replicationLag,
     replicationState,
-    configHash: metrics.configHash,
     updatedAt: now,
   }).where(eq(clinicNodes.id, node.id)).returning();
 
@@ -257,7 +270,7 @@ export async function logNodeEvent(
   eventType: string,
   severity: string,
   message: string,
-  details?: Record<string, any>
+  details?: Record<string, string | number | boolean | null>
 ) {
   return db.insert(clinicNodeEvents).values({
     nodeId,
@@ -321,7 +334,8 @@ export async function logReplication(data: {
 }
 
 export async function seedJurisdictions() {
-  const jurisdictions = [
+  type JurisdictionSeed = Omit<typeof globalJurisdictions.$inferInsert, "id" | "createdAt" | "updatedAt">;
+  const jurisdictions: JurisdictionSeed[] = [
     {
       countryCode: "US",
       countryName: "United States of America",
@@ -639,15 +653,15 @@ export async function seedJurisdictions() {
   ];
 
   for (const j of jurisdictions) {
-    await upsertJurisdiction(j as any);
+    await upsertJurisdiction(j);
   }
 
   return jurisdictions.length;
 }
 
-export async function seedPrimaryNode() {
+export async function seedPrimaryNode(): Promise<{ node: typeof clinicNodes.$inferSelect; apiKey: string | null }> {
   const existing = await getNodeByIdentifier("ffpma-central-us-east");
-  if (existing) return existing;
+  if (existing) return { node: existing, apiKey: null };
 
   return registerNode({
     nodeIdentifier: "ffpma-central-us-east",

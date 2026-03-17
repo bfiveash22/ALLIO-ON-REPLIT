@@ -89,7 +89,7 @@ interface NodeEvent {
   eventType: string;
   severity: string;
   message: string;
-  details: any;
+  details: Record<string, string | number | boolean | null> | null;
   acknowledgedAt: string | null;
   createdAt: string;
 }
@@ -188,18 +188,19 @@ export default function AdminClinicNodesPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/jurisdictions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/clinic-nodes/health-summary"] });
     },
-    onError: (e: any) => toast({ title: "Seed failed", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Seed failed", description: e.message, variant: "destructive" }),
   });
 
   const registerMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("POST", "/api/clinic-nodes/register", data),
+    mutationFn: (data: { nodeIdentifier: string; displayName: string; region: string; endpoint: string }) =>
+      apiRequest("POST", "/api/clinic-nodes/register", data),
     onSuccess: () => {
       toast({ title: "Node registered", description: "New clinic node provisioned successfully" });
       setShowRegisterDialog(false);
       setRegisterForm({ nodeIdentifier: "", displayName: "", region: "", endpoint: "" });
       queryClient.invalidateQueries({ queryKey: ["/api/clinic-nodes"] });
     },
-    onError: (e: any) => toast({ title: "Registration failed", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Registration failed", description: e.message, variant: "destructive" }),
   });
 
   const failoverMutation = useMutation({
