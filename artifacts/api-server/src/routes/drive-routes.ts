@@ -400,15 +400,22 @@ export function registerDriveRoutes(app: Express): void {
       }
 
       const actions: string[] = [];
-      const contents = await listFolderContents(allioFolder.id);
-      const topLevelFolders = contents.filter((f: any) => f.mimeType === "application/vnd.google-apps.folder");
+      let contents = await listFolderContents(allioFolder.id);
+      let topLevelFolders = contents.filter((f: any) => f.mimeType === "application/vnd.google-apps.folder");
 
       const requiredFolders = ["Legal Compliance", "Member Contracts", "Member Content", "Protocols"];
+      let createdRoots = false;
       for (const required of requiredFolders) {
         if (!topLevelFolders.some((f: any) => f.name === required)) {
           await createSub(allioFolder.id, required);
           actions.push(`Created missing folder: ${required}`);
+          createdRoots = true;
         }
+      }
+
+      if (createdRoots) {
+        contents = await listFolderContents(allioFolder.id);
+        topLevelFolders = contents.filter((f: any) => f.mimeType === "application/vnd.google-apps.folder");
       }
 
       const legalComplianceFolder = topLevelFolders.find((f: any) => f.name === "Legal Compliance");
