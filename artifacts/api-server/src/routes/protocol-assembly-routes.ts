@@ -849,4 +849,91 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       res.status(500).json({ error: 'Failed to upload protocol to Drive' });
     }
   });
+
+  app.post('/api/protocol-assembly/batch-generate', async (req: Request, res: Response) => {
+    const internalKey = req.headers['x-internal-key'] || req.body?.internalKey;
+    if (internalKey !== process.env.CORE_API_KEY) {
+      return res.status(401).json({ error: 'Unauthorized — admin key required' });
+    }
+    try {
+      const { member } = req.body as { member?: string };
+      const {
+        buildAnnetteGomerProfile,
+        buildCropDusterProfile,
+        buildBreastCancer75FProfile,
+      } = await import('../services/backlog-member-protocols');
+      const { generateProtocolPPTX } = await import('../services/protocol-pptx');
+
+      type MemberDef = { name: string; buildProfile: () => PatientProfile; filePrefix: string };
+      const allMembers: MemberDef[] = [
+        { name: 'Annette Gomer', buildProfile: buildAnnetteGomerProfile, filePrefix: 'Annette_Gomer' },
+        { name: 'John D.', buildProfile: buildCropDusterProfile, filePrefix: 'Crop_Duster_80M' },
+        { name: 'Margaret R.', buildProfile: buildBreastCancer75FProfile, filePrefix: 'Breast_Cancer_75F' },
+      ];
+
+      const targets = member
+        ? allMembers.filter(m => m.name.toLowerCase().includes(member.toLowerCase()) || m.filePrefix.toLowerCase().includes(member.toLowerCase()))
+        : allMembers;
+
+      if (targets.length === 0) {
+        return res.status(400).json({ error: `No member found matching "${member}"` });
+      }
+
+      res.json({ status: 'started', members: targets.map(t => t.name), count: targets.length });
+
+      (async () => {
+        for (const t of targets) {
+          try {
+            console.log(`[Batch Generate] Starting: ${t.name}`);
+            const profile = t.buildProfile();
+            console.log(`[Batch Generate] Profile built: ${profile.name}, ${profile.age}`);
+
+            const protocol = await generateProtocol(profile);
+            console.log(`[Batch Generate] Protocol generated for ${t.name}: ${protocol.injectablePeptides?.length || 0} injectables, ${protocol.supplements?.length || 0} supplements`);
+
+            const dbResult = await db.insert(generatedProtocols).values({
+              patientName: profile.name,
+              patientAge: profile.age,
+              sourceType: 'batch_generate',
+              doctorId: 'trustee-michael-blake',
+              status: 'approved',
+              patientProfile: profile as unknown as Record<string, unknown>,
+              protocol: protocol as unknown as Record<string, unknown>,
+              generatedBy: 'batch-generate',
+              notes: `Batch generated: ${protocol.injectablePeptides?.length || 0} injectables, ${protocol.supplements?.length || 0} supplements, ${protocol.bioregulators?.length || 0} bioregulators`,
+            }).returning({ id: generatedProtocols.id });
+            console.log(`[Batch Generate] Stored ${t.name} as DB id=${dbResult[0].id}`);
+
+            const fs = await import('fs');
+            const path = await import('path');
+            const outDir = path.resolve(process.cwd(), 'generated-protocols');
+            if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+
+            const [fullPdf, dailyPdf, peptidePdf] = await Promise.all([
+              generateProtocolPDFBuffer(protocol, profile),
+              generateDailySchedulePDFBuffer(protocol, profile),
+              generatePeptideSchedulePDFBuffer(protocol, profile),
+            ]);
+
+            fs.writeFileSync(path.join(outDir, `${t.filePrefix}_Full_Protocol.pdf`), fullPdf);
+            fs.writeFileSync(path.join(outDir, `${t.filePrefix}_Daily_Schedule.pdf`), dailyPdf);
+            fs.writeFileSync(path.join(outDir, `${t.filePrefix}_Peptide_Schedule.pdf`), peptidePdf);
+            console.log(`[Batch Generate] 3 PDFs written for ${t.name}`);
+
+            const pptxBuf = await generateProtocolPPTX(protocol, profile);
+            fs.writeFileSync(path.join(outDir, `${t.filePrefix}_Protocol_Presentation.pptx`), pptxBuf);
+            console.log(`[Batch Generate] PPTX written for ${t.name} (${(pptxBuf.length / 1024).toFixed(0)} KB)`);
+
+            console.log(`[Batch Generate] COMPLETE: ${t.name} — 4 deliverables generated`);
+          } catch (err: any) {
+            console.error(`[Batch Generate] FAILED: ${t.name} — ${err.message}`);
+          }
+        }
+        console.log(`[Batch Generate] All batch generation complete`);
+      })();
+    } catch (error: unknown) {
+      console.error('[Batch Generate] Setup error:', error);
+      res.status(500).json({ error: 'Failed to start batch generation' });
+    }
+  });
 }

@@ -9,20 +9,20 @@ import type {
 import { getPatientResources } from "./protocol-resources";
 import { sanitizePmaLanguage } from "@shared/pma-language";
 
-const PRIMARY = "1B2A4A";
-const SECONDARY = "00B4D8";
-const ACCENT = "D4A843";
-const TEAL = "00D4AA";
-const DARK_BG = "0F1923";
-const CARD_BG = "1A2A3A";
+const PRIMARY = "1A2440";
+const SECONDARY = "C9A54E";
+const ACCENT = "C9A54E";
+const TEAL = "C8CFE0";
+const DARK_BG = "0A0E1A";
+const CARD_BG = "243055";
 const WHITE = "FFFFFF";
-const LIGHT_GRAY = "F2F4F7";
-const TEXT_DARK = "222222";
-const TEXT_MED = "666666";
+const LIGHT_GRAY = "E8EDF5";
+const TEXT_DARK = "1A2440";
+const TEXT_MED = "5A6B8A";
 const RED_ACCENT = "C62828";
 const GREEN_ACCENT = "2E7D32";
-const ORANGE_ACCENT = "EF6C00";
-const PURPLE_ACCENT = "6A1B9A";
+const ORANGE_ACCENT = "C9A54E";
+const PURPLE_ACCENT = "4A3080";
 
 function sanitizeTextInput(text: string | PptxGenJS.TextProps[]): string | PptxGenJS.TextProps[] {
   if (typeof text === 'string') return sanitizePmaLanguage(text);
@@ -49,11 +49,12 @@ function addSanitizedSlide(pres: PptxPresentation) {
 const FF_WEBSITE = "https://www.forgottenformula.com";
 const FF_SHOP = `${FF_WEBSITE}/shop`;
 
-const HEADER_FONT = "Georgia";
-const BODY_FONT = "Calibri";
+const HEADER_FONT = "Playfair Display";
+const BODY_FONT = "Source Sans 3";
 
 const REFERENCE_PPTX_DRIVE_FILE_ID = "1Tc_hVN7M6c2Q41151GXsvrH8OWAZ7hPL";
-const REFERENCE_PPTX_PROVENANCE = `Structural template derived from Trustee reference PPTX (Drive: ${REFERENCE_PPTX_DRIVE_FILE_ID}). Slide order, color palette, and section groupings match the reference document.`;
+const TRUSTEE_TEMPLATE_FILE = "Trustee_Protocol_Template_UPDATE_1773744290526.pptx";
+const REFERENCE_PPTX_PROVENANCE = `Structural template derived from Trustee reference PPTX (Drive: ${REFERENCE_PPTX_DRIVE_FILE_ID}). Color theme: Navy (#1A2440/#0A0E1A) + Gold (#C9A54E) + Lavender (#E8EDF5/#C8CFE0). Fonts: Playfair Display (headers) + Source Sans 3 (body). Based on ${TRUSTEE_TEMPLATE_FILE}.`;
 
 const REFERENCE_SLIDE_ORDER = [
   "cover",
@@ -192,8 +193,8 @@ function slideCover(pres: PptxPresentation, protocol: HealingProtocol, date: str
   const slide = addSanitizedSlide(pres);
   slide.background = { color: DARK_BG };
 
-  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: SECONDARY } });
-  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 5.565, w: 10, h: 0.06, fill: { color: SECONDARY } });
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: ACCENT } });
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 5.565, w: 10, h: 0.06, fill: { color: ACCENT } });
 
   slide.addText("FORGOTTEN FORMULA", {
     x: 0, y: 1, w: 10, h: 0.8,
@@ -201,7 +202,7 @@ function slideCover(pres: PptxPresentation, protocol: HealingProtocol, date: str
   });
   slide.addText("PRIVATE MEMBER ASSOCIATION", {
     x: 0, y: 1.7, w: 10, h: 0.5,
-    fontSize: 14, fontFace: BODY_FONT, color: SECONDARY, align: "center",
+    fontSize: 14, fontFace: BODY_FONT, color: ACCENT, align: "center",
   });
 
   slide.addShape(pres.shapes.LINE, {
@@ -215,17 +216,17 @@ function slideCover(pres: PptxPresentation, protocol: HealingProtocol, date: str
   });
   slide.addText(protocol.patientName, {
     x: 0, y: 3.4, w: 10, h: 0.5,
-    fontSize: 20, fontFace: BODY_FONT, color: SECONDARY, align: "center",
+    fontSize: 20, fontFace: BODY_FONT, color: TEAL, align: "center",
   });
   slide.addText(`Prepared by: FF Trustee Michael Blake`, {
     x: 0, y: 3.9, w: 10, h: 0.4,
-    fontSize: 11, fontFace: BODY_FONT, color: "AAAAAA", align: "center",
+    fontSize: 11, fontFace: BODY_FONT, color: "8A95B0", align: "center",
   });
 
   if (isCancer) {
     slide.addShape(pres.shapes.RECTANGLE, {
       x: 3.2, y: 4.3, w: 3.6, h: 0.35,
-      fill: { color: "331111" },
+      fill: { color: "1A0A0A" },
     });
     slide.addText("CANCER-SPECIFIC PROTOCOL", {
       x: 3.2, y: 4.3, w: 3.6, h: 0.35,
@@ -234,8 +235,8 @@ function slideCover(pres: PptxPresentation, protocol: HealingProtocol, date: str
   }
 
   slide.addText([
-    { text: '"Before you heal someone, ask him if he\'s willing to give up the things that make him sick"', options: { italic: true, color: "777777", fontSize: 9, breakLine: true } },
-    { text: "— Hippocrates", options: { color: SECONDARY, fontSize: 9 } },
+    { text: '"Before you heal someone, ask him if he\'s willing to give up the things that make him sick"', options: { italic: true, color: "8A95B0", fontSize: 9, breakLine: true } },
+    { text: "— Hippocrates", options: { color: ACCENT, fontSize: 9 } },
   ], { x: 1.5, y: 4.8, w: 7, h: 0.6, align: "center", fontFace: BODY_FONT });
 }
 
@@ -441,7 +442,7 @@ function slideRootCauses(pres: PptxPresentation, protocol: HealingProtocol) {
 
   causes.forEach((rc, idx) => {
     const y = startY + idx * (cardHeight + 0.1);
-    const colors = [RED_ACCENT, ORANGE_ACCENT, "F9A825", GREEN_ACCENT, "1565C0"];
+    const colors = [RED_ACCENT, SECONDARY, "C8CFE0", GREEN_ACCENT, "243055"];
 
     slide.addShape(pres.shapes.RECTANGLE, {
       x: 0.5, y, w: 9, h: cardHeight,
@@ -476,7 +477,7 @@ function slide5Rs(pres: PptxPresentation, protocol: HealingProtocol) {
     fontSize: 28, fontFace: HEADER_FONT, color: WHITE, bold: true, margin: 0,
   });
 
-  const phaseColors = [RED_ACCENT, ORANGE_ACCENT, "F9A825", GREEN_ACCENT, "1565C0"];
+  const phaseColors = [RED_ACCENT, SECONDARY, "C8CFE0", GREEN_ACCENT, "243055"];
   const phases = protocol.phases?.slice(0, 5) || [];
 
   phases.forEach((phase, idx) => {
@@ -518,10 +519,10 @@ function slideDailySchedule(pres: PptxPresentation, protocol: HealingProtocol) {
   if (!protocol.dailySchedule) return;
 
   const periods = [
-    { key: "morning" as const, label: "MORNING", color: "FF8F00" },
-    { key: "midday" as const, label: "MIDDAY", color: "0097A7" },
-    { key: "evening" as const, label: "EVENING", color: "5C6BC0" },
-    { key: "bedtime" as const, label: "BEDTIME", color: "37474F" },
+    { key: "morning" as const, label: "MORNING", color: "C9A54E" },
+    { key: "midday" as const, label: "MIDDAY", color: "243055" },
+    { key: "evening" as const, label: "EVENING", color: "1A2440" },
+    { key: "bedtime" as const, label: "BEDTIME", color: "0A0E1A" },
   ];
 
   const colW = 2.15;
@@ -604,36 +605,36 @@ function slideInjectablePeptides(pres: PptxPresentation, protocol: HealingProtoc
 
   slide.addText("Therapeutics: Injectable Peptide Protocol", {
     x: 0.5, y: 0.3, w: 9, h: 0.6,
-    fontSize: 24, fontFace: HEADER_FONT, color: TEAL, bold: true, margin: 0,
+    fontSize: 24, fontFace: HEADER_FONT, color: ACCENT, bold: true, margin: 0,
   });
 
   const peptides = protocol.injectablePeptides || [];
 
   const headerRow = [
-    { text: "Peptide", options: { bold: true, color: WHITE, fontSize: 9, fill: { color: PRIMARY } } },
-    { text: "Vial/Recon", options: { bold: true, color: WHITE, fontSize: 9, fill: { color: PRIMARY } } },
-    { text: "Dose", options: { bold: true, color: WHITE, fontSize: 9, fill: { color: PRIMARY } } },
-    { text: "Frequency", options: { bold: true, color: WHITE, fontSize: 9, fill: { color: PRIMARY } } },
-    { text: "Duration", options: { bold: true, color: WHITE, fontSize: 9, fill: { color: PRIMARY } } },
-    { text: "Purpose", options: { bold: true, color: WHITE, fontSize: 9, fill: { color: PRIMARY } } },
+    { text: "Peptide", options: { bold: true, color: DARK_BG, fontSize: 9, fill: { color: ACCENT } } },
+    { text: "Vial/Recon", options: { bold: true, color: DARK_BG, fontSize: 9, fill: { color: ACCENT } } },
+    { text: "Dose", options: { bold: true, color: DARK_BG, fontSize: 9, fill: { color: ACCENT } } },
+    { text: "Frequency", options: { bold: true, color: DARK_BG, fontSize: 9, fill: { color: ACCENT } } },
+    { text: "Duration", options: { bold: true, color: DARK_BG, fontSize: 9, fill: { color: ACCENT } } },
+    { text: "Purpose", options: { bold: true, color: DARK_BG, fontSize: 9, fill: { color: ACCENT } } },
   ];
 
   const tableRows: PptxGenJS.TableCell[][] = [headerRow];
   peptides.forEach(p => {
     tableRows.push([
-      { text: p.name, options: { fontSize: 8, color: TEAL, bold: true } },
-      { text: `${p.vialSize}\n${p.reconstitution}`, options: { fontSize: 7, color: WHITE } },
-      { text: p.dose, options: { fontSize: 8, color: WHITE } },
-      { text: p.frequency, options: { fontSize: 8, color: WHITE } },
-      { text: p.duration, options: { fontSize: 8, color: WHITE } },
-      { text: p.purpose, options: { fontSize: 7, color: "AAAAAA" } },
+      { text: p.name, options: { fontSize: 8, color: ACCENT, bold: true } },
+      { text: `${p.vialSize}\n${p.reconstitution}`, options: { fontSize: 7, color: TEAL } },
+      { text: p.dose, options: { fontSize: 8, color: TEAL } },
+      { text: p.frequency, options: { fontSize: 8, color: TEAL } },
+      { text: p.duration, options: { fontSize: 8, color: TEAL } },
+      { text: p.purpose, options: { fontSize: 7, color: "8A95B0" } },
     ]);
   });
 
   slide.addTable(tableRows, {
     x: 0.3, y: 1.0, w: 9.4,
     colW: [1.5, 1.8, 1.2, 1.2, 1.0, 2.7],
-    border: { pt: 0.5, color: "333333" },
+    border: { pt: 0.5, color: "1A2440" },
     fill: { color: CARD_BG },
     autoPage: false,
   });
@@ -645,7 +646,7 @@ function slideOralPeptides(pres: PptxPresentation, protocol: HealingProtocol) {
 
   slide.addText("Therapeutics: Oral Peptides", {
     x: 0.5, y: 0.3, w: 9, h: 0.6,
-    fontSize: 24, fontFace: HEADER_FONT, color: GREEN_ACCENT, bold: true, margin: 0,
+    fontSize: 24, fontFace: HEADER_FONT, color: PRIMARY, bold: true, margin: 0,
   });
 
   const peptides = protocol.oralPeptides || [];
@@ -673,7 +674,7 @@ function slideBioregulators(pres: PptxPresentation, protocol: HealingProtocol) {
 
   slide.addText("Therapeutics: Forgotten Formula Oral Bioregulators", {
     x: 0.5, y: 0.3, w: 9, h: 0.6,
-    fontSize: 22, fontFace: HEADER_FONT, color: PURPLE_ACCENT, bold: true, margin: 0,
+    fontSize: 22, fontFace: HEADER_FONT, color: PRIMARY, bold: true, margin: 0,
   });
 
   slide.addShape(pres.shapes.RECTANGLE, {
@@ -688,7 +689,7 @@ function slideBioregulators(pres: PptxPresentation, protocol: HealingProtocol) {
 
   const bios = protocol.bioregulators || [];
   const items = bios.slice(0, 10).map((b, i) => ([
-    { text: `${b.name}`, options: { bold: true, color: PURPLE_ACCENT, fontSize: 12, breakLine: false } },
+    { text: `${b.name}`, options: { bold: true, color: SECONDARY, fontSize: 12, breakLine: false } },
     { text: ` — Target: ${b.targetOrgan} | ${b.dose} | ${b.frequency} | ${b.duration}`, options: { color: TEXT_DARK, fontSize: 10, breakLine: i < bios.length - 1 } },
   ])).flat();
 
@@ -815,7 +816,7 @@ function slideIVIM(pres: PptxPresentation, protocol: HealingProtocol) {
 
   slide.addText("Therapeutics: IV & IM Therapy Schedule", {
     x: 0.5, y: 0.3, w: 9, h: 0.6,
-    fontSize: 24, fontFace: HEADER_FONT, color: "00838F", bold: true, margin: 0,
+    fontSize: 24, fontFace: HEADER_FONT, color: PRIMARY, bold: true, margin: 0,
   });
 
   let y = 1.0;
@@ -823,7 +824,7 @@ function slideIVIM(pres: PptxPresentation, protocol: HealingProtocol) {
   if (protocol.ivTherapies?.length) {
     slide.addText("IV Therapies:", {
       x: 0.5, y, w: 9, h: 0.3,
-      fontSize: 13, fontFace: BODY_FONT, color: "00838F", bold: true,
+      fontSize: 13, fontFace: BODY_FONT, color: SECONDARY, bold: true,
     });
     y += 0.35;
 
@@ -844,7 +845,7 @@ function slideIVIM(pres: PptxPresentation, protocol: HealingProtocol) {
     y += 0.2;
     slide.addText("IM Therapies:", {
       x: 0.5, y, w: 9, h: 0.3,
-      fontSize: 13, fontFace: BODY_FONT, color: "4527A0", bold: true,
+      fontSize: 13, fontFace: BODY_FONT, color: SECONDARY, bold: true,
     });
     y += 0.35;
 
@@ -895,7 +896,7 @@ function slideParasite(pres: PptxPresentation, protocol: HealingProtocol) {
 
   slide.addText("Parasite & Antiviral Protocols", {
     x: 0.5, y: 0.3, w: 9, h: 0.6,
-    fontSize: 24, fontFace: HEADER_FONT, color: "880E4F", bold: true, margin: 0,
+    fontSize: 24, fontFace: HEADER_FONT, color: PRIMARY, bold: true, margin: 0,
   });
 
   slide.addShape(pres.shapes.RECTANGLE, {
@@ -905,7 +906,7 @@ function slideParasite(pres: PptxPresentation, protocol: HealingProtocol) {
 
   const prots = protocol.parasiteAntiviralProtocols || [];
   const items = prots.slice(0, 8).map((p, i) => ([
-    { text: p.name, options: { bold: true, color: "880E4F", fontSize: 12, breakLine: false } },
+    { text: p.name, options: { bold: true, color: SECONDARY, fontSize: 12, breakLine: false } },
     { text: ` — ${p.dose} | ${p.schedule} for ${p.duration}`, options: { color: TEXT_DARK, fontSize: 10, breakLine: false } },
     { text: `\n   Purpose: ${p.purpose}`, options: { color: TEXT_MED, fontSize: 9, breakLine: i < prots.length - 1 } },
   ])).flat();
@@ -1149,7 +1150,7 @@ function slideCommitment(pres: PptxPresentation) {
     { text: "I will do everything in my power and knowledge to focus on the root of all problems. Most doctors focus only on the symptoms, not the underlying cause of the disease or issue. We will not give up on you, but you need to work with us on every step of this protocol.", options: { breakLine: true, fontSize: 11, color: WHITE } },
     { text: "\nDon't lose hope and don't give up! There is no single pill or capsule that will fix this. Only a commitment to follow the steps laid herein — if you choose to do so, the ECS, the gut, and your body will take care of itself. Homeostasis is about balance in the body.", options: { breakLine: true, fontSize: 11, color: WHITE } },
     { text: "\nWe have provided the educational tools and research to help guide you through your journey. Please utilize these resources. These are extremely specific formulations that only a handful of folks know how to do — it's my lifelong work.", options: { breakLine: true, fontSize: 11, color: WHITE } },
-    { text: "\nHope is coming and a solution is in route. There is no doubt in my mind about the efficacy of our formulations and our 5 steps to health and wellness.", options: { breakLine: true, fontSize: 12, color: SECONDARY, italic: true } },
+    { text: "\nHope is coming and a solution is in route. There is no doubt in my mind about the efficacy of our formulations and our 5 steps to health and wellness.", options: { breakLine: true, fontSize: 12, color: ACCENT, italic: true } },
     { text: "\nThank you for giving us this opportunity. We are looking forward to healing you.", options: { breakLine: true, fontSize: 11, color: WHITE } },
   ], {
     x: 0.7, y: 1.0, w: 8.6, h: 3.2,
@@ -1162,25 +1163,25 @@ function slideCommitment(pres: PptxPresentation) {
   });
   slide.addText("FF Founder and Medical Trustee", {
     x: 0, y: 4.8, w: 10, h: 0.3,
-    fontSize: 12, fontFace: BODY_FONT, color: SECONDARY, align: "center",
+    fontSize: 12, fontFace: BODY_FONT, color: ACCENT, align: "center",
   });
 
   slide.addText('"Before you heal someone, ask him if he\'s willing to give up the things that make him sick"', {
     x: 1, y: 5.1, w: 8, h: 0.4,
-    fontSize: 9, fontFace: BODY_FONT, color: "777777", align: "center", italic: true,
+    fontSize: 9, fontFace: BODY_FONT, color: "8A95B0", align: "center", italic: true,
   });
 }
 
 function slideECS(pres: PptxPresentation, protocol: HealingProtocol) {
   const sectionSlide = addSanitizedSlide(pres);
-  sectionSlide.background = { color: "0B3D2E" };
+  sectionSlide.background = { color: DARK_BG };
   sectionSlide.addText("ECS PROTOCOL", {
     x: 0, y: 1.8, w: 10, h: 0.8,
     fontSize: 36, fontFace: HEADER_FONT, color: WHITE, align: "center", bold: true,
   });
   sectionSlide.addText("Endocannabinoid System Optimization — Suppositories, Tinctures & Targeted Ratios", {
     x: 1, y: 2.6, w: 8, h: 0.6,
-    fontSize: 14, fontFace: BODY_FONT, color: TEAL, align: "center",
+    fontSize: 14, fontFace: BODY_FONT, color: ACCENT, align: "center",
   });
 
   const slide = addSanitizedSlide(pres);
@@ -1278,14 +1279,14 @@ function slideSuppositories(pres: PptxPresentation, protocol: HealingProtocol) {
 
 function slideSirtuinMito(pres: PptxPresentation, protocol: HealingProtocol) {
   const sectionSlide = addSanitizedSlide(pres);
-  sectionSlide.background = { color: "1A0A3E" };
+  sectionSlide.background = { color: DARK_BG };
   sectionSlide.addText("MITOCHONDRIAL & SIRTUIN SUPPORT", {
     x: 0, y: 1.8, w: 10, h: 0.8,
     fontSize: 32, fontFace: HEADER_FONT, color: WHITE, align: "center", bold: true,
   });
   sectionSlide.addText("NAD+, GlyNAC, MitoSTAC Complex, Methylation, Cellular Energy Restoration", {
     x: 1, y: 2.6, w: 8, h: 0.6,
-    fontSize: 14, fontFace: BODY_FONT, color: "B39DDB", align: "center",
+    fontSize: 14, fontFace: BODY_FONT, color: ACCENT, align: "center",
   });
 
   const slide = addSanitizedSlide(pres);

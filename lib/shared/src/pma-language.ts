@@ -41,6 +41,7 @@ export const PMA_PDF_FOOTER =
   "Forgotten Formula PMA — Private Member Association | Wellness guidance for PMA members only.";
 
 export function sanitizePmaLanguage(text: string): string {
+  if (typeof text !== 'string') return String(text ?? '');
   return text
     .replace(/\bpatients\b/gi, (match) => {
       if (match === "patients") return "members";
