@@ -29,6 +29,9 @@ const FF_SHOP = `${FF_WEBSITE}/shop`;
 const HEADER_FONT = "Georgia";
 const BODY_FONT = "Calibri";
 
+const REFERENCE_PPTX_DRIVE_FILE_ID = "1Tc_hVN7M6c2Q41151GXsvrH8OWAZ7hPL";
+const REFERENCE_PPTX_PROVENANCE = `Structural template derived from Trustee reference PPTX (Drive: ${REFERENCE_PPTX_DRIVE_FILE_ID}). Slide order, color palette, and section groupings match the reference document.`;
+
 const REFERENCE_SLIDE_ORDER = [
   "cover",
   "summary",
@@ -72,10 +75,12 @@ export async function generateProtocolPPTX(
   profile: PatientProfile
 ): Promise<Buffer> {
   console.log(`[PPTX] Generating presentation for ${protocol.patientName} (${REFERENCE_SLIDE_ORDER.length} slide types in reference order)`);
+  console.log(`[PPTX] Provenance: ${REFERENCE_PPTX_PROVENANCE}`);
   const pres = new PptxCtor() as PptxPresentation;
   pres.layout = "LAYOUT_16x9";
   pres.author = "Forgotten Formula PMA — DR. FORMULA";
   pres.title = `${protocol.patientName} — Member Protocol 2026`;
+  pres.subject = REFERENCE_PPTX_PROVENANCE;
 
   const resources = getPatientResources(protocol, profile);
   const dateStr = protocol.generatedDate || new Date().toISOString().split("T")[0];

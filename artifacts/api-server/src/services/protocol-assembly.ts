@@ -795,7 +795,25 @@ function runDeterministicQAChecks(
     issues.push("Missing detox baths (clay/bentonite/Epsom) in detox protocols — required for heavy metal binding");
   }
   if (!protocol.topicals?.length) {
-    suggestions.push("Consider topicals (DMSO cream, Kaneh Bosem) for localized treatment");
+    issues.push("Missing topical protocols — at minimum DMSO cream or Kaneh Bosem required for every member");
+  }
+  if (!protocol.exosomes?.length) {
+    issues.push("Missing exosome therapy — required modality for regenerative protocol");
+  }
+
+  const allDiagnoses: string[] = [...(profile.currentDiagnoses || []), ...(profile.chiefComplaints || [])];
+  const hasJoint = allDiagnoses.some(d => /joint|arthrit|musculoskeletal|knee|shoulder|back pain/i.test(d));
+  const hasSkin = allDiagnoses.some(d => /skin|dermat|eczema|psoriasis|wound|scar/i.test(d));
+  const hasNeuro = allDiagnoses.some(d => /neuro|brain|cognitive|tbi|concussion|alzheimer|parkinson/i.test(d));
+
+  if (hasJoint && !protocol.topicals?.some(t => t.purpose?.toLowerCase().includes("joint") || t.purpose?.toLowerCase().includes("pain"))) {
+    issues.push("Joint/musculoskeletal condition present — topicals must include joint-targeted application");
+  }
+  if (hasSkin && !protocol.topicals?.some(t => t.purpose?.toLowerCase().includes("skin") || t.purpose?.toLowerCase().includes("dermat"))) {
+    issues.push("Skin condition present — topicals must include dermatological application");
+  }
+  if (hasNeuro && !protocol.exosomes?.some(e => e.route?.toLowerCase().includes("intranasal") || e.route?.toLowerCase().includes("iv"))) {
+    issues.push("Neurological condition present — exosomes must include intranasal or IV route for CNS targeting");
   }
 
   for (const pep of protocol.injectablePeptides || []) {
@@ -814,12 +832,20 @@ function runDeterministicQAChecks(
     ...(protocol.nebulization || []).map(n => n.name),
   ];
 
+  function normalizeName(name: string): string {
+    return name.toLowerCase().replace(/[^a-z0-9]/g, "");
+  }
+  const catalogNormalized = CATALOG_PRODUCTS.map(normalizeName);
+
   let catalogMatches = 0;
   const nonCatalogItems: string[] = [];
   for (const productName of allProductNames) {
-    const lower = productName.toLowerCase();
-    const matched = CATALOG_PRODUCTS.some(cp => lower.includes(cp) || cp.includes(lower));
-    if (matched) {
+    const norm = normalizeName(productName);
+    const exactMatch = catalogNormalized.includes(norm);
+    const canonicalMatch = !exactMatch && catalogNormalized.some(cp =>
+      (norm.length >= 4 && cp.startsWith(norm)) || (cp.length >= 4 && norm.startsWith(cp))
+    );
+    if (exactMatch || canonicalMatch) {
       catalogMatches++;
     } else {
       nonCatalogItems.push(productName);
