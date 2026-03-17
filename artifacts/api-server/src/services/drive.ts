@@ -557,6 +557,8 @@ export async function uploadFileFromPath(
     else if (ext === '.pdf') mimeType = 'application/pdf';
     else if (ext === '.doc') mimeType = 'application/msword';
     else if (ext === '.docx') mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    else if (ext === '.pptx') mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    else if (ext === '.xlsx') mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
     const fileMetadata = {
       name: actualFileName,

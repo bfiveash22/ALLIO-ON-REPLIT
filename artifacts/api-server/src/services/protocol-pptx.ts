@@ -53,41 +53,46 @@ const HEADER_FONT = "Playfair Display";
 const BODY_FONT = "Source Sans 3";
 
 const REFERENCE_PPTX_DRIVE_FILE_ID = "1Tc_hVN7M6c2Q41151GXsvrH8OWAZ7hPL";
-const TRUSTEE_TEMPLATE_FILE = "Trustee_Protocol_Template_UPDATE_1773744290526.pptx";
-const REFERENCE_PPTX_PROVENANCE = `Structural template derived from Trustee reference PPTX (Drive: ${REFERENCE_PPTX_DRIVE_FILE_ID}). Color theme: Navy (#1A2440/#0A0E1A) + Gold (#C9A54E) + Lavender (#E8EDF5/#C8CFE0). Fonts: Playfair Display (headers) + Source Sans 3 (body). Based on ${TRUSTEE_TEMPLATE_FILE}.`;
+const TRUSTEE_TEMPLATE_FILE = "FFPMA_Trustee_Final_Protocol_Template_1773746354505.pptx";
+const REFERENCE_PPTX_PROVENANCE = `Structural template derived from Trustee FINAL reference PPTX (Drive: ${REFERENCE_PPTX_DRIVE_FILE_ID}). Color theme: Navy (#1A2440/#0A0E1A) + Gold (#C9A54E) + Lavender (#E8EDF5/#C8CFE0). Fonts: Playfair Display (headers) + Source Sans 3 (body). Based on ${TRUSTEE_TEMPLATE_FILE}. 32-slide structure.`;
 
 const REFERENCE_SLIDE_ORDER = [
   "cover",
-  "summary",
+  "about-pma",
+  "protocol-overview",
+  "philosophy",
+  "5rs-phases",
+  "diagnostic-framework",
+  "program-structure",
   "member-info",
   "timeline",
   "trustee-analysis",
   "root-causes",
-  "5rs-phases",
-  "daily-schedule",
-  "products-ff",
+  "peptide-therapy-intro",
   "injectable-peptides",
   "oral-peptides",
   "bioregulators",
   "supplements",
   "supplement-timing",
   "iv-im-therapies",
+  "hbot-therapy",
   "detox-protocols",
   "parasite-antiviral",
+  "home-protocols",
+  "dietary-protocol",
   "ecs-protocol",
   "suppositories",
   "sirtuin-mito",
-  "liposomals",
-  "nebulization",
-  "topicals",
-  "exosomes",
-  "dietary-protocol",
-  "lifestyle",
+  "advanced-modalities",
+  "daily-schedule",
+  "products-ff",
   "follow-up",
-  "books",
+  "ai-research-tool",
   "research-links",
   "drive-links",
-  "commitment",
+  "books",
+  "protocol-summary",
+  "closing",
 ] as const;
 
 function makeShadow(): PptxGenJS.ShadowProps {
@@ -110,19 +115,22 @@ export async function generateProtocolPPTX(
   const dateStr = protocol.generatedDate || new Date().toISOString().split("T")[0];
 
   slideCover(pres, protocol, dateStr, resources.isCancer);
-  slideSummary(pres, protocol);
-  slideMemberInfo(pres, protocol, profile, resources);
-  slideTimeline(pres, profile);
-  slideTrusteeAnalysis(pres, protocol);
-  slideRootCauses(pres, protocol);
+  slideAboutPMA(pres);
+  slideProtocolOverview(pres, protocol);
+  slidePhilosophy(pres);
 
   if (protocol.phases?.length) {
     slide5Rs(pres, protocol);
   }
 
-  slideDailySchedule(pres, protocol);
+  slideDiagnosticFramework(pres, protocol);
+  slideProgramStructure(pres, protocol);
+  slideMemberInfo(pres, protocol, profile, resources);
+  slideTimeline(pres, profile);
+  slideTrusteeAnalysis(pres, protocol);
+  slideRootCauses(pres, protocol);
 
-  slideProductsFF(pres, protocol);
+  slidePeptideTherapyIntro(pres, protocol);
   if (protocol.injectablePeptides?.length) {
     slideInjectablePeptides(pres, protocol);
   }
@@ -139,11 +147,20 @@ export async function generateProtocolPPTX(
   if (protocol.ivTherapies?.length || protocol.imTherapies?.length) {
     slideIVIM(pres, protocol);
   }
+
+  slideHBOTTherapy(pres, protocol);
+
   if (protocol.detoxProtocols?.length) {
     slideDetox(pres, protocol);
   }
   if (protocol.parasiteAntiviralProtocols?.length) {
     slideParasite(pres, protocol);
+  }
+
+  slideHomeProtocols(pres, protocol);
+
+  if (protocol.dietaryProtocol?.phases?.length) {
+    slideDietaryProtocol(pres, protocol);
   }
   if (protocol.ecsProtocol?.overview) {
     slideECS(pres, protocol);
@@ -154,34 +171,27 @@ export async function generateProtocolPPTX(
   if (protocol.sirtuinStack?.mitoSTAC) {
     slideSirtuinMito(pres, protocol);
   }
-  if (protocol.liposomals?.length) {
-    slideLiposomals(pres, protocol);
-  }
-  if (protocol.nebulization?.length) {
-    slideNebulization(pres, protocol);
-  }
-  if (protocol.topicals?.length) {
-    slideTopicals(pres, protocol);
-  }
-  if (protocol.exosomes?.length) {
-    slideExosomes(pres, protocol);
-  }
-  if (protocol.dietaryProtocol?.phases?.length) {
-    slideDietaryProtocol(pres, protocol);
-  }
-  if (protocol.lifestyleRecommendations?.length || protocol.dietaryGuidelines?.length) {
-    slideLifestyle(pres, protocol);
-  }
+
+  slideAdvancedModalities(pres, protocol);
+
+  slideDailySchedule(pres, protocol);
+
+  slideProductsFF(pres, protocol);
+
   if (protocol.followUpPlan?.length || protocol.labsRequired?.length) {
     slideFollowUp(pres, protocol);
   }
 
+  slideAIResearchTool(pres);
+  slideResearchLinks(pres, resources);
+  slideDriveLinks(pres, resources);
+
   if (resources.books.length > 0) {
     slideBooks(pres, resources);
   }
-  slideResearchLinks(pres, resources);
-  slideDriveLinks(pres, resources);
-  slideCommitment(pres);
+
+  slideProtocolSummary(pres, protocol, profile);
+  slideClosing(pres);
 
   const slideCount = (pres as unknown as { slides: unknown[] }).slides?.length || 0;
   console.log(`[PPTX] Generated ${slideCount} slides for ${protocol.patientName} — modalities: ECS=${!!protocol.ecsProtocol}, sirtuin=${!!protocol.sirtuinStack}, liposomals=${protocol.liposomals?.length || 0}, nebulization=${protocol.nebulization?.length || 0}, topicals=${protocol.topicals?.length || 0}, exosomes=${protocol.exosomes?.length || 0}`);
@@ -238,6 +248,652 @@ function slideCover(pres: PptxPresentation, protocol: HealingProtocol, date: str
     { text: '"Before you heal someone, ask him if he\'s willing to give up the things that make him sick"', options: { italic: true, color: "8A95B0", fontSize: 9, breakLine: true } },
     { text: "— Hippocrates", options: { color: ACCENT, fontSize: 9 } },
   ], { x: 1.5, y: 4.8, w: 7, h: 0.6, align: "center", fontFace: BODY_FONT });
+}
+
+function slideAboutPMA(pres: PptxPresentation) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+
+  slide.addText("ABOUT OUR ASSOCIATION", {
+    x: 0.5, y: 0.2, w: 9, h: 0.4,
+    fontSize: 12, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("What Is Forgotten Formula PMA?", {
+    x: 0.5, y: 0.55, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 0.5, y: 1.2, w: 9, h: 1.4,
+    fill: { color: CARD_BG },
+  });
+  slide.addText("Forgotten Formula PMA is a Private Members Association operating at the constitutional level — providing medical freedom through natural therapies, peptide protocols, and regenerative modalities.\n\nThe Supreme Court has upheld the constitutional right to private association, allowing members to access modalities and therapeutic formulations outside of conventional regulation.", {
+    x: 0.7, y: 1.3, w: 8.6, h: 1.2,
+    fontSize: 10, fontFace: BODY_FONT, color: TEAL, valign: "top",
+  });
+
+  const pillars = [
+    { title: "Constitutional Protection", desc: "Operating above state-level regulation under the right to private association" },
+    { title: "In-House Manufacturing", desc: "Custom peptide compounding and bioregulator formulation" },
+    { title: "AI-Powered Research", desc: "DR. FORMULA protocol assembly backed by published PubMed research" },
+  ];
+
+  pillars.forEach((p, i) => {
+    const x = 0.5 + i * 3.1;
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x, y: 2.85, w: 2.9, h: 1.4,
+      fill: { color: CARD_BG },
+    });
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x, y: 2.85, w: 2.9, h: 0.04,
+      fill: { color: ACCENT },
+    });
+    slide.addText(p.title, {
+      x: x + 0.15, y: 3.0, w: 2.6, h: 0.3,
+      fontSize: 11, fontFace: HEADER_FONT, color: ACCENT, bold: true,
+    });
+    slide.addText(p.desc, {
+      x: x + 0.15, y: 3.35, w: 2.6, h: 0.8,
+      fontSize: 9, fontFace: BODY_FONT, color: TEAL,
+    });
+  });
+
+  slide.addText('"We hold these truths to be self-evident…" — Declaration of Independence', {
+    x: 1, y: 4.6, w: 8, h: 0.4,
+    fontSize: 9, fontFace: BODY_FONT, color: "8A95B0", align: "center", italic: true,
+  });
+}
+
+function slideProtocolOverview(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+
+  slide.addText("PROTOCOL OVERVIEW", {
+    x: 0.5, y: 0.2, w: 9, h: 0.4,
+    fontSize: 12, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("What We'll Cover", {
+    x: 0.5, y: 0.55, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  const sections = [
+    { num: "01", title: "PMA Foundation", desc: "Constitutional framework & philosophy" },
+    { num: "02", title: "Root-Cause Analysis", desc: "Diagnostic methodology" },
+    { num: "03", title: "Peptide Therapy", desc: "Injectable, oral & bioregulator protocols" },
+    { num: "04", title: "HBOT & IV Systems", desc: "Hyperbaric & infusion therapy" },
+    { num: "05", title: "Detoxification", desc: "Heavy metal, pathogen & gut protocols" },
+    { num: "06", title: "ECS Optimization", desc: "Endocannabinoid system support" },
+    { num: "07", title: "Diet & Nutrition", desc: "Phased dietary protocol" },
+    { num: "08", title: "Monitoring", desc: "Follow-up labs & milestones" },
+  ];
+
+  sections.forEach((s, i) => {
+    const row = Math.floor(i / 2);
+    const col = i % 2;
+    const x = 0.5 + col * 4.7;
+    const y = 1.2 + row * 0.95;
+
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x, y, w: 4.4, h: 0.8,
+      fill: { color: CARD_BG },
+    });
+    slide.addText(s.num, {
+      x: x + 0.1, y, w: 0.5, h: 0.8,
+      fontSize: 18, fontFace: HEADER_FONT, color: ACCENT, bold: true, valign: "middle",
+    });
+    slide.addText(s.title, {
+      x: x + 0.65, y, w: 3.5, h: 0.4,
+      fontSize: 12, fontFace: HEADER_FONT, color: WHITE, bold: true, valign: "bottom",
+    });
+    slide.addText(s.desc, {
+      x: x + 0.65, y: y + 0.4, w: 3.5, h: 0.35,
+      fontSize: 9, fontFace: BODY_FONT, color: TEAL, valign: "top",
+    });
+  });
+}
+
+function slidePhilosophy(pres: PptxPresentation) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+
+  slide.addText("PHILOSOPHY", {
+    x: 0.5, y: 0.2, w: 9, h: 0.4,
+    fontSize: 12, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("The Root-Cause Approach", {
+    x: 0.5, y: 0.55, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  slide.addText('"Illness is the summation of experience" — every symptom traces back to a disrupted foundation', {
+    x: 0.7, y: 1.15, w: 8.6, h: 0.4,
+    fontSize: 11, fontFace: BODY_FONT, color: TEAL, italic: true,
+  });
+
+  const causes = [
+    { title: "CarbonCycle", desc: "Environmental toxin accumulation disrupts cellular energy", color: ACCENT },
+    { title: "MicrobiotaShift", desc: "Gut flora dysbiosis triggers systemic immune dysfunction", color: ACCENT },
+    { title: "MitochondrialDrift", desc: "ATP production failure leads to chronic fatigue and degeneration", color: ACCENT },
+    { title: "AutoimmuneLoop", desc: "Chronic inflammation creates self-perpetuating tissue damage", color: ACCENT },
+  ];
+
+  causes.forEach((c, i) => {
+    const y = 1.7 + i * 0.85;
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x: 0.5, y, w: 9, h: 0.7,
+      fill: { color: CARD_BG },
+    });
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x: 0.5, y, w: 0.06, h: 0.7,
+      fill: { color: c.color },
+    });
+    slide.addText(c.title, {
+      x: 0.7, y, w: 2.8, h: 0.7,
+      fontSize: 12, fontFace: HEADER_FONT, color: ACCENT, bold: true, valign: "middle",
+    });
+    slide.addText(c.desc, {
+      x: 3.6, y, w: 5.7, h: 0.7,
+      fontSize: 10, fontFace: BODY_FONT, color: TEAL, valign: "middle",
+    });
+  });
+
+  slide.addText('"The body was designed to heal itself — given the proper conditions" — Hippocrates', {
+    x: 1, y: 5.0, w: 8, h: 0.4,
+    fontSize: 9, fontFace: BODY_FONT, color: "8A95B0", align: "center", italic: true,
+  });
+}
+
+function slideDiagnosticFramework(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+
+  slide.addText("DIAGNOSTIC FRAMEWORK", {
+    x: 0.5, y: 0.2, w: 9, h: 0.4,
+    fontSize: 12, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("Three Systems of Focus", {
+    x: 0.5, y: 0.55, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  const systems = [
+    {
+      title: "P53",
+      subtitle: "Tumor Suppressor Pathways",
+      desc: "The P53 gene is the body's master cancer defense. When disrupted by toxins, oxidative stress, or chronic inflammation, malignant cells escape surveillance.",
+      peptides: "Key Peptides: PNC-27, FOXO4-DRI, MENK",
+    },
+    {
+      title: "ATP",
+      subtitle: "Mitochondrial Function",
+      desc: "Mitochondria produce cellular energy. Dysfunction leads to fatigue, neurodegeneration, and metabolic collapse. Supporting ATP production is foundational.",
+      peptides: "Key Peptides: SS-31, MOTS-c, Epithalon",
+    },
+    {
+      title: "ECS",
+      subtitle: "Endocannabinoid System",
+      desc: "The ECS regulates pain, mood, immunity, and homeostasis. Deficiency drives chronic illness. Targeted cannabinoid ratios restore balance.",
+      peptides: "Key Compounds: CBD, CBG, CBN, THC, DMSO",
+    },
+  ];
+
+  systems.forEach((sys, i) => {
+    const x = 0.5 + i * 3.1;
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x, y: 1.2, w: 2.9, h: 3.6,
+      fill: { color: CARD_BG },
+    });
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x, y: 1.2, w: 2.9, h: 0.04,
+      fill: { color: ACCENT },
+    });
+    slide.addText(sys.title, {
+      x: x + 0.15, y: 1.35, w: 2.6, h: 0.5,
+      fontSize: 22, fontFace: HEADER_FONT, color: ACCENT, bold: true,
+    });
+    slide.addText(sys.subtitle, {
+      x: x + 0.15, y: 1.85, w: 2.6, h: 0.3,
+      fontSize: 10, fontFace: BODY_FONT, color: WHITE, bold: true,
+    });
+    slide.addText(sys.desc, {
+      x: x + 0.15, y: 2.25, w: 2.6, h: 1.5,
+      fontSize: 9, fontFace: BODY_FONT, color: TEAL,
+    });
+    slide.addText(sys.peptides, {
+      x: x + 0.15, y: 3.9, w: 2.6, h: 0.4,
+      fontSize: 8, fontFace: BODY_FONT, color: ACCENT, italic: true,
+    });
+  });
+}
+
+function slideProgramStructure(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+
+  slide.addText("PROGRAM STRUCTURE", {
+    x: 0.5, y: 0.2, w: 9, h: 0.4,
+    fontSize: 12, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("The 90-Day Protocol + Phase 4", {
+    x: 0.5, y: 0.55, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  const phaseColors = [RED_ACCENT, SECONDARY, TEAL, GREEN_ACCENT];
+  const phases = [
+    {
+      name: "Phase 1 — Foundation",
+      range: "Days 1–30",
+      items: ["Detox IV protocol (5-step)", "Begin oral peptides & bioregulators", "ECS suppository introduction", "Dietary elimination phase", "Baseline labs & imaging"],
+    },
+    {
+      name: "Phase 2 — Build",
+      range: "Days 31–60",
+      items: ["Add injectable peptides", "HBOT sessions begin", "Increase cannabinoid ratios", "Gut flora optimization", "Nutrient repletion protocols"],
+    },
+    {
+      name: "Phase 3 — Optimize",
+      range: "Days 61–90",
+      items: ["Full-spectrum modality stack", "Advanced sirtuin/mito support", "Exosome therapy if indicated", "Re-assess labs & markers", "Transition planning"],
+    },
+    {
+      name: "Phase 4 — Maintain",
+      range: "Ongoing",
+      items: ["Maintenance peptide cycles", "Quarterly lab monitoring", "Lifestyle integration", "Community support access", "Ongoing ECS optimization"],
+    },
+  ];
+
+  phases.forEach((phase, i) => {
+    const x = 0.3 + i * 2.45;
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x, y: 1.2, w: 2.3, h: 4.0,
+      fill: { color: CARD_BG },
+    });
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x, y: 1.2, w: 2.3, h: 0.04,
+      fill: { color: phaseColors[i] },
+    });
+    slide.addText(phase.name, {
+      x: x + 0.1, y: 1.35, w: 2.1, h: 0.35,
+      fontSize: 10, fontFace: HEADER_FONT, color: phaseColors[i], bold: true,
+    });
+    slide.addText(phase.range, {
+      x: x + 0.1, y: 1.7, w: 2.1, h: 0.2,
+      fontSize: 8, fontFace: BODY_FONT, color: TEXT_MED,
+    });
+    const items = phase.items.map((item, j) => ({
+      text: `▸ ${item}`,
+      options: { fontSize: 8, color: TEAL, breakLine: j < phase.items.length - 1 },
+    }));
+    slide.addText(items, {
+      x: x + 0.1, y: 2.0, w: 2.1, h: 3.0,
+      fontFace: BODY_FONT, valign: "top",
+    });
+  });
+}
+
+function slidePeptideTherapyIntro(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+
+  slide.addText("PEPTIDE THERAPY", {
+    x: 0, y: 1.5, w: 10, h: 0.8,
+    fontSize: 36, fontFace: HEADER_FONT, color: WHITE, align: "center", bold: true,
+  });
+
+  const inj = protocol.injectablePeptides?.length || 0;
+  const oral = protocol.oralPeptides?.length || 0;
+  const bio = protocol.bioregulators?.length || 0;
+  const total = inj + oral + bio;
+
+  slide.addText(`${total} Custom Peptides — Injectable, Oral & Bioregulator Protocols`, {
+    x: 1, y: 2.3, w: 8, h: 0.6,
+    fontSize: 14, fontFace: BODY_FONT, color: ACCENT, align: "center",
+  });
+
+  slide.addShape(pres.shapes.LINE, {
+    x: 3.5, y: 3.1, w: 3, h: 0,
+    line: { color: ACCENT, width: 1.5 },
+  });
+
+  const stats = [
+    { label: "Injectable", count: inj },
+    { label: "Oral", count: oral },
+    { label: "Bioregulators", count: bio },
+  ];
+
+  stats.forEach((s, i) => {
+    const x = 1.5 + i * 2.8;
+    slide.addText(String(s.count), {
+      x, y: 3.4, w: 2.2, h: 0.6,
+      fontSize: 28, fontFace: HEADER_FONT, color: ACCENT, align: "center", bold: true,
+    });
+    slide.addText(s.label, {
+      x, y: 3.95, w: 2.2, h: 0.3,
+      fontSize: 11, fontFace: BODY_FONT, color: TEAL, align: "center",
+    });
+  });
+}
+
+function slideHBOTTherapy(pres: PptxPresentation, _protocol: HealingProtocol) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+
+  slide.addText("HBOT THERAPY", {
+    x: 0.5, y: 0.2, w: 9, h: 0.4,
+    fontSize: 12, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("Hyperbaric Oxygen Therapy", {
+    x: 0.5, y: 0.55, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 0.5, y: 1.2, w: 9, h: 1.2,
+    fill: { color: CARD_BG },
+  });
+  slide.addText("HBOT delivers 100% oxygen under increased atmospheric pressure, driving oxygen deep into tissues, plasma, and cerebrospinal fluid. This accelerates wound healing, reduces inflammation, stimulates stem cell mobilization, and enhances mitochondrial function.\n\nFFPMA operates its own HBOT Systems Division with medical-grade chambers available to members.", {
+    x: 0.7, y: 1.3, w: 8.6, h: 1.0,
+    fontSize: 10, fontFace: BODY_FONT, color: TEAL,
+  });
+
+  const benefits = [
+    { title: "Neovascularization", desc: "Stimulates new blood vessel growth in damaged tissues" },
+    { title: "Stem Cell Release", desc: "Up to 8x increase in circulating stem cells" },
+    { title: "Anti-Inflammatory", desc: "Reduces cytokine storms and systemic inflammation" },
+    { title: "Neuroprotection", desc: "Enhances brain oxygenation and cognitive recovery" },
+  ];
+
+  benefits.forEach((b, i) => {
+    const x = 0.5 + i * 2.35;
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x, y: 2.7, w: 2.15, h: 1.2,
+      fill: { color: CARD_BG },
+    });
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x, y: 2.7, w: 2.15, h: 0.04,
+      fill: { color: ACCENT },
+    });
+    slide.addText(b.title, {
+      x: x + 0.1, y: 2.85, w: 1.95, h: 0.3,
+      fontSize: 10, fontFace: HEADER_FONT, color: ACCENT, bold: true,
+    });
+    slide.addText(b.desc, {
+      x: x + 0.1, y: 3.15, w: 1.95, h: 0.6,
+      fontSize: 8, fontFace: BODY_FONT, color: TEAL,
+    });
+  });
+
+  slide.addText("FFPMA HBOT Systems Division — Contact us for availability and member pricing", {
+    x: 0.5, y: 4.2, w: 9, h: 0.3,
+    fontSize: 9, fontFace: BODY_FONT, color: TEXT_MED, align: "center",
+  });
+}
+
+function slideHomeProtocols(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+
+  slide.addText("HOME PROTOCOLS", {
+    x: 0.5, y: 0.2, w: 9, h: 0.4,
+    fontSize: 12, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("At-Home Therapeutic Protocols", {
+    x: 0.5, y: 0.55, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  const homeItems = [
+    { title: "Detox Baths", desc: "Epsom salt, bentonite clay, and essential oil baths — 3x per week for lymphatic drainage and toxin elimination" },
+    { title: "Castor Oil Packs", desc: "Apply to liver area 30–60 min, 3–4x/week to stimulate lymphatic flow and reduce inflammation" },
+    { title: "Coffee Enemas", desc: "Organic coffee retention enemas for glutathione production and bile duct cleansing — per protocol schedule" },
+    { title: "Nebulization", desc: "Colloidal silver, glutathione, or hydrogen peroxide nebulization for respiratory and immune support" },
+    { title: "Red Light Therapy", desc: "NIR/red light panel sessions for mitochondrial support, wound healing, and inflammation reduction" },
+    { title: "Grounding", desc: "Barefoot earthing 20+ min/day for inflammation reduction and circadian rhythm regulation" },
+  ];
+
+  homeItems.forEach((item, i) => {
+    const row = Math.floor(i / 2);
+    const col = i % 2;
+    const x = 0.5 + col * 4.7;
+    const y = 1.2 + row * 1.1;
+
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x, y, w: 4.4, h: 0.95,
+      fill: { color: CARD_BG },
+    });
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x, y, w: 0.06, h: 0.95,
+      fill: { color: ACCENT },
+    });
+    slide.addText(item.title, {
+      x: x + 0.2, y, w: 4.0, h: 0.3,
+      fontSize: 11, fontFace: HEADER_FONT, color: ACCENT, bold: true,
+    });
+    slide.addText(item.desc, {
+      x: x + 0.2, y: y + 0.3, w: 4.0, h: 0.6,
+      fontSize: 8, fontFace: BODY_FONT, color: TEAL,
+    });
+  });
+}
+
+function slideAdvancedModalities(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+
+  slide.addText("ADVANCED MODALITIES", {
+    x: 0.5, y: 0.2, w: 9, h: 0.4,
+    fontSize: 12, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("Additional Therapeutic Stack", {
+    x: 0.5, y: 0.55, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  const modalities: Array<{ title: string; desc: string; count: number }> = [];
+
+  if (protocol.liposomals?.length) {
+    modalities.push({ title: "Liposomal Supplements", desc: protocol.liposomals.map(l => l.name).join(", "), count: protocol.liposomals.length });
+  }
+  if (protocol.nebulization?.length) {
+    modalities.push({ title: "Nebulization Protocols", desc: protocol.nebulization.map(n => n.name).join(", "), count: protocol.nebulization.length });
+  }
+  if (protocol.topicals?.length) {
+    modalities.push({ title: "Topical Protocols", desc: protocol.topicals.map(t => t.name).join(", "), count: protocol.topicals.length });
+  }
+  if (protocol.exosomes?.length) {
+    modalities.push({ title: "Exosome Therapy", desc: protocol.exosomes.map(e => e.name).join(", "), count: protocol.exosomes.length });
+  }
+  if (protocol.lifestyleRecommendations?.length) {
+    modalities.push({ title: "Lifestyle Modifications", desc: protocol.lifestyleRecommendations.slice(0, 3).map(l => l.category).join(", "), count: protocol.lifestyleRecommendations.length });
+  }
+  if (protocol.dietaryGuidelines?.length) {
+    modalities.push({ title: "Dietary Guidelines", desc: protocol.dietaryGuidelines.slice(0, 2).join("; ").substring(0, 80), count: protocol.dietaryGuidelines.length });
+  }
+
+  if (modalities.length === 0) {
+    modalities.push(
+      { title: "Liposomal Delivery", desc: "Enhanced bioavailability through liposomal encapsulation", count: 0 },
+      { title: "Nebulization", desc: "Aerosolized therapeutic delivery for respiratory and systemic benefit", count: 0 },
+      { title: "Topical Protocols", desc: "Transdermal application of peptides and cannabinoids", count: 0 },
+    );
+  }
+
+  modalities.slice(0, 6).forEach((mod, i) => {
+    const row = Math.floor(i / 2);
+    const col = i % 2;
+    const x = 0.5 + col * 4.7;
+    const y = 1.2 + row * 1.1;
+
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x, y, w: 4.4, h: 0.95,
+      fill: { color: CARD_BG },
+    });
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x, y, w: 0.06, h: 0.95,
+      fill: { color: ACCENT },
+    });
+    slide.addText(mod.title, {
+      x: x + 0.2, y, w: 3.5, h: 0.3,
+      fontSize: 11, fontFace: HEADER_FONT, color: ACCENT, bold: true,
+    });
+    if (mod.count > 0) {
+      slide.addText(String(mod.count), {
+        x: x + 3.7, y, w: 0.5, h: 0.3,
+        fontSize: 14, fontFace: HEADER_FONT, color: ACCENT, bold: true, align: "right",
+      });
+    }
+    slide.addText(mod.desc.substring(0, 100), {
+      x: x + 0.2, y: y + 0.3, w: 4.0, h: 0.6,
+      fontSize: 8, fontFace: BODY_FONT, color: TEAL,
+    });
+  });
+}
+
+function slideAIResearchTool(pres: PptxPresentation) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+
+  slide.addText("AI RESEARCH TOOL", {
+    x: 0.5, y: 0.2, w: 9, h: 0.4,
+    fontSize: 12, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("Peptide Chat — AI Assistant", {
+    x: 0.5, y: 0.55, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 0.5, y: 1.2, w: 9, h: 1.6,
+    fill: { color: CARD_BG },
+  });
+  slide.addText("Access our custom AI research assistant trained on thousands of peptide studies, clinical trials, and mechanism-of-action papers.\n\nAsk questions about any peptide in your protocol — interactions, dosing rationale, mechanism of action, supporting research.", {
+    x: 0.7, y: 1.3, w: 8.6, h: 1.2,
+    fontSize: 10, fontFace: BODY_FONT, color: TEAL,
+  });
+
+  const examples = [
+    '"What is the mechanism of PNC-27 against pancreatic cancer?"',
+    '"Can LL-37 and KPV be taken simultaneously?"',
+    '"Show me clinical trials for Epithalon and telomere extension"',
+  ];
+
+  examples.forEach((ex, i) => {
+    const y = 3.1 + i * 0.5;
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x: 1, y, w: 8, h: 0.4,
+      fill: { color: CARD_BG },
+    });
+    slide.addText(ex, {
+      x: 1.2, y, w: 7.6, h: 0.4,
+      fontSize: 9, fontFace: BODY_FONT, color: ACCENT, italic: true, valign: "middle",
+    });
+  });
+
+  slide.addText("Launch Peptide Chat →", {
+    x: 3, y: 4.8, w: 4, h: 0.4,
+    fontSize: 12, fontFace: BODY_FONT, color: ACCENT, bold: true, align: "center",
+    hyperlink: { url: "https://peptide-chat.abacusai.app" },
+  });
+}
+
+function slideProtocolSummary(pres: PptxPresentation, protocol: HealingProtocol, profile: PatientProfile) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+
+  slide.addText("PROTOCOL SUMMARY", {
+    x: 0.5, y: 0.2, w: 9, h: 0.4,
+    fontSize: 12, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("Your Custom Protocol — At a Glance", {
+    x: 0.5, y: 0.55, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  const fields = [
+    { label: "Member Name", value: protocol.patientName },
+    { label: "Start Date", value: protocol.generatedDate || new Date().toISOString().split("T")[0] },
+    { label: "Selected Peptides", value: [
+      ...(protocol.injectablePeptides || []).map(p => p.name),
+      ...(protocol.oralPeptides || []).map(p => p.name),
+    ].slice(0, 6).join(", ") || "See peptide slides" },
+    { label: "Duration", value: `${protocol.protocolDurationDays} days` },
+    { label: "Key Modalities", value: [
+      protocol.ivTherapies?.length ? "IV Therapy" : "",
+      protocol.imTherapies?.length ? "IM Injections" : "",
+      protocol.ecsProtocol ? "ECS Optimization" : "",
+      protocol.sirtuinStack ? "Sirtuin/Mito Support" : "",
+      "HBOT",
+    ].filter(Boolean).join(", ") },
+    { label: "Dietary Focus", value: protocol.dietaryProtocol?.phases?.[0]?.name || "Per protocol schedule" },
+  ];
+
+  fields.forEach((f, i) => {
+    const y = 1.2 + i * 0.6;
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x: 0.5, y, w: 9, h: 0.5,
+      fill: { color: CARD_BG },
+    });
+    slide.addText(f.label, {
+      x: 0.7, y, w: 2.5, h: 0.5,
+      fontSize: 10, fontFace: BODY_FONT, color: ACCENT, bold: true, valign: "middle",
+    });
+    slide.addText(f.value, {
+      x: 3.3, y, w: 6.0, h: 0.5,
+      fontSize: 10, fontFace: BODY_FONT, color: TEAL, valign: "middle",
+    });
+  });
+}
+
+function slideClosing(pres: PptxPresentation) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: ACCENT } });
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 5.565, w: 10, h: 0.06, fill: { color: ACCENT } });
+
+  slide.addText("Your Healing Begins Here", {
+    x: 0, y: 1.2, w: 10, h: 0.8,
+    fontSize: 32, fontFace: HEADER_FONT, color: WHITE, align: "center", bold: true,
+  });
+  slide.addText("A root-cause approach to regeneration — customized for your body, backed by science, protected by constitutional right.", {
+    x: 1, y: 2.1, w: 8, h: 0.6,
+    fontSize: 12, fontFace: BODY_FONT, color: TEAL, align: "center",
+  });
+
+  slide.addShape(pres.shapes.LINE, {
+    x: 3.5, y: 2.9, w: 3, h: 0,
+    line: { color: ACCENT, width: 1.5 },
+  });
+
+  const contacts = [
+    { label: "Contact", value: "forgottenformulapma.com" },
+    { label: "Research", value: "peptide-chat.abacusai.app" },
+    { label: "HBOT Systems", value: "FFPMA Division" },
+  ];
+
+  contacts.forEach((c, i) => {
+    const x = 1 + i * 3;
+    slide.addText(c.label, {
+      x, y: 3.3, w: 2.5, h: 0.3,
+      fontSize: 10, fontFace: BODY_FONT, color: ACCENT, bold: true, align: "center",
+    });
+    slide.addText(c.value, {
+      x, y: 3.6, w: 2.5, h: 0.3,
+      fontSize: 9, fontFace: BODY_FONT, color: TEAL, align: "center",
+    });
+  });
+
+  slide.addText([
+    { text: '"Before you heal someone, ask him if he\'s willing to give up the things that make him sick"', options: { italic: true, color: "8A95B0", fontSize: 9, breakLine: true } },
+    { text: "— Hippocrates", options: { color: ACCENT, fontSize: 9 } },
+  ], { x: 1.5, y: 4.5, w: 7, h: 0.6, align: "center", fontFace: BODY_FONT });
+
+  slide.addText("Confidential — Private Members Association", {
+    x: 0, y: 5.1, w: 10, h: 0.3,
+    fontSize: 8, fontFace: BODY_FONT, color: "5A6B8A", align: "center",
+  });
 }
 
 function slideSummary(pres: PptxPresentation, protocol: HealingProtocol) {
@@ -1137,40 +1793,6 @@ function slideDriveLinks(pres: PptxPresentation, resources: ReturnType<typeof ge
   }
 }
 
-function slideCommitment(pres: PptxPresentation) {
-  const slide = addSanitizedSlide(pres);
-  slide.background = { color: DARK_BG };
-
-  slide.addText("My Commitment to You", {
-    x: 0.5, y: 0.3, w: 9, h: 0.6,
-    fontSize: 28, fontFace: HEADER_FONT, color: ACCENT, bold: true, margin: 0,
-  });
-
-  slide.addText([
-    { text: "I will do everything in my power and knowledge to focus on the root of all problems. Most doctors focus only on the symptoms, not the underlying cause of the disease or issue. We will not give up on you, but you need to work with us on every step of this protocol.", options: { breakLine: true, fontSize: 11, color: WHITE } },
-    { text: "\nDon't lose hope and don't give up! There is no single pill or capsule that will fix this. Only a commitment to follow the steps laid herein — if you choose to do so, the ECS, the gut, and your body will take care of itself. Homeostasis is about balance in the body.", options: { breakLine: true, fontSize: 11, color: WHITE } },
-    { text: "\nWe have provided the educational tools and research to help guide you through your journey. Please utilize these resources. These are extremely specific formulations that only a handful of folks know how to do — it's my lifelong work.", options: { breakLine: true, fontSize: 11, color: WHITE } },
-    { text: "\nHope is coming and a solution is in route. There is no doubt in my mind about the efficacy of our formulations and our 5 steps to health and wellness.", options: { breakLine: true, fontSize: 12, color: ACCENT, italic: true } },
-    { text: "\nThank you for giving us this opportunity. We are looking forward to healing you.", options: { breakLine: true, fontSize: 11, color: WHITE } },
-  ], {
-    x: 0.7, y: 1.0, w: 8.6, h: 3.2,
-    fontFace: BODY_FONT, valign: "top",
-  });
-
-  slide.addText("Michael Blake", {
-    x: 0, y: 4.4, w: 10, h: 0.4,
-    fontSize: 16, fontFace: HEADER_FONT, color: WHITE, align: "center", bold: true,
-  });
-  slide.addText("FF Founder and Medical Trustee", {
-    x: 0, y: 4.8, w: 10, h: 0.3,
-    fontSize: 12, fontFace: BODY_FONT, color: ACCENT, align: "center",
-  });
-
-  slide.addText('"Before you heal someone, ask him if he\'s willing to give up the things that make him sick"', {
-    x: 1, y: 5.1, w: 8, h: 0.4,
-    fontSize: 9, fontFace: BODY_FONT, color: "8A95B0", align: "center", italic: true,
-  });
-}
 
 function slideECS(pres: PptxPresentation, protocol: HealingProtocol) {
   const sectionSlide = addSanitizedSlide(pres);
@@ -1509,36 +2131,41 @@ export function validatePptxParity(
 
   const checks: Array<{ section: typeof REFERENCE_SLIDE_ORDER[number]; present: boolean }> = [
     { section: "cover", present: true },
-    { section: "summary", present: true },
+    { section: "about-pma", present: true },
+    { section: "protocol-overview", present: true },
+    { section: "philosophy", present: true },
+    { section: "5rs-phases", present: true },
+    { section: "diagnostic-framework", present: true },
+    { section: "program-structure", present: true },
     { section: "member-info", present: true },
     { section: "timeline", present: (profile.medicalTimeline?.length || 0) > 0 },
     { section: "trustee-analysis", present: true },
     { section: "root-causes", present: true },
-    { section: "5rs-phases", present: true },
-    { section: "daily-schedule", present: true },
-    { section: "products-ff", present: true },
+    { section: "peptide-therapy-intro", present: true },
     { section: "injectable-peptides", present: (protocol.injectablePeptides?.length || 0) > 0 },
     { section: "oral-peptides", present: (protocol.oralPeptides?.length || 0) > 0 },
     { section: "bioregulators", present: (protocol.bioregulators?.length || 0) > 0 },
     { section: "supplements", present: (protocol.supplements?.length || 0) > 0 },
     { section: "supplement-timing", present: (protocol.supplements?.length || 0) > 0 || (protocol.liposomals?.length || 0) > 0 },
     { section: "iv-im-therapies", present: (protocol.ivTherapies?.length || 0) > 0 || (protocol.imTherapies?.length || 0) > 0 },
+    { section: "hbot-therapy", present: true },
     { section: "detox-protocols", present: (protocol.detoxProtocols?.length || 0) > 0 },
     { section: "parasite-antiviral", present: true },
+    { section: "home-protocols", present: true },
+    { section: "dietary-protocol", present: !!protocol.dietaryProtocol?.phases?.length },
     { section: "ecs-protocol", present: !!protocol.ecsProtocol || (protocol.suppositories?.length || 0) > 0 },
     { section: "suppositories", present: (protocol.suppositories?.length || 0) > 0 },
     { section: "sirtuin-mito", present: !!protocol.sirtuinStack },
-    { section: "liposomals", present: (protocol.liposomals?.length || 0) > 0 },
-    { section: "nebulization", present: (protocol.nebulization?.length || 0) > 0 },
-    { section: "topicals", present: (protocol.topicals?.length || 0) > 0 },
-    { section: "exosomes", present: (protocol.exosomes?.length || 0) > 0 },
-    { section: "dietary-protocol", present: !!protocol.dietaryProtocol?.phases?.length },
-    { section: "lifestyle", present: (protocol.lifestyleRecommendations?.length || 0) > 0 },
+    { section: "advanced-modalities", present: true },
+    { section: "daily-schedule", present: true },
+    { section: "products-ff", present: true },
     { section: "follow-up", present: true },
-    { section: "books", present: true },
+    { section: "ai-research-tool", present: true },
     { section: "research-links", present: true },
     { section: "drive-links", present: true },
-    { section: "commitment", present: true },
+    { section: "books", present: true },
+    { section: "protocol-summary", present: true },
+    { section: "closing", present: true },
   ];
 
   for (const check of checks) {
