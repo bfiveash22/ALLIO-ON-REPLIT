@@ -59,20 +59,25 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       const profile = await analyzeTranscript(transcript);
       const protocol = await generateProtocol(profile);
 
-      let agentValidation: { valid: boolean; issues: string[]; suggestions: string[] } | null = null;
+      let agentValidation: { valid: boolean; issues: string[]; suggestions: string[]; catalogMatchRate: number } | null = null;
+      let qaStatus: "draft" | "needs_review" = "draft";
       try {
         agentValidation = await validateProtocolWithAgents(protocol, profile);
         if (!agentValidation.valid) {
-          console.warn(`[Protocol Assembly] Agent QA flagged ${agentValidation.issues.length} issues:`);
+          qaStatus = "needs_review";
+          console.warn(`[Protocol Assembly] Agent QA BLOCKED — ${agentValidation.issues.length} issues, setting status to needs_review:`);
           agentValidation.issues.forEach(issue => console.warn(`  - ${issue}`));
+        } else {
+          console.log(`[Protocol Assembly] Agent QA PASSED — catalog match: ${agentValidation.catalogMatchRate}%`);
         }
       } catch (qaErr) {
-        console.warn('[Protocol Assembly] Agent QA validation failed (non-fatal):', qaErr);
+        qaStatus = "needs_review";
+        console.warn('[Protocol Assembly] Agent QA validation failed, flagging for review:', qaErr);
       }
 
       const creatorId = getUserId(req);
       const creatorDoctorId = isDoctorOnly(req) ? creatorId : undefined;
-      const protocolId = await saveProtocol(profile, protocol, 'transcript', (req.user as { username?: string })?.username, memberId as string | undefined, creatorDoctorId);
+      const protocolId = await saveProtocol(profile, protocol, 'transcript', (req.user as { username?: string })?.username, memberId as string | undefined, creatorDoctorId, qaStatus);
       let slides = null;
       if (shouldGenerateSlides) {
         try {
@@ -82,8 +87,8 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
           console.error('[Protocol Assembly] Slide generation failed:', (slideError as Error).message);
         }
       }
-      res.json({ id: protocolId, profile, protocol, slides, agentValidation });
-    } catch (error: any) {
+      res.json({ id: protocolId, profile, protocol, slides, agentValidation, qaStatus });
+    } catch (error) {
       console.error('[Protocol Assembly] Generate error:', error);
       res.status(500).json({ error: 'Failed to generate protocol. Please try again.' });
     }
@@ -108,20 +113,25 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       profile.intakeFormId = intakeId;
       const protocol = await generateProtocol(profile);
 
-      let agentValidation: { valid: boolean; issues: string[]; suggestions: string[] } | null = null;
+      let agentValidation: { valid: boolean; issues: string[]; suggestions: string[]; catalogMatchRate: number } | null = null;
+      let qaStatus: "draft" | "needs_review" = "draft";
       try {
         agentValidation = await validateProtocolWithAgents(protocol, profile);
         if (!agentValidation.valid) {
-          console.warn(`[Protocol Assembly] Agent QA flagged ${agentValidation.issues.length} issues:`);
+          qaStatus = "needs_review";
+          console.warn(`[Protocol Assembly] Agent QA BLOCKED — ${agentValidation.issues.length} issues, setting status to needs_review:`);
           agentValidation.issues.forEach(issue => console.warn(`  - ${issue}`));
+        } else {
+          console.log(`[Protocol Assembly] Agent QA PASSED — catalog match: ${agentValidation.catalogMatchRate}%`);
         }
       } catch (qaErr) {
-        console.warn('[Protocol Assembly] Agent QA validation failed (non-fatal):', qaErr);
+        qaStatus = "needs_review";
+        console.warn('[Protocol Assembly] Agent QA validation failed, flagging for review:', qaErr);
       }
 
       const creatorId2 = getUserId(req);
       const creatorDoctorId2 = isDoctorOnly(req) ? creatorId2 : undefined;
-      const protocolId = await saveProtocol(profile, protocol, 'intake_form', (req.user as { username?: string })?.username, req.body?.memberId as string | undefined, creatorDoctorId2);
+      const protocolId = await saveProtocol(profile, protocol, 'intake_form', (req.user as { username?: string })?.username, req.body?.memberId as string | undefined, creatorDoctorId2, qaStatus);
       const { generateSlides: shouldGenerateSlides } = req.body || {};
       let slides = null;
       if (shouldGenerateSlides) {
@@ -132,8 +142,8 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
           console.error('[Protocol Assembly] Slide generation failed:', (slideError as Error).message);
         }
       }
-      res.json({ id: protocolId, profile, protocol, slides, agentValidation });
-    } catch (error: any) {
+      res.json({ id: protocolId, profile, protocol, slides, agentValidation, qaStatus });
+    } catch (error) {
       console.error('[Protocol Assembly] Generate from intake error:', error);
       res.status(500).json({ error: 'Failed to generate protocol from intake. Please try again.' });
     }

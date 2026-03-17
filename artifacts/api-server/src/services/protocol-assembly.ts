@@ -525,14 +525,28 @@ Return ONLY valid JSON, no markdown.`;
 
   const parsed = JSON.parse(content) as HealingProtocol;
 
-  if (!parsed.suppositories) parsed.suppositories = [];
-  if (!parsed.liposomals) parsed.liposomals = [];
-  if (!parsed.exosomes) parsed.exosomes = [];
-  if (!parsed.topicals) parsed.topicals = [];
-  if (!parsed.nebulization) parsed.nebulization = [];
-  if (!parsed.ecsProtocol) {
-    parsed.ecsProtocol = {
-      overview: "ECS optimization protocol — pending condition-specific customization",
+  enforceRequiredModalities(parsed, profile);
+
+  return parsed;
+}
+
+function enforceRequiredModalities(protocol: HealingProtocol, profile: PatientProfile): void {
+  const allText = JSON.stringify(profile).toLowerCase();
+  const hasMold = allText.includes("mold") || allText.includes("mycotoxin");
+  const hasMercury = allText.includes("mercury") || allText.includes("amalgam");
+  const hasGut = (profile.gutHealth?.digestiveIssues?.length || 0) > 0 || allText.includes("gut") || allText.includes("dysbiosis");
+  const hasCancer = ["cancer","tumor","carcinoma","malignant","her2","er+","pr+"].some(k => allText.includes(k));
+  const hasAutoimmune = allText.includes("autoimmune") || allText.includes("lupus") || allText.includes("hashimoto");
+
+  if (!protocol.suppositories) protocol.suppositories = [];
+  if (!protocol.liposomals) protocol.liposomals = [];
+  if (!protocol.exosomes) protocol.exosomes = [];
+  if (!protocol.topicals) protocol.topicals = [];
+  if (!protocol.nebulization) protocol.nebulization = [];
+
+  if (!protocol.ecsProtocol) {
+    protocol.ecsProtocol = {
+      overview: "ECS optimization protocol — mandatory for all FF PMA members",
       daytimeFormula: { CBD: "25-50mg", CBG: "10-25mg", DMSO: "5-10%", base: "cacao butter", deliveryMethod: "suppository" },
       nighttimeFormula: { CBD: "50-100mg", CBN: "10-20mg", THC: "10-25mg", DMSO: "5-10%", base: "cacao butter", deliveryMethod: "suppository" },
       tincture: { name: "Elixir for Everything", cannabinoids: ["CBD","CBG","CBC","CBDV","CBN","THCV","CBDA","CBGA","CBCA","THCA","CBDVA","CBCVA"], dose: "1-2 mL", frequency: "2x daily sublingual" },
@@ -540,9 +554,10 @@ Return ONLY valid JSON, no markdown.`;
       ecsSupport: ["Omega-3 fatty acids 2-4g EPA/DHA daily","PEA 600mg 2x daily","Dark chocolate 85%+ cacao"],
       molecularTargets: [],
     };
+    console.log("[Protocol Enforcer] Injected default ECS protocol");
   }
-  if (!parsed.sirtuinStack) {
-    parsed.sirtuinStack = {
+  if (!protocol.sirtuinStack) {
+    protocol.sirtuinStack = {
       mitoSTAC: { resveratrol: "500mg daily", pterostilbene: "100mg daily", quercetin: "500mg 2x daily", fisetin: "100mg daily" },
       nadPrecursors: { compound: "NMN", dose: "500-1000mg daily", frequency: "Morning" },
       glyNAC: { glycine: "2-3g 2x daily", nac: "600mg 2x daily", frequency: "Morning and evening" },
@@ -558,20 +573,128 @@ Return ONLY valid JSON, no markdown.`;
         { name: "Methylcobalamin", dose: "1000-5000mcg daily" },
       ],
     };
+    console.log("[Protocol Enforcer] Injected sirtuin/MitoSTAC stack");
   }
-  if (!parsed.dietaryProtocol) {
-    parsed.dietaryProtocol = {
+  if (!protocol.dietaryProtocol) {
+    protocol.dietaryProtocol = {
       phases: [
-        { name: "Phase 1: Elimination", duration: "Weeks 1-3", focus: "Remove inflammatory triggers", eliminate: ["Gluten","Dairy","Sugar","Processed foods","Alcohol","Caffeine"], emphasize: ["Organic vegetables","Wild-caught fish","Bone broth","Healthy fats"], },
-        { name: "Phase 2: Anti-Inflammatory", duration: "Weeks 3-8", focus: "Reduce systemic inflammation", eliminate: ["Refined carbohydrates","Seed oils","Nightshades if sensitive"], emphasize: ["Cruciferous vegetables","Fermented foods","Omega-3 rich foods","Turmeric/ginger"], },
-        { name: "Phase 3: Condition-Specific", duration: "Weeks 8+", focus: "Targeted nutrition for primary condition", eliminate: [], emphasize: ["Condition-specific nutrition"], },
+        { name: "Phase 1: Elimination", duration: "Weeks 1-3", focus: "Remove inflammatory triggers", eliminate: ["Gluten","Dairy","Sugar","Processed foods","Alcohol","Caffeine"], emphasize: ["Organic vegetables","Wild-caught fish","Bone broth","Healthy fats"] },
+        { name: "Phase 2: Anti-Inflammatory", duration: "Weeks 3-8", focus: "Reduce systemic inflammation", eliminate: ["Refined carbohydrates","Seed oils","Nightshades if sensitive"], emphasize: ["Cruciferous vegetables","Fermented foods","Omega-3 rich foods","Turmeric/ginger"] },
+        { name: "Phase 3: Condition-Specific", duration: "Weeks 8+", focus: "Targeted nutrition for primary condition", eliminate: [], emphasize: ["Condition-specific nutrition"] },
       ],
       intermittentFasting: { protocol: "16:8", schedule: "Eat 12pm-8pm, fast 8pm-12pm", purpose: "Autophagy, cellular cleanup, immune optimization" },
       specialConsiderations: [],
     };
+    console.log("[Protocol Enforcer] Injected 3-phase dietary protocol");
   }
 
-  return parsed;
+  if (!protocol.liposomals.length) {
+    protocol.liposomals = [
+      { name: "Liposomal Glutathione", dose: "500mg", frequency: "Daily", timing: "Morning empty stomach", purpose: "Master antioxidant, detoxification support" },
+      { name: "Liposomal Curcumin", dose: "500mg", frequency: "2x daily", timing: "With meals", purpose: "Anti-inflammatory, NF-kB inhibition" },
+      { name: "Liposomal D3/K2", dose: "5000 IU D3 + 200mcg K2", frequency: "Daily", timing: "With fat-containing meal", purpose: "Immune modulation, calcium metabolism" },
+      { name: "Liposomal Astaxanthin", dose: "12mg", frequency: "Daily", timing: "With meals", purpose: "Mitochondrial protection, antioxidant" },
+    ];
+    console.log("[Protocol Enforcer] Injected liposomal supplements");
+  }
+
+  if (hasMold && !protocol.nebulization.length) {
+    protocol.nebulization = [
+      { name: "Nebulized Glutathione", solution: "200mg in 3mL saline", dose: "200mg", frequency: "3x weekly", duration: "10-15 minutes", purpose: "Mycotoxin clearance from respiratory system" },
+      { name: "Nebulized Hydrogen Peroxide", solution: "0.04% food-grade H2O2 in saline", dose: "3mL", frequency: "2x weekly", duration: "10 minutes", purpose: "Antimicrobial respiratory support" },
+    ];
+    console.log("[Protocol Enforcer] Injected nebulization for mold exposure");
+  }
+
+  if (hasMercury && !protocol.detoxProtocols?.some(d => d.name?.toLowerCase().includes("chelat") || d.instructions?.toLowerCase().includes("edta"))) {
+    if (!protocol.detoxProtocols) protocol.detoxProtocols = [];
+    protocol.detoxProtocols.push({
+      name: "EDTA Chelation Protocol",
+      method: "IV Chelation",
+      frequency: "Weekly during Phase 1-2",
+      duration: "8-12 sessions",
+      instructions: "EDTA IV chelation — must be administered at clinic. Pre-treatment with glutathione IV. Monitor kidney function and mineral levels throughout."
+    });
+    console.log("[Protocol Enforcer] Injected EDTA chelation for mercury exposure");
+  }
+
+  if (hasCancer && !protocol.ivTherapies?.some(iv => iv.name?.toLowerCase().includes("vitamin c"))) {
+    if (!protocol.ivTherapies) protocol.ivTherapies = [];
+    protocol.ivTherapies.push({
+      name: "High-Dose Vitamin C IV",
+      frequency: "2-3x weekly",
+      duration: "Throughout protocol",
+      purpose: "Pro-oxidant cancer cell targeting at pharmacological doses",
+      notes: "Start 25g, titrate to 50-100g based on G6PD status. Requires G6PD test before first infusion."
+    });
+    console.log("[Protocol Enforcer] Injected high-dose Vitamin C IV for cancer");
+  }
+
+  if (hasAutoimmune && !protocol.ivTherapies?.some(iv => iv.name?.toLowerCase().includes("nad"))) {
+    if (!protocol.ivTherapies) protocol.ivTherapies = [];
+    protocol.ivTherapies.push({
+      name: "NAD+ IV Therapy",
+      frequency: "Weekly x 4, then biweekly",
+      duration: "Initial 4-week loading, then maintenance",
+      purpose: "Sirtuin activation, immune modulation, cellular repair"
+    });
+    console.log("[Protocol Enforcer] Injected NAD+ IV for autoimmune condition");
+  }
+
+  if (hasGut && !protocol.oralPeptides?.some(p => p.name?.toLowerCase().includes("bpc"))) {
+    if (!protocol.oralPeptides) protocol.oralPeptides = [];
+    protocol.oralPeptides.push({
+      name: "BPC-157 (oral)",
+      dose: "500mcg",
+      frequency: "2x daily on empty stomach",
+      duration: "8-12 weeks",
+      purpose: "Gut lining repair, mucosal healing, angiogenesis"
+    });
+    console.log("[Protocol Enforcer] Injected oral BPC-157 for gut issues");
+  }
+
+  if (protocol.suppositories.length === 0) {
+    protocol.suppositories = [
+      {
+        name: "FF PMA Daytime ECS Formula",
+        timing: "daytime",
+        formula: "CBD 25-50mg + CBG 10-25mg + CBN 5-10mg + DMSO 5-10%",
+        cannabinoids: { CBD: "25-50mg", CBG: "10-25mg", CBN: "5-10mg", DMSO: "5-10%" },
+        base: "cacao butter",
+        frequency: "Daily upon waking",
+        purpose: "Daytime ECS optimization, anti-inflammatory CB2 activation",
+      },
+      {
+        name: "FF PMA Nighttime ECS Formula",
+        timing: "nighttime",
+        formula: "CBD 50-100mg + THC 10-25mg + CBN 10-20mg + DMSO 5-10%",
+        cannabinoids: { CBD: "50-100mg", THC: "10-25mg", CBN: "10-20mg", DMSO: "5-10%" },
+        base: "cacao butter",
+        frequency: "Nightly before bed",
+        purpose: "Sleep, immune activation, overnight cellular repair",
+      },
+    ];
+    console.log("[Protocol Enforcer] Injected ECS suppositories");
+  }
+
+  const ivLipoB = protocol.ivTherapies?.filter(iv =>
+    iv.name?.toLowerCase().includes("lipo-b") || iv.name?.toLowerCase().includes("lipo b")
+  ) || [];
+  if (ivLipoB.length > 0) {
+    protocol.ivTherapies = protocol.ivTherapies?.filter(iv =>
+      !iv.name?.toLowerCase().includes("lipo-b") && !iv.name?.toLowerCase().includes("lipo b")
+    ) || [];
+    if (!protocol.imTherapies) protocol.imTherapies = [];
+    ivLipoB.forEach(lb => {
+      protocol.imTherapies!.push({
+        name: lb.name,
+        dose: "1mL (216mg total)",
+        frequency: lb.frequency,
+        purpose: lb.purpose
+      });
+    });
+    console.log("[Protocol Enforcer] Moved Lipo-B from IV to IM section");
+  }
 }
 
 const CATALOG_PRODUCTS = [
@@ -1047,7 +1170,8 @@ export async function saveProtocol(
   sourceType: "transcript" | "intake_form",
   generatedBy?: string,
   memberId?: string,
-  doctorId?: string
+  doctorId?: string,
+  status?: string
 ): Promise<number> {
   const [result] = await db
     .insert(generatedProtocols)
@@ -1060,7 +1184,7 @@ export async function saveProtocol(
       doctorId: doctorId || null,
       patientProfile: profile as unknown as Record<string, unknown>,
       protocol: protocol as unknown as Record<string, unknown>,
-      status: "draft",
+      status: status || "draft",
       generatedBy: generatedBy || "system",
     })
     .returning({ id: generatedProtocols.id });
