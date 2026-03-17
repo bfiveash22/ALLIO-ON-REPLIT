@@ -100,7 +100,7 @@ export const formulaAnalysisModules = [
     id: "fa-106-protocol-design",
     title: "Custom Protocol Design & Case Studies",
     slug: "fa-106-protocol-design",
-    description: "Apply formula analysis skills to real patient scenarios. Design custom therapeutic protocols integrating IV therapy, supplements, peptides, and botanicals for complex conditions.",
+    description: "Apply formula analysis skills to real member scenarios. Design custom therapeutic protocols integrating IV therapy, supplements, peptides, and botanicals for complex conditions.",
     imageUrl: "https://images.unsplash.com/photo-1628595351029-c2bf17511435?w=800",
     category: "Formula Analysis",
     sortOrder: 6,

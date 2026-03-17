@@ -282,10 +282,10 @@ const moduleContent: Record<string, {
   },
   "ecs-203-patient-assessment": {
     sections: [
-      { title: "The CECD Questionnaire", content: "A structured questionnaire assesses ECS function across six domains: mood stability, sleep quality, pain levels, digestive health, immune function, and stress response. Scores help identify patients who may benefit from ECS support." },
-      { title: "Symptom Pattern Recognition", content: "CECD often presents with clusters: migraine + IBS + fibromyalgia. Patients with treatment-resistant conditions in multiple systems should be evaluated for ECS dysfunction. Co-occurring conditions strengthen the CECD hypothesis." },
-      { title: "Response to Cannabinoid Therapy", content: "One of the best diagnostic tools is therapeutic trial. Patients with CECD often show rapid, significant improvement with cannabinoid therapy. Document baseline symptoms and track response over 4-8 weeks." },
-      { title: "Case Study Integration", content: "Practice applying assessment tools to real patient cases. Identify patterns, formulate ECS-focused treatment plans, and track outcomes. Case-based learning reinforces clinical reasoning skills." }
+      { title: "The CECD Questionnaire", content: "A structured questionnaire assesses ECS function across six domains: mood stability, sleep quality, pain levels, digestive health, immune function, and stress response. Scores help identify members who may benefit from ECS support." },
+      { title: "Symptom Pattern Recognition", content: "CECD often presents with clusters: migraine + IBS + fibromyalgia. Members with treatment-resistant conditions in multiple systems should be evaluated for ECS dysfunction. Co-occurring conditions strengthen the CECD hypothesis." },
+      { title: "Response to Cannabinoid Therapy", content: "One of the best diagnostic tools is therapeutic trial. Members with CECD often show rapid, significant improvement with cannabinoid therapy. Document baseline symptoms and track response over 4-8 weeks." },
+      { title: "Case Study Integration", content: "Practice applying assessment tools to real member cases. Identify patterns, formulate ECS-focused wellness protocols, and track outcomes. Case-based learning reinforces clinical reasoning skills." }
     ],
     keyPoints: ["Use standardized CECD questionnaire across 6 domains", "Look for symptom clusters suggesting systemic ECS dysfunction", "Therapeutic trial with cannabinoids is diagnostically valuable", "Document baselines and track response over 4-8 weeks"],
     videoUrl: "https://drive.google.com/file/d/ECS_ASSESSMENT_VIDEO"
@@ -333,8 +333,8 @@ const moduleContent: Record<string, {
   "ecs-208-certification-exam-prep": {
     sections: [
       { title: "Exam Overview", content: "The ECS Practitioner Certification Exam consists of 75 multiple-choice questions covering all practitioner modules. You have 90 minutes. Passing score is 80% (60 correct answers). One attempt included; retakes available." },
-      { title: "Study Strategy", content: "Review all module key points. Focus on clinical application: patient assessment, dosing, drug interactions, and condition-specific protocols. Practice case-based questions. Understand mechanisms well enough to apply them." },
-      { title: "What to Expect", content: "Questions test both knowledge and clinical reasoning. Many are scenario-based: 'A patient with X presents. What is your approach?' Know your dosing ranges, drug interactions, and contraindications." },
+      { title: "Study Strategy", content: "Review all module key points. Focus on clinical application: member assessment, dosing, drug interactions, and condition-specific protocols. Practice case-based questions. Understand mechanisms well enough to apply them." },
+      { title: "What to Expect", content: "Questions test both knowledge and clinical reasoning. Many are scenario-based: 'A member with X presents. What is your approach?' Know your dosing ranges, drug interactions, and contraindications." },
       { title: "After Certification", content: "Upon passing, you receive your ECS Practitioner Certificate. You can use this credential in your practice and are eligible for the Advanced ECS Specialist program. Maintain certification with annual continuing education." }
     ],
     keyPoints: ["75 questions, 90 minutes, 80% passing (60 correct)", "Focus on clinical application and case scenarios", "Know dosing ranges, interactions, contraindications", "Certificate awarded upon passing; annual CE required"],
@@ -404,12 +404,12 @@ const moduleContent: Record<string, {
   // ========== DOCTOR ONBOARDING MODULES ==========
   "doc-101-portal-orientation": {
     sections: [
-      { title: "Doctor Portal Overview", content: "Your Doctor Portal is designed for efficient patient management. You'll find patient lists, appointment scheduling, blood analysis tools, document generation, and communication features all in one place." },
-      { title: "Patient Management", content: "View your patient roster, their protocols, and progress. Quick actions for common tasks. Search and filter capabilities. Each patient card shows key status information at a glance." },
+      { title: "Doctor Portal Overview", content: "Your Doctor Portal is designed for efficient member management. You'll find member lists, appointment scheduling, blood analysis tools, document generation, and communication features all in one place." },
+      { title: "Member Management", content: "View your member roster, their protocols, and progress. Quick actions for common tasks. Search and filter capabilities. Each member card shows key status information at a glance." },
       { title: "Blood Analysis Tools", content: "Upload Live Blood Analysis images/videos for AI-assisted interpretation. The system identifies patterns and suggests correlations. You make the final clinical judgments." },
-      { title: "Document Generation", content: "Generate protocol recommendations, intake forms, and reports. Templates are customizable. Documents can be sent directly to patients or downloaded for your records." }
+      { title: "Document Generation", content: "Generate protocol recommendations, intake forms, and reports. Templates are customizable. Documents can be sent directly to members or downloaded for your records." }
     ],
-    keyPoints: ["All-in-one portal for patient management", "Patient cards show key status at a glance", "AI-assisted blood analysis with doctor oversight", "Template-based document generation"],
+    keyPoints: ["All-in-one portal for member management", "Member cards show key status at a glance", "AI-assisted blood analysis with doctor oversight", "Template-based document generation"],
     videoUrl: "https://drive.google.com/file/d/DOC_PORTAL_VIDEO"
   },
   "doc-102-patient-intake": {
@@ -427,17 +427,17 @@ const moduleContent: Record<string, {
       { title: "What is Live Blood Analysis?", content: "LBA examines fresh, unstained blood under dark field microscopy at 1000x magnification. Unlike conventional blood tests, LBA shows living cells in real-time, revealing morphology, behavior, and plasma quality." },
       { title: "Ordering and Collecting", content: "LBA can be done in-office or at designated collection sites. Finger prick technique, immediate slide preparation, analysis within 15-20 minutes. Patient should fast 8-12 hours for best results." },
       { title: "AI-Assisted Interpretation", content: "Upload images/videos to Allio for HIPPOCRATES and PARACELSUS analysis. AI identifies patterns: rouleaux, echinocytes, crystals, fibrin, WBC activity. You receive a structured report with confidence scores." },
-      { title: "Clinical Integration", content: "LBA findings correlate with symptoms and other tests. Use for baseline assessment, progress monitoring, and patient education. The visual nature motivates compliance." }
+      { title: "Clinical Integration", content: "LBA findings correlate with symptoms and other tests. Use for baseline assessment, progress monitoring, and member education. The visual nature motivates compliance." }
     ],
-    keyPoints: ["Dark field microscopy at 1000x, living cells in real-time", "Fast 8-12 hours, analyze within 15-20 minutes", "AI assists identification; you make clinical judgments", "Visual results motivate patient compliance"],
+    keyPoints: ["Dark field microscopy at 1000x, living cells in real-time", "Fast 8-12 hours, analyze within 15-20 minutes", "AI assists identification; you make clinical judgments", "Visual results motivate member compliance"],
     videoUrl: "https://drive.google.com/file/d/LBA_BASICS_VIDEO"
   },
   "doc-104-protocol-prescribing": {
     sections: [
-      { title: "The Protocol Library", content: "FFPMA maintains evidence-based protocols for common conditions. Each includes rationale, product combinations, dosing, duration, monitoring, and expected outcomes. Use as templates; individualize for each patient." },
-      { title: "IV Therapy Prescribing", content: "Specify formulation, dose, frequency, and duration. Review contraindications and drug interactions. Ensure proper patient screening and informed consent. Monitor during and after infusion." },
+      { title: "The Protocol Library", content: "FFPMA maintains evidence-based protocols for common conditions. Each includes rationale, product combinations, dosing, duration, monitoring, and expected outcomes. Use as templates; individualize for each member." },
+      { title: "IV Therapy Protocols", content: "Specify formulation, dose, frequency, and duration. Review contraindications and drug interactions. Ensure proper member screening and informed consent. Monitor during and after infusion." },
       { title: "Peptide Protocols", content: "Select appropriate peptide(s), determine dosing and cycling, specify reconstitution and storage instructions. Many peptides are prescription-only. Document medical necessity." },
-      { title: "Combination Approaches", content: "Most patients benefit from multi-modal protocols: oral supplements + IV + peptides + lifestyle. Layer interventions strategically. Start simple, add complexity as needed." }
+      { title: "Combination Approaches", content: "Most members benefit from multi-modal protocols: oral supplements + IV + peptides + lifestyle. Layer interventions strategically. Start simple, add complexity as needed." }
     ],
     keyPoints: ["Protocol Library provides evidence-based templates", "IV: specify formula, dose, frequency; ensure screening", "Peptides: prescription-only, document necessity", "Layer interventions strategically"],
     videoUrl: "https://drive.google.com/file/d/PROTOCOL_PRESCRIBING_VIDEO"
@@ -445,7 +445,7 @@ const moduleContent: Record<string, {
   "doc-105-referral-network": {
     sections: [
       { title: "Member Referrals", content: "When members you've enrolled make purchases, you earn referral credits. Your unique doctor code tracks referrals. Share your signup link: forgottenformula.com/join/[your-code]." },
-      { title: "Doctor-to-Doctor Referrals", content: "Refer patients to specialists in the network. Orthopedic cases to our joint specialists, complex cases to experienced practitioners. Network collaboration improves outcomes." },
+      { title: "Doctor-to-Doctor Referrals", content: "Refer members to specialists in the network. Orthopedic cases to our joint specialists, complex cases to experienced practitioners. Network collaboration improves outcomes." },
       { title: "Building Your Practice", content: "The network supports your practice growth. Marketing materials, educational content, and AI tools are available. Focus on patient outcomes; referrals follow naturally." },
       { title: "Revenue Sharing", content: "Understand the compensation structure: membership fees, product purchases, protocol fees. Transparency builds trust. All earnings are documented in your portal." }
     ],
@@ -476,8 +476,8 @@ const moduleContent: Record<string, {
     sections: [
       { title: "Exam Overview", content: "The Doctor Certification Quiz consists of 40 questions covering all onboarding modules. You have 45 minutes. Passing score is 85% (34 correct). This certifies you for full network participation." },
       { title: "Topics Covered", content: "Portal navigation, patient intake, LBA basics, protocol prescribing, referral network, AI usage, and compliance/legal. Review each module's key points." },
-      { title: "Clinical Scenarios", content: "Many questions present clinical scenarios. Apply your knowledge to patient situations. Think through the appropriate response before selecting an answer." },
-      { title: "After Certification", content: "Upon passing, you're fully credentialed in the network. Your profile is activated for patient assignments. You'll receive your Doctor Certificate and can begin accepting patients immediately." }
+      { title: "Clinical Scenarios", content: "Many questions present clinical scenarios. Apply your knowledge to member situations. Think through the appropriate response before selecting an answer." },
+      { title: "After Certification", content: "Upon passing, you're fully credentialed in the network. Your profile is activated for member assignments. You'll receive your Doctor Certificate and can begin accepting members immediately." }
     ],
     keyPoints: ["40 questions, 45 minutes, 85% to pass (34 correct)", "Scenario-based questions test clinical application", "Review all module key points", "Passing activates full network participation"],
     videoUrl: "https://drive.google.com/file/d/DOC_EXAM_PREP_VIDEO"
@@ -589,7 +589,7 @@ const moduleContent: Record<string, {
       },
       {
         title: "Clinical Applications",
-        content: "LBA helps identify nutritional deficiencies, oxidative stress, inflammation markers, and overall cellular health. It's particularly valuable for monitoring patient progress during treatment protocols and providing visual feedback that motivates lifestyle changes."
+        content: "LBA helps identify nutritional deficiencies, oxidative stress, inflammation markers, and overall cellular health. It's particularly valuable for monitoring member progress during wellness protocols and providing visual feedback that motivates lifestyle changes."
       }
     ],
     keyPoints: [
@@ -608,15 +608,15 @@ const moduleContent: Record<string, {
       },
       {
         title: "Safety Protocols and Screening",
-        content: "Before administering IV therapy, proper patient screening is essential. This includes reviewing medical history, current medications, allergies, and contraindications. Baseline vital signs (blood pressure, pulse, temperature) should be recorded, and informed consent obtained."
+        content: "Before administering IV therapy, proper member screening is essential. This includes reviewing medical history, current medications, allergies, and contraindications. Baseline vital signs (blood pressure, pulse, temperature) should be recorded, and informed consent obtained."
       },
       {
         title: "Vein Selection and Access",
-        content: "Proper venipuncture technique minimizes patient discomfort and complications. Select veins that are visible, palpable, and adequately sized. The antecubital fossa is preferred for larger infusions. Always rotate access sites to prevent vein damage."
+        content: "Proper venipuncture technique minimizes member discomfort and complications. Select veins that are visible, palpable, and adequately sized. The antecubital fossa is preferred for larger infusions. Always rotate access sites to prevent vein damage."
       },
       {
         title: "Infusion Rate and Monitoring",
-        content: "Most IV vitamin infusions run at 1-2 mL per minute. Monitor patients continuously for adverse reactions: flushing (slow the rate), pain at site, dizziness, or allergic symptoms. Have emergency protocols ready for anaphylaxis or severe reactions."
+        content: "Most IV vitamin infusions run at 1-2 mL per minute. Monitor members continuously for adverse reactions: flushing (slow the rate), pain at site, dizziness, or allergic symptoms. Have emergency protocols ready for anaphylaxis or severe reactions."
       },
       {
         title: "Common IV Formulations",
@@ -1104,7 +1104,7 @@ const moduleContent: Record<string, {
       },
       {
         title: "Clinical Protocols and Safety",
-        content: "Safe detoxification requires proper preparation, adequate hydration, electrolyte support, and gradual progression. Patients with high toxic burden may experience healing crises. Pre-detox assessment should include liver function, kidney function, and baseline symptom scoring."
+        content: "Safe detoxification requires proper preparation, adequate hydration, electrolyte support, and gradual progression. Members with high toxic burden may experience healing crises. Pre-detox assessment should include liver function, kidney function, and baseline symptom scoring."
       }
     ],
     keyPoints: [
@@ -1131,7 +1131,7 @@ const moduleContent: Record<string, {
       },
       {
         title: "Constitutional Assessment Integration",
-        content: "Ayurvedic dosha typing and TCM pattern diagnosis can complement modern functional medicine testing. A Vata-dominant patient may need different supplement timing than Kapha-dominant. TCM blood stasis patterns may correlate with modern inflammatory markers."
+        content: "Ayurvedic dosha typing and TCM pattern diagnosis can complement modern functional medicine testing. A Vata-dominant member may need different supplement timing than Kapha-dominant. TCM blood stasis patterns may correlate with modern inflammatory markers."
       },
       {
         title: "Building Comprehensive Protocols",
@@ -1166,7 +1166,7 @@ const moduleContent: Record<string, {
       },
       {
         title: "Factors Affecting Peptide PK",
-        content: "Injection site (abdomen vs. thigh vs. deltoid affects absorption rate), injection depth (subcutaneous vs. intramuscular), patient body composition, hydration status, and local blood flow all influence peptide pharmacokinetics. Understanding these variables enables optimized dosing."
+        content: "Injection site (abdomen vs. thigh vs. deltoid affects absorption rate), injection depth (subcutaneous vs. intramuscular), member body composition, hydration status, and local blood flow all influence peptide pharmacokinetics. Understanding these variables enables optimized dosing."
       }
     ],
     keyPoints: [
@@ -1304,16 +1304,16 @@ const moduleContent: Record<string, {
   "ppm-106-patient-management": {
     sections: [
       {
-        title: "Patient Assessment for Peptide Therapy",
+        title: "Member Assessment for Peptide Therapy",
         content: "Comprehensive assessment includes: medical history review, current medications, contraindications screening, baseline labs (CBC, CMP, hormones, inflammatory markers), body composition analysis, and treatment goals. Document everything for medical-legal protection and outcome tracking."
       },
       {
         title: "Protocol Selection Framework",
-        content: "Match peptides to patient needs: Healing/recovery → BPC-157/TB-500 stack. Immune support → Thymosin Alpha-1. Anti-aging → Epithalon + GHK-Cu. Weight management → GLP-1 agonist. Gut health → BPC-157 + KPV. Consider patient comfort with injections, budget, and commitment level."
+        content: "Match peptides to member needs: Healing/recovery → BPC-157/TB-500 stack. Immune support → Thymosin Alpha-1. Anti-aging → Epithalon + GHK-Cu. Weight management → GLP-1 agonist. Gut health → BPC-157 + KPV. Consider member comfort with injections, budget, and commitment level."
       },
       {
         title: "Monitoring and Adjustments",
-        content: "Schedule follow-ups at 2, 6, and 12 weeks. Reassess symptoms, side effects, and labs. Adjust dosing based on response — some patients need lower doses (higher sensitivity) while others need maximum therapeutic doses. Document all changes and rationale."
+        content: "Schedule follow-ups at 2, 6, and 12 weeks. Reassess symptoms, side effects, and labs. Adjust dosing based on response — some members need lower doses (higher sensitivity) while others need maximum therapeutic doses. Document all changes and rationale."
       },
       {
         title: "Managing Expectations and Compliance",
@@ -1326,7 +1326,7 @@ const moduleContent: Record<string, {
     ],
     keyPoints: [
       "Comprehensive assessment: history, labs, body comp, goals",
-      "Match peptide protocols to specific patient needs and preferences",
+      "Match peptide protocols to specific member needs and preferences",
       "Monitor at 2, 6, 12 weeks; adjust based on response",
       "Set realistic timelines: weeks for healing, months for metabolic",
       "Document everything: consent, protocols, adverse events, outcomes"
@@ -1398,11 +1398,11 @@ const moduleContent: Record<string, {
     sections: [
       {
         title: "IV Therapy Fundamentals",
-        content: "Intravenous therapy delivers nutrients directly to the bloodstream, achieving 100% bioavailability. This bypasses GI absorption barriers, making it ideal for patients with malabsorption, acute deficiencies, or conditions requiring high tissue concentrations. Understanding osmolarity, pH, and compatibility is essential for safe IV formulation."
+        content: "Intravenous therapy delivers nutrients directly to the bloodstream, achieving 100% bioavailability. This bypasses GI absorption barriers, making it ideal for members with malabsorption, acute deficiencies, or conditions requiring high tissue concentrations. Understanding osmolarity, pH, and compatibility is essential for safe IV formulation."
       },
       {
         title: "The Myers' Cocktail and Variations",
-        content: "Dr. John Myers' original formula: magnesium chloride, calcium gluconate, vitamin B-complex, B12, and vitamin C in sterile water. Modern variations add glutathione, zinc, selenium, or taurine. Standard infusion: 150-250mL over 30-45 minutes. Customize based on patient needs and lab values."
+        content: "Dr. John Myers' original formula: magnesium chloride, calcium gluconate, vitamin B-complex, B12, and vitamin C in sterile water. Modern variations add glutathione, zinc, selenium, or taurine. Standard infusion: 150-250mL over 30-45 minutes. Customize based on member needs and lab values."
       },
       {
         title: "High-Dose Vitamin C Protocols",
@@ -1498,7 +1498,7 @@ const moduleContent: Record<string, {
         content: "Layer 1: Foundation (correct deficiencies, optimize nutrition). Layer 2: Remove (detoxification, eliminate inflammatory triggers). Layer 3: Repair (gut healing, tissue regeneration with peptides). Layer 4: Optimize (hormones, immune modulation, performance). Each layer builds on the previous — don't skip ahead."
       },
       {
-        title: "Case Study: Chronic Fatigue Patient",
+        title: "Case Study: Chronic Fatigue Member",
         content: "Assessment reveals: low vitamin D (18 ng/mL), suboptimal B12, elevated inflammatory markers, poor sleep. Protocol: Foundation — D3 5000IU + K2, methylated B-complex, magnesium glycinate 400mg. Repair — BPC-157 250mcg for gut healing. Optimize — Thymosin Alpha-1 for immune regulation. Reassess at 8 weeks."
       },
       {

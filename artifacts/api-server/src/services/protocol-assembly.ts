@@ -75,7 +75,7 @@ export async function fetchProtocolCitations(
           "DR_FORMULA",
           "DR. FORMULA",
           term,
-          "Protocol citation for patient protocol generation"
+          "Protocol citation for member protocol generation"
         );
         allPaperIds.push(...paperIds);
       } catch (err) {
@@ -314,7 +314,7 @@ export async function analyzeTranscript(
     messages: [
       {
         role: "system",
-        content: `You are a clinical data extraction expert for Forgotten Formula PMA. Analyze the call transcript and extract a structured patient profile.
+        content: `You are a clinical data extraction expert for Forgotten Formula PMA. Analyze the call transcript and extract a structured member profile.
 
 Extract ALL of the following into valid JSON matching the PatientProfile interface:
 - name, age, gender, location, callDate
@@ -332,7 +332,7 @@ Extract ALL of the following into valid JSON matching the PatientProfile interfa
 - dentalHistory: {amalgamFillings, rootCanals, cavitations?}
 - deficiencies: array of suspected deficiencies
 - contraindications: array of things to avoid
-- goals: array of patient goals
+- goals: array of member wellness goals
 
 Use clinical reasoning to identify root causes from the data. Follow the FF PMA 5 Root Causes framework:
 1. Toxicity (mercury, mold, chemicals)
@@ -354,12 +354,12 @@ Return ONLY valid JSON, no markdown.`,
   });
 
   const content = response.choices[0]?.message?.content;
-  if (!content) throw new Error("Failed to extract patient profile from transcript");
+  if (!content) throw new Error("Failed to extract member profile from transcript");
 
   const parsed = JSON.parse(content);
 
   const profile: PatientProfile = {
-    name: parsed.name || "Unknown Patient",
+    name: parsed.name || "Unknown Member",
     age: parsed.age || 0,
     gender: parsed.gender || "unknown",
     location: parsed.location,
@@ -406,7 +406,7 @@ export async function generateProtocol(
   const knowledgeBase = buildKnowledgeBase();
   const detoxKnowledge = loadDetoxKnowledge();
 
-  const systemPrompt = `You are DR. FORMULA, the Forgotten Formula Protocol Architect. Given a patient profile, generate a comprehensive 90-day healing protocol with FULL MODALITY COVERAGE.
+  const systemPrompt = `You are DR. FORMULA, the Forgotten Formula Protocol Architect. Given a member profile, generate a comprehensive 90-day healing protocol with FULL MODALITY COVERAGE.
 
 ${knowledgeBase}
 
@@ -802,7 +802,7 @@ function runDeterministicQAChecks(
     issues.push("Missing NAD+ precursors (NMN/NR) — required for sirtuin activation");
   }
   if (hasCancer && !protocol.ivTherapies?.some(iv => iv.name?.toLowerCase().includes("vitamin c"))) {
-    issues.push("Cancer patient missing high-dose Vitamin C IV — critical for cancer protocol");
+    issues.push("Cancer member missing high-dose Vitamin C IV — critical for cancer protocol");
   }
   if (hasMold && !protocol.nebulization?.length) {
     issues.push("Mold exposure present but no nebulization protocol — nebulized glutathione 3x/week recommended");
@@ -917,17 +917,17 @@ function runDeterministicQAChecks(
 }
 
 const PERSONA_PROMPTS = {
-  HIPPOCRATES: `You are HIPPOCRATES, a clinical safety reviewer for the Forgotten Formula PMA. Your role is to review healing protocols for patient safety, drug interactions, contraindications, and clinical completeness.
+  HIPPOCRATES: `You are HIPPOCRATES, a clinical safety reviewer for the Forgotten Formula PMA. Your role is to review healing protocols for member safety, drug interactions, contraindications, and clinical completeness.
 
-Review the protocol below against the patient profile. Return a JSON object with:
+Review the protocol below against the member profile. Return a JSON object with:
 - "issues": string[] — blocking safety/completeness problems that MUST be fixed
 - "suggestions": string[] — non-blocking improvements
 
 Focus on:
 1. Drug-drug and supplement-drug interactions
-2. Contraindications based on patient conditions, medications, and allergies
+2. Contraindications based on member conditions, medications, and allergies
 3. Dosing safety (overdose risk, pediatric/geriatric adjustments)
-4. Missing condition-specific treatments (e.g., cancer needs high-dose Vitamin C IV)
+4. Missing condition-specific protocols (e.g., cancer needs high-dose Vitamin C IV)
 5. Route-of-administration errors (e.g., Lipo-B must be IM, never IV)
 6. ECS suppository protocol presence and correctness
 
@@ -935,7 +935,7 @@ Return ONLY valid JSON. No markdown, no explanation.`,
 
   PARACELSUS: `You are PARACELSUS, a formulation and dosing specialist for the Forgotten Formula PMA. Your role is to verify that all compounds use correct dosages, routes of administration, frequencies, and formulations from the FF PMA product catalog.
 
-Review the protocol below against the patient profile. Return a JSON object with:
+Review the protocol below against the member profile. Return a JSON object with:
 - "issues": string[] — blocking dosing/formulation errors that MUST be fixed
 - "suggestions": string[] — non-blocking formulation improvements
 
@@ -951,7 +951,7 @@ Return ONLY valid JSON. No markdown, no explanation.`,
 
   ORACLE: `You are ORACLE, a protocol completeness and methodology auditor for the Forgotten Formula PMA. Your role is to verify the protocol follows FF PMA 2026 methodology, includes all required modalities, and maintains internal consistency.
 
-Review the protocol below against the patient profile. Return a JSON object with:
+Review the protocol below against the member profile. Return a JSON object with:
 - "issues": string[] — blocking methodology violations that MUST be fixed
 - "suggestions": string[] — non-blocking improvements to protocol quality
 

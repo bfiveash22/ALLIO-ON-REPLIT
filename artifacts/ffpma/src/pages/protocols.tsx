@@ -55,12 +55,12 @@ const protocols: Protocol[] = [
       "Gauze and bandage",
     ],
     steps: [
-      { title: "Patient Preparation", description: "Verify patient identity and consent. Review medical history and contraindications. Ensure patient is well-hydrated." },
+      { title: "Member Preparation", description: "Verify member identity and consent. Review medical history and contraindications. Ensure member is well-hydrated." },
       { title: "Vial Preparation", description: "Allow exosome vial to reach room temperature. Gently invert vial 3-5 times to mix. Do not shake vigorously." },
       { title: "Draw Exosomes", description: "Using aseptic technique, draw the exosome solution into a 10ml syringe. Avoid introducing air bubbles." },
       { title: "Venous Access", description: "Apply tourniquet and identify suitable vein. Clean site with alcohol and allow to dry. Insert butterfly needle at 15-30 degree angle." },
       { title: "Administration", description: "Confirm blood return. Release tourniquet. Slowly push exosome solution over 3-5 minutes. Monitor for adverse reactions." },
-      { title: "Post-Injection", description: "Apply gentle pressure with gauze. Bandage site. Have patient rest for 10-15 minutes before discharge." },
+      { title: "Post-Injection", description: "Apply gentle pressure with gauze. Bandage site. Have member rest for 10-15 minutes before leaving." },
     ],
     precautions: [
       "Contraindicated in active infection or fever",
@@ -92,12 +92,12 @@ const protocols: Protocol[] = [
       "Alcohol swabs and gloves",
     ],
     steps: [
-      { title: "Patient Assessment", description: "Verify consent and review allergies. Take baseline vitals. Ensure IV access site is suitable." },
-      { title: "Solution Preparation", description: "Using sterile technique, add exosome solution to saline bag. Gently mix by inverting bag. Label with patient info and contents." },
+      { title: "Member Assessment", description: "Verify consent and review allergies. Take baseline vitals. Ensure IV access site is suitable." },
+      { title: "Solution Preparation", description: "Using sterile technique, add exosome solution to saline bag. Gently mix by inverting bag. Label with member info and contents." },
       { title: "IV Placement", description: "Establish IV access using appropriate gauge catheter. Confirm patency with saline flush." },
       { title: "Begin Infusion", description: "Connect exosome-saline solution. Set drip rate for 45-60 minute infusion. Start slow for first 15 minutes." },
       { title: "Monitoring", description: "Check vitals every 15 minutes. Watch for adverse reactions including flushing, difficulty breathing, or rash." },
-      { title: "Completion", description: "Flush line with saline. Remove IV and apply pressure. Document procedure and patient response." },
+      { title: "Completion", description: "Flush line with saline. Remove IV and apply pressure. Document procedure and member response." },
     ],
     precautions: [
       "Pre-medicate if history of infusion reactions",
@@ -129,9 +129,9 @@ const protocols: Protocol[] = [
     steps: [
       { title: "Hand Hygiene", description: "Wash hands thoroughly with soap and water. Dry with clean towel." },
       { title: "Preparation", description: "If using vial, prepare sterile dropper. Check solution clarity - should be clear without particles." },
-      { title: "Patient Position", description: "Have patient tilt head back and look up. Gently pull down lower eyelid to create pocket." },
+      { title: "Member Position", description: "Have member tilt head back and look up. Gently pull down lower eyelid to create pocket." },
       { title: "Application", description: "Hold dropper 1-2 inches above eye. Instill 1-2 drops into lower conjunctival sac. Avoid touching eye or lashes." },
-      { title: "Post-Application", description: "Have patient close eyes gently for 1-2 minutes. Apply gentle pressure to inner corner to prevent drainage." },
+      { title: "Post-Application", description: "Have member close eyes gently for 1-2 minutes. Apply gentle pressure to inner corner to prevent drainage." },
       { title: "Repeat", description: "If treating both eyes, repeat process. Cap dropper immediately after use." },
     ],
     precautions: [
@@ -165,10 +165,10 @@ const protocols: Protocol[] = [
     steps: [
       { title: "Equipment Setup", description: "Ensure nebulizer is clean and functioning. Attach fresh nebulizer cup and appropriate mask/mouthpiece." },
       { title: "Solution Preparation", description: "Add exosome solution to nebulizer cup. Dilute with sterile saline to appropriate volume (typically 3-5ml total)." },
-      { title: "Patient Preparation", description: "Position patient comfortably upright. Take baseline oxygen saturation. Instruct on slow, deep breathing." },
+      { title: "Member Preparation", description: "Position member comfortably upright. Take baseline oxygen saturation. Instruct on slow, deep breathing." },
       { title: "Treatment", description: "Begin nebulization. Have patient breathe slowly and deeply through mouth. Continue until solution is nebulized (10-15 min)." },
       { title: "Monitoring", description: "Monitor for coughing or bronchospasm. Check oxygen saturation periodically. Stop if adverse reaction occurs." },
-      { title: "Completion", description: "Have patient rest briefly. Recheck vitals. Clean and disinfect equipment." },
+      { title: "Completion", description: "Have member rest briefly. Recheck vitals. Clean and disinfect equipment." },
     ],
     precautions: [
       "Not for patients with severe asthma exacerbation",
@@ -205,7 +205,7 @@ const protocols: Protocol[] = [
       { title: "Numbing", description: "Apply topical anesthetic cream generously. Cover with occlusive wrap. Allow 20-30 minutes for full effect." },
       { title: "Preparation", description: "Clean treatment area with alcohol. Draw exosome solution into syringe with fine needle." },
       { title: "Injection Sites", description: "Inject into corpus cavernosum at multiple points. Use proper technique to avoid urethra and dorsal vein." },
-      { title: "Post-Injection", description: "Apply gentle pressure. May use ice for comfort. Have patient rest briefly." },
+      { title: "Post-Injection", description: "Apply gentle pressure. May use ice for comfort. Have member rest briefly." },
       { title: "Discharge", description: "Provide post-care instructions. Schedule follow-up. Discuss expected timeline for results." },
     ],
     precautions: [
@@ -241,9 +241,9 @@ const protocols: Protocol[] = [
     steps: [
       { title: "Consultation", description: "Obtain informed consent. Discuss sexual health concerns and goals. Review medical history." },
       { title: "Preparation", description: "Apply topical anesthetic to treatment areas. Allow adequate time for numbing (20-30 min)." },
-      { title: "Positioning", description: "Position patient comfortably. Use sterile technique throughout procedure." },
+      { title: "Positioning", description: "Position member comfortably. Use sterile technique throughout procedure." },
       { title: "Injection", description: "Inject exosome solution into designated areas including anterior vaginal wall and clitoral region." },
-      { title: "Post-Procedure", description: "Monitor briefly for any adverse reactions. Ensure patient comfort." },
+      { title: "Post-Procedure", description: "Monitor briefly for any adverse reactions. Ensure member comfort." },
       { title: "Follow-up", description: "Provide written instructions. Schedule follow-up appointment. Discuss expected outcomes." },
     ],
     precautions: [
@@ -342,7 +342,7 @@ const protocols: Protocol[] = [
     title: "Pre & Post Treatment Guidelines",
     category: "guidelines",
     icon: <ClipboardList className="h-5 w-5" />,
-    description: "General guidelines for patient preparation and aftercare to optimize exosome treatment outcomes.",
+    description: "General guidelines for patient preparation and aftercare to optimize exosome protocol outcomes.",
     targetAudience: ["doctor", "clinic", "member"],
     materials: [],
     steps: [

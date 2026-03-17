@@ -308,7 +308,7 @@ THERAPEUTIC BENEFITS:
 VARIATIONS ALLOWED:
 - Add more garlic for immune support
 - Include a small amount of fresh herbs after cooking
-- Adjust consistency to patient preference
+- Adjust consistency to member preference
 
 DO NOT ADD:
 - Salt
@@ -388,7 +388,7 @@ SIGNS OF HEALING REACTIONS:
     summary: "The scientific principles behind Gerson Therapy including sodium/potassium balance, oxidative phosphorylation, and tissue damage theory.",
     content: `GERSON THERAPY SCIENTIFIC RATIONALE
 
-Dr. Max Gerson developed his therapy based on careful observation of patient outcomes and the scientific understanding of his era. Modern research continues to validate many of his principles.
+Dr. Max Gerson developed his therapy based on careful observation of member outcomes and the scientific understanding of his era. Modern research continues to validate many of his principles.
 
 SODIUM/POTASSIUM BALANCE:
 - Cancer cells have elevated sodium and depleted potassium
@@ -411,7 +411,7 @@ OXIDATIVE METABOLISM:
 
 LIVER FUNCTION:
 - The liver is the primary detoxification organ
-- Cancer patients often have compromised liver function
+- Cancer members often have compromised liver function
 - Coffee enemas increase glutathione S-transferase by 600-700%
 - This enhances Phase II liver detoxification
 

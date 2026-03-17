@@ -228,7 +228,7 @@ export function ConsultAITeam({ preselectedAgentId, patientName }: ConsultAITeam
             AI Science Team Consultation
           </h2>
           <p className="text-white/60 text-sm mt-1">
-            Consult with AI specialists for patient analysis and protocol guidance
+            Consult with AI specialists for member analysis and protocol guidance
           </p>
         </div>
         <Badge className="bg-violet-500/10 text-violet-400 border-violet-500/30">
@@ -290,13 +290,13 @@ export function ConsultAITeam({ preselectedAgentId, patientName }: ConsultAITeam
               className="flex items-center gap-2 text-xs text-white/60 hover:text-white/80 transition-colors w-full"
             >
               <User className="w-3 h-3" />
-              Patient Context
+              Member Context
               {showContext ? <ChevronUp className="w-3 h-3 ml-auto" /> : <ChevronDown className="w-3 h-3 ml-auto" />}
             </button>
             {showContext && (
               <div className="mt-2 space-y-2">
                 <Input
-                  placeholder="Patient name"
+                  placeholder="Member name"
                   value={patientContext.name}
                   onChange={(e) => setPatientContext((p) => ({ ...p, name: e.target.value }))}
                   className="bg-white/5 border-white/10 text-xs h-8"
@@ -391,7 +391,7 @@ export function ConsultAITeam({ preselectedAgentId, patientName }: ConsultAITeam
                         {["Protocol guidance", "Lab interpretation", "Treatment options"].map((suggestion) => (
                           <button
                             key={suggestion}
-                            onClick={() => setMessageText(`Help me with ${suggestion.toLowerCase()} for my patient`)}
+                            onClick={() => setMessageText(`Help me with ${suggestion.toLowerCase()} for my member`)}
                             className="text-xs px-3 py-1.5 rounded-full bg-violet-500/10 text-violet-300 hover:bg-violet-500/20 border border-violet-500/20 transition-colors"
                           >
                             {suggestion}
@@ -435,7 +435,7 @@ export function ConsultAITeam({ preselectedAgentId, patientName }: ConsultAITeam
               <div className="p-3 border-t border-white/10">
                 <div className="flex items-center gap-2">
                   <Input
-                    placeholder={`Ask ${activeAgent.name} about your patient...`}
+                    placeholder={`Ask ${activeAgent.name} about your member...`}
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
                     onKeyDown={(e) => {

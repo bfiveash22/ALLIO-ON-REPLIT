@@ -4,7 +4,7 @@ import { rupaHealthAgent } from '../services/rupa-health-agent';
 async function testRupaHealthAgent() {
     console.log("Testing Rupa Health Agent...");
 
-    // Testing with a hypothetical patient and standard panel
+    // Testing with a hypothetical member and standard panel
     const patientDetails = {
         firstName: "Test",
         lastName: "Patient",

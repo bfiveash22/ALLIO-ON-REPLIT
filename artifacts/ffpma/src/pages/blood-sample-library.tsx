@@ -729,7 +729,7 @@ export default function BloodSampleLibrary() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-slate-300 mb-2 block">Patient Context (optional)</label>
+                  <label className="text-sm text-slate-300 mb-2 block">Member Context (optional)</label>
                   <Textarea
                     data-testid="textarea-patient-context"
                     placeholder="Recent travel history, symptoms, medications..."

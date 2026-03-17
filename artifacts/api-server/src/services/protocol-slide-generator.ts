@@ -274,16 +274,16 @@ export async function generateAnnetteGomerSlides(): Promise<ProtocolSlideResult>
   addTextBox(titleSlide, 'ANNETTE GOMER', 40, 80, 640, 50, 40, true, FFPMA_COLORS.white, 'Montserrat');
   addTextBox(titleSlide, 'Complete Healing Protocol', 40, 140, 640, 40, 24, false, FFPMA_COLORS.cyan, 'Montserrat');
   addTextBox(titleSlide, 'FF PMA Model — The 5 Rs of Forgotten Formula', 40, 185, 640, 30, 14, false, FFPMA_COLORS.gold, 'Open Sans');
-  addTextBox(titleSlide, 'Prepared by: FFPMA Medical Team\nDate: March 9, 2026\nPatient DOB: September 7, 1950 (Age 75)', 40, 240, 400, 60, 11, false, FFPMA_COLORS.lightGray, 'Open Sans');
+  addTextBox(titleSlide, 'Prepared by: FFPMA Wellness Team\nDate: March 9, 2026\nMember DOB: September 7, 1950 (Age 75)', 40, 240, 400, 60, 11, false, FFPMA_COLORS.lightGray, 'Open Sans');
   addTextBox(titleSlide, 'FORGOTTEN FORMULA PMA\n"Before you heal someone, ask them if they\'re willing to give up the things that make them sick." — Hippocrates', 40, 330, 640, 40, 9, false, FFPMA_COLORS.subtleText, 'Open Sans');
 
   // ═══════════════════════════════════════════
-  // SLIDE 2: Patient Overview
+  // SLIDE 2: Member Overview
   // ═══════════════════════════════════════════
   buildContentSlide(
-    'PATIENT OVERVIEW',
+    'MEMBER OVERVIEW',
     [
-      'Patient: Annette Gomer  |  Age: 75  |  DOB: September 7, 1950',
+      'Member: Annette Gomer  |  Age: 75  |  DOB: September 7, 1950',
       '',
       'PRIMARY CONDITIONS:',
       '• Graves Disease + Hashimoto\'s Thyroiditis (thyroid autoimmune)',
@@ -1000,13 +1000,13 @@ export async function generateKathrynSmithSlides(): Promise<ProtocolSlideResult>
   addTextBox(titleSlide, 'KATHRYN SMITH', 40, 80, 640, 50, 40, true, FFPMA_COLORS.white, 'Montserrat');
   addTextBox(titleSlide, 'Complete Healing Protocol', 40, 140, 640, 40, 24, false, FFPMA_COLORS.cyan, 'Montserrat');
   addTextBox(titleSlide, 'FF PMA Model — Breast Cancer (Second Occurrence) — Root Cause Approach', 40, 185, 640, 30, 14, false, FFPMA_COLORS.gold, 'Open Sans');
-  addTextBox(titleSlide, 'Prepared by: FFPMA Medical Team\nDate: March 13, 2026\nPatient DOB: ~1951 (Age 75)', 40, 240, 400, 60, 11, false, FFPMA_COLORS.lightGray, 'Open Sans');
+  addTextBox(titleSlide, 'Prepared by: FFPMA Wellness Team\nDate: March 13, 2026\nMember DOB: ~1951 (Age 75)', 40, 240, 400, 60, 11, false, FFPMA_COLORS.lightGray, 'Open Sans');
   addTextBox(titleSlide, 'FORGOTTEN FORMULA PMA\n"Before you heal someone, ask them if they\'re willing to give up the things that make them sick." — Hippocrates', 40, 330, 640, 40, 9, false, FFPMA_COLORS.subtleText, 'Open Sans');
 
   buildContentSlide(
-    'PATIENT OVERVIEW',
+    'MEMBER OVERVIEW',
     [
-      'Patient: Kathryn Smith  |  Age: 75  |  Married 42 years  |  6 Children  |  14 Grandchildren',
+      'Member: Kathryn Smith  |  Age: 75  |  Married 42 years  |  6 Children  |  14 Grandchildren',
       '',
       'PRIMARY CONDITION:',
       '• Breast Cancer — Second Occurrence (Feb 2026)',
@@ -1056,7 +1056,7 @@ export async function generateKathrynSmithSlides(): Promise<ProtocolSlideResult>
       '• Gallbladder & appendix still intact',
       '',
       'CANCER HISTORY:',
-      '• ~2018: First breast cancer — lumpectomy, right breast (no root cause treatment)',
+      '• ~2018: First breast cancer — lumpectomy, right breast (no root cause protocol)',
       '• Feb 18, 2026: Biopsy → Feb 24: Diagnosis (ER+, PR+, HER2+)',
       '• Feb 26, 2026: Consultation with Michael Blake / Forgotten Formula PMA',
       '• Lymph node involvement (right armpit) — indicates potential spread',
@@ -1251,7 +1251,7 @@ export async function generateKathrynSmithSlides(): Promise<ProtocolSlideResult>
     'R2: REBALANCE — Gut & Hormone Restoration',
     [
       'GUT MICROBIOME RESTORATION:',
-      'Note: Gallbladder & appendix are INTACT (advantage over many patients)',
+      'Note: Gallbladder & appendix are INTACT (advantage over many members)',
       '',
       'Probiotic Restoration:',
       '• Multi-strain Probiotic: 100+ billion CFU daily (Lactobacillus, Bifido, S. boulardii)',

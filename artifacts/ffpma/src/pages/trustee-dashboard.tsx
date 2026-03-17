@@ -950,13 +950,13 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
       return res.json();
     },
     onSuccess: () => {
-      toast({ title: "Patient added successfully" });
+      toast({ title: "Member added successfully" });
       setShowAddPatient(false);
       setNewPatient({ name: "", email: "", phone: "", dateOfBirth: "" });
       refetchPatients();
     },
     onError: (error: Error) => {
-      toast({ title: "Failed to add patient", description: error.message, variant: "destructive" });
+      toast({ title: "Failed to add member", description: error.message, variant: "destructive" });
     },
   });
 
@@ -968,9 +968,9 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
             <div>
               <CardTitle className="flex items-center gap-2 text-emerald-100">
                 <Stethoscope className="w-5 h-5 text-emerald-400" />
-                Patient Management
+                Member Management
               </CardTitle>
-              <CardDescription>Full patient access — roster, enrollment, protocols, clinical tools, and messaging</CardDescription>
+              <CardDescription>Full member access — roster, enrollment, protocols, clinical tools, and messaging</CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <Badge className="bg-emerald-500/20 text-emerald-300">{roleLabel} Access</Badge>
@@ -981,7 +981,7 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
                 onClick={() => setShowAddPatient(true)}
                 data-testid="button-add-patient"
               >
-                <Plus className="w-4 h-4 mr-1" /> Add Patient
+                <Plus className="w-4 h-4 mr-1" /> Add Member
               </Button>
             </div>
           </div>
@@ -990,7 +990,7 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-center">
               <p className="text-2xl font-bold text-emerald-400">{patients.length}</p>
-              <p className="text-xs text-white/60">Total Patients</p>
+              <p className="text-xs text-white/60">Total Members</p>
             </div>
             <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-center">
               <p className="text-2xl font-bold text-cyan-400">{patients.filter(p => p.status === "active").length}</p>
@@ -1009,7 +1009,7 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
           <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
             <TabsList className="bg-black/40 border border-white/10">
               <TabsTrigger value="roster" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300">
-                <Users className="w-4 h-4 mr-2" /> Patient Roster
+                <Users className="w-4 h-4 mr-2" /> Member Roster
               </TabsTrigger>
               <TabsTrigger value="protocols" className="data-[state=active]:bg-violet-500/20 data-[state=active]:text-violet-300">
                 <FileText className="w-4 h-4 mr-2" /> Protocols
@@ -1027,7 +1027,7 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                   <Input
-                    placeholder="Search patients by name or email..."
+                    placeholder="Search members by name or email..."
                     value={patientSearch}
                     onChange={(e) => setPatientSearch(e.target.value)}
                     className="pl-10 bg-white/5 border-white/10"
@@ -1054,7 +1054,7 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
                 {filteredPatients.length === 0 ? (
                   <div className="text-center py-12">
                     <Users className="w-12 h-12 mx-auto mb-3 text-white/20" />
-                    <p className="text-white/60">{patients.length === 0 ? "No patients yet. Add your first patient." : "No patients match your filters."}</p>
+                    <p className="text-white/60">{patients.length === 0 ? "No members yet. Add your first member." : "No members match your filters."}</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -1242,8 +1242,8 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
       <Dialog open={showAddPatient} onOpenChange={setShowAddPatient}>
         <DialogContent className="bg-slate-900 border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle>Add New Patient</DialogTitle>
-            <DialogDescription className="text-white/60">Enter patient information to add them to the system</DialogDescription>
+            <DialogTitle>Add New Member</DialogTitle>
+            <DialogDescription className="text-white/60">Enter member information to add them to the system</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -1299,7 +1299,7 @@ function PatientManagementPanel({ roleLabel }: { roleLabel: string }) {
               data-testid="button-submit-patient"
             >
               {addPatientMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-              Add Patient
+              Add Member
             </Button>
           </div>
         </DialogContent>
@@ -1818,7 +1818,7 @@ function ProtocolQueuePanel() {
               </div>
               <div>
                 <CardTitle>Protocol Review Queue</CardTitle>
-                <CardDescription>Review, approve, and deliver patient protocols to doctors</CardDescription>
+                <CardDescription>Review, approve, and deliver member protocols to doctors</CardDescription>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -1873,7 +1873,7 @@ function ProtocolQueuePanel() {
             <div className="text-center py-12">
               <ClipboardList className="w-16 h-16 mx-auto mb-4 text-white/20" />
               <h3 className="text-lg font-medium mb-2">No Protocols Yet</h3>
-              <p className="text-white/50">Protocols will appear here once generated from patient intake forms or transcripts</p>
+              <p className="text-white/50">Protocols will appear here once generated from member intake forms or transcripts</p>
             </div>
           )}
         </CardContent>
@@ -3058,9 +3058,9 @@ export default function TrusteeDashboard() {
                   <Bell className="w-4 h-4 mr-2" />
                   Sentinel Alerts
                 </TabsTrigger>
-                <TabsTrigger value="patient-management" className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-400 data-[state=active]:bg-emerald-950/20 data-[state=active]:text-white text-white/60 hover:text-white/80 transition-all whitespace-nowrap" data-testid="tab-patient-management">
+                <TabsTrigger value="member-management" className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-400 data-[state=active]:bg-emerald-950/20 data-[state=active]:text-white text-white/60 hover:text-white/80 transition-all whitespace-nowrap" data-testid="tab-member-management">
                   <Stethoscope className="w-4 h-4 mr-2" />
-                  Patient Tools
+                  Member Tools
                 </TabsTrigger>
                 <TabsTrigger value="pma-contracts" className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-teal-400 data-[state=active]:bg-teal-950/20 data-[state=active]:text-white text-white/60 hover:text-white/80 transition-all whitespace-nowrap" data-testid="tab-pma-contracts">
                   <Gavel className="w-4 h-4 mr-2" />
@@ -5108,8 +5108,8 @@ export default function TrusteeDashboard() {
               <SentinelAlertsPanel />
             </TabsContent>
 
-            {/* Patient Management Tab - Same features as Doctors */}
-            <TabsContent value="patient-management" className="space-y-6">
+            {/* Member Management Tab - Same features as Doctors */}
+            <TabsContent value="member-management" className="space-y-6">
               <PatientManagementPanel roleLabel="Trustee" />
             </TabsContent>
 

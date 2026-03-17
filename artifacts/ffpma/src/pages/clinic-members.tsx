@@ -67,7 +67,7 @@ export default function ClinicMembersPage() {
           </Button>
           <div className="flex-1">
             <h1 className="text-2xl font-bold tracking-tight" data-testid="text-page-title">Clinic Members</h1>
-            <p className="text-muted-foreground">Manage your clinic's patient roster</p>
+            <p className="text-muted-foreground">Manage your clinic's member roster</p>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-lg px-3 py-1">
@@ -168,7 +168,7 @@ export default function ClinicMembersPage() {
               <CardDescription className="text-center max-w-md">
                 {searchQuery || statusFilter !== "all" 
                   ? "No members match your search criteria. Try adjusting your filters."
-                  : "Your clinic's member roster is empty. Start by adding patients who are part of the Forgotten Formula PMA network."}
+                  : "Your clinic's member roster is empty. Start by adding members who are part of the Forgotten Formula PMA network."}
               </CardDescription>
             </CardContent>
           </Card>
@@ -259,7 +259,7 @@ export default function ClinicMembersPage() {
             <DialogHeader>
               <DialogTitle>Add New Member</DialogTitle>
               <DialogDescription>
-                Add a new patient to your clinic's member roster.
+                Add a new member to your clinic's member roster.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">

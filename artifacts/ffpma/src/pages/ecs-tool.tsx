@@ -460,7 +460,7 @@ export default function ECSToolPage() {
                     <CardContent className="space-y-4">
                       <SafetyRow label="AMES Mutagenicity" value={selectedCannabinoid.pharmacokinetics.amesToxicity} threshold={0.25} description="Mutation risk (lower = safer, all <0.25 is safe)" />
                       <SafetyRow label="DILI (Liver Injury)" value={selectedCannabinoid.pharmacokinetics.diliRisk} threshold={0.52} description="Drug-induced liver injury risk (lower = safer)" />
-                      <SafetyRow label="hERG Cardiac Risk" value={selectedCannabinoid.pharmacokinetics.hergRisk} threshold={0.70} description="Cardiac arrhythmia risk (monitor in cardiac patients)" />
+                      <SafetyRow label="hERG Cardiac Risk" value={selectedCannabinoid.pharmacokinetics.hergRisk} threshold={0.70} description="Cardiac arrhythmia risk (monitor in cardiac members)" />
                       <SafetyRow label="Hepatotoxicity" value={selectedCannabinoid.pharmacokinetics.hepatotoxicity} threshold={0.70} description="Human hepatotoxicity risk" />
                       <SafetyRow label="Skin Sensitization" value={selectedCannabinoid.pharmacokinetics.skinSensitization} threshold={0.60} description="Topical sensitization risk" />
                       <SafetyRow label="FDA Max Daily Dose" value={selectedCannabinoid.pharmacokinetics.fdamdd} threshold={0.50} description="FDA recommended max daily dose exceedance risk (lower = safer)" />

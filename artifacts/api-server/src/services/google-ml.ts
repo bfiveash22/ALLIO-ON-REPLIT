@@ -19,7 +19,7 @@ export async function getGoogleAuthClient() {
 
 /**
  * Cloud Vision API
- * Used for OCR (Optical Character Recognition) on scanned patient records, intake forms, or IDs.
+ * Used for OCR (Optical Character Recognition) on scanned member records, intake forms, or IDs.
  * Aligns with moving away from manual clerical work, empowering clinics to digitize instantly.
  */
 export async function analyzeImageWithVision(imageUri: string) {
@@ -48,7 +48,7 @@ export async function analyzeImageWithVision(imageUri: string) {
 /**
  * Cloud Natural Language API
  * Used to extract conditions, symptoms, and methodologies from unstructured text.
- * Assists in validating patient files against the FFPMA 2026 Protocol (5 Rs).
+ * Assists in validating member files against the FFPMA 2026 Protocol (5 Rs).
  */
 export async function analyzeTextEntities(text: string) {
   try {

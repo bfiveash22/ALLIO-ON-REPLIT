@@ -71,7 +71,7 @@ export function DoctorScheduling({ doctorId }: DoctorSchedulingProps) {
     if (!selectedPatientId || !date) {
       toast({
         title: "Missing Information",
-        description: "Please select a patient and date.",
+        description: "Please select a member and date.",
         variant: "destructive",
       });
       return;
@@ -94,7 +94,7 @@ export function DoctorScheduling({ doctorId }: DoctorSchedulingProps) {
             <CalendarIcon className="w-6 h-6 text-cyan-400" />
             Doctor Scheduling
           </h2>
-          <p className="text-white/60 text-sm mt-1">Manage your patient appointments</p>
+          <p className="text-white/60 text-sm mt-1">Manage your member appointments</p>
         </div>
         
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -116,7 +116,7 @@ export function DoctorScheduling({ doctorId }: DoctorSchedulingProps) {
                 <label className="text-sm text-white/60 mb-1 block">Patient</label>
                 <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
                   <SelectTrigger className="bg-white/5 border-white/10">
-                    <SelectValue placeholder="Select a patient" />
+                    <SelectValue placeholder="Select a member" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-900 border-white/10 text-white">
                     {membersData?.members?.map((member: any) => (
@@ -210,7 +210,7 @@ export function DoctorScheduling({ doctorId }: DoctorSchedulingProps) {
                       <span className="text-xs font-bold">{format(new Date(appointment.appointmentDate), "HH:mm")}</span>
                     </div>
                     <div>
-                      <p className="font-medium text-sm">Patient ID: {appointment.patientId}</p>
+                      <p className="font-medium text-sm">Member ID: {appointment.patientId}</p>
                       <p className="text-xs text-white/50 capitalize">{appointment.appointmentType} • {appointment.durationMinutes} min</p>
                     </div>
                   </div>
@@ -231,7 +231,7 @@ export function DoctorScheduling({ doctorId }: DoctorSchedulingProps) {
                     <span className="text-xs font-bold">10:00</span>
                   </div>
                   <div>
-                    <p className="font-medium text-sm">Sample Patient</p>
+                    <p className="font-medium text-sm">Sample Member</p>
                     <p className="text-xs text-white/50">Consultation • 60 min</p>
                   </div>
                 </div>

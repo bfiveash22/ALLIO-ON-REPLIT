@@ -268,16 +268,16 @@ export default function DosageCalculatorPage() {
                     IV Dosage Calculator
                   </CardTitle>
                   <CardDescription>
-                    Calculate IV medication dosages based on patient weight
+                    Calculate IV medication dosages based on member weight
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="patient-weight">Patient Weight</Label>
+                      <Label htmlFor="member-weight">Member Weight</Label>
                       <div className="flex gap-2">
                         <Input
-                          id="patient-weight"
+                          id="member-weight"
                           type="number"
                           value={ivWeight}
                           onChange={(e) => setIvWeight(e.target.value)}
@@ -354,7 +354,7 @@ export default function DosageCalculatorPage() {
                   ) : (
                     <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
                       <Info className="h-10 w-10 mb-3 opacity-50" />
-                      <p>Enter patient details and click calculate to see results</p>
+                      <p>Enter member details and click calculate to see results</p>
                     </div>
                   )}
                 </CardContent>

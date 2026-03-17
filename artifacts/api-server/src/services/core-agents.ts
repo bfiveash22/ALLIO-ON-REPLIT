@@ -74,7 +74,7 @@ CLINIC PRINCIPAL CHARTER AGREEMENT (FFPMA-CPA-1.0):
 - $5,000 one-time charter fee for Child PMA formation, network access, and operational framework
 - Deliverables: Articles of Association, Bylaws (customized to state), membership contract templates, SOPs, emergency protocols, documentation templates
 - Establishes clinic as an Affiliated Clinic Association (Child PMA) operating under the Mother PMA umbrella in the private domain
-- No doctor-patient relationship as defined by state licensure law — the relationship is a private member-to-member association relationship
+- No doctor-member relationship as defined by state licensure law — the relationship is a private member-to-member association relationship
 - No insurance billing — the Association does not participate in Medicare, Medicaid, or any insurance plan
 - $10 member enrollment fee is a pass-through remitted to the Mother PMA; service fees charged by the clinic remain with the clinic's entity
 - Lifetime network membership for the clinic principal — no annual dues or renewal fees
@@ -149,7 +149,7 @@ export async function getCoreAgentStatus(): Promise<CoreAgentStatus[]> {
       'ATLAS': ['Financial reporting', 'Payment processing', 'Member billing', 'Crypto treasury'],
       'DIANE': ['Nutrition guidance', 'Candida protocols', 'Dietary healing', 'Keto optimization'],
       'DR-TRIAGE': ['5 R\'s Protocol', 'Symptom assessment', 'Diagnostic triage', 'Healing pathways'],
-      'DR_FORMULA': ['Root cause analysis', 'Protocol generation', 'Patient intake automation', 'PDF deliverables', 'Research citation', 'QA validation']
+      'DR_FORMULA': ['Root cause analysis', 'Protocol generation', 'Member intake automation', 'PDF deliverables', 'Research citation', 'QA validation']
     };
 
     return {

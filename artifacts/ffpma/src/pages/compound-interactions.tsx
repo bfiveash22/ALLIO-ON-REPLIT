@@ -345,7 +345,7 @@ export default function CompoundInteractionsPage() {
           <ShieldAlert className="h-4 w-4" />
           <AlertTitle>Practitioner Reference Only</AlertTitle>
           <AlertDescription>
-            This tool is provided as a reference for qualified practitioners. All compound combinations should be evaluated in the context of individual patient profiles, medical history, and current medications. This is not medical advice.
+            This tool is provided as a reference for qualified practitioners. All compound combinations should be evaluated in the context of individual member profiles, medical history, and current medications. This is not medical advice.
           </AlertDescription>
         </Alert>
 

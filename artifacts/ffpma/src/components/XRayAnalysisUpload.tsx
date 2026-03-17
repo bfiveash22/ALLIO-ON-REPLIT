@@ -271,7 +271,7 @@ export function XRayAnalysisUpload({ onAnalysisComplete, patientId: propPatientI
         <div className="mt-4 space-y-2">
           <Label className="text-white/70">Patient/Member ID</Label>
           <Input
-            placeholder="e.g., MEM-001 or Patient Name"
+            placeholder="e.g., MEM-001 or Member Name"
             value={patientId}
             onChange={(e) => setPatientId(e.target.value)}
             className="bg-white/5 border-white/10 text-white placeholder:text-white/30"

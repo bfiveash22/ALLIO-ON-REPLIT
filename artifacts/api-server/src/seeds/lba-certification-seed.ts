@@ -70,7 +70,7 @@ While LBA is not considered a standard diagnostic tool in conventional medicine,
 
 2. Camera System:
 - High-resolution digital camera adapted for microscopy
-- Live video feed capability for patient education
+- Live video feed capability for member education
 - Image capture software for documentation
 - Monitor for real-time display to patients
 - Storage system for before/after comparisons
@@ -88,7 +88,7 @@ While LBA is not considered a standard diagnostic tool in conventional medicine,
 - Vibration-free surface
 - Controlled lighting (dim ambient light for dark field)
 - Temperature-controlled environment
-- HIPAA-compliant storage for patient images
+- HIPAA-compliant storage for member images
 - Cleaning supplies for slide preparation
 
 5. Calibration and Maintenance:
@@ -155,7 +155,7 @@ The dark field condenser must be precisely aligned for optimal results. Misalign
         title: "Sample Collection Protocol",
         content: `Proper Sample Collection for LBA:
 
-Patient Preparation:
+Member Preparation:
 - Ideally fasting 12 hours (minimum 4 hours)
 - Well hydrated (8oz water 30 minutes prior)
 - No supplements or medications for 4 hours if possible
@@ -464,7 +464,7 @@ Signs of Chronic vs Acute Inflammation:
       "Sluggish WBC behavior indicates immune suppression or exhaustion",
       "The WBC activity score (1-5) standardizes immune function assessment",
       "Chronic inflammation shows sluggish WBCs with background debris; acute shows hyperactive WBCs",
-      "Monocyte phagocytic activity — watching cleanup in real-time — is a powerful patient education tool",
+      "Monocyte phagocytic activity — watching cleanup in real-time — is a powerful member education tool",
     ],
   },
   {
@@ -684,7 +684,7 @@ Visual Comparison Techniques:
 - Side-by-side photograph comparison (same magnification, same zone)
 - Vitality score trending over time
 - Pattern severity grading comparison (mild/moderate/severe)
-- Patient education using before/after images
+- Member education using before/after images
 
 Protocol Adjustment Indicators:
 - Improving vitality score: Protocol is working, continue
@@ -697,7 +697,7 @@ Referral Guidelines:
 Refer to conventional medical evaluation when:
 - Severe morphological abnormalities suggest serious hematological disease
 - Findings are inconsistent with expected patterns
-- Patient symptoms do not improve with appropriate interventions
+- Member symptoms do not improve with appropriate interventions
 - Findings suggest acute medical conditions requiring immediate attention`,
       },
     ],
@@ -1272,7 +1272,7 @@ Practical Identification Tips:
 - Observe at multiple magnifications (40x for overview, 100x for detail)
 - Note motility patterns — parasites have characteristic movement
 - Document with photographs and video when possible
-- Correlate with patient history (travel, exposure, symptoms)
+- Correlate with member history (travel, exposure, symptoms)
 - Confirm with conventional parasitology testing when indicated
 
 Full Moon Observation Note:
@@ -1292,7 +1292,7 @@ Many LBA practitioners note increased parasitic activity around the full moon. W
     id: "lba-mod-17",
     title: "Practice Management, Legal & PMA Compliance",
     slug: "lba-practice-management",
-    description: "Legal framework for LBA practice within a PMA, CLIA compliance considerations, documentation standards, patient communication, and business practices.",
+    description: "Legal framework for LBA practice within a PMA, CLIA compliance considerations, documentation standards, member communication, and business practices.",
     category: "lba-certification",
     sortOrder: 17,
     duration: "3 hours",
@@ -1393,7 +1393,7 @@ const LBA_QUIZ_DATA: Array<{
       { id: "q-lba01-07", text: "What is the terrain theory in the context of LBA?", explanation: "Terrain theory holds that the body's internal environment (pH, oxidation-reduction potential, mineral balance) determines health and microbial behavior, rather than specific pathogens alone.", answers: [{ text: "Internal environment determines health and microbial behavior", isCorrect: true }, { text: "Specific germs cause specific diseases", isCorrect: false }, { text: "Blood type determines disease risk", isCorrect: false }, { text: "Genetics alone determine health outcomes", isCorrect: false }] },
       { id: "q-lba01-08", text: "What lancet depth is recommended for LBA sample collection?", explanation: "A 2.4mm depth sterile lancet is recommended for finger prick blood collection in LBA.", answers: [{ text: "2.4mm", isCorrect: true }, { text: "1.0mm", isCorrect: false }, { text: "5.0mm", isCorrect: false }, { text: "0.5mm", isCorrect: false }] },
       { id: "q-lba01-09", text: "Which observation is LBA best suited to provide?", explanation: "LBA provides real-time qualitative morphological and dynamic assessment of living blood cells — complementary to quantitative lab testing.", answers: [{ text: "Real-time qualitative morphological assessment", isCorrect: true }, { text: "Precise cell counts", isCorrect: false }, { text: "Genetic analysis", isCorrect: false }, { text: "Hormone level measurement", isCorrect: false }] },
-      { id: "q-lba01-10", text: "What camera feature is recommended for LBA documentation?", explanation: "A trinocular microscope head allows camera attachment for live video feed and image capture, essential for documentation and patient education.", answers: [{ text: "Trinocular head with live video capability", isCorrect: true }, { text: "Smartphone attachment only", isCorrect: false }, { text: "Sketch pad for drawings", isCorrect: false }, { text: "Audio recording device", isCorrect: false }] },
+      { id: "q-lba01-10", text: "What camera feature is recommended for LBA documentation?", explanation: "A trinocular microscope head allows camera attachment for live video feed and image capture, essential for documentation and member education.", answers: [{ text: "Trinocular head with live video capability", isCorrect: true }, { text: "Smartphone attachment only", isCorrect: false }, { text: "Sketch pad for drawings", isCorrect: false }, { text: "Audio recording device", isCorrect: false }] },
     ],
   },
   {
@@ -1524,10 +1524,10 @@ const LBA_QUIZ_DATA_MODULES_8_17: typeof LBA_QUIZ_DATA = [
       { id: "q-lba09-02", text: "What confidence score threshold requires manual verification?", explanation: "AI confidence scores below 70% require careful manual verification by the practitioner.", answers: [{ text: "Below 70%", isCorrect: true }, { text: "Below 99%", isCorrect: false }, { text: "Below 50%", isCorrect: false }, { text: "Below 10%", isCorrect: false }] },
       { id: "q-lba09-03", text: "Can AI replace practitioner clinical judgment in LBA?", explanation: "No — AI is strictly a support tool. All AI suggestions must be reviewed by a qualified practitioner with clinical context.", answers: [{ text: "No — AI supports but never replaces clinical judgment", isCorrect: true }, { text: "Yes — AI is always more accurate", isCorrect: false }, { text: "Yes — for routine findings", isCorrect: false }, { text: "Only for experienced practitioners", isCorrect: false }] },
       { id: "q-lba09-04", text: "What databases does the AI cross-reference?", explanation: "The AI cross-references both conventional hematology and pleomorphic morphology databases for comprehensive analysis.", answers: [{ text: "Both conventional and pleomorphic morphology databases", isCorrect: true }, { text: "Conventional hematology only", isCorrect: false }, { text: "Social media databases", isCorrect: false }, { text: "Pharmaceutical databases only", isCorrect: false }] },
-      { id: "q-lba09-05", text: "What benefit does AI documentation provide?", explanation: "AI automates structured report generation, saving time while maintaining standardized documentation format.", answers: [{ text: "Automated structured reports with standardized format", isCorrect: true }, { text: "Eliminates need for documentation", isCorrect: false }, { text: "Only stores images", isCorrect: false }, { text: "Replaces patient consent", isCorrect: false }] },
-      { id: "q-lba09-06", text: "What can AI help identify that a practitioner might miss?", explanation: "AI pattern matching can highlight findings the practitioner may have overlooked by comparing against a large database of known patterns.", answers: [{ text: "Findings missed by comparing against known pattern database", isCorrect: true }, { text: "Patient emotional state", isCorrect: false }, { text: "Financial status", isCorrect: false }, { text: "AI cannot identify anything new", isCorrect: false }] },
+      { id: "q-lba09-05", text: "What benefit does AI documentation provide?", explanation: "AI automates structured report generation, saving time while maintaining standardized documentation format.", answers: [{ text: "Automated structured reports with standardized format", isCorrect: true }, { text: "Eliminates need for documentation", isCorrect: false }, { text: "Only stores images", isCorrect: false }, { text: "Replaces member consent", isCorrect: false }] },
+      { id: "q-lba09-06", text: "What can AI help identify that a practitioner might miss?", explanation: "AI pattern matching can highlight findings the practitioner may have overlooked by comparing against a large database of known patterns.", answers: [{ text: "Findings missed by comparing against known pattern database", isCorrect: true }, { text: "Member emotional state", isCorrect: false }, { text: "Financial status", isCorrect: false }, { text: "AI cannot identify anything new", isCorrect: false }] },
       { id: "q-lba09-07", text: "What type of image should be uploaded for AI analysis?", explanation: "High-resolution microscopy images captured at appropriate magnification with proper illumination.", answers: [{ text: "High-resolution microscopy images with proper illumination", isCorrect: true }, { text: "Smartphone selfies", isCorrect: false }, { text: "Low-resolution thumbnails", isCorrect: false }, { text: "Scanned documents", isCorrect: false }] },
-      { id: "q-lba09-08", text: "What clinical context can AI NOT assess?", explanation: "AI cannot assess patient history, symptoms, medications, lifestyle, and other clinical context that the practitioner integrates.", answers: [{ text: "Patient history, symptoms, medications, and lifestyle context", isCorrect: true }, { text: "Image patterns", isCorrect: false }, { text: "Morphological features", isCorrect: false }, { text: "Database comparisons", isCorrect: false }] },
+      { id: "q-lba09-08", text: "What clinical context can AI NOT assess?", explanation: "AI cannot assess member history, symptoms, medications, lifestyle, and other clinical context that the practitioner integrates.", answers: [{ text: "Member history, symptoms, medications, and lifestyle context", isCorrect: true }, { text: "Image patterns", isCorrect: false }, { text: "Morphological features", isCorrect: false }, { text: "Database comparisons", isCorrect: false }] },
       { id: "q-lba09-09", text: "How does AI assist with treatment decisions?", explanation: "AI suggests relevant protocols from the FFPMA database based on findings, but all suggestions must be reviewed by the practitioner.", answers: [{ text: "Suggests protocols from FFPMA database for practitioner review", isCorrect: true }, { text: "Prescribes medications directly", isCorrect: false }, { text: "Does not assist with treatment", isCorrect: false }, { text: "Overrides practitioner decisions", isCorrect: false }] },
       { id: "q-lba09-10", text: "What storage standard applies to AI-processed images?", explanation: "All images and records, including AI-processed ones, must comply with HIPAA-compliant storage requirements.", answers: [{ text: "HIPAA-compliant storage", isCorrect: true }, { text: "No storage requirements", isCorrect: false }, { text: "Public cloud only", isCorrect: false }, { text: "Local computer only", isCorrect: false }] },
     ],
@@ -1560,7 +1560,7 @@ const LBA_QUIZ_DATA_MODULES_8_17: typeof LBA_QUIZ_DATA = [
     questions: [
       { id: "q-lba08-01", text: "What is the optimal retest interval for standard protocols?", explanation: "4 weeks is the optimal retest interval for standard treatment protocols to allow time for interventions to take effect.", answers: [{ text: "4 weeks", isCorrect: true }, { text: "1 day", isCorrect: false }, { text: "6 months", isCorrect: false }, { text: "1 year", isCorrect: false }] },
       { id: "q-lba08-02", text: "What must be identical for valid before/after comparison?", explanation: "Collection conditions (fasting status, time of day, hydration, same technique) must be identical for meaningful comparison.", answers: [{ text: "Collection conditions (fasting, timing, hydration, technique)", isCorrect: true }, { text: "Only the microscope brand", isCorrect: false }, { text: "The room temperature", isCorrect: false }, { text: "Nothing needs to be identical", isCorrect: false }] },
-      { id: "q-lba08-03", text: "When should a patient be referred to conventional medical evaluation?", explanation: "Refer when severe morphological abnormalities suggest serious hematological disease, symptoms don't improve, or findings suggest acute conditions.", answers: [{ text: "When findings suggest serious disease or symptoms don't improve", isCorrect: true }, { text: "Never — LBA handles all conditions", isCorrect: false }, { text: "Only when patient requests it", isCorrect: false }, { text: "After every session", isCorrect: false }] },
+      { id: "q-lba08-03", text: "When should a member be referred to conventional medical evaluation?", explanation: "Refer when severe morphological abnormalities suggest serious hematological disease, symptoms don't improve, or findings suggest acute conditions.", answers: [{ text: "When findings suggest serious disease or symptoms don't improve", isCorrect: true }, { text: "Never — LBA handles all conditions", isCorrect: false }, { text: "Only when member requests it", isCorrect: false }, { text: "After every session", isCorrect: false }] },
       { id: "q-lba08-04", text: "What does a declining vitality score indicate?", explanation: "A declining vitality score indicates the current protocol is not effective and reassessment is needed.", answers: [{ text: "Protocol is not effective — reassess", isCorrect: true }, { text: "Protocol is working", isCorrect: false }, { text: "Normal fluctuation", isCorrect: false }, { text: "Equipment problem", isCorrect: false }] },
       { id: "q-lba08-05", text: "How many elements should baseline documentation include?", explanation: "Baseline includes: standardized conditions, full 5-zone assessment with photos, vitality score at 5 time points, written narrative, and lab correlation.", answers: [{ text: "5 elements: conditions, 5-zone photos, vitality timing, narrative, labs", isCorrect: true }, { text: "Just a photograph", isCorrect: false }, { text: "Just a vitality score", isCorrect: false }, { text: "3 elements", isCorrect: false }] },
       { id: "q-lba08-06", text: "What retest interval is used for acute protocols?", explanation: "Acute protocols warrant retesting at 2 weeks to assess rapid response.", answers: [{ text: "2 weeks", isCorrect: true }, { text: "24 hours", isCorrect: false }, { text: "3 months", isCorrect: false }, { text: "6 months", isCorrect: false }] },

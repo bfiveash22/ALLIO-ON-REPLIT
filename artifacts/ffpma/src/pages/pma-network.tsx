@@ -48,7 +48,7 @@ const pmaRules = [
     number: 2,
     title: "Everyone Signs — No Exceptions",
     details:
-      "Every person within the clinic walls must be a signed, dues-paying member of the PMA. This includes the doctor, staff, patients, visitors, vendors — anyone who steps foot inside the private domain. If they are not signed and paid, they are not protected and they compromise the entire PMA structure. There are zero exceptions to this rule. The moment an unsigned person is present, the private domain is breached and legal exposure is created for everyone.",
+      "Every person within the clinic walls must be a signed, dues-paying member of the PMA. This includes the doctor, staff, members, visitors, vendors — anyone who steps foot inside the private domain. If they are not signed and paid, they are not protected and they compromise the entire PMA structure. There are zero exceptions to this rule. The moment an unsigned person is present, the private domain is breached and legal exposure is created for everyone.",
   },
   {
     number: 3,
@@ -798,7 +798,7 @@ export default function PMANetworkPage() {
                     { title: "Separate Legal Entities", desc: "Each Affiliated Clinic Association has its own EIN, Articles, and Bylaws. Legal issues at one clinic cannot pierce up to the Mother PMA or across to other clinics." },
                     { title: "Affiliation, Not Ownership", desc: "The Network Agreement establishes clinics as affiliates exercising their constitutional right to associate — not subsidiaries. The Mother PMA provides the framework, not operational control." },
                     { title: "Constitutional Foundation", desc: "Every document is built on 1st and 14th Amendment protections, establishing the private domain and right to contract freely. The Association operates under constitutional authority — not state regulatory jurisdiction." },
-                    { title: "Patient Protection", desc: "Member contracts ensure patients knowingly and voluntarily join the private association, with privacy acknowledgments reflecting the private nature of services." },
+                    { title: "Member Protection", desc: "Member contracts ensure members knowingly and voluntarily join the private association, with privacy acknowledgments reflecting the private nature of services." },
                     { title: "IRS Compliance", desc: "Each clinic files its own Form 1120 with its own EIN. Form 8832 (Entity Classification Election) is filed independently to elect corporate tax classification at the 21% rate." },
                   ].map((item, i) => (
                     <div key={i} className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">

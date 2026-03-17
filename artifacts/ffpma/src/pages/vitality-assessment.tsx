@@ -86,7 +86,7 @@ const SECTIONS = [
     icon: Dna,
     color: "emerald",
     fields: [
-      { key: "telomereLength", label: "Telomere Length", hint: "Rate the patient's estimated telomere length status" },
+      { key: "telomereLength", label: "Telomere Length", hint: "Rate the member's estimated telomere length status" },
       { key: "mitochondrialFunction", label: "Mitochondrial Function", hint: "Energy production capacity and cellular respiration" },
       { key: "oxidativeStress", label: "Oxidative Stress Level", hint: "Antioxidant capacity vs free radical burden (5 = low stress)" },
       { key: "cellMembraneIntegrity", label: "Cell Membrane Integrity", hint: "Lipid bilayer health and cellular communication" },

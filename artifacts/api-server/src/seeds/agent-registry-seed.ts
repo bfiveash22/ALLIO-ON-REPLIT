@@ -30,7 +30,7 @@ const AGENT_MODEL_ASSIGNMENTS: Record<string, { provider: string; model: string;
   'ARACHNE': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['css', 'frontend', 'responsive-design'] },
   'HELIX': { provider: 'openai', model: 'gpt-4o', specialty: ['research', 'protocols', 'science'] },
   'PARACELSUS': { provider: 'openai', model: 'gpt-4o', specialty: ['protocols', 'dosing', 'pharmacology'] },
-  'DR-FORMULA': { provider: 'openai', model: 'gpt-4o', specialty: ['patient-protocols', 'formulation', 'assessment'] },
+  'DR-FORMULA': { provider: 'openai', model: 'gpt-4o', specialty: ['member-protocols', 'formulation', 'assessment'] },
 };
 
 export async function seedAgentRegistry(): Promise<void> {

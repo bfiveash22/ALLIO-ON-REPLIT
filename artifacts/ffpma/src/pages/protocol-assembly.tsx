@@ -359,7 +359,7 @@ export default function ProtocolAssemblyPage() {
                     <textarea
                       value={transcript}
                       onChange={(e) => setTranscript(e.target.value)}
-                      placeholder="Paste the full patient call transcript here. The AI will extract the patient profile, identify root causes, and generate a complete 90-day healing protocol..."
+                      placeholder="Paste the full member call transcript here. The AI will extract the member profile, identify root causes, and generate a complete 90-day healing protocol..."
                       className="w-full h-64 bg-slate-800/50 border border-slate-600/50 rounded-xl p-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 resize-none font-mono text-sm"
                     />
                   </>
@@ -492,8 +492,8 @@ export default function ProtocolAssemblyPage() {
                         </p>
                         <p className="text-xs text-purple-400/70 mt-1">
                           {sourceMode === "transcript"
-                            ? "Analyzing transcript → Extracting patient profile → Generating protocol → Building slides"
-                            : "Reading intake form → Building patient profile → Generating protocol → Building slides"}
+                            ? "Analyzing transcript → Extracting member profile → Generating protocol → Building slides"
+                            : "Reading intake form → Building member profile → Generating protocol → Building slides"}
                         </p>
                       </div>
                     </div>

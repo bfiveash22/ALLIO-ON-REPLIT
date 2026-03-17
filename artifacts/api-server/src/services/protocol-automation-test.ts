@@ -176,7 +176,7 @@ export async function testAbacusAI(): Promise<AutomationTestResult> {
   const errors: string[] = [];
   let rawOutput = '';
 
-  const systemPrompt = `You are the Forgotten Formula Protocol Architect. Given a patient consultation call transcript, generate a comprehensive healing protocol following the FF PMA 5 Rs framework (REDUCE, REBALANCE, REACTIVATE, RESTORE, REVITALIZE).
+  const systemPrompt = `You are the Forgotten Formula Protocol Architect. Given a member consultation call transcript, generate a comprehensive healing protocol following the FF PMA 5 Rs framework (REDUCE, REBALANCE, REACTIVATE, RESTORE, REVITALIZE).
 
 Include:
 1. Patient overview with root cause analysis
@@ -328,7 +328,7 @@ export async function testOpenAIDirect(): Promise<AutomationTestResult> {
   const errors: string[] = [];
   let rawOutput = '';
 
-  const systemPrompt = `You are the Forgotten Formula Protocol Architect. Given a patient consultation call transcript, generate a comprehensive healing protocol following the FF PMA 5 Rs framework (REDUCE, REBALANCE, REACTIVATE, RESTORE, REVITALIZE).
+  const systemPrompt = `You are the Forgotten Formula Protocol Architect. Given a member consultation call transcript, generate a comprehensive healing protocol following the FF PMA 5 Rs framework (REDUCE, REBALANCE, REACTIVATE, RESTORE, REVITALIZE).
 
 Include:
 1. Patient overview with root cause analysis

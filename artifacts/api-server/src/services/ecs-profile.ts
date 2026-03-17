@@ -130,7 +130,7 @@ export async function buildECSProfile(
 ): Promise<ECSProfile> {
   const patient = await storage.getPatientRecord(patientRecordId);
   if (!patient) {
-    throw new Error("Patient record not found");
+    throw new Error("Member record not found");
   }
   if (!isAdmin && patient.doctorId !== doctorId) {
     throw new Error("Unauthorized: patient does not belong to this doctor");

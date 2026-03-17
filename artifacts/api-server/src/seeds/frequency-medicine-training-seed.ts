@@ -139,7 +139,7 @@ export const frequencyMedicineModules = [
     id: "freq-108-clinical-protocols",
     title: "Clinical Frequency Protocols & Integration",
     slug: "freq-108-clinical-protocols",
-    description: "Practical guide to integrating frequency medicine into clinical practice — patient assessment, device selection, treatment protocols, and combining modalities within the FF PMA 5R Framework.",
+    description: "Practical guide to integrating frequency medicine into clinical practice — member assessment, device selection, wellness protocols, and combining modalities within the FF PMA 5R Framework.",
     imageUrl: "https://images.unsplash.com/photo-1576086213369-97a306d36557?w=800",
     category: "Frequency Medicine",
     sortOrder: 8,
@@ -259,7 +259,7 @@ const frequencyModuleSections: Record<string, Array<{ title: string; content: st
     },
     {
       title: "Clinical Integration & the FF PMA Approach",
-      content: "Within the Forgotten Formula PMA framework, light therapy integrates into multiple phases of the 5R Protocol. In the Remove phase, UV blood irradiation (UVBI) has been used to reduce pathogen load and modulate immune function. In the Repair phase, red and NIR light accelerate tissue healing, reduce surgical recovery time, and enhance collagen remodeling. In the Rebalance phase, circadian light protocols optimize sleep quality and hormonal rhythms. Practical integration includes in-clinic devices (red light panels, cold lasers, UV cabinets) and take-home protocols (consumer LED panels, blue-light-blocking glasses, morning light exposure routines). Combining PBM with other frequency modalities — such as PEMF for deep tissue and red light for surface tissue — creates synergistic treatment protocols that address multiple healing pathways simultaneously.",
+      content: "Within the Forgotten Formula PMA framework, light therapy integrates into multiple phases of the 5R Protocol. In the Remove phase, UV blood irradiation (UVBI) has been used to reduce pathogen load and modulate immune function. In the Repair phase, red and NIR light accelerate tissue healing, reduce surgical recovery time, and enhance collagen remodeling. In the Rebalance phase, circadian light protocols optimize sleep quality and hormonal rhythms. Practical integration includes in-clinic devices (red light panels, cold lasers, UV cabinets) and take-home protocols (consumer LED panels, blue-light-blocking glasses, morning light exposure routines). Combining PBM with other frequency modalities — such as PEMF for deep tissue and red light for surface tissue — creates synergistic wellness protocols that address multiple healing pathways simultaneously.",
     },
   ],
   "freq-107-scalar-energy": [
@@ -277,12 +277,12 @@ const frequencyModuleSections: Record<string, Array<{ title: string; content: st
     },
     {
       title: "Emerging Research & Critical Evaluation",
-      content: "As with many areas of frequency medicine, scalar energy research requires careful critical evaluation. The theoretical basis draws from legitimate physics concepts (standing waves, potential energy fields, quantum vacuum fluctuations) but extends them into territory that mainstream physics has not yet validated. Practitioners should: (1) Distinguish between well-established frequency modalities (PEMF, photobiomodulation) with extensive peer-reviewed support and emerging modalities (scalar energy) with preliminary or anecdotal evidence. (2) Apply the precautionary principle — scalar devices that are passive (pendants, environmental harmonizers) carry minimal risk, while active generators should be used with proper training. (3) Document patient outcomes rigorously to contribute to the growing evidence base. (4) Remain open to new discoveries while maintaining scientific rigor. Within the FF PMA framework, scalar energy technologies are categorized as experimental adjuncts rather than primary treatment modalities, used to support the overall energetic environment for healing.",
+      content: "As with many areas of frequency medicine, scalar energy research requires careful critical evaluation. The theoretical basis draws from legitimate physics concepts (standing waves, potential energy fields, quantum vacuum fluctuations) but extends them into territory that mainstream physics has not yet validated. Practitioners should: (1) Distinguish between well-established frequency modalities (PEMF, photobiomodulation) with extensive peer-reviewed support and emerging modalities (scalar energy) with preliminary or anecdotal evidence. (2) Apply the precautionary principle — scalar devices that are passive (pendants, environmental harmonizers) carry minimal risk, while active generators should be used with proper training. (3) Document member outcomes rigorously to contribute to the growing evidence base. (4) Remain open to new discoveries while maintaining scientific rigor. Within the FF PMA framework, scalar energy technologies are categorized as experimental adjuncts rather than primary treatment modalities, used to support the overall energetic environment for healing.",
     },
   ],
   "freq-108-clinical-protocols": [
     {
-      title: "Patient Assessment for Frequency Medicine",
+      title: "Member Assessment for Frequency Medicine",
       content: "Comprehensive patient assessment is the foundation of effective frequency medicine. The evaluation begins with a detailed health history including conventional diagnoses, environmental exposures, electromagnetic sensitivity, and prior experience with energy medicine. Bioenergetic assessment tools — such as electrodermal screening (EAV/Meridian Stress Assessment), heart rate variability (HRV) analysis, and thermographic imaging — provide objective data about the patient's energetic state. Laboratory findings (inflammatory markers, oxidative stress panels, microbiome analysis) complement the energetic assessment. Contraindication screening is essential: patients with pacemakers, cochlear implants, active seizure disorders, pregnancy, or photosensitivity conditions require modified or alternative protocols. Documentation should include baseline measurements, device settings, treatment duration, and patient-reported outcomes for each session.",
     },
     {
@@ -312,7 +312,7 @@ const frequencyModuleKeyPoints: Record<string, string[]> = {
     "Royal Raymond Rife discovered each microorganism has a unique Mortal Oscillatory Rate (MOR)",
     "Rife therapy uses selective resonance destruction to eliminate pathogens without harming healthy cells",
     "The CAFL (Consolidated Annotated Frequency List) contains thousands of frequencies organized by condition",
-    "Herxheimer (die-off) reactions are common during initial Rife treatment as pathogens are destroyed",
+    "Herxheimer (die-off) reactions are common during initial Rife protocol as pathogens are destroyed",
     "Within the FF PMA 5R Framework, Rife therapy is part of the Remove phase targeting pathogenic root causes",
   ],
   "freq-103-sound-healing": [
@@ -351,7 +351,7 @@ const frequencyModuleKeyPoints: Record<string, string[]> = {
     "Within the FF PMA framework, scalar energy is classified as an experimental adjunct, not a primary treatment",
   ],
   "freq-108-clinical-protocols": [
-    "Patient assessment includes health history, bioenergetic testing (EAV, HRV), and contraindication screening",
+    "Member assessment includes health history, bioenergetic testing (EAV, HRV), and contraindication screening",
     "Each phase of the 5R Framework maps to specific frequency modalities (Rife→Remove, PEMF→Repair, Light→Rebalance)",
     "A clinical frequency practice requires Rife, PEMF, photobiomodulation, and sound therapy equipment",
     "PMA practice provides constitutional protection but requires informed consent and proper safety protocols",
@@ -438,7 +438,7 @@ const frequencyQuizQuestions = [
     explanation: "Within the 5R Framework, Rife therapy is integrated into the Remove phase, targeting pathogens (bacteria, viruses, parasites, fungi) that contribute to chronic disease.",
   },
   {
-    question: "What common patient reaction occurs during initial Rife treatment as pathogens are destroyed?",
+    question: "What common member reaction occurs during initial Rife protocol as pathogens are destroyed?",
     options: [
       "Immediate energy boost",
       "Herxheimer reaction (die-off symptoms)",
@@ -446,7 +446,7 @@ const frequencyQuizQuestions = [
       "Allergic reaction",
     ],
     correctAnswerIndex: 1,
-    explanation: "Herxheimer reactions (die-off symptoms like fatigue, headache, flu-like symptoms) are common during initial Rife treatment as pathogens are destroyed and their endotoxins are released into the system.",
+    explanation: "Herxheimer reactions (die-off symptoms like fatigue, headache, flu-like symptoms) are common during initial Rife protocol as pathogens are destroyed and their endotoxins are released into the system.",
   },
   {
     question: "Which of the following is a contraindication for most frequency medicine modalities?",
@@ -457,7 +457,7 @@ const frequencyQuizQuestions = [
       "Low energy levels",
     ],
     correctAnswerIndex: 2,
-    explanation: "Patients with pacemakers, cochlear implants, active seizure disorders, pregnancy, or photosensitivity conditions require modified or alternative protocols due to potential interference with implanted devices.",
+    explanation: "Members with pacemakers, cochlear implants, active seizure disorders, pregnancy, or photosensitivity conditions require modified or alternative protocols due to potential interference with implanted devices.",
   },
   {
     question: "How much can PEMF therapy increase mitochondrial ATP production according to research?",

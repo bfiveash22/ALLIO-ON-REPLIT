@@ -98,7 +98,7 @@ export function DoctorPatientMessaging({ doctorId, preselectedPatientId }: Docto
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2">
             <MessageSquare className="w-6 h-6 text-blue-400" />
-            Patient Messaging
+            Member Messaging
           </h2>
           <p className="text-white/60 text-sm mt-1">Secure communication with your patients</p>
         </div>
@@ -198,7 +198,7 @@ export function DoctorPatientMessaging({ doctorId, preselectedPatientId }: Docto
             <div className="h-full flex items-center justify-center text-white/40">
               <div className="text-center">
                 <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                <p>Select a patient to start messaging</p>
+                <p>Select a member to start messaging</p>
               </div>
             </div>
           )}

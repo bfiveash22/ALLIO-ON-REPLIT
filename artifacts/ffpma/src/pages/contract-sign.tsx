@@ -170,7 +170,7 @@ export default function ContractSignPage() {
                 </h4>
                 <p className="text-sm text-muted-foreground">
                   This includes your unique clinic URL, member management dashboard, 
-                  and access to wholesale pricing for your patients.
+                  and access to wholesale pricing for your members.
                 </p>
               </div>
               <div className="flex gap-3">

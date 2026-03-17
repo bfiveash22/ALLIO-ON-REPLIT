@@ -116,7 +116,7 @@ Harmful EMF mitigation strategies include minimizing RF exposure, blue-light blo
       title: "5. Quantum Entanglement and Biological Systems",
       content: `Current evidence for quantum entanglement in biology includes the radical pair mechanism in avian magnetoreception, long-lived coherence in photosynthetic complexes, and the Penrose-Hameroff "Orch OR" consciousness theory.
 
-Speculative healing implications include non-local healing mechanisms, practitioner-patient resonance, intention effects via quantum observer effects, and group coherence amplification.
+Speculative healing implications include non-local healing mechanisms, practitioner-member resonance, intention effects via quantum observer effects, and group coherence amplification.
 
 This area should be approached with scientific caution — while the radical pair mechanism is well-supported, applications to healing remain hypothesis-driven and require rigorous validation.`,
     },

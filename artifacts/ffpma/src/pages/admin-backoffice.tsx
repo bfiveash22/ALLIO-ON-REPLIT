@@ -202,13 +202,13 @@ function AdminPatientManagementPanel() {
       return res.json();
     },
     onSuccess: () => {
-      toast({ title: "Patient added successfully" });
+      toast({ title: "Member added successfully" });
       setShowAddPatient(false);
       setNewPatient({ name: "", email: "", phone: "", dateOfBirth: "" });
       refetchPatients();
     },
     onError: (error: Error) => {
-      toast({ title: "Failed to add patient", description: error.message, variant: "destructive" });
+      toast({ title: "Failed to add member", description: error.message, variant: "destructive" });
     },
   });
 
@@ -220,9 +220,9 @@ function AdminPatientManagementPanel() {
             <div>
               <CardTitle className="flex items-center gap-2 text-emerald-100">
                 <Stethoscope className="w-5 h-5 text-emerald-400" />
-                Patient Management
+                Member Management
               </CardTitle>
-              <CardDescription>Full patient access — roster, enrollment, protocols, and clinical tools</CardDescription>
+              <CardDescription>Full member access — roster, enrollment, protocols, and clinical tools</CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <Badge className="bg-emerald-500/20 text-emerald-300">Admin Access</Badge>
@@ -232,7 +232,7 @@ function AdminPatientManagementPanel() {
                 className="border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10"
                 onClick={() => setShowAddPatient(true)}
               >
-                <Plus className="w-4 h-4 mr-1" /> Add Patient
+                <Plus className="w-4 h-4 mr-1" /> Add Member
               </Button>
             </div>
           </div>
@@ -241,7 +241,7 @@ function AdminPatientManagementPanel() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-center">
               <p className="text-2xl font-bold text-emerald-400">{patients.length}</p>
-              <p className="text-xs text-white/60">Total Patients</p>
+              <p className="text-xs text-white/60">Total Members</p>
             </div>
             <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-center">
               <p className="text-2xl font-bold text-cyan-400">{patients.filter(p => p.status === "active").length}</p>
@@ -260,7 +260,7 @@ function AdminPatientManagementPanel() {
           <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
             <TabsList className="bg-black/40 border border-white/10">
               <TabsTrigger value="roster" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300">
-                <Users className="w-4 h-4 mr-2" /> Patient Roster
+                <Users className="w-4 h-4 mr-2" /> Member Roster
               </TabsTrigger>
               <TabsTrigger value="protocols" className="data-[state=active]:bg-violet-500/20 data-[state=active]:text-violet-300">
                 <FileText className="w-4 h-4 mr-2" /> Protocols
@@ -278,7 +278,7 @@ function AdminPatientManagementPanel() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                   <Input
-                    placeholder="Search patients by name or email..."
+                    placeholder="Search members by name or email..."
                     value={patientSearch}
                     onChange={(e) => setPatientSearch(e.target.value)}
                     className="pl-10 bg-white/5 border-white/10"
@@ -304,7 +304,7 @@ function AdminPatientManagementPanel() {
                 {filteredPatients.length === 0 ? (
                   <div className="text-center py-12">
                     <Users className="w-12 h-12 mx-auto mb-3 text-white/20" />
-                    <p className="text-white/60">{patients.length === 0 ? "No patients yet. Add your first patient." : "No patients match your filters."}</p>
+                    <p className="text-white/60">{patients.length === 0 ? "No members yet. Add your first member." : "No members match your filters."}</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -362,8 +362,8 @@ function AdminPatientManagementPanel() {
                     <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center mb-3">
                       <MessageSquare className="w-6 h-6 text-blue-400" />
                     </div>
-                    <h4 className="font-bold">Patient Messaging</h4>
-                    <p className="text-sm text-white/60 mt-1">Secure communication with patients</p>
+                    <h4 className="font-bold">Member Messaging</h4>
+                    <p className="text-sm text-white/60 mt-1">Secure communication with members</p>
                   </div>
                 </Link>
               </div>
@@ -492,8 +492,8 @@ function AdminPatientManagementPanel() {
       <Dialog open={showAddPatient} onOpenChange={setShowAddPatient}>
         <DialogContent className="bg-slate-900 border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle>Add New Patient</DialogTitle>
-            <DialogDescription className="text-white/60">Enter patient information to add them to the system</DialogDescription>
+            <DialogTitle>Add New Member</DialogTitle>
+            <DialogDescription className="text-white/60">Enter member information to add them to the system</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -544,7 +544,7 @@ function AdminPatientManagementPanel() {
               disabled={!newPatient.name || addPatientMutation.isPending}
             >
               {addPatientMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-              Add Patient
+              Add Member
             </Button>
           </div>
         </DialogContent>
@@ -820,9 +820,9 @@ export default function AdminBackoffice() {
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Support
               </TabsTrigger>
-              <TabsTrigger value="patient-tools" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300">
+              <TabsTrigger value="member-tools" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300">
                 <Stethoscope className="w-4 h-4 mr-2" />
-                Patient Tools
+                Member Tools
               </TabsTrigger>
             </TabsList>
 
@@ -1067,7 +1067,7 @@ export default function AdminBackoffice() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="patient-tools" className="space-y-6">
+            <TabsContent value="member-tools" className="space-y-6">
               <AdminPatientManagementPanel />
             </TabsContent>
           </Tabs>

@@ -100,7 +100,7 @@ export const ancientMedicineModules = [
     id: "ancient-106-integration-protocols",
     title: "Integrating Ancient & Modern Protocols",
     slug: "ancient-106-integration-protocols",
-    description: "Advanced module on combining ancient healing modalities with modern peptide therapy, IV nutrition, and functional medicine for comprehensive patient care.",
+    description: "Advanced module on combining ancient healing modalities with modern peptide therapy, IV nutrition, and functional medicine for comprehensive member wellness.",
     imageUrl: "https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?w=800",
     category: "Ancient Medicine",
     sortOrder: 6,
@@ -205,9 +205,9 @@ export const ancientMedicineQuizQuestions = [
   {
     id: "q-anc101-4",
     quizId: "quiz-ancient-101",
-    questionText: "Hippocratic medicine emphasized treating the patient as a:",
+    questionText: "Hippocratic medicine emphasized treating the member as a:",
     questionType: "multiple_choice",
-    explanation: "Hippocratic medicine viewed the patient as a whole person — mind, body, and environment — not just a collection of symptoms.",
+    explanation: "Hippocratic medicine viewed the member as a whole person — mind, body, and environment — not just a collection of symptoms.",
     sortOrder: 4,
     points: 1,
     answers: [

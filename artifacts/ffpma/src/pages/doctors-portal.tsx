@@ -109,16 +109,16 @@ interface Certification {
 }
 
 const pendingConsults = [
-  { id: 1, patient: "John Davis", type: "Blood Analysis Review", scheduled: "Today, 2:00 PM", urgent: true },
-  { id: 2, patient: "Karen White", type: "Protocol Adjustment", scheduled: "Today, 4:30 PM", urgent: false },
-  { id: 3, patient: "Tom Brown", type: "Initial Consultation", scheduled: "Tomorrow, 10:00 AM", urgent: false },
-  { id: 4, patient: "Amy Lee", type: "Follow-up", scheduled: "Tomorrow, 2:00 PM", urgent: false },
+  { id: 1, member: "John Davis", type: "Blood Analysis Review", scheduled: "Today, 2:00 PM", urgent: true },
+  { id: 2, member: "Karen White", type: "Protocol Adjustment", scheduled: "Today, 4:30 PM", urgent: false },
+  { id: 3, member: "Tom Brown", type: "Initial Consultation", scheduled: "Tomorrow, 10:00 AM", urgent: false },
+  { id: 4, member: "Amy Lee", type: "Follow-up", scheduled: "Tomorrow, 2:00 PM", urgent: false },
 ];
 
 const recentAnalyses = [
-  { id: 1, patient: "Sarah Mitchell", type: "Live Blood", findings: ["Rouleaux moderate", "Healthy RBC majority", "Minor fibrin"], date: "2 days ago", aiAgents: ["vitalis", "prometheus"] },
-  { id: 2, patient: "Michael Chen", type: "Microbiome", findings: ["Dysbiosis detected", "Low bifido", "Candida markers"], date: "1 week ago", aiAgents: ["microbia", "hippocrates"] },
-  { id: 3, patient: "Emily Rodriguez", type: "Nutrient Panel", findings: ["Zinc deficiency", "B12 low", "Magnesium optimal"], date: "3 days ago", aiAgents: ["synthesis", "oracle"] },
+  { id: 1, member: "Sarah Mitchell", type: "Live Blood", findings: ["Rouleaux moderate", "Healthy RBC majority", "Minor fibrin"], date: "2 days ago", aiAgents: ["vitalis", "prometheus"] },
+  { id: 2, member: "Michael Chen", type: "Microbiome", findings: ["Dysbiosis detected", "Low bifido", "Candida markers"], date: "1 week ago", aiAgents: ["microbia", "hippocrates"] },
+  { id: 3, member: "Emily Rodriguez", type: "Nutrient Panel", findings: ["Zinc deficiency", "B12 low", "Magnesium optimal"], date: "3 days ago", aiAgents: ["synthesis", "oracle"] },
 ];
 
 const protocolTemplates = [
@@ -157,7 +157,7 @@ function AssignedProtocolsSection() {
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-bold text-lg flex items-center gap-2">
           <FileText className="w-5 h-5 text-emerald-400" />
-          Approved Patient Protocols
+          Approved Member Protocols
           <Badge className="bg-emerald-500/20 text-emerald-300 ml-2">{approvedProtocols.length}</Badge>
         </h3>
       </div>
@@ -274,7 +274,7 @@ function DoctorSettingsTab() {
           <Link2 className="w-5 h-5 text-green-400" />
           Your Clinic Signup URL
         </h3>
-        <p className="text-sm text-white/50 mb-4">Share this URL with patients to have them sign up under your clinic:</p>
+        <p className="text-sm text-white/50 mb-4">Share this URL with members to have them sign up under your clinic:</p>
         <div className="flex items-center gap-3">
           <Input 
             value={clinicSignupUrl}
@@ -377,7 +377,7 @@ export default function DoctorsPortal() {
   // Enroll Member Modal State
   const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
 
-  // Patient Filter State
+  // Member Filter State
   interface FilterState {
     searchQuery: string;
     status: 'all' | 'active' | 'pending' | 'inactive';
@@ -508,7 +508,7 @@ export default function DoctorsPortal() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                   <Input
-                    placeholder="Search patients, protocols..."
+                    placeholder="Search members, protocols..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 w-64 bg-white/5 border-white/10 text-white placeholder:text-white/40"
@@ -556,9 +556,9 @@ export default function DoctorsPortal() {
                 <Activity className="w-4 h-4 mr-2" />
                 Dashboard
               </TabsTrigger>
-              <TabsTrigger value="patients" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-300">
+              <TabsTrigger value="members" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-300">
                 <Users className="w-4 h-4 mr-2" />
-                My Patients
+                My Members
               </TabsTrigger>
               <TabsTrigger value="rootcause" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300">
                 <Brain className="w-4 h-4 mr-2" />
@@ -624,7 +624,7 @@ export default function DoctorsPortal() {
                         <div key={analysis.id} className="p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-3">
-                              <span className="font-bold">{analysis.patient}</span>
+                              <span className="font-bold">{analysis.member}</span>
                               <Badge className="bg-violet-500/20 text-violet-300">{analysis.type}</Badge>
                             </div>
                             <span className="text-sm text-white/40">{analysis.date}</span>
@@ -701,7 +701,7 @@ export default function DoctorsPortal() {
                         Your Referral Link
                       </h3>
                       <p className="text-sm text-white/60 mb-4">
-                        Share this link with patients to enroll them in the FFPMA network under your practice.
+                        Share this link with members to enroll them in the FFPMA network under your practice.
                       </p>
                       <div className="space-y-3">
                         <div className="flex items-center justify-between p-3 rounded-lg bg-black/20">
@@ -835,7 +835,7 @@ export default function DoctorsPortal() {
               </div>
             </TabsContent>
 
-            <TabsContent value="patients" className="space-y-6">
+            <TabsContent value="members" className="space-y-6">
               <Card className="bg-black/20 border-white/10 p-5">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="font-bold text-lg">Enrolled Members</h3>
@@ -1168,7 +1168,7 @@ export default function DoctorsPortal() {
                         <Microscope className="w-5 h-5 text-violet-400" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{analysis.patient}</p>
+                        <p className="font-medium truncate">{analysis.member}</p>
                         <p className="text-xs text-white/50">{analysis.type} • {analysis.date}</p>
                       </div>
                       <Button variant="ghost" size="sm" data-testid={`button-view-analysis-${analysis.id}`}>
@@ -1197,18 +1197,18 @@ export default function DoctorsPortal() {
                 </div>
                 <div className="space-y-3">
                   {[
-                    { patient: "Sarah M.", protocol: "5 R's Protocol", day: 14, total: 90, compliance: 87, products: ["L-Glutamine", "Probiotics", "Digestive Enzymes"] },
-                    { patient: "Michael C.", protocol: "Heavy Metal Detox", day: 7, total: 60, compliance: 92, products: ["Chlorella", "Cilantro Extract", "Binders"] },
-                    { patient: "Emily R.", protocol: "Parasite Cleanse", day: 21, total: 30, compliance: 78, products: ["Black Walnut", "Wormwood", "Cloves"] }
+                    { member: "Sarah M.", protocol: "5 R's Protocol", day: 14, total: 90, compliance: 87, products: ["L-Glutamine", "Probiotics", "Digestive Enzymes"] },
+                    { member: "Michael C.", protocol: "Heavy Metal Detox", day: 7, total: 60, compliance: 92, products: ["Chlorella", "Cilantro Extract", "Binders"] },
+                    { member: "Emily R.", protocol: "Parasite Cleanse", day: 21, total: 30, compliance: 78, products: ["Black Walnut", "Wormwood", "Cloves"] }
                   ].map((item, idx) => (
                     <div key={idx} className="p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center font-bold text-sm">
-                            {item.patient.split(' ').map(n => n[0]).join('')}
+                            {item.member.split(' ').map(n => n[0]).join('')}
                           </div>
                           <div>
-                            <p className="font-medium">{item.patient}</p>
+                            <p className="font-medium">{item.member}</p>
                             <p className="text-sm text-white/50">{item.protocol}</p>
                           </div>
                         </div>

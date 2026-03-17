@@ -42,13 +42,39 @@ async function isDoctorsMember(doctorUserId: string, patientId: string): Promise
 }
 
 export function registerDoctorRoutes(app: Express): void {
+  app.get("/api/doctor/members", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
+    try {
+      const isPrivileged = isPrivilegedUser(req);
+      const members = isPrivileged
+        ? await storage.getAllPatientRecords()
+        : await storage.getPatientRecords(req.user?.id as string);
+      res.json({ success: true, members });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   app.get("/api/doctor/patients", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const isPrivileged = isPrivilegedUser(req);
-      const patients = isPrivileged
+      const members = isPrivileged
         ? await storage.getAllPatientRecords()
         : await storage.getPatientRecords(req.user?.id as string);
-      res.json({ success: true, patients });
+      res.json({ success: true, members });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.get("/api/doctor/members/:id", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
+    try {
+      const member = await storage.getPatientRecord(req.params.id);
+      if (!member) {
+        return res.status(404).json({ success: false, error: "Member not found" });
+      }
+      const uploads = await storage.getPatientUploads(member.id);
+      const protocols = await storage.getPatientProtocols(member.id);
+      res.json({ success: true, member, uploads, protocols });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }
@@ -56,19 +82,19 @@ export function registerDoctorRoutes(app: Express): void {
 
   app.get("/api/doctor/patients/:id", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
-      const patient = await storage.getPatientRecord(req.params.id);
-      if (!patient) {
-        return res.status(404).json({ success: false, error: "Patient not found" });
+      const member = await storage.getPatientRecord(req.params.id);
+      if (!member) {
+        return res.status(404).json({ success: false, error: "Member not found" });
       }
-      const uploads = await storage.getPatientUploads(patient.id);
-      const protocols = await storage.getPatientProtocols(patient.id);
-      res.json({ success: true, patient, uploads, protocols });
+      const uploads = await storage.getPatientUploads(member.id);
+      const protocols = await storage.getPatientProtocols(member.id);
+      res.json({ success: true, member, uploads, protocols });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }
   });
 
-  app.post("/api/doctor/patients", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
+  app.post("/api/doctor/members", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const isPrivileged = isPrivilegedUser(req);
       const userId = req.user?.id as string;
@@ -86,7 +112,7 @@ export function registerDoctorRoutes(app: Express): void {
         }
       }
 
-      const patient = await storage.createPatientRecord({
+      const member = await storage.createPatientRecord({
         ...rest,
         doctorId,
         memberId: safeMemberId,
@@ -95,13 +121,35 @@ export function registerDoctorRoutes(app: Express): void {
         phone: phone || null,
         dateOfBirth: parsedDob,
       });
-      res.json({ success: true, patient });
+      res.json({ success: true, member });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }
   });
 
-  app.put("/api/doctor/patients/:id", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
+  app.post("/api/doctor/patients", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id as string;
+      const doctorId = req.body.doctorId || userId;
+      const { name, email, phone, dateOfBirth, memberId, memberName, memberEmail, ...rest } = req.body;
+      const safeName = memberName || name || "Unknown";
+      const safeMemberId = memberId || safeName.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Date.now().toString(36);
+      let parsedDob: Date | null = null;
+      if (dateOfBirth && dateOfBirth !== "") {
+        const d = new Date(dateOfBirth);
+        if (!isNaN(d.getTime())) parsedDob = d;
+      }
+      const member = await storage.createPatientRecord({
+        ...rest, doctorId, memberId: safeMemberId, memberName: safeName,
+        memberEmail: memberEmail || email || null, phone: phone || null, dateOfBirth: parsedDob,
+      });
+      res.json({ success: true, member });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.put("/api/doctor/members/:id", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
     try {
       const updates = { ...req.body };
 
@@ -129,8 +177,49 @@ export function registerDoctorRoutes(app: Express): void {
         const d = new Date(updates.nextAppointmentAt);
         updates.nextAppointmentAt = !isNaN(d.getTime()) ? d : null;
       }
-      const patient = await storage.updatePatientRecord(req.params.id, updates);
-      res.json({ success: true, patient });
+      const member = await storage.updatePatientRecord(req.params.id, updates);
+      res.json({ success: true, member });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.put("/api/doctor/patients/:id", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
+    try {
+      const updates = { ...req.body };
+      if ("name" in updates) { updates.memberName = updates.name; delete updates.name; }
+      if ("email" in updates) { updates.memberEmail = updates.email; delete updates.email; }
+      if ("dateOfBirth" in updates) {
+        if (updates.dateOfBirth && updates.dateOfBirth !== "") {
+          const d = new Date(updates.dateOfBirth);
+          updates.dateOfBirth = !isNaN(d.getTime()) ? d : null;
+        } else { updates.dateOfBirth = null; }
+      }
+      if ("lastVisitAt" in updates && typeof updates.lastVisitAt === "string") {
+        const d = new Date(updates.lastVisitAt);
+        updates.lastVisitAt = !isNaN(d.getTime()) ? d : null;
+      }
+      if ("nextAppointmentAt" in updates && typeof updates.nextAppointmentAt === "string") {
+        const d = new Date(updates.nextAppointmentAt);
+        updates.nextAppointmentAt = !isNaN(d.getTime()) ? d : null;
+      }
+      const member = await storage.updatePatientRecord(req.params.id, updates);
+      res.json({ success: true, member });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.post("/api/doctor/members/:memberId/uploads", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
+    try {
+      const doctorId = req.user?.id as string;
+      const upload = await storage.createPatientUpload({
+        ...req.body,
+        patientRecordId: req.params.memberId,
+        uploadedBy: doctorId,
+        uploadedByRole: "doctor"
+      });
+      res.json({ success: true, upload });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }
@@ -158,6 +247,20 @@ export function registerDoctorRoutes(app: Express): void {
         ? await storage.getAllDoctorProtocols()
         : await storage.getDoctorProtocols(req.user?.id as string);
       res.json({ success: true, protocols });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.post("/api/doctor/members/:memberId/protocols", requireRole("admin", "trustee", "doctor"), async (req: Request, res: Response) => {
+    try {
+      const doctorId = req.user?.id as string;
+      const protocol = await storage.createPatientProtocol({
+        ...req.body,
+        patientRecordId: req.params.memberId,
+        doctorId
+      });
+      res.json({ success: true, protocol });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }
@@ -291,7 +394,7 @@ export function registerDoctorRoutes(app: Express): void {
       if (!isPrivileged) {
         const authorized = await isDoctorsMember(doctorId, patientId);
         if (!authorized) {
-          return res.status(403).json({ success: false, error: "This patient is not enrolled under your practice" });
+          return res.status(403).json({ success: false, error: "This member is not enrolled under your practice" });
         }
       }
       const messages = await storage.getMessagesBetween(doctorId, patientId);
@@ -309,7 +412,7 @@ export function registerDoctorRoutes(app: Express): void {
       if (!isPrivileged) {
         const authorized = await isDoctorsMember(doctorId, patientId);
         if (!authorized) {
-          return res.status(403).json({ success: false, error: "This patient is not enrolled under your practice" });
+          return res.status(403).json({ success: false, error: "This member is not enrolled under your practice" });
         }
       }
       const { messageText } = req.body;
@@ -320,7 +423,7 @@ export function registerDoctorRoutes(app: Express): void {
         : doctorUser?.email || "Doctor";
       const patientName = patientUser?.firstName && patientUser?.lastName
         ? `${patientUser.firstName} ${patientUser.lastName}`
-        : patientUser?.email || "Patient";
+        : patientUser?.email || "Member";
       const conversation = await storage.getOrCreateConversation(doctorId, doctorName, patientId, patientName);
       const message = await storage.createMessage({
         conversationId: conversation.id,

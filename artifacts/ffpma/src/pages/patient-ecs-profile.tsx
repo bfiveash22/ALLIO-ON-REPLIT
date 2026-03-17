@@ -120,7 +120,7 @@ export default function PatientECSProfile() {
         <Card className="bg-red-500/10 border-red-500/30 max-w-lg mx-auto">
           <CardContent className="p-6 text-center">
             <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
-            <p className="text-red-300">Unable to load ECS profile. This patient may not have sufficient data.</p>
+            <p className="text-red-300">Unable to load ECS profile. This member may not have sufficient data.</p>
           </CardContent>
         </Card>
       </div>

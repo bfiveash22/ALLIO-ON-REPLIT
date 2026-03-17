@@ -271,7 +271,7 @@ export default function ProtocolBuilder() {
                 <p className="text-violet-200 max-w-xl mx-auto">
                   Welcome, Dr. {userName}. I have complete knowledge of all{" "}
                   <span className="text-violet-300 font-semibold">127+ products</span> in the FF PMA
-                  catalog. Describe your patient's needs and I'll build a comprehensive protocol.
+                  catalog. Describe your member's needs and I'll build a comprehensive protocol.
                 </p>
               </motion.div>
 
@@ -386,7 +386,7 @@ export default function ProtocolBuilder() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Describe the patient case and desired outcomes..."
+              placeholder="Describe the member case and desired outcomes..."
               rows={2}
               className="flex-1 bg-transparent text-white placeholder-violet-400/60 resize-none focus:outline-none p-2 text-sm"
             />

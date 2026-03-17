@@ -1,7 +1,10 @@
 # Workspace
 
 ## Overview
-Allio v1 (Forgotten Formula PMA) is a full-stack health and wellness platform designed to empower individuals on their healing journeys. It leverages AI-powered tools to create personalized healing protocols, manage patient data, and streamline administrative tasks for practitioners. The platform's core purpose is to provide a comprehensive, integrated solution for holistic health management, from patient intake and AI-driven analysis to protocol generation, educational content, and ongoing support. The business vision is to become a leading platform in personalized wellness, offering advanced AI capabilities and a seamless user experience for both patients and practitioners.
+Allio v1 (Forgotten Formula PMA) is a full-stack health and wellness platform designed to empower individuals on their healing journeys. It leverages AI-powered tools to create personalized healing protocols, manage member data, and streamline administrative tasks for practitioners. The platform's core purpose is to provide a comprehensive, integrated solution for holistic health management, from member intake and AI-driven analysis to protocol generation, educational content, and ongoing support. The business vision is to become a leading platform in personalized wellness, offering advanced AI capabilities and a seamless user experience for both members and practitioners.
+
+### PMA Language Compliance
+All user-facing content uses PMA-compliant terminology. DB columns (patient_name etc.) are kept for backward compatibility but are aliased in API responses. The shared module `lib/shared/src/pma-language.ts` provides term constants and sanitization utilities. API routes use `/api/doctor/members` (primary) with `/api/doctor/patients` as backward-compatible aliases. Key mappings: patient→member, treatment→protocol, diagnosis→assessment, prescribe→suggest, cure→restore, medical advice→wellness guidance, doctor-patient→trustee-member.
 
 ## User Preferences
 I want iterative development, with a focus on delivering small, functional increments. Please ask clarifying questions and propose alternative solutions when appropriate, especially before making significant architectural changes or implementing complex features. I prefer clear, concise explanations and well-structured code. Do not make changes to files outside the `artifacts/ffpma/` and `artifacts/api-server/` directories unless explicitly instructed.
@@ -44,10 +47,10 @@ The project is organized as a pnpm monorepo using workspaces, enabling efficient
 
 ### Protocol Assembly System
 An AI-powered pipeline (`artifacts/api-server/src/services/protocol-assembly.ts`) for generating personalized 90-day healing protocols.
-- **Process**: Analyzes call transcripts, extracts structured patient profiles, generates protocols with 5R framework (Remove, Restore, Replenish, Regenerate, Rebalance).
+- **Process**: Analyzes call transcripts, extracts structured member profiles, generates protocols with 5R framework (Remove, Restore, Replenish, Regenerate, Rebalance).
 - **4-Deliverable Pipeline**: On protocol approval, auto-generates: (1) Full Protocol PDF, (2) Daily Schedule PDF, (3) Peptide Schedule PDF, (4) PPTX Presentation (30+ slides). All files upload to Google Drive with links stored in DB.
 - **Full Modality Coverage**: All deliverables render 12+ modality types: injectable peptides, oral peptides, bioregulators, IV/IM therapies, supplements, detox protocols, parasite/antiviral, ECS protocol (suppositories + tincture + targeted ratios), sirtuin/MitoSTAC stack, liposomals, nebulization, topicals, exosomes, and dietary protocol with phases.
-- **Resource Engine** (`protocol-resources.ts`): Condition-based mapping engine that auto-selects books, research links, Drive library resources, and YouTube channels based on patient conditions (cancer, amalgam, parasite, gut, hormone, metabolic, heart, autoimmune, mold).
+- **Resource Engine** (`protocol-resources.ts`): Condition-based mapping engine that auto-selects books, research links, Drive library resources, and YouTube channels based on member conditions (cancer, amalgam, parasite, gut, hormone, metabolic, heart, autoimmune, mold).
 - **PPTX Generator** (`protocol-pptx.ts`): Uses `pptxgenjs` to create 30+ slide presentations matching Trustee's format — includes ECS section dividers, suppository slides, sirtuin/mitochondrial slides, liposomal, nebulization, topical, exosome, and dietary protocol slides alongside original sections.
 - **PDF Branding**: Deep blue/cyan/gold color scheme with FF PMA branding. Generated via PDFKit in `protocol-pdf.ts`. Includes dynamic resource sections (books, research, Drive links, YouTube) and Trustee commitment page.
 - **Presentation**: 30-slide interactive slideshow at `/protocol-presentation/` with narration, slide navigation, and share functionality. Built as separate Vite artifact.

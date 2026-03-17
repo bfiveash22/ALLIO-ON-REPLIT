@@ -452,7 +452,7 @@ Intravenous administration bypasses the digestive system, achieving:
 - **Magnesium flush** - slow the rate
 - **Taste changes** - normal with B vitamins
 - **Cooling sensation** - normal
-- **Hypotension** - lay patient flat, slow rate
+- **Hypotension** - lay member flat, slow rate
 
 ## Contraindications:
 - G6PD deficiency (high-dose C)

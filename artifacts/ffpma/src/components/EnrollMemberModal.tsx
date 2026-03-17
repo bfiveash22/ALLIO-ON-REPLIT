@@ -106,7 +106,7 @@ export function EnrollMemberModal({ open, onOpenChange, signupUrl }: EnrollMembe
       return res.json();
     },
     onSuccess: () => {
-      toast({ title: "Member Added", description: "This member has been added to your patient list." });
+      toast({ title: "Member Added", description: "This member has been added to your member roster." });
       queryClient.invalidateQueries({ queryKey: ["/api/doctor/members"] });
       handleClose();
     },
@@ -199,7 +199,7 @@ export function EnrollMemberModal({ open, onOpenChange, signupUrl }: EnrollMembe
                     <div>
                       <p className="font-medium text-red-300 text-sm">Contract Required</p>
                       <p className="text-sm text-white/60 mt-1">
-                        The member must complete their PMA membership contract before they can be added to your patient list. 
+                        The member must complete their PMA membership contract before they can be added to your member roster. 
                         Share the signup URL below so they can complete the process.
                       </p>
                       {signupUrl && (
@@ -368,7 +368,7 @@ export function EnrollMemberModal({ open, onOpenChange, signupUrl }: EnrollMembe
                         ) : (
                           <UserPlus className="w-4 h-4 mr-2" />
                         )}
-                        Confirm & Add to My Patients
+                        Confirm & Add to My Members
                       </Button>
                     </div>
                   ) : (
@@ -379,7 +379,7 @@ export function EnrollMemberModal({ open, onOpenChange, signupUrl }: EnrollMembe
                           <div>
                             <p className="text-sm font-medium text-red-300">Cannot Add — Verification Incomplete</p>
                             <p className="text-xs text-white/60 mt-1">
-                              This member must complete all verification steps before they can be added to your patient list. 
+                              This member must complete all verification steps before they can be added to your member roster. 
                               Please share the signup URL so they can complete the remaining steps.
                             </p>
                             {signupUrl && (

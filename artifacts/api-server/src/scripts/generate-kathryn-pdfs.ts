@@ -266,7 +266,7 @@ function generateFullProtocol() {
   doc.moveDown(1);
   doc.fontSize(7).fillColor("#8395A7").font("Helvetica")
     .text("Forgotten Formula PMA • www.ffpma.com • www.forgottenformula.com", { align: "center" })
-    .text("For licensed practitioners. Individualize per patient response and safety.", { align: "center" })
+    .text("For licensed practitioners. Individualize per member response and safety.", { align: "center" })
     .text("This document is a private member-to-member communication protected under the 1st and 14th Amendments.", { align: "center" });
 
   doc.end();

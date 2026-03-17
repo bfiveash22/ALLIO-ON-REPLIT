@@ -276,9 +276,9 @@ export function BloodAnalysisUpload({ onUploadComplete, patientId: propPatientId
 
         <div className="grid grid-cols-2 gap-4 mt-6">
           <div className="space-y-2">
-            <Label className="text-white/70">Patient/Member ID</Label>
+            <Label className="text-white/70">Member ID</Label>
             <Input
-              placeholder="e.g., MEM-001 or Patient Name"
+              placeholder="e.g., MEM-001 or Member Name"
               value={patientId}
               onChange={(e) => setPatientId(e.target.value)}
               className="bg-white/5 border-white/10 text-white placeholder:text-white/30"

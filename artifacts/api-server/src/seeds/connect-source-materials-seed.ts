@@ -16,7 +16,7 @@ const MODULE_SOURCE_MAPPINGS: SourceMapping[] = [
   { moduleId: "ecs-105-support", keywords: ["ECS support", "cannabinoid", "natural"] },
   { moduleId: "ecs-201-neuroanatomy", keywords: ["neuroanatomy", "cannabinoid", "brain", "CNS"] },
   { moduleId: "ecs-202-immune-system", keywords: ["immune", "cannabinoid", "inflammation"] },
-  { moduleId: "ecs-203-patient-assessment", keywords: ["patient", "assessment", "cannabinoid"] },
+  { moduleId: "ecs-203-patient-assessment", keywords: ["member", "assessment", "cannabinoid"] },
   { moduleId: "ecs-204-phytocannabinoids", keywords: ["phytocannabinoid", "THC", "CBD", "cannabis"] },
   { moduleId: "ecs-205-terpenes", keywords: ["terpene", "entourage effect", "cannabis"] },
   { moduleId: "ecs-206-dosing", keywords: ["dosing", "titration", "cannabinoid"] },
@@ -142,7 +142,7 @@ export async function autoConnectByKeywordMatch(): Promise<{
     "Peptide": ["peptide", "amino acid", "bioregulator"],
     "PMA": ["legal", "law", "constitution", "rights"],
     "Blood": ["blood", "analysis", "diagnostic"],
-    "Doctor": ["clinical", "patient", "physician"],
+    "Doctor": ["clinical", "member", "physician"],
     "Nutrition": ["diet", "nutrition", "food", "mineral"],
     "IV": ["IV", "infusion", "therapy"],
   };

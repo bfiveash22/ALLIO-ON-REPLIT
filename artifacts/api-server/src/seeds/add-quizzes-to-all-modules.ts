@@ -30,7 +30,7 @@ const categoryQuizTemplates: Record<string, QuizTemplate> = {
       {
         question: "Why is individualized dosing important in advanced therapeutics?",
         answers: [
-          { text: "Every patient responds differently based on their unique biology", correct: true },
+          { text: "Every member responds differently based on their unique biology", correct: true },
           { text: "It makes treatment more expensive", correct: false },
           { text: "Standard doses always work the same", correct: false },
           { text: "Dosing doesn't matter for therapeutic outcomes", correct: false }
@@ -40,12 +40,12 @@ const categoryQuizTemplates: Record<string, QuizTemplate> = {
       {
         question: "What should be monitored during advanced therapeutic protocols?",
         answers: [
-          { text: "Patient response, side effects, and biomarkers", correct: true },
+          { text: "Member response, side effects, and biomarkers", correct: true },
           { text: "Only the calendar date", correct: false },
           { text: "Nothing - advanced therapies are always safe", correct: false },
           { text: "Only the cost of treatment", correct: false }
         ],
-        explanation: "Comprehensive monitoring ensures safety and allows for protocol adjustments based on patient response."
+        explanation: "Comprehensive monitoring ensures safety and allows for protocol adjustments based on member response."
       }
     ]
   },
@@ -102,7 +102,7 @@ const categoryQuizTemplates: Record<string, QuizTemplate> = {
       {
         question: "How should doctors utilize ALLIO AI agents in their practice?",
         answers: [
-          { text: "As assistive tools to enhance patient care and research", correct: true },
+          { text: "As assistive tools to enhance member wellness and research", correct: true },
           { text: "To replace all clinical decision making", correct: false },
           { text: "AI agents should be avoided entirely", correct: false },
           { text: "Only for administrative tasks", correct: false }
@@ -198,7 +198,7 @@ const categoryQuizTemplates: Record<string, QuizTemplate> = {
     description: "Certification exam for ECS practitioners",
     questions: [
       {
-        question: "What is the first consideration when assessing a patient for ECS support?",
+        question: "What is the first consideration when assessing a member for ECS support?",
         answers: [
           { text: "Complete health history including current medications", correct: true },
           { text: "Only their interest in cannabis", correct: false },
@@ -563,14 +563,14 @@ const categoryQuizTemplates: Record<string, QuizTemplate> = {
           { text: "Sterile technique and proper vein access", correct: true },
           { text: "Speed of administration", correct: false },
           { text: "Cost of materials", correct: false },
-          { text: "Patient comfort only", correct: false }
+          { text: "Member comfort only", correct: false }
         ],
         explanation: "Maintaining sterility prevents infection, the primary risk of IV therapy."
       },
       {
         question: "What should be verified before starting any IV infusion?",
         answers: [
-          { text: "Patient allergies, correct solution, and expiration dates", correct: true },
+          { text: "Member allergies, correct solution, and expiration dates", correct: true },
           { text: "Only the patient's name", correct: false },
           { text: "Nothing needs verification", correct: false },
           { text: "Only payment information", correct: false }
@@ -580,8 +580,8 @@ const categoryQuizTemplates: Record<string, QuizTemplate> = {
       {
         question: "When should an IV infusion be stopped immediately?",
         answers: [
-          { text: "Signs of infiltration, allergic reaction, or patient distress", correct: true },
-          { text: "When the patient asks questions", correct: false },
+          { text: "Signs of infiltration, allergic reaction, or member distress", correct: true },
+          { text: "When the member asks questions", correct: false },
           { text: "Never - always complete the infusion", correct: false },
           { text: "Only when the bag is empty", correct: false }
         ],

@@ -377,7 +377,7 @@ export default function MemberOnboardingPage() {
                     By proceeding, you acknowledge the following:
                   </p>
                   <ul className="text-xs text-muted-foreground space-y-2 list-disc pl-5">
-                    <li>I acknowledge that all individuals present within any Affiliated Clinic Association's facilities — including patients, clients, staff, practitioners, and visitors — must be active, signed members of the Forgotten Formula PMA network.</li>
+                    <li>I acknowledge that all individuals present within any Affiliated Clinic Association's facilities — including members, clients, staff, practitioners, and visitors — must be active, signed members of the Forgotten Formula PMA network.</li>
                     <li>The Unified Membership Contract requires three signatures: (1) myself as the Member, (2) the Trustee representing the Mother PMA, and (3) the Clinic Representative at my selected Affiliated Clinic Association.</li>
                     <li>My membership is portable nationwide — I may access services at any Affiliated Clinic Association location within the FFPMA network without requiring a separate membership application or additional enrollment fee.</li>
                     <li>I am joining voluntarily, have not been coerced, and freely exercise my constitutional right of association.</li>

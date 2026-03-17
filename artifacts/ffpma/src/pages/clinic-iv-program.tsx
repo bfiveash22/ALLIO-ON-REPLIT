@@ -59,9 +59,9 @@ const ivProtocols = [
 ];
 
 const upcomingAppointments = [
-  { id: 1, patient: "John D.", protocol: "High-Dose Vitamin C", time: "Today 2:00 PM", status: "scheduled" },
-  { id: 2, patient: "Sarah M.", protocol: "NAD+ Infusion", time: "Today 3:30 PM", status: "scheduled" },
-  { id: 3, patient: "Robert K.", protocol: "Myers' Cocktail", time: "Tomorrow 10:00 AM", status: "confirmed" },
+  { id: 1, member: "John D.", protocol: "High-Dose Vitamin C", time: "Today 2:00 PM", status: "scheduled" },
+  { id: 2, member: "Sarah M.", protocol: "NAD+ Infusion", time: "Today 3:30 PM", status: "scheduled" },
+  { id: 3, member: "Robert K.", protocol: "Myers' Cocktail", time: "Tomorrow 10:00 AM", status: "confirmed" },
 ];
 
 export default function ClinicIVProgramPage() {
@@ -170,7 +170,7 @@ export default function ClinicIVProgramPage() {
                           <Users className="h-5 w-5 text-amber-500" />
                         </div>
                         <div>
-                          <p className="font-medium">{apt.patient}</p>
+                          <p className="font-medium">{apt.member}</p>
                           <p className="text-sm text-muted-foreground">{apt.protocol}</p>
                         </div>
                       </div>
