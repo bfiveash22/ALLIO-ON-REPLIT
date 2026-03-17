@@ -32,7 +32,7 @@ const RESEARCH_LINKS: Record<string, { url: string; label: string }[]> = {
   ],
   'NAD+': [
     { url: 'https://pubmed.ncbi.nlm.nih.gov/29514064/', label: 'PubMed: NAD+ and aging' },
-    { url: 'https://pubmed.ncbi.nlm.nih.gov/30457958/', label: 'PubMed: NMN clinical review' },
+    { url: 'https://pubmed.ncbi.nlm.nih.gov/30457958/', label: 'PubMed: NMN research review' },
   ],
   'ECS Cannabinoid': [
     { url: 'https://pubmed.ncbi.nlm.nih.gov/17369778/', label: 'PubMed: ECS and cancer' },
@@ -491,7 +491,7 @@ export async function generateAnnetteGomerSlides(): Promise<ProtocolSlideResult>
   // ═══════════════════════════════════════════
   buildSectionSlide(
     'R3: REACTIVATE',
-    'Endocannabinoid System (ECS) Optimization — Suppositories, Tinctures, Clinical Mappings',
+    'Endocannabinoid System (ECS) Optimization — Suppositories, Tinctures, Wellness Mappings',
     FFPMA_COLORS.deepBlue,
     FFPMA_COLORS.white
   );
@@ -586,7 +586,7 @@ export async function generateAnnetteGomerSlides(): Promise<ProtocolSlideResult>
     'R5: REVITALIZE — Mind, Body, Spirit',
     [
       'MENTAL/EMOTIONAL HEALING:',
-      'Daily Affirmations (As Prescribed):',
+      'Daily Affirmations (As Directed):',
       '  "Today\'s going to be a great day"  |  "My body heals quickly, easily, and completely"',
       '  "I am healthy, vibrant, and cancer-free"',
       '• Meditation: 10-20 minutes daily  |  Gratitude Journal: 3 things daily',
@@ -1152,7 +1152,7 @@ export async function generateKathrynSmithSlides(): Promise<ProtocolSlideResult>
       'MYCOTOXIN BINDERS (Weeks 1-12):',
       '• Activated Charcoal: 1000mg, 2x daily (away from food)',
       '• Bentonite Clay: 1 tsp in water daily',
-      '• Cholestyramine: As prescribed (prescription binder)',
+      '• Cholestyramine: As prescribed (detox binder)',
       '• Modified Citrus Pectin: 5g, 2x daily',
       '',
       'ANTIFUNGAL SUPPORT:',
@@ -1368,7 +1368,7 @@ export async function generateKathrynSmithSlides(): Promise<ProtocolSlideResult>
       '• EFT/Tapping: Daily for anxiety & fear processing',
       '• Somatic experiencing: Release stored body trauma',
       '',
-      'Daily Affirmations (As Prescribed):',
+      'Daily Affirmations (As Directed):',
       '  "Today\'s going to be a great day"  |  "My body heals quickly, easily, and completely"',
       '  "I am healthy, vibrant, and cancer-free"  |  "I will see my great-grandchildren"',
       '• Meditation: 10-20 minutes daily  |  Gratitude Journal: 3 things daily',
@@ -1547,7 +1547,7 @@ export async function generateKathrynSmithSlides(): Promise<ProtocolSlideResult>
       '',
       'MITOCHONDRIAL SUPPORT:',
       '• NAD+ and aging — PubMed: 29514064',
-      '• NMN clinical review — PubMed: 30457958',
+      '• NMN research review — PubMed: 30457958',
       '',
       'SUPPLIERS:',
       '• Peptide Sciences: peptidesciences.com',

@@ -27,7 +27,7 @@ import {
 import { researchApi } from "./research-api";
 import { generateProtocolPDF, generateDailySchedulePDF, generatePeptideSchedulePDF } from "./protocol-pdf";
 import { callWithFallback } from "./ai-fallback";
-import { sanitizePmaLanguage } from "@shared/pma-language";
+import { sanitizePmaLanguage, sanitizeObjectStrings } from "@shared/pma-language";
 
 export interface ProtocolCitation {
   title: string;
@@ -117,21 +117,24 @@ export async function generateProtocolPDFBuffer(
   profile: PatientProfile,
   citations?: ProtocolCitation[]
 ): Promise<Buffer> {
-  return generateProtocolPDF(protocol, profile, citations);
+  const sanitizedProtocol = sanitizeObjectStrings(protocol);
+  return generateProtocolPDF(sanitizedProtocol, profile, citations);
 }
 
 export async function generateDailySchedulePDFBuffer(
   protocol: HealingProtocol,
   profile: PatientProfile
 ): Promise<Buffer> {
-  return generateDailySchedulePDF(protocol, profile);
+  const sanitizedProtocol = sanitizeObjectStrings(protocol);
+  return generateDailySchedulePDF(sanitizedProtocol, profile);
 }
 
 export async function generatePeptideSchedulePDFBuffer(
   protocol: HealingProtocol,
   profile: PatientProfile
 ): Promise<Buffer> {
-  return generatePeptideSchedulePDF(protocol, profile);
+  const sanitizedProtocol = sanitizeObjectStrings(protocol);
+  return generatePeptideSchedulePDF(sanitizedProtocol, profile);
 }
 
 export async function runProtocolQA(protocol: HealingProtocol): Promise<{
@@ -320,7 +323,7 @@ export async function analyzeTranscript(
 Extract ALL of the following into valid JSON matching the PatientProfile interface:
 - name, age, gender, location, callDate
 - chiefComplaints: array of primary health concerns
-- currentDiagnoses: array of diagnosed conditions
+- currentDiagnoses: array of assessed conditions
 - currentMedications: array of current meds
 - medicalTimeline: array of {ageRange, year?, event, significance}
 - rootCauses: array of {rank (1-5), cause, category (primary/secondary/tertiary/quaternary/quinary), details, relatedSymptoms[]}
@@ -329,13 +332,13 @@ Extract ALL of the following into valid JSON matching the PatientProfile interfa
 - surgicalHistory: array of surgeries
 - gutHealth: {gallbladderRemoved, appendixRemoved, digestiveIssues[], probioticHistory?}
 - hormoneStatus: {thyroidIssues?, estrogenDominance?, hormoneDetails?}
-- parasiteStatus: {everTreated, treatmentDetails?}
+- parasiteStatus: {everTreated, protocolDetails?}
 - dentalHistory: {amalgamFillings, rootCanals, cavitations?}
 - deficiencies: array of suspected deficiencies
 - contraindications: array of things to avoid
 - goals: array of member wellness goals
 
-Use clinical reasoning to identify root causes from the data. Follow the FF PMA 5 Root Causes framework:
+Use root-cause reasoning to identify root causes from the data. Follow the FF PMA 5 Root Causes framework:
 1. Toxicity (mercury, mold, chemicals)
 2. Gut Dysbiosis (microbiome disruption)
 3. Hormonal/Endocrine Disruption
@@ -838,7 +841,7 @@ function runDeterministicQAChecks(
   if (topicalsIndicated && !protocol.topicals?.length) {
     issues.push("Topical-indicating condition present (joint/skin/pain) — topical protocols required");
   } else if (!protocol.topicals?.length) {
-    suggestions.push("Consider topicals (DMSO cream, Kaneh Bosem) for localized treatment");
+    suggestions.push("Consider topicals (DMSO cream, Kaneh Bosem) for localized support");
   }
 
   if (exosomesIndicated && !protocol.exosomes?.length) {
@@ -1226,7 +1229,7 @@ function buildSlideRequests(protocol: HealingProtocol, profile: PatientProfile):
   addTextBox(titleSlide, "Forgotten Formula PMA", 50, 320, 620, 30, 14, false, { red: 0.5, green: 0.5, blue: 0.5 });
 
   const overviewSlide = addSlide();
-  addTextBox(overviewSlide, "Patient Overview", 30, 20, 660, 40, 24, true, { red: 0.2, green: 0.1, blue: 0.5 });
+  addTextBox(overviewSlide, "Member Overview", 30, 20, 660, 40, 24, true, { red: 0.2, green: 0.1, blue: 0.5 });
   const overviewText = [
     `Name: ${protocol.patientName}`,
     `Age: ${protocol.patientAge}`,
@@ -1236,7 +1239,7 @@ function buildSlideRequests(protocol: HealingProtocol, profile: PatientProfile):
     "Chief Complaints:",
     ...profile.chiefComplaints.map((c) => `• ${c}`),
     "",
-    "Current Diagnoses:",
+    "Current Assessments:",
     ...profile.currentDiagnoses.map((d) => `• ${d}`),
     "",
     "Goals:",
@@ -1267,7 +1270,7 @@ function buildSlideRequests(protocol: HealingProtocol, profile: PatientProfile):
 
   if (protocol.phases && protocol.phases.length > 0) {
     const phaseSlide = addSlide();
-    addTextBox(phaseSlide, "Treatment Phases", 30, 20, 660, 40, 24, true, { red: 0.2, green: 0.1, blue: 0.5 });
+    addTextBox(phaseSlide, "Wellness Phases", 30, 20, 660, 40, 24, true, { red: 0.2, green: 0.1, blue: 0.5 });
     const phaseText = protocol.phases
       .map(
         (p) =>

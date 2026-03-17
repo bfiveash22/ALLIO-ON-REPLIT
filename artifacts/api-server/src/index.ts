@@ -287,6 +287,38 @@ registerHealthRoutes(app);
   app.use(notFoundHandler);
   app.use(errorHandler);
 
+  try {
+    const { PMA_FORBIDDEN_PATTERNS } = await import("@shared/pma-language");
+    const fs = await import("fs");
+    const userFacingFiles = [
+      path.resolve(process.cwd(), '..', '..', 'artifacts', 'api-server', 'src', 'services', 'protocol-pdf.ts'),
+      path.resolve(process.cwd(), '..', '..', 'artifacts', 'api-server', 'src', 'services', 'protocol-pptx.ts'),
+    ];
+    let violations = 0;
+    for (const file of userFacingFiles) {
+      if (fs.existsSync(file)) {
+        const content = fs.readFileSync(file, 'utf-8');
+        const lines = content.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          if (line.trimStart().startsWith('//') || line.trimStart().startsWith('import') || line.trimStart().startsWith('*')) continue;
+          for (const pattern of PMA_FORBIDDEN_PATTERNS) {
+            if (pattern.test(line) && !line.includes('sanitize') && !line.includes('PMA_') && !line.includes('interface') && !line.includes('type ') && !line.includes('does not constitute') && !line.includes('disclaimer')) {
+              violations++;
+            }
+          }
+        }
+      }
+    }
+    if (violations > 0) {
+      log(`[pma-compliance] WARNING: ${violations} potential PMA terminology violations detected in output files`, 'startup');
+    } else {
+      log('[pma-compliance] All output files pass PMA terminology check', 'startup');
+    }
+  } catch (err: any) {
+    log(`[pma-compliance] Check failed (non-fatal): ${err.message}`, 'startup');
+  }
+
   const port = parseInt(process.env.PORT || "5000", 10);
   httpServer.listen(
     {

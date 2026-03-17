@@ -295,7 +295,7 @@ function slideMemberInfo(pres: PptxPresentation, protocol: HealingProtocol, prof
   const diagnoses = (profile.currentDiagnoses || []).slice(0, 5);
   const complaints = (profile.chiefComplaints || []).slice(0, 5);
 
-  slide.addText("Current Diagnoses:", {
+  slide.addText("Current Assessments:", {
     x: 5.2, y: 1.0, w: 4.1, h: 0.3,
     fontSize: 11, fontFace: BODY_FONT, color: SECONDARY, bold: true,
   });

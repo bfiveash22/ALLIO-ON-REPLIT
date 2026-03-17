@@ -42,19 +42,43 @@ export const PMA_PDF_FOOTER =
 
 export function sanitizePmaLanguage(text: string): string {
   return text
-    .replace(/\bpatient\b/gi, (match) => {
-      if (match === "patient") return "member";
-      if (match === "Patient") return "Member";
-      if (match === "PATIENT") return "MEMBER";
-      return "member";
-    })
     .replace(/\bpatients\b/gi, (match) => {
       if (match === "patients") return "members";
       if (match === "Patients") return "Members";
       if (match === "PATIENTS") return "MEMBERS";
       return "members";
     })
+    .replace(/\bpatient\b/gi, (match) => {
+      if (match === "patient") return "member";
+      if (match === "Patient") return "Member";
+      if (match === "PATIENT") return "MEMBER";
+      return "member";
+    })
     .replace(/\bTreatment Phases\b/g, "Wellness Phases")
     .replace(/\btreatment plan\b/gi, "wellness protocol")
-    .replace(/\bmedical advice\b/gi, "wellness guidance");
+    .replace(/\bmedical advice\b/gi, "wellness guidance")
+    .replace(/\bdoctor-patient\b/gi, "trustee-member")
+    .replace(/\bpatient overview\b/gi, "member overview")
+    .replace(/\bpatient care\b/gi, "member wellness");
 }
+
+export function sanitizeObjectStrings<T>(obj: T): T {
+  if (typeof obj === "string") return sanitizePmaLanguage(obj) as T;
+  if (Array.isArray(obj)) return obj.map(sanitizeObjectStrings) as T;
+  if (obj && typeof obj === "object") {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      result[key] = sanitizeObjectStrings(value);
+    }
+    return result as T;
+  }
+  return obj;
+}
+
+export const PMA_FORBIDDEN_PATTERNS = [
+  /\bpatient\b/i,
+  /\bpatients\b/i,
+  /\btreatment plan\b/i,
+  /\bmedical advice\b/i,
+  /\bdoctor-patient\b/i,
+] as const;
