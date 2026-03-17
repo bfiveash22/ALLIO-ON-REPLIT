@@ -88,15 +88,15 @@
   },
   "doctors": {
     "portal": "Portal Médico",
-    "patients": "Mis Pacientes",
+    "patients": "Mis Miembros",
     "protocols": "Protocolos",
     "analysis": "Análisis con IA",
     "messaging": "Mensajería",
     "documents": "Documentos",
     "rootCause": "Origen del Problema",
     "assignProtocol": "Asignar Protocolo",
-    "newPatient": "Agregar Paciente",
-    "patientManagement": "Gestión de Pacientes",
+    "newPatient": "Agregar Miembro",
+    "patientManagement": "Gestión de Miembros",
     "practiceAnalytics": "Estadísticas del Consultorio"
   },
   "analysis": {

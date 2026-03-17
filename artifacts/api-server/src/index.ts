@@ -329,6 +329,8 @@ registerHealthRoutes(app);
       'artifacts/ffpma/src/pages/protocols.tsx',
       'artifacts/ffpma/src/pages/protocol-assembly.tsx',
       'artifacts/ffpma/src/components/ConsultAITeam.tsx',
+      'artifacts/ffpma/src/locales/en/common.json',
+      'artifacts/ffpma/src/locales/es/common.json',
     ];
 
     const codeLineSkip = (line: string): boolean => {
@@ -356,6 +358,7 @@ registerHealthRoutes(app);
       if (/getPatientResources|PatientProfile|PatientInfo|profileFromIntakeForm/.test(line)) return true;
       if (/sanitize(PmaLanguage|TextInput)|addSanitizedSlide/.test(line)) return true;
       if (/generatedProtocols\.patient/.test(line)) return true;
+      if (/"patients":|"newPatient":|"patientManagement":/.test(line)) return true;
       if (/totalMembers:\s*patients|activeMembers:\s*patients/.test(line)) return true;
       if (/profit model|cured nothing|poison to cure|not a cure/.test(line)) return true;
       if (/YOU ARE NOT YOUR/.test(line)) return true;
