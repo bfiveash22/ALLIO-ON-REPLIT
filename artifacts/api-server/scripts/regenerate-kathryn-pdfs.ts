@@ -32,7 +32,7 @@ async function main() {
     throw new Error("No protocol data found for record id=2");
   }
 
-  const protocol = record.protocol as any;
+  const protocol = record.protocol as unknown as import("@shared/types/protocol-assembly").HealingProtocol;
 
   console.log(`[Regen] Protocol: ${protocol.patientName}, ${protocol.protocolDurationDays} days`);
   console.log(`[Regen] ${protocol.injectablePeptides?.length || 0} injectables, ${protocol.supplements?.length || 0} supplements`);

@@ -279,14 +279,13 @@ WRITING STYLE - BE A CLINICAL MENTOR:
     
     if (response.body) {
       const { Readable } = await import('node:stream');
-      const webStream = response.body as any;
-      const nodeStream = Readable.fromWeb(webStream);
+      const nodeStream = Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0]);
       nodeStream.pipe(res);
     } else {
       res.end();
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Protocol builder error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }

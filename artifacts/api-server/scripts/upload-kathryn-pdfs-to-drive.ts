@@ -5,6 +5,7 @@ import { generatedProtocols } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { uploadProtocolToDrive } from "../src/services/drive";
 
+const TARGET_PROTOCOL_ID = 2;
 const OUTPUT_DIR = path.resolve(process.cwd(), "..", "..", "public", "protocols");
 
 async function main() {
@@ -19,6 +20,8 @@ async function main() {
     }
   }
 
+  console.log(`[Upload] Target protocol record: id=${TARGET_PROTOCOL_ID}`);
+
   console.log("[Upload] Uploading Full Protocol PDF to Drive...");
   const fullBuf = fs.readFileSync(fullPath);
   const fullResult = await uploadProtocolToDrive(fullBuf, "Kathryn_Smith_Full_Protocol_2026.pdf");
@@ -30,16 +33,8 @@ async function main() {
         pdfDriveFileId: fullResult.fileId,
         pdfDriveWebViewLink: fullResult.webViewLink || null,
       })
-      .where(eq(generatedProtocols.id, 2));
-    console.log("[Upload] DB updated: id=2 pdfDriveFileId=" + fullResult.fileId);
-
-    await db.update(generatedProtocols)
-      .set({
-        pdfDriveFileId: fullResult.fileId,
-        pdfDriveWebViewLink: fullResult.webViewLink || null,
-      })
-      .where(eq(generatedProtocols.id, 1));
-    console.log("[Upload] DB updated: id=1 pdfDriveFileId=" + fullResult.fileId);
+      .where(eq(generatedProtocols.id, TARGET_PROTOCOL_ID));
+    console.log(`[Upload] DB updated: id=${TARGET_PROTOCOL_ID} pdfDriveFileId=${fullResult.fileId}`);
   }
 
   console.log("[Upload] Uploading Daily Schedule PDF to Drive...");
@@ -53,16 +48,8 @@ async function main() {
         dailySchedulePdfFileId: dailyResult.fileId,
         dailySchedulePdfWebViewLink: dailyResult.webViewLink || null,
       })
-      .where(eq(generatedProtocols.id, 2));
-    console.log("[Upload] DB updated: id=2 dailySchedulePdfFileId=" + dailyResult.fileId);
-
-    await db.update(generatedProtocols)
-      .set({
-        dailySchedulePdfFileId: dailyResult.fileId,
-        dailySchedulePdfWebViewLink: dailyResult.webViewLink || null,
-      })
-      .where(eq(generatedProtocols.id, 1));
-    console.log("[Upload] DB updated: id=1 dailySchedulePdfFileId=" + dailyResult.fileId);
+      .where(eq(generatedProtocols.id, TARGET_PROTOCOL_ID));
+    console.log(`[Upload] DB updated: id=${TARGET_PROTOCOL_ID} dailySchedulePdfFileId=${dailyResult.fileId}`);
   }
 
   console.log("[Upload] Uploading Peptide Schedule PDF to Drive...");
@@ -76,16 +63,8 @@ async function main() {
         peptideSchedulePdfFileId: peptideResult.fileId,
         peptideSchedulePdfWebViewLink: peptideResult.webViewLink || null,
       })
-      .where(eq(generatedProtocols.id, 2));
-    console.log("[Upload] DB updated: id=2 peptideSchedulePdfFileId=" + peptideResult.fileId);
-
-    await db.update(generatedProtocols)
-      .set({
-        peptideSchedulePdfFileId: peptideResult.fileId,
-        peptideSchedulePdfWebViewLink: peptideResult.webViewLink || null,
-      })
-      .where(eq(generatedProtocols.id, 1));
-    console.log("[Upload] DB updated: id=1 peptideSchedulePdfFileId=" + peptideResult.fileId);
+      .where(eq(generatedProtocols.id, TARGET_PROTOCOL_ID));
+    console.log(`[Upload] DB updated: id=${TARGET_PROTOCOL_ID} peptideSchedulePdfFileId=${peptideResult.fileId}`);
   }
 
   console.log("[Upload] Uploading PPTX Presentation to Drive...");
@@ -103,19 +82,11 @@ async function main() {
         slidesPresentationId: pptxResult.fileId,
         slidesWebViewLink: pptxResult.webViewLink || null,
       })
-      .where(eq(generatedProtocols.id, 2));
-    console.log("[Upload] DB updated: id=2 slidesPresentationId=" + pptxResult.fileId);
-
-    await db.update(generatedProtocols)
-      .set({
-        slidesPresentationId: pptxResult.fileId,
-        slidesWebViewLink: pptxResult.webViewLink || null,
-      })
-      .where(eq(generatedProtocols.id, 1));
-    console.log("[Upload] DB updated: id=1 slidesPresentationId=" + pptxResult.fileId);
+      .where(eq(generatedProtocols.id, TARGET_PROTOCOL_ID));
+    console.log(`[Upload] DB updated: id=${TARGET_PROTOCOL_ID} slidesPresentationId=${pptxResult.fileId}`);
   }
 
-  console.log("\n[Upload] All 4 deliverables uploaded to Drive and DB records updated!");
+  console.log(`\n[Upload] All 4 deliverables uploaded to Drive and DB record id=${TARGET_PROTOCOL_ID} updated!`);
   process.exit(0);
 }
 

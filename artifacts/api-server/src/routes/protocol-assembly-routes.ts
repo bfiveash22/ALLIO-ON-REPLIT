@@ -286,7 +286,7 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       createdAt: generatedProtocols.createdAt,
       updatedAt: generatedProtocols.updatedAt,
     }).from(generatedProtocols)
-      .where(eq(generatedProtocols.status, 'pending_review'))
+      .where(eq(generatedProtocols.status, 'needs_review'))
       .orderBy(desc(generatedProtocols.createdAt));
     res.json(pending);
   }));
@@ -517,7 +517,7 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
 
       const { status, reviewNotes, doctorId } = req.body;
-      const validStatuses = ['draft', 'pending_review', 'approved', 'rejected'];
+      const validStatuses = ['draft', 'needs_review', 'approved', 'rejected'];
       if (!status || !validStatuses.includes(status)) {
         return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
       }
