@@ -535,7 +535,7 @@ export function registerMiscRoutes(app: Express): void {
     }
   });
 
-  app.get("/api/legal/documents/:slug", async (req: Request, res: Response) => {
+  app.get("/api/legal/documents/:slug", requireAuth, async (req: Request, res: Response) => {
     try {
       const { getLegalDocumentBySlug } = await import("../services/legal-documents");
       const doc = getLegalDocumentBySlug(req.params.slug);

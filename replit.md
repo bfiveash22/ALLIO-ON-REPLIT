@@ -81,6 +81,13 @@ Includes an AI agent network with:
 - A Sentinel monitoring system.
 - Diane AI assistant for member support.
 
+### Legal Division & Constitutional Law Framework
+- **Agents**: JURIS (Chief Legal AI), LEXICON (Contract Specialist), AEGIS (PMA Sovereignty Guardian), SCRIBE (Document Automation). All trained on 1st/14th Amendment constitutional law foundations.
+- **Constitutional Framework**: Comprehensive legal document (`getConstitutionalLawFramework()`) covering First/Fourteenth/Ninth/Tenth Amendment protections, regulatory jurisdiction analysis, case law library (NAACP v. Alabama, Roberts v. Jaycees, Boy Scouts v. Dale, Griswold v. Connecticut, etc.), PMA structural requirements, and operational guidelines.
+- **Drive Structure**: `ALLIO/Legal Compliance/{Constitutional Law, Case Law, Reference Materials, PMA Formation Documents}` and `ALLIO/Member Contracts/{MemberName}/`.
+- **API Endpoint**: `/api/legal/documents/constitutional-law-framework` (auth required).
+- **Scripts**: `legal-drive-audit.ts` (folder audit + reorganization), `upload-constitutional-framework.ts` (uploads framework + PMA formation checklist to Drive).
+
 ## External Dependencies
 
 - **AI Services**: OpenAI, Anthropic, Google Gemini, HuggingFace

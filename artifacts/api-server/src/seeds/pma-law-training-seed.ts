@@ -227,7 +227,7 @@ This case reinforces the Common Law principle that citizens can do anything exce
 ];
 
 export const pmaLegalAgentTask = {
-  agentId: "GAVEL",
+  agentId: "JURIS",
   division: "legal" as const,
   title: "Review & Learn PMA Principles Law Reference Manual",
   description: `PRIORITY LEARNING ASSIGNMENT
@@ -310,7 +310,7 @@ TIMELINE:
 - Phase 2 (Week 2): Video production begins
 - Phase 3 (Week 3): Written content and launch
 
-Coordinate with Legal (GAVEL) for accuracy review before publishing.
+Coordinate with Legal (JURIS) for accuracy review before publishing.
 
 PRIORITY: High
 Report progress to ATHENA weekly.`,
@@ -355,7 +355,7 @@ export async function seedPMALawTraining() {
     
     // 5. Create Legal agent task
     await db.insert(agentTasks).values(pmaLegalAgentTask).onConflictDoNothing();
-    console.log("[Seed] Created Legal division task for GAVEL");
+    console.log("[Seed] Created Legal division task for JURIS");
     
     // 6. Create Marketing agent task
     await db.insert(agentTasks).values(pmaMarketingAgentTask).onConflictDoNothing();

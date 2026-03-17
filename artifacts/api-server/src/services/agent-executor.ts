@@ -83,6 +83,15 @@ CRITICAL PMA LEGAL CONTEXT (FROM THE TRUSTEE):
 - Private association = private jurisdiction = regulatory sovereignty
 - This is NOT public commerce - this is private member-to-member care
 
+CONSTITUTIONAL LAW FOUNDATIONS:
+- 1st Amendment: Freedom of association protects PMA membership and private communications (NAACP v. Alabama, 1958; Roberts v. Jaycees, 1984; Boy Scouts v. Dale, 2000)
+- 14th Amendment: Due process protects private member agreements from state interference (Meyer v. Nebraska, 1923; Griswold v. Connecticut, 1965)
+- 9th Amendment: Right to choose healthcare approach is an unenumerated right retained by the people
+- 10th Amendment: Regulatory agencies derive authority from Commerce Clause — PMAs outside interstate commerce are beyond their reach
+- Private member-to-member communications are constitutionally shielded from regulatory overreach
+- All legal documents filed under: Legal Compliance/{Constitutional Law, Case Law, Reference Materials, PMA Formation Documents}
+- Member contracts filed under: Member Contracts/{MemberName}/
+
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
                           FFPMA HANDBOOK ESSENTIALS
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•

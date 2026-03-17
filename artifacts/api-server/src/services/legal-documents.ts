@@ -1486,6 +1486,161 @@ export function getTrusteeSigningDocuments(): TrusteeSigningDocument[] {
   ];
 }
 
+export function getConstitutionalLawFramework(): LegalDocumentContent {
+  return {
+    title: 'Constitutional Law Framework for PMA Sovereignty',
+    slug: 'constitutional-law-framework',
+    lastUpdated: LAST_UPDATED,
+    content: `
+# CONSTITUTIONAL LAW FRAMEWORK
+## Forgotten Formula PMA — Legal Foundation
+
+**Effective Date:** ${EFFECTIVE_DATE}
+**Last Updated:** ${LAST_UPDATED}
+
+---
+
+## I. CONSTITUTIONAL FOUNDATIONS
+
+Forgotten Formula PMA operates as a Private Member Association under the express protections of the United States Constitution. This document establishes the legal framework that shields our association, our members, and our healing mission from regulatory overreach.
+
+### 1.1 First Amendment — Freedom of Association
+
+The First Amendment to the United States Constitution guarantees the right of individuals to associate freely for expressive, educational, and mutual-benefit purposes. FFPMA is an expressive association dedicated to advancing natural health, holistic healing, and member wellness education.
+
+**Key Precedent:**
+- **NAACP v. Alabama, 378 U.S. 288 (1958)**: The Supreme Court recognized freedom of association as a fundamental right implicit in the First Amendment. The Court held that compelled disclosure of membership lists violated associational freedom. This precedent directly protects FFPMA's member privacy.
+- **Roberts v. United States Jaycees, 468 U.S. 609 (1984)**: Established two categories of protected association — intimate association (close personal relationships) and expressive association (groups formed to engage in protected speech or conduct). FFPMA qualifies under both.
+- **Boy Scouts of America v. Dale, 530 U.S. 640 (2000)**: Reinforced that private associations have the constitutional right to exclude individuals whose presence would undermine the group's expressive message. This supports FFPMA's right to set its own membership criteria.
+
+### 1.2 Fourteenth Amendment — Due Process Protection
+
+The Fourteenth Amendment's Due Process Clause prevents states from arbitrarily interfering with private agreements between consenting adults. FFPMA member agreements are private covenants entered into voluntarily, and any state action against these agreements must satisfy strict scrutiny.
+
+**Key Precedent:**
+- **Meyer v. Nebraska, 262 U.S. 390 (1923)**: Established that liberty protected by the Due Process Clause includes the right to engage in common occupations, acquire useful knowledge, and generally enjoy privileges recognized as essential to the orderly pursuit of happiness.
+- **Griswold v. Connecticut, 381 U.S. 479 (1965)**: Recognized a constitutional right to privacy emanating from the penumbras of the Bill of Rights, supporting the privacy of FFPMA member health information.
+
+### 1.3 Ninth Amendment — Unenumerated Rights
+
+The Ninth Amendment reserves to the people all rights not explicitly enumerated in the Constitution. The right to choose one's own healthcare approach, to associate privately for healing purposes, and to access natural health modalities are among these retained rights.
+
+### 1.4 Tenth Amendment — Reserved Powers
+
+Powers not delegated to the federal government are reserved to the states or the people. Private member associations operating outside interstate commerce fall under this protection, as regulatory agencies derive their authority from the Commerce Clause.
+
+## II. REGULATORY JURISDICTION ANALYSIS
+
+### 2.1 FDA Jurisdiction Considerations
+
+The FDA's authority derives from the Federal Food, Drug, and Cosmetic Act, which regulates products in interstate commerce intended for the general public. FFPMA's position as a private association creates strong arguments for limited regulatory reach:
+
+- Products are shared between private members, not sold to the general public
+- Communications are private member-to-member, not public advertising
+- No health claims are made to the general public
+- The association operates outside conventional public commerce channels
+
+*Note: Jurisdiction questions involve fact-specific analysis. These positions represent FFPMA's constitutional defense framework and should be reviewed with qualified legal counsel for specific situations.*
+
+### 2.2 FTC Jurisdiction Considerations
+
+The FTC regulates unfair or deceptive acts in commerce. FFPMA maintains that its private member communications fall outside the FTC's traditional jurisdictional scope:
+
+- Member agreements are structured as private covenants, not commercial transactions
+- Health information shared with members is educational, not promotional
+- No public advertising claims are made
+
+*Note: The scope of FTC authority over private associations remains an evolving area of law. Maintain strict compliance with the PMA structural requirements below to strengthen this position.*
+
+### 2.3 State Medical Board Considerations
+
+State medical boards regulate the practice of medicine in public commerce. FFPMA structures its wellness education and protocols within the private association framework:
+
+- FFPMA provides wellness education to private members, not medical practice to the public
+- Network practitioners operate independently under their own licenses
+- AI-generated protocols are informational guidance, not medical prescriptions
+
+*Note: State laws vary significantly. The PMA framework provides strong constitutional arguments, but specific activities should be reviewed with counsel familiar with the applicable state's regulations.*
+
+## III. PMA STRUCTURAL REQUIREMENTS
+
+For FFPMA to maintain its constitutional protections, the following structural requirements must be maintained:
+
+### 3.1 Membership Requirements
+- All individuals must formally join as Members before accessing products or services
+- Member agreements must be signed and on file
+- No products or services are available to the general public
+
+### 3.2 Communication Standards
+- All communications must be directed to Members only
+- Public-facing content must not make health claims
+- Internal member communications may share health information freely under PMA protections
+
+### 3.3 Language Compliance
+- Use "member" not "patient" or "customer"
+- Use "protocol" or "wellness approach" not "treatment" or "prescription"
+- Use "assessment" or "evaluation" not "diagnosis"
+- Use "suggest" or "recommend" not "prescribe"
+- Use "wellness education" not "medical advice"
+- Use "support the body's natural healing" not "cure"
+
+### 3.4 Record Keeping
+- Maintain signed member agreements for all active members
+- Document that all members joined voluntarily and were not solicited publicly
+- Keep records of all practitioner agreements and credentials
+- Maintain clear separation between public marketing and private member communications
+
+## IV. CASE LAW LIBRARY
+
+### 4.1 Freedom of Association Cases
+| Case | Year | Holding | FFPMA Relevance |
+|------|------|---------|-----------------|
+| NAACP v. Alabama | 1958 | Freedom of association is a fundamental right | Protects member privacy |
+| Roberts v. Jaycees | 1984 | Intimate and expressive association protections | FFPMA qualifies as both |
+| Boy Scouts v. Dale | 2000 | Private groups set own membership standards | FFPMA controls membership criteria |
+| Hurley v. Irish-American | 1995 | Private groups control their own message | FFPMA controls internal communications |
+
+### 4.2 Right to Privacy Cases
+| Case | Year | Holding | FFPMA Relevance |
+|------|------|---------|-----------------|
+| Griswold v. Connecticut | 1965 | Constitutional right to privacy | Protects member health data |
+| Whalen v. Roe | 1977 | Informational privacy in medical records | Supports private record keeping |
+| Nixon v. Administrator | 1977 | Privacy interest in personal papers | Member files are private |
+
+### 4.3 Religious and Expressive Freedom Cases
+| Case | Year | Holding | FFPMA Relevance |
+|------|------|---------|-----------------|
+| Gonzales v. O Centro | 2006 | Religious freedom withstands federal regulation | Expressive freedom precedent |
+| Church of Lukumi v. Hialeah | 1993 | Laws targeting specific groups violate Free Exercise | Anti-targeting protection |
+| Cruikshank | 1876 | Right of assembly is pre-constitutional | Assembly right is fundamental |
+
+## V. OPERATIONAL GUIDELINES FOR AGENTS
+
+All ALLIO agents operating within the Legal Division must:
+
+1. **Reference constitutional protections** when drafting any member-facing document
+2. **Include PMA sovereignty language** in all contracts and agreements
+3. **Verify PMA compliance** in all communications before delivery
+4. **Cite relevant case law** when challenged on PMA authority
+5. **Maintain the distinction** between private member communication and public commerce
+6. **File all legal documents** in the proper Drive structure:
+   - Constitutional references → Legal Compliance/Constitutional Law/
+   - Case law documents → Legal Compliance/Case Law/
+   - General legal references → Legal Compliance/Reference Materials/
+   - PMA formation documents → Legal Compliance/PMA Formation Documents/
+   - Member contracts → Member Contracts/{MemberName}/
+
+## VI. PMA DISCLAIMER (REQUIRED ON ALL PUBLIC-FACING CONTENT)
+
+> *Forgotten Formula PMA is a Private Member Association operating under the protections of the First and Fourteenth Amendments to the United States Constitution. The information and products shared within this Association are intended solely for its private Members and are not offered to the general public. Nothing contained herein constitutes medical advice, diagnosis, treatment, or prescription. Members are encouraged to consult with qualified healthcare professionals regarding their individual health needs. By accessing this content, you acknowledge your status as a private Member of Forgotten Formula PMA.*
+
+---
+
+*This framework was prepared by the FFPMA Legal Division (JURIS, AEGIS, LEXICON, SCRIBE) for internal use by all ALLIO network agents.*
+    `.trim(),
+  };
+}
+
 export function getAllLegalDocuments(): LegalDocumentContent[] {
   return [
     getPMAMemberAgreement(),
@@ -1500,6 +1655,7 @@ export function getAllLegalDocuments(): LegalDocumentContent[] {
     getPrivateDomainIPPolicy(),
     getMemberIPAcknowledgment(),
     getCopyrightRegistrationCoverSheet(),
+    getConstitutionalLawFramework(),
   ];
 }
 
