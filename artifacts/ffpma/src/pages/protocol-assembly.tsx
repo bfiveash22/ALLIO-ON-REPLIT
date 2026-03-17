@@ -693,7 +693,7 @@ export default function ProtocolAssemblyPage() {
                     </CollapsibleSection>
 
                     <CollapsibleSection
-                      title="Treatment Phases"
+                      title="Wellness Phases"
                       icon={<Calendar className="w-4 h-4 text-blue-400" />}
                       expanded={expandedSections["phases"]}
                       onToggle={() => toggleSection("phases")}

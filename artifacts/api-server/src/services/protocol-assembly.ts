@@ -513,7 +513,7 @@ RULES:
 
 Return ONLY valid JSON, no markdown.`;
 
-  const userPrompt = `PATIENT PROFILE:\n${JSON.stringify(profile, null, 2)}`;
+  const userPrompt = `MEMBER PROFILE:\n${JSON.stringify(profile, null, 2)}`;
 
   const { callWithFallback, isTerminalFailure } = await import("./ai-fallback");
   console.log("[Protocol Assembly] Generating protocol via centralized AI fallback chain with quality validation...");
@@ -1009,7 +1009,7 @@ async function runPersonaValidation(
     traumaHistory: profile.traumaHistory ? { childhood: profile.traumaHistory.childhoodTrauma } : null,
   });
 
-  const prompt = `PATIENT PROFILE:\n${profileSummary}\n\nPROTOCOL:\n${protocolSummary}\n\nReview this protocol and return your validation as JSON.`;
+  const prompt = `MEMBER PROFILE:\n${profileSummary}\n\nPROTOCOL:\n${protocolSummary}\n\nReview this protocol and return your validation as JSON.`;
 
   try {
     const result = await callWithFallback(prompt, {

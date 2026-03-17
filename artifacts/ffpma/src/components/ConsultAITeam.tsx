@@ -388,7 +388,7 @@ export function ConsultAITeam({ preselectedAgentId, patientName }: ConsultAITeam
                       <p className="text-sm text-white/50 mb-2">{activeAgent.specialty}</p>
                       <p className="text-xs text-white/40 italic">"{activeAgent.catchphrase}"</p>
                       <div className="mt-4 flex flex-wrap gap-2 justify-center">
-                        {["Protocol guidance", "Lab interpretation", "Treatment options"].map((suggestion) => (
+                        {["Protocol guidance", "Lab interpretation", "Wellness options"].map((suggestion) => (
                           <button
                             key={suggestion}
                             onClick={() => setMessageText(`Help me with ${suggestion.toLowerCase()} for my member`)}

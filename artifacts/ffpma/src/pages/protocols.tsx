@@ -166,14 +166,14 @@ const protocols: Protocol[] = [
       { title: "Equipment Setup", description: "Ensure nebulizer is clean and functioning. Attach fresh nebulizer cup and appropriate mask/mouthpiece." },
       { title: "Solution Preparation", description: "Add exosome solution to nebulizer cup. Dilute with sterile saline to appropriate volume (typically 3-5ml total)." },
       { title: "Member Preparation", description: "Position member comfortably upright. Take baseline oxygen saturation. Instruct on slow, deep breathing." },
-      { title: "Treatment", description: "Begin nebulization. Have member breathe slowly and deeply through mouth. Continue until solution is nebulized (10-15 min)." },
+      { title: "Session", description: "Begin nebulization. Have member breathe slowly and deeply through mouth. Continue until solution is nebulized (10-15 min)." },
       { title: "Monitoring", description: "Monitor for coughing or bronchospasm. Check oxygen saturation periodically. Stop if adverse reaction occurs." },
       { title: "Completion", description: "Have member rest briefly. Recheck vitals. Clean and disinfect equipment." },
     ],
     precautions: [
-      "Not for patients with severe asthma exacerbation",
-      "Use bronchodilator pre-treatment if history of reactive airways",
-      "Ensure adequate ventilation in treatment area",
+      "Not for members with severe asthma exacerbation",
+      "Use bronchodilator pre-session if history of reactive airways",
+      "Ensure adequate ventilation in session area",
       "Single-use nebulizer cups recommended",
     ],
     postCare: [
@@ -339,7 +339,7 @@ const protocols: Protocol[] = [
   },
   {
     id: "pre-post-treatment",
-    title: "Pre & Post Treatment Guidelines",
+    title: "Pre & Post Session Guidelines",
     category: "guidelines",
     icon: <ClipboardList className="h-5 w-5" />,
     description: "General guidelines for member preparation and aftercare to optimize exosome protocol outcomes.",
@@ -348,8 +348,8 @@ const protocols: Protocol[] = [
     steps: [
       { title: "72 Hours Before", description: "Discontinue blood thinners if approved by physician. Avoid alcohol. Stay well hydrated. Get adequate sleep." },
       { title: "24 Hours Before", description: "No NSAIDs (ibuprofen, aspirin). Eat a light, healthy meal. Avoid excessive caffeine. Confirm appointment details." },
-      { title: "Day of Treatment", description: "Arrive well-hydrated. Wear comfortable clothing. Bring list of current medications. Have someone drive if receiving sedation." },
-      { title: "Immediately After", description: "Rest for recommended time. Apply ice if directed. Take prescribed medications only. Have light meal if comfortable." },
+      { title: "Day of Session", description: "Arrive well-hydrated. Wear comfortable clothing. Bring list of current medications. Have someone drive if receiving sedation." },
+      { title: "Immediately After", description: "Rest for recommended time. Apply ice if directed. Take suggested supplements only. Have light meal if comfortable." },
       { title: "First 24 Hours", description: "Limit physical activity. Continue extra hydration. Avoid alcohol and smoking. Monitor for unusual symptoms." },
       { title: "First Week", description: "Gradually resume normal activities. Attend follow-up if scheduled. Report any concerning symptoms. Continue healthy lifestyle." },
     ],
@@ -519,7 +519,7 @@ export default function ProtocolsPage() {
                           <div>
                             <h4 className="font-semibold mb-3 flex items-center gap-2 text-cyan-600 dark:text-cyan-400">
                               <CheckCircle2 className="h-4 w-4" />
-                              Post-Treatment Care
+                              Post-Session Care
                             </h4>
                             <ul className="space-y-1 text-sm">
                               {protocol.postCare.map((item, i) => (

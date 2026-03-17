@@ -38,7 +38,7 @@ Bechamp's work was largely overshadowed by Pasteur's germ theory, which became t
 
 Dark field microscopy, which illuminates specimens against a dark background to reveal structures invisible in bright field, became the primary tool for observing these pleomorphic phenomena in living blood. Practitioners like Gaston Naessens, Robert O. Young, and the Dumrese/Haefeli school further developed the assessment and wellness applications of live blood observation.
 
-Today, LBA is practiced within integrative, naturopathic, and functional medicine settings as a real-time assessment tool providing visual feedback about nutritional status, oxidative stress, immune function, and biological terrain. Within the FFPMA framework, LBA serves as a cornerstone of the nature-first diagnostic approach.`,
+Today, LBA is practiced within integrative, naturopathic, and functional medicine settings as a real-time assessment tool providing visual feedback about nutritional status, oxidative stress, immune function, and biological terrain. Within the FFPMA framework, LBA serves as a cornerstone of the nature-first assessment approach.`,
       },
       {
         title: "Scientific Basis and Methodology",
@@ -652,7 +652,7 @@ LBA findings should always be correlated with:
   },
   {
     id: "lba-mod-08",
-    title: "Wellness Protocols Treatment Protocols & Monitoring Monitoring",
+    title: "Wellness Protocols & Monitoring",
     slug: "lba-wellness-monitoring",
     description: "Baseline documentation, progress monitoring, protocol adjustments based on LBA observations, and before/after comparison techniques.",
     category: "lba-certification",
@@ -828,7 +828,7 @@ Exam Content Distribution:
 Practitioner Agreement:
 Upon certification, practitioners agree to:
 - Operate within PMA guidelines
-- Present LBA as educational assessment, not medical assessment
+- Present LBA as educational assessment, not formal assessment
 - Maintain documentation standards
 - Continue education requirements
 - Uphold ethical standards of the FFPMA`,
@@ -1031,7 +1031,7 @@ Key Pleomorphic Terminology:
 - Upward development: Progression from protit toward fungal forms (pathological)
 - Downward development: Regression from fungal forms toward protit (therapeutic goal)
 - Endobiont: An organism that lives permanently within the host
-- Isopathy: Treatment using preparations from the same organism cycle`,
+- Isopathy: Protocol using preparations from the same organism cycle`,
       },
       {
         title: "Practical Identification of Cyclogeny Stages",
@@ -1285,7 +1285,7 @@ Many LBA practitioners note increased parasitic activity around the full moon. W
       "The pleomorphic perspective views endobiont organisms shifting to parasitic behavior based on terrain",
       "Use multiple magnifications and both dark field and phase contrast for parasite identification",
       "Always confirm significant parasitic findings with conventional parasitology testing",
-      "Treatment includes both direct anti-parasitic approaches and terrain correction",
+      "The protocol includes both direct anti-parasitic approaches and terrain correction",
     ],
   },
   {
@@ -1312,14 +1312,14 @@ LBA within the FFPMA operates under the PMA legal framework:
 - Private contract protections between members
 - Not subject to FDA/medical board oversight when properly structured
 - Members voluntarily join and consent to services
-- All services are educational, not diagnostic or prescriptive
+- All services are educational, not for assessment or recommendation
 
 Scope of Practice:
 - LBA is presented as an educational assessment tool
-- Findings are "observations" not "diagnoses"
-- Recommendations are "educational suggestions" not "prescriptions"
+- Findings are "observations" not "assessments"
+- Recommendations are "educational suggestions" not "recommendations"
 - Always document that members understand this distinction
-- Never claim to diagnose, treat, cure, or prevent disease
+- Never claim to assess, provide protocols, restore, or prevent disease
 
 CLIA Considerations:
 - Clinical Laboratory Improvement Amendments (CLIA) regulate clinical labs
@@ -1338,7 +1338,7 @@ Documentation Standards:
 
 Member Communication Best Practices:
 - Explain what LBA is AND what it is not before each session
-- Use educational language, not diagnostic language
+- Use educational language, not clinical assessment language
 - Show members their own blood as a teaching tool
 - Document member understanding and consent
 - Provide written educational materials to accompany verbal explanations
@@ -1355,8 +1355,8 @@ Business Practices:
     ],
     keyPoints: [
       "LBA within FFPMA operates under PMA legal framework with member-to-member protections",
-      "Present LBA as educational assessment — never claim to diagnose, treat, cure, or prevent",
-      "Use observation language, not diagnostic language in all documentation",
+      "Present LBA as educational assessment — never claim to assess, provide protocols, restore, or prevent",
+      "Use observation language, not clinical assessment language in all documentation",
       "Member consent must be obtained and documented before every session",
       "Understand CLIA requirements even when operating within PMA context",
       "HIPAA-compliant storage and documentation standards must be maintained",
@@ -1520,7 +1520,7 @@ const LBA_QUIZ_DATA_MODULES_8_17: typeof LBA_QUIZ_DATA = [
     slug: "lba-ai-quiz",
     description: "Test your knowledge of AI integration in blood analysis.",
     questions: [
-      { id: "q-lba09-01", text: "What is the AI's primary role in the ALLIO blood analysis platform?", explanation: "The AI provides pattern recognition, second opinions, and documentation support — but never replaces practitioner judgment.", answers: [{ text: "Pattern recognition, second opinions, and documentation support", isCorrect: true }, { text: "Replacing practitioner diagnosis", isCorrect: false }, { text: "Prescribing treatments", isCorrect: false }, { text: "Running laboratory tests", isCorrect: false }] },
+      { id: "q-lba09-01", text: "What is the AI's primary role in the ALLIO blood analysis platform?", explanation: "The AI provides pattern recognition, second opinions, and documentation support — but never replaces practitioner judgment.", answers: [{ text: "Pattern recognition, second opinions, and documentation support", isCorrect: true }, { text: "Replacing practitioner assessment", isCorrect: false }, { text: "Recommending protocols", isCorrect: false }, { text: "Running laboratory tests", isCorrect: false }] },
       { id: "q-lba09-02", text: "What confidence score threshold requires manual verification?", explanation: "AI confidence scores below 70% require careful manual verification by the practitioner.", answers: [{ text: "Below 70%", isCorrect: true }, { text: "Below 99%", isCorrect: false }, { text: "Below 50%", isCorrect: false }, { text: "Below 10%", isCorrect: false }] },
       { id: "q-lba09-03", text: "Can AI replace practitioner clinical judgment in LBA?", explanation: "No — AI is strictly a support tool. All AI suggestions must be reviewed by a qualified practitioner with clinical context.", answers: [{ text: "No — AI supports but never replaces clinical judgment", isCorrect: true }, { text: "Yes — AI is always more accurate", isCorrect: false }, { text: "Yes — for routine findings", isCorrect: false }, { text: "Only for experienced practitioners", isCorrect: false }] },
       { id: "q-lba09-04", text: "What databases does the AI cross-reference?", explanation: "The AI cross-references both conventional hematology and pleomorphic morphology databases for comprehensive analysis.", answers: [{ text: "Both conventional and pleomorphic morphology databases", isCorrect: true }, { text: "Conventional hematology only", isCorrect: false }, { text: "Social media databases", isCorrect: false }, { text: "Pharmaceutical databases only", isCorrect: false }] },
@@ -1554,7 +1554,7 @@ const LBA_QUIZ_DATA_MODULES_8_17: typeof LBA_QUIZ_DATA = [
   {
     moduleId: "lba-mod-08",
     quizId: "quiz-lba-08",
-    title: "Treatment Monitoring Quiz",
+    title: "Wellness Monitoring Quiz",
     slug: "lba-treatment-quiz",
     description: "Test your knowledge of treatment protocols and monitoring.",
     questions: [
@@ -1564,7 +1564,7 @@ const LBA_QUIZ_DATA_MODULES_8_17: typeof LBA_QUIZ_DATA = [
       { id: "q-lba08-04", text: "What does a declining vitality score indicate?", explanation: "A declining vitality score indicates the current protocol is not effective and reassessment is needed.", answers: [{ text: "Protocol is not effective — reassess", isCorrect: true }, { text: "Protocol is working", isCorrect: false }, { text: "Normal fluctuation", isCorrect: false }, { text: "Equipment problem", isCorrect: false }] },
       { id: "q-lba08-05", text: "How many elements should baseline documentation include?", explanation: "Baseline includes: standardized conditions, full 5-zone assessment with photos, vitality score at 5 time points, written narrative, and lab correlation.", answers: [{ text: "5 elements: conditions, 5-zone photos, vitality timing, narrative, labs", isCorrect: true }, { text: "Just a photograph", isCorrect: false }, { text: "Just a vitality score", isCorrect: false }, { text: "3 elements", isCorrect: false }] },
       { id: "q-lba08-06", text: "What retest interval is used for acute protocols?", explanation: "Acute protocols warrant retesting at 2 weeks to assess rapid response.", answers: [{ text: "2 weeks", isCorrect: true }, { text: "24 hours", isCorrect: false }, { text: "3 months", isCorrect: false }, { text: "6 months", isCorrect: false }] },
-      { id: "q-lba08-07", text: "What does a stable vitality score suggest?", explanation: "A stable but not improving vitality score may indicate the need for dose adjustment or additional interventions.", answers: [{ text: "May need dose adjustment or additional interventions", isCorrect: true }, { text: "Complete success", isCorrect: false }, { text: "Treatment should stop", isCorrect: false }, { text: "Equipment is miscalibrated", isCorrect: false }] },
+      { id: "q-lba08-07", text: "What does a stable vitality score suggest?", explanation: "A stable but not improving vitality score may indicate the need for dose adjustment or additional interventions.", answers: [{ text: "May need dose adjustment or additional interventions", isCorrect: true }, { text: "Complete success", isCorrect: false }, { text: "Protocol should stop", isCorrect: false }, { text: "Equipment is miscalibrated", isCorrect: false }] },
       { id: "q-lba08-08", text: "What is the maintenance retest interval?", explanation: "Maintenance retesting every 3-6 months monitors ongoing health status and protocol adherence.", answers: [{ text: "3-6 months", isCorrect: true }, { text: "Daily", isCorrect: false }, { text: "Weekly", isCorrect: false }, { text: "Annually", isCorrect: false }] },
       { id: "q-lba08-09", text: "Why is visual comparison important for members?", explanation: "Showing members before/after images of their own blood provides powerful motivation for protocol adherence.", answers: [{ text: "Provides motivation for protocol adherence", isCorrect: true }, { text: "Has no member benefit", isCorrect: false }, { text: "Only for insurance documentation", isCorrect: false }, { text: "Required by law", isCorrect: false }] },
       { id: "q-lba08-10", text: "What should happen when new findings appear during monitoring?", explanation: "New findings that weren't present at baseline should be addressed with additional targeted interventions.", answers: [{ text: "Address with additional targeted interventions", isCorrect: true }, { text: "Ignore them", isCorrect: false }, { text: "Stop all treatment", isCorrect: false }, { text: "Repeat baseline only", isCorrect: false }] },
@@ -1691,15 +1691,15 @@ const LBA_QUIZ_DATA_MODULES_8_17: typeof LBA_QUIZ_DATA = [
     slug: "lba-practice-quiz",
     description: "Test your knowledge of practice management and legal compliance.",
     questions: [
-      { id: "q-lba17-01", text: "How should LBA be presented within the PMA framework?", explanation: "LBA must be presented as an educational assessment tool, not as medical diagnosis, within the PMA member-to-member context.", answers: [{ text: "As an educational assessment tool, not medical assessment", isCorrect: true }, { text: "As a replacement for all medical testing", isCorrect: false }, { text: "As a diagnostic procedure", isCorrect: false }, { text: "As a treatment modality", isCorrect: false }] },
+      { id: "q-lba17-01", text: "How should LBA be presented within the PMA framework?", explanation: "LBA must be presented as an educational assessment tool, not as medical diagnosis, within the PMA member-to-member context.", answers: [{ text: "As an educational assessment tool, not formal assessment", isCorrect: true }, { text: "As a replacement for all medical testing", isCorrect: false }, { text: "As a clinical assessment procedure", isCorrect: false }, { text: "As a wellness modality", isCorrect: false }] },
       { id: "q-lba17-02", text: "What type of language should be used in LBA reports?", explanation: "Use observation language ('observations suggest' not 'diagnosis shows'), educational suggestions not prescriptions.", answers: [{ text: "Observation language, not diagnostic language", isCorrect: true }, { text: "Medical diagnostic terminology", isCorrect: false }, { text: "Legal terminology", isCorrect: false }, { text: "Any language is acceptable", isCorrect: false }] },
       { id: "q-lba17-03", text: "What must be obtained before every LBA session?", explanation: "Member consent must be obtained and documented before every session, including understanding of LBA's educational nature.", answers: [{ text: "Member consent with understanding of LBA's educational nature", isCorrect: true }, { text: "Insurance authorization", isCorrect: false }, { text: "Medical referral", isCorrect: false }, { text: "Nothing is required", isCorrect: false }] },
       { id: "q-lba17-04", text: "What data storage standard must LBA records comply with?", explanation: "All member images and records must be stored in HIPAA-compliant systems with proper security measures.", answers: [{ text: "HIPAA-compliant storage", isCorrect: true }, { text: "No storage requirements", isCorrect: false }, { text: "Public cloud storage", isCorrect: false }, { text: "Paper records only", isCorrect: false }] },
-      { id: "q-lba17-05", text: "What should practitioners never claim about LBA?", explanation: "Practitioners should never claim to diagnose, treat, cure, or prevent any disease through LBA.", answers: [{ text: "To diagnose, treat, cure, or prevent disease", isCorrect: true }, { text: "To provide educational assessment", isCorrect: false }, { text: "To show visual findings", isCorrect: false }, { text: "To complement other testing", isCorrect: false }] },
+      { id: "q-lba17-05", text: "What should practitioners never claim about LBA?", explanation: "Practitioners should never claim to assess, provide protocols, restore, or prevent any disease through LBA.", answers: [{ text: "To assess, provide protocols, restore, or prevent disease", isCorrect: true }, { text: "To provide educational assessment", isCorrect: false }, { text: "To show visual findings", isCorrect: false }, { text: "To complement other testing", isCorrect: false }] },
       { id: "q-lba17-06", text: "What annual requirement maintains LBA certification?", explanation: "10 hours of continuing education per year is required to maintain FFPMA LBA Practitioner certification.", answers: [{ text: "10 hours of continuing education", isCorrect: true }, { text: "No ongoing requirements", isCorrect: false }, { text: "100 hours per year", isCorrect: false }, { text: "Full re-examination", isCorrect: false }] },
       { id: "q-lba17-07", text: "What is the PMA legal protection based on?", explanation: "PMA protection is based on member-to-member private contracts, voluntary membership, and constitutional rights to private association.", answers: [{ text: "Member-to-member private contracts and constitutional rights", isCorrect: true }, { text: "Medical licensing", isCorrect: false }, { text: "Insurance coverage", isCorrect: false }, { text: "Government approval", isCorrect: false }] },
       { id: "q-lba17-08", text: "What should be understood about CLIA in the PMA context?", explanation: "Practitioners should understand CLIA requirements even within PMA context, as jurisdictional requirements vary.", answers: [{ text: "Understand CLIA requirements — jurisdictional requirements vary", isCorrect: true }, { text: "CLIA never applies", isCorrect: false }, { text: "CLIA always requires certification", isCorrect: false }, { text: "CLIA only applies to hospitals", isCorrect: false }] },
-      { id: "q-lba17-09", text: "What terminology should replace 'prescription' in PMA context?", explanation: "Within PMA context, use 'educational suggestion' instead of 'prescription' to stay within proper scope of practice.", answers: [{ text: "Educational suggestion", isCorrect: true }, { text: "Medical order", isCorrect: false }, { text: "Treatment plan", isCorrect: false }, { text: "Prescription alternative", isCorrect: false }] },
+      { id: "q-lba17-09", text: "What terminology should replace 'prescription' in PMA context?", explanation: "Within PMA context, use 'educational suggestion' instead of 'prescription' to stay within proper scope of practice.", answers: [{ text: "Educational suggestion", isCorrect: true }, { text: "Medical order", isCorrect: false }, { text: "Wellness protocol", isCorrect: false }, { text: "Prescription alternative", isCorrect: false }] },
       { id: "q-lba17-10", text: "Why is documentation standardization important?", explanation: "Standardized documentation ensures consistency, enables meaningful case comparison, supports member care continuity, and provides legal protection.", answers: [{ text: "Consistency, case comparison, care continuity, legal protection", isCorrect: true }, { text: "Only for billing purposes", isCorrect: false }, { text: "Not important", isCorrect: false }, { text: "Only for research papers", isCorrect: false }] },
     ],
   },

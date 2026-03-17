@@ -723,7 +723,7 @@ function RifeProtocolDetail({ protocol, onBack }: { protocol: RifeProtocol; onBa
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Clock className="h-5 w-5 text-amber-400" />
-              Treatment Duration
+              Session Duration
             </CardTitle>
           </CardHeader>
           <CardContent>

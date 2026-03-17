@@ -299,7 +299,7 @@ export default function ClinicIVProgramPage() {
                 <Button variant="outline" onClick={() => setSelectedProtocol(null)}>Close</Button>
                 <Button className="bg-amber-500 hover:bg-amber-600 text-black">
                   <Calendar className="h-4 w-4 mr-2" />
-                  Schedule Treatment
+                  Schedule Session
                 </Button>
               </DialogFooter>
             </DialogContent>

@@ -1387,7 +1387,7 @@ export default function DoctorsPortal() {
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-black/20">
                         <div>
-                          <p className="font-medium">Treatment Consent Form</p>
+                          <p className="font-medium">Wellness Consent Form</p>
                           <p className="text-xs text-white/50">Michael Chen • Sent today</p>
                         </div>
                         <Badge className="bg-amber-500/20 text-amber-300">Pending</Badge>

@@ -166,7 +166,7 @@ export function registerSettingsRoutes(app: Express): void {
       const { patientInfo, formData } = req.body;
 
       if (!patientInfo || !patientInfo.name || !patientInfo.email) {
-        return res.status(400).json({ success: false, error: "Missing required patient info (name, email)" });
+        return res.status(400).json({ success: false, error: "Missing required member info (name, email)" });
       }
 
       const result = await submitIntakeForm(patientInfo, formData);
