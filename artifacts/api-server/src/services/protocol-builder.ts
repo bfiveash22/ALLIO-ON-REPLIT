@@ -76,7 +76,8 @@ export async function handleProtocolBuilder(req: Request, res: Response): Promis
 
     // The seed.ts might not have had suppositories, supplements, exosomes, topicals explicitly 
     // populated if they were empty or missing. We'll safely map them if they exist.
-    const safeMap = (arr: any[], mapper: (item: any) => string) => arr && Array.isArray(arr) ? arr.map(mapper).join('\n\n') : '';
+    interface SeedItem { name?: string; personaTrait?: string; mechanism?: string; benefits?: string[]; directions?: string; form?: string; category?: string; dosageInfo?: string; concentration?: string; volume?: string; administration?: string; application?: string; [key: string]: unknown; }
+    const safeMap = (arr: SeedItem[], mapper: (item: SeedItem) => string) => arr && Array.isArray(arr) ? arr.map(mapper).join('\n\n') : '';
 
     const suppositoryKnowledge = safeMap(suppositories, s => 
       `SUPPOSITORY: ${s.name} - ${s.personaTrait}\n` +
@@ -291,6 +292,6 @@ WRITING STYLE - BE A CLINICAL MENTOR:
   }
 }
 
-export function registerProtocolBuilderRoutes(app: any) {
+export function registerProtocolBuilderRoutes(app: import("express").Express) {
   app.post("/api/protocol-builder", handleProtocolBuilder);
 }

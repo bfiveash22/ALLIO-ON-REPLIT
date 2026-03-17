@@ -1466,3 +1466,73 @@ function slideDietaryProtocol(pres: PptxPresentation, protocol: HealingProtocol)
     ], { x: 0.7, y: yPos + 0.05, w: 8.6, h: 0.5, fontFace: BODY_FONT, valign: "middle" });
   }
 }
+
+export interface PptxParityResult {
+  valid: boolean;
+  totalSlides: number;
+  expectedMinSlides: number;
+  missingSections: string[];
+  presentSections: string[];
+  referenceFileId: string;
+}
+
+export function validatePptxParity(
+  protocol: HealingProtocol,
+  profile: PatientProfile
+): PptxParityResult {
+  const presentSections: string[] = [];
+  const missingSections: string[] = [];
+
+  const checks: Array<{ section: typeof REFERENCE_SLIDE_ORDER[number]; present: boolean }> = [
+    { section: "cover", present: true },
+    { section: "summary", present: true },
+    { section: "member-info", present: true },
+    { section: "timeline", present: (profile.medicalTimeline?.length || 0) > 0 },
+    { section: "trustee-analysis", present: true },
+    { section: "root-causes", present: true },
+    { section: "5rs-phases", present: true },
+    { section: "daily-schedule", present: true },
+    { section: "products-ff", present: true },
+    { section: "injectable-peptides", present: (protocol.injectablePeptides?.length || 0) > 0 },
+    { section: "oral-peptides", present: (protocol.oralPeptides?.length || 0) > 0 },
+    { section: "bioregulators", present: (protocol.bioregulators?.length || 0) > 0 },
+    { section: "supplements", present: (protocol.supplements?.length || 0) > 0 },
+    { section: "supplement-timing", present: (protocol.supplements?.length || 0) > 0 || (protocol.liposomals?.length || 0) > 0 },
+    { section: "iv-im-therapies", present: (protocol.ivTherapies?.length || 0) > 0 || (protocol.imTherapies?.length || 0) > 0 },
+    { section: "detox-protocols", present: (protocol.detoxProtocols?.length || 0) > 0 },
+    { section: "parasite-antiviral", present: true },
+    { section: "ecs-protocol", present: !!protocol.ecsProtocol || (protocol.suppositories?.length || 0) > 0 },
+    { section: "suppositories", present: (protocol.suppositories?.length || 0) > 0 },
+    { section: "sirtuin-mito", present: !!protocol.sirtuinStack },
+    { section: "liposomals", present: (protocol.liposomals?.length || 0) > 0 },
+    { section: "nebulization", present: (protocol.nebulization?.length || 0) > 0 },
+    { section: "topicals", present: (protocol.topicals?.length || 0) > 0 },
+    { section: "exosomes", present: (protocol.exosomes?.length || 0) > 0 },
+    { section: "dietary-protocol", present: !!protocol.dietaryProtocol?.phases?.length },
+    { section: "lifestyle", present: (protocol.lifestyleRecommendations?.length || 0) > 0 },
+    { section: "follow-up", present: true },
+    { section: "books", present: true },
+    { section: "research-links", present: true },
+    { section: "drive-links", present: true },
+    { section: "commitment", present: true },
+  ];
+
+  for (const check of checks) {
+    if (check.present) {
+      presentSections.push(check.section);
+    } else {
+      missingSections.push(check.section);
+    }
+  }
+
+  const expectedMinSlides = 20;
+
+  return {
+    valid: presentSections.length >= expectedMinSlides && missingSections.length <= 5,
+    totalSlides: presentSections.length,
+    expectedMinSlides,
+    missingSections,
+    presentSections,
+    referenceFileId: REFERENCE_PPTX_DRIVE_FILE_ID,
+  };
+}

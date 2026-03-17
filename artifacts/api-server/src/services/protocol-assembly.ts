@@ -794,17 +794,26 @@ function runDeterministicQAChecks(
   if (!protocol.detoxProtocols?.some(d => d.name?.toLowerCase().includes("clay") || d.name?.toLowerCase().includes("bentonite") || d.name?.toLowerCase().includes("bath"))) {
     issues.push("Missing detox baths (clay/bentonite/Epsom) in detox protocols — required for heavy metal binding");
   }
-  if (!protocol.topicals?.length) {
-    issues.push("Missing topical protocols — at minimum DMSO cream or Kaneh Bosem required for every member");
-  }
-  if (!protocol.exosomes?.length) {
-    issues.push("Missing exosome therapy — required modality for regenerative protocol");
-  }
-
   const allDiagnoses: string[] = [...(profile.currentDiagnoses || []), ...(profile.chiefComplaints || [])];
   const hasJoint = allDiagnoses.some(d => /joint|arthrit|musculoskeletal|knee|shoulder|back pain/i.test(d));
   const hasSkin = allDiagnoses.some(d => /skin|dermat|eczema|psoriasis|wound|scar/i.test(d));
   const hasNeuro = allDiagnoses.some(d => /neuro|brain|cognitive|tbi|concussion|alzheimer|parkinson/i.test(d));
+  const hasPain = allDiagnoses.some(d => /pain|fibromyalgia|inflammation|neuropath/i.test(d));
+  const hasDegen = allDiagnoses.some(d => /degen|aging|stem cell|regenerat|tissue|injury/i.test(d));
+  const topicalsIndicated = hasJoint || hasSkin || hasPain;
+  const exosomesIndicated = hasNeuro || hasCancer || hasDegen || hasAutoimmune;
+
+  if (topicalsIndicated && !protocol.topicals?.length) {
+    issues.push("Topical-indicating condition present (joint/skin/pain) — topical protocols required");
+  } else if (!protocol.topicals?.length) {
+    suggestions.push("Consider topicals (DMSO cream, Kaneh Bosem) for localized treatment");
+  }
+
+  if (exosomesIndicated && !protocol.exosomes?.length) {
+    issues.push("Exosome-indicating condition present (neuro/cancer/degenerative/autoimmune) — exosome therapy required");
+  } else if (!protocol.exosomes?.length) {
+    suggestions.push("Consider exosome therapy for regenerative support");
+  }
 
   if (hasJoint && !protocol.topicals?.some(t => t.purpose?.toLowerCase().includes("joint") || t.purpose?.toLowerCase().includes("pain"))) {
     issues.push("Joint/musculoskeletal condition present — topicals must include joint-targeted application");
