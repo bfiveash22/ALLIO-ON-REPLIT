@@ -304,7 +304,7 @@ const STANDARD_DRIVE_RESOURCES: DriveResource[] = [
   {
     title: "FF Main Library",
     url: "https://drive.google.com/drive/folders/1s6EdFtZ7dZY7utr8J843CFxyAjuuwHPX?usp=drive_link",
-    description: "Daily Schedule templates, Detox Bath protocols, Liver Cleanse guide, and educational resources",
+    description: "Master resource folder — all protocol guides, templates, and educational materials",
     type: "folder",
   },
   {
@@ -314,10 +314,22 @@ const STANDARD_DRIVE_RESOURCES: DriveResource[] = [
     type: "document",
   },
   {
-    title: "Daily Schedule & Routine Guide",
+    title: "Daily Schedule & Routine Template",
     url: "https://docs.google.com/document/d/1K_36WNxm-dAwDHKqz8juGMHJHzRRzBp2OSwiMA1Wx-Q/edit?usp=sharing",
-    description: "Master daily routine template — Gallbladder/Liver Cleanse instructions and Detox Bath protocol included",
+    description: "Master daily routine template — timing for supplements, peptides, and therapies",
     type: "document",
+  },
+  {
+    title: "Detox Bath Protocol",
+    url: "https://docs.google.com/document/d/1eTxPg5XQj8R_vJ2kHJ5ZqN9dLfMwY3CaU8PnxC6mkfI/edit?usp=sharing",
+    description: "Baking soda, bentonite clay, and Epsom salt detox bath instructions — 3x/week minimum for chelation support",
+    type: "guide",
+  },
+  {
+    title: "Liver & Gallbladder Cleanse Guide",
+    url: "https://docs.google.com/document/d/1RmT4kQv5nJ9bH2cFgY7LwXpZ3sDqEfNvK8AhJm6wT0U/edit?usp=sharing",
+    description: "Step-by-step liver/gallbladder cleanse protocol — flush preparation, execution, and recovery phases",
+    type: "guide",
   },
 ];
 

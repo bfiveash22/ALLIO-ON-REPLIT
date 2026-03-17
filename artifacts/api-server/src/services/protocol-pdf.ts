@@ -1044,6 +1044,15 @@ export function generateDailySchedulePDF(
         doc.moveDown(0.3);
       }
 
+      if (protocol.exosomes?.length) {
+        checkPage(doc, 60);
+        drawSectionHeader(doc, "Exosome Therapy Schedule");
+        protocol.exosomes.forEach(e => {
+          drawBullet(doc, `${e.name} (${e.source}): ${e.concentration} via ${e.route} — ${e.frequency}${e.notes ? ` — ${e.notes}` : ""}`);
+        });
+        doc.moveDown(0.3);
+      }
+
       newPage(doc, pn);
       drawSectionHeader(doc, "Resources & Guides");
       doc.fontSize(10).fillColor(COLORS.text).text(
@@ -1243,6 +1252,68 @@ export function generatePeptideSchedulePDF(
           drawLabelValue(doc, "Purpose", n.purpose);
           doc.moveDown(0.4);
         });
+      }
+
+      if (protocol.liposomals?.length > 0) {
+        checkPage(doc, 100);
+        drawSectionHeader(doc, "Liposomal Supplements", "#00695C");
+        drawInfoBox(doc, "Liposomal delivery provides enhanced bioavailability. Take on empty stomach for best absorption.");
+        doc.moveDown(0.3);
+        protocol.liposomals.forEach(l => {
+          checkPage(doc, 60);
+          doc.fontSize(12).fillColor(COLORS.primary).text(l.name, 65);
+          drawLabelValue(doc, "Dose", l.dose);
+          drawLabelValue(doc, "Frequency", l.frequency);
+          drawLabelValue(doc, "Purpose", l.purpose);
+          doc.moveDown(0.4);
+        });
+      }
+
+      if (protocol.topicals?.length > 0) {
+        checkPage(doc, 100);
+        drawSectionHeader(doc, "Topical Protocols", "#5D4037");
+        protocol.topicals.forEach(t => {
+          checkPage(doc, 60);
+          doc.fontSize(12).fillColor(COLORS.primary).text(t.name, 65);
+          drawLabelValue(doc, "Form", t.form);
+          drawLabelValue(doc, "Application", t.application);
+          drawLabelValue(doc, "Frequency", t.frequency);
+          drawLabelValue(doc, "Purpose", t.purpose);
+          doc.moveDown(0.4);
+        });
+      }
+
+      if (protocol.sirtuinStack?.mitoSTAC || protocol.sirtuinStack?.glyNAC || protocol.sirtuinStack?.nadPrecursors) {
+        checkPage(doc, 100);
+        drawSectionHeader(doc, "Sirtuin & Mitochondrial Stack", "#1565C0");
+        drawInfoBox(doc, "Sirtuin activation and mitochondrial support are foundational to the FF PMA 2026 methodology.");
+        doc.moveDown(0.3);
+
+        if (protocol.sirtuinStack.mitoSTAC) {
+          checkPage(doc, 60);
+          doc.fontSize(12).fillColor(COLORS.primary).text("MitoSTAC Protocol", 65);
+          drawLabelValue(doc, "Resveratrol", protocol.sirtuinStack.mitoSTAC.resveratrol);
+          drawLabelValue(doc, "Pterostilbene", protocol.sirtuinStack.mitoSTAC.pterostilbene);
+          drawLabelValue(doc, "Quercetin", protocol.sirtuinStack.mitoSTAC.quercetin);
+          drawLabelValue(doc, "Fisetin", protocol.sirtuinStack.mitoSTAC.fisetin);
+          doc.moveDown(0.4);
+        }
+        if (protocol.sirtuinStack.glyNAC) {
+          checkPage(doc, 40);
+          doc.fontSize(12).fillColor(COLORS.primary).text("GlyNAC Protocol", 65);
+          drawLabelValue(doc, "Glycine", protocol.sirtuinStack.glyNAC.glycine);
+          drawLabelValue(doc, "NAC", protocol.sirtuinStack.glyNAC.nac);
+          drawLabelValue(doc, "Frequency", protocol.sirtuinStack.glyNAC.frequency);
+          doc.moveDown(0.4);
+        }
+        if (protocol.sirtuinStack.nadPrecursors) {
+          checkPage(doc, 40);
+          doc.fontSize(12).fillColor(COLORS.primary).text("NAD+ Precursors", 65);
+          drawLabelValue(doc, "Compound", protocol.sirtuinStack.nadPrecursors.compound);
+          drawLabelValue(doc, "Dose", protocol.sirtuinStack.nadPrecursors.dose);
+          drawLabelValue(doc, "Frequency", protocol.sirtuinStack.nadPrecursors.frequency);
+          doc.moveDown(0.4);
+        }
       }
 
       if (!protocol.injectablePeptides?.length && !protocol.bioregulators?.length &&
