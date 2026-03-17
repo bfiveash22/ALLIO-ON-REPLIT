@@ -29,6 +29,40 @@ const FF_SHOP = `${FF_WEBSITE}/shop`;
 const HEADER_FONT = "Georgia";
 const BODY_FONT = "Calibri";
 
+const REFERENCE_SLIDE_ORDER = [
+  "cover",
+  "summary",
+  "member-info",
+  "timeline",
+  "trustee-analysis",
+  "root-causes",
+  "5rs-phases",
+  "daily-schedule",
+  "products-ff",
+  "injectable-peptides",
+  "oral-peptides",
+  "bioregulators",
+  "supplements",
+  "supplement-timing",
+  "iv-im-therapies",
+  "detox-protocols",
+  "parasite-antiviral",
+  "ecs-protocol",
+  "suppositories",
+  "sirtuin-mito",
+  "liposomals",
+  "nebulization",
+  "topicals",
+  "exosomes",
+  "dietary-protocol",
+  "lifestyle",
+  "follow-up",
+  "books",
+  "research-links",
+  "drive-links",
+  "commitment",
+] as const;
+
 function makeShadow(): PptxGenJS.ShadowProps {
   return { type: "outer", blur: 6, offset: 2, color: "000000", opacity: 0.15, angle: 135 };
 }
@@ -37,7 +71,7 @@ export async function generateProtocolPPTX(
   protocol: HealingProtocol,
   profile: PatientProfile
 ): Promise<Buffer> {
-  console.log(`[PPTX] Generating presentation for ${protocol.patientName}`);
+  console.log(`[PPTX] Generating presentation for ${protocol.patientName} (${REFERENCE_SLIDE_ORDER.length} slide types in reference order)`);
   const pres = new PptxCtor() as PptxPresentation;
   pres.layout = "LAYOUT_16x9";
   pres.author = "Forgotten Formula PMA — DR. FORMULA";
@@ -71,6 +105,7 @@ export async function generateProtocolPPTX(
   }
   if (protocol.supplements?.length) {
     slideSupplements(pres, protocol);
+    slideSupplementTiming(pres, protocol);
   }
   if (protocol.ivTherapies?.length || protocol.imTherapies?.length) {
     slideIVIM(pres, protocol);
@@ -660,6 +695,90 @@ function slideSupplements(pres: PptxPresentation, protocol: HealingProtocol) {
     x: 0.7, y: 1.1, w: 8.6, h: 4.0,
     fontFace: BODY_FONT, valign: "top",
   });
+}
+
+function slideSupplementTiming(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = pres.addSlide();
+  slide.background = { color: LIGHT_GRAY };
+
+  slide.addText("Supplement Timing Guide", {
+    x: 0.5, y: 0.3, w: 9, h: 0.6,
+    fontSize: 24, fontFace: HEADER_FONT, color: PRIMARY, bold: true, margin: 0,
+  });
+
+  slide.addText("Proper timing maximizes absorption and minimizes interactions", {
+    x: 0.5, y: 0.85, w: 9, h: 0.3,
+    fontSize: 11, fontFace: BODY_FONT, color: TEXT_MED, italic: true,
+  });
+
+  const supps = protocol.supplements || [];
+  const lipos = protocol.liposomals || [];
+
+  const timingGroups: Record<string, Array<{ name: string; dose: string }>> = {
+    "Morning (Empty Stomach)": [],
+    "With Breakfast": [],
+    "Midday": [],
+    "With Dinner": [],
+    "Bedtime": [],
+  };
+
+  for (const s of supps) {
+    const t = (s.timing || "").toLowerCase();
+    if (t.includes("empty") || t.includes("fasting") || t.includes("wake")) {
+      timingGroups["Morning (Empty Stomach)"].push({ name: s.name, dose: s.dose });
+    } else if (t.includes("morning") || t.includes("breakfast")) {
+      timingGroups["With Breakfast"].push({ name: s.name, dose: s.dose });
+    } else if (t.includes("midday") || t.includes("lunch") || t.includes("afternoon")) {
+      timingGroups["Midday"].push({ name: s.name, dose: s.dose });
+    } else if (t.includes("dinner") || t.includes("evening")) {
+      timingGroups["With Dinner"].push({ name: s.name, dose: s.dose });
+    } else if (t.includes("bed") || t.includes("night")) {
+      timingGroups["Bedtime"].push({ name: s.name, dose: s.dose });
+    } else {
+      timingGroups["With Breakfast"].push({ name: s.name, dose: s.dose });
+    }
+  }
+  for (const l of lipos) {
+    const t = (l.timing || "").toLowerCase();
+    if (t.includes("morning") || t.includes("empty")) {
+      timingGroups["Morning (Empty Stomach)"].push({ name: `${l.name} (liposomal)`, dose: l.dose });
+    } else {
+      timingGroups["With Breakfast"].push({ name: `${l.name} (liposomal)`, dose: l.dose });
+    }
+  }
+
+  let yPos = 1.2;
+  for (const [period, items] of Object.entries(timingGroups)) {
+    if (items.length === 0) continue;
+
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x: 0.5, y: yPos, w: 9, h: 0.3,
+      fill: { color: PRIMARY },
+    });
+    slide.addText(period, {
+      x: 0.7, y: yPos, w: 8.6, h: 0.3,
+      fontSize: 11, fontFace: BODY_FONT, color: WHITE, bold: true, valign: "middle",
+    });
+    yPos += 0.35;
+
+    for (const item of items.slice(0, 4)) {
+      slide.addShape(pres.shapes.RECTANGLE, {
+        x: 0.5, y: yPos, w: 9, h: 0.35,
+        fill: { color: WHITE }, shadow: makeShadow(),
+      });
+      slide.addText([
+        { text: item.name, options: { bold: true, color: TEXT_DARK, fontSize: 10 } },
+        { text: ` — ${item.dose}`, options: { color: TEXT_MED, fontSize: 9 } },
+      ], {
+        x: 0.7, y: yPos, w: 8.6, h: 0.35,
+        fontFace: BODY_FONT, valign: "middle",
+      });
+      yPos += 0.38;
+    }
+    yPos += 0.1;
+
+    if (yPos > 5.0) break;
+  }
 }
 
 function slideIVIM(pres: PptxPresentation, protocol: HealingProtocol) {

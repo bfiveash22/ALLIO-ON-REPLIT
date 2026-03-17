@@ -782,17 +782,17 @@ function runDeterministicQAChecks(
   if (hasMercury && !protocol.detoxProtocols?.some(d => d.name?.toLowerCase().includes("chelat") || d.instructions?.toLowerCase().includes("dmsa") || d.instructions?.toLowerCase().includes("edta"))) {
     issues.push("Mercury exposure — chelation protocol (DMSA/EDTA) required in detox");
   }
-  if (hasTrauma && !protocol.lifestyleRecommendations?.some(l => l.recommendation?.toLowerCase().includes("emdr") || l.recommendation?.toLowerCase().includes("eft"))) {
-    suggestions.push("Trauma history present — recommend EMDR/EFT/somatic therapy in lifestyle section");
+  if (hasTrauma && !protocol.lifestyleRecommendations?.some(l => l.recommendation?.toLowerCase().includes("emdr") || l.recommendation?.toLowerCase().includes("eft") || l.recommendation?.toLowerCase().includes("somatic"))) {
+    issues.push("Trauma history present — EMDR/EFT/somatic therapy required in lifestyle section");
   }
   if (hasGut && !protocol.oralPeptides?.some(p => p.name?.toLowerCase().includes("bpc"))) {
     issues.push("Gut issues present — oral BPC-157 required for gut lining repair");
   }
   if (!protocol.detoxProtocols?.some(d => d.name?.toLowerCase().includes("castor"))) {
-    suggestions.push("Add castor oil packs to detox protocols (3x weekly, liver area)");
+    issues.push("Missing castor oil packs in detox protocols — required 3x weekly for liver area");
   }
-  if (!protocol.detoxProtocols?.some(d => d.name?.toLowerCase().includes("clay") || d.name?.toLowerCase().includes("bentonite"))) {
-    suggestions.push("Add clay/bentonite baths to detox protocols for heavy metal binding");
+  if (!protocol.detoxProtocols?.some(d => d.name?.toLowerCase().includes("clay") || d.name?.toLowerCase().includes("bentonite") || d.name?.toLowerCase().includes("bath"))) {
+    issues.push("Missing detox baths (clay/bentonite/Epsom) in detox protocols — required for heavy metal binding");
   }
   if (!protocol.topicals?.length) {
     suggestions.push("Consider topicals (DMSO cream, Kaneh Bosem) for localized treatment");
