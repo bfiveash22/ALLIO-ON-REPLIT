@@ -74,6 +74,17 @@ export function registerClinicNodeRoutes(app: Express): void {
     }
   });
 
+  app.get("/api/clinic-nodes/replication/logs", requireAuth, requireRole("admin", "trustee"), async (req: Request, res: Response) => {
+    try {
+      const nodeId = req.query.nodeId as string | undefined;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const logs = await getReplicationLogs(nodeId, limit);
+      res.json({ success: true, logs });
+    } catch (error: unknown) {
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
   app.get("/api/clinic-nodes/:id", requireAuth, requireRole("admin", "trustee"), async (req: Request, res: Response) => {
     try {
       const node = await getNodeById(req.params.id);
@@ -165,17 +176,6 @@ export function registerClinicNodeRoutes(app: Express): void {
       const event = await acknowledgeEvent(req.params.eventId, authReq.user?.email || "admin");
       if (!event) return res.status(404).json({ success: false, error: "Event not found" });
       res.json({ success: true, event });
-    } catch (error: unknown) {
-      res.status(500).json({ success: false, error: getErrorMessage(error) });
-    }
-  });
-
-  app.get("/api/clinic-nodes/replication/logs", requireAuth, requireRole("admin", "trustee"), async (req: Request, res: Response) => {
-    try {
-      const nodeId = req.query.nodeId as string | undefined;
-      const limit = parseInt(req.query.limit as string) || 50;
-      const logs = await getReplicationLogs(nodeId, limit);
-      res.json({ success: true, logs });
     } catch (error: unknown) {
       res.status(500).json({ success: false, error: getErrorMessage(error) });
     }
