@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { db } from "../src/db";
 import { generatedProtocols } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { uploadProtocolToDrive } from "../src/services/drive";
 
 const MEMBER_NAME = "Kathryn Smith";
@@ -13,6 +13,7 @@ async function resolveTargetId(): Promise<number> {
     .select({ id: generatedProtocols.id })
     .from(generatedProtocols)
     .where(eq(generatedProtocols.patientName, MEMBER_NAME))
+    .orderBy(desc(generatedProtocols.createdAt))
     .limit(1);
 
   if (!records.length) {

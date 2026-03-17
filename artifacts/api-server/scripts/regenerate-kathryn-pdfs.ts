@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { db } from "../src/db";
 import { generatedProtocols } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { buildKathrynSmithProfile } from "../src/services/kathryn-smith-protocol";
 import {
   generateProtocolPDFBuffer,
@@ -20,6 +20,7 @@ async function findProtocolRecord(): Promise<{ id: number; protocol: HealingProt
     .select()
     .from(generatedProtocols)
     .where(eq(generatedProtocols.patientName, MEMBER_NAME))
+    .orderBy(desc(generatedProtocols.createdAt))
     .limit(1);
 
   if (!records.length || !records[0].protocol) {
