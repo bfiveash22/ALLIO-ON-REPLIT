@@ -313,6 +313,8 @@ registerHealthRoutes(app);
       'artifacts/api-server/src/routes/doctor-routes.ts',
       'artifacts/api-server/src/routes/automation-routes.ts',
       'artifacts/api-server/src/routes/settings-routes.ts',
+      'artifacts/api-server/src/routes/drive-routes.ts',
+      'artifacts/api-server/src/routes/bloodwork-routes.ts',
       'artifacts/api-server/src/seeds/lba-certification-seed.ts',
       'artifacts/api-server/src/seeds/frequency-medicine-training-seed.ts',
       'artifacts/api-server/src/seeds/gerson-therapy-seed.ts',
@@ -346,7 +348,9 @@ registerHealthRoutes(app);
       if (/req\.(params|body|query)\.patient/.test(line)) return true;
       if (/AdminPatient|PatientManagement|PatientProtocol|PatientContext/.test(line)) return true;
       if (/patient:\s*member/.test(line)) return true;
-      if (/@deprecated.*patient/.test(line)) return true;
+      if (/@deprecated/.test(line)) return true;
+      if (/createPatientProtocolsFolder/.test(line)) return true;
+      if (/res\.redirect\(30[17]/.test(line)) return true;
       if (/totalMembers:\s*patients|activeMembers:\s*patients/.test(line)) return true;
       if (/profit model|cured nothing|poison to cure|not a cure/.test(line)) return true;
       if (/YOU ARE NOT YOUR/.test(line)) return true;

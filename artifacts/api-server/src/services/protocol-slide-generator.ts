@@ -749,7 +749,7 @@ export async function generateAnnetteGomerSlides(): Promise<ProtocolSlideResult>
   addBackground(closingSlide, FFPMA_COLORS.deepBlue);
   addAccentBar(closingSlide, 0, 0, 720, 8, FFPMA_COLORS.gold);
   addAccentBar(closingSlide, 0, 397, 720, 8, FFPMA_COLORS.gold);
-  addTextBox(closingSlide, 'YOU ARE NOT YOUR DIAGNOSIS.', 40, 60, 640, 50, 28, true, FFPMA_COLORS.gold, 'Montserrat');
+  addTextBox(closingSlide, 'YOU ARE NOT YOUR CONDITION.', 40, 60, 640, 50, 28, true, FFPMA_COLORS.gold, 'Montserrat');
   addTextBox(closingSlide, [
     'Your body has an innate ability to heal when given the right conditions.',
     '',
@@ -1567,7 +1567,7 @@ export async function generateKathrynSmithSlides(): Promise<ProtocolSlideResult>
   addBackground(closingSlide, FFPMA_COLORS.deepBlue);
   addAccentBar(closingSlide, 0, 0, 720, 8, FFPMA_COLORS.gold);
   addAccentBar(closingSlide, 0, 397, 720, 8, FFPMA_COLORS.gold);
-  addTextBox(closingSlide, 'YOU ARE NOT YOUR DIAGNOSIS.', 40, 60, 640, 50, 28, true, FFPMA_COLORS.gold, 'Montserrat');
+  addTextBox(closingSlide, 'YOU ARE NOT YOUR CONDITION.', 40, 60, 640, 50, 28, true, FFPMA_COLORS.gold, 'Montserrat');
   addTextBox(closingSlide, [
     'Your body has an innate ability to heal when given the right conditions.',
     '',

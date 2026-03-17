@@ -62,7 +62,7 @@ export function registerBloodworkRoutes(app: Express): void {
         try {
           const { rupaHealthAgent } = await import("../services/rupa-health-agent");
           const result = await rupaHealthAgent.placeOrder(
-            { firstName: memberName?.split(' ')[0] || 'Patient', lastName: memberName?.split(' ').slice(1).join(' ') || '', email: '' },
+            { firstName: memberName?.split(' ')[0] || 'Member', lastName: memberName?.split(' ').slice(1).join(' ') || '', email: '' },
             panels,
             false
           );

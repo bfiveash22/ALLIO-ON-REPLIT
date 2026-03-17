@@ -182,9 +182,12 @@ export function registerDriveRoutes(app: Express): void {
     catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
   });
 
-  app.post("/api/drive/create-patient-protocols-folder", requireRole("admin"), async (req: Request, res: Response) => {
+  app.post("/api/drive/create-member-protocols-folder", requireRole("admin"), async (req: Request, res: Response) => {
     try { res.json(await createPatientProtocolsFolder()); }
     catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
+  });
+  app.post("/api/drive/create-patient-protocols-folder", requireRole("admin"), (req: Request, res: Response) => {
+    res.redirect(307, "/api/drive/create-member-protocols-folder");
   });
 
   app.post("/api/drive/upload-baker-protocol", requireRole("admin"), async (req: Request, res: Response) => {

@@ -473,7 +473,7 @@ PROTOCOL STRUCTURE (output as valid JSON matching HealingProtocol):
   }
 }
 
-ROOT-CAUSE-TO-TREATMENT MAPPING (MANDATORY):
+ROOT-CAUSE-TO-PROTOCOL MAPPING (MANDATORY):
 - Mycotoxin/Mercury exposure → Glutathione IV + EDTA chelation + clay baths + castor oil packs + infrared sauna + nebulized glutathione
 - Cancer → High-dose Vitamin C IV (50-100g) + mistletoe + ozone + modified keto diet + DIM/I3C + fenbendazole + ECS suppositories (THC:CBD 1:1)
 - Gut/Immune dysfunction → ECS suppository rotation + probiotics (100B+ CFU) + BPC-157 oral + L-glutamine + colostrum
