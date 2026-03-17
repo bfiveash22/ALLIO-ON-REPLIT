@@ -595,7 +595,7 @@ function slideInjectablePeptides(pres: PptxPresentation, protocol: HealingProtoc
     { text: "Purpose", options: { bold: true, color: WHITE, fontSize: 9, fill: { color: PRIMARY } } },
   ];
 
-  const tableRows: any[][] = [headerRow];
+  const tableRows: PptxGenJS.TableCell[][] = [headerRow];
   peptides.forEach(p => {
     tableRows.push([
       { text: p.name, options: { fontSize: 8, color: TEAL, bold: true } },

@@ -6,6 +6,21 @@ import { asyncHandler, AppError } from "../middleware/error-handler";
 import { intakeForms, generatedProtocols } from "@shared/schema";
 import type { HealingProtocol, PatientProfile } from "@shared/types/protocol-assembly";
 
+interface AuthenticatedUser {
+  id: string;
+  wpRoles?: string[];
+  email?: string;
+  firstName?: string;
+  role?: string;
+  name?: string;
+  lastName?: string;
+  wpUserId?: string;
+}
+
+interface AuthenticatedRequest extends Request {
+  user?: AuthenticatedUser;
+}
+
 export async function registerProtocolAssemblyRoutes(app: Express): Promise<void> {
   const {
     analyzeTranscript,
@@ -27,18 +42,18 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
   const DOCTOR_ROLE_NAMES = ['doctor', 'physician', 'ff_doctor', 'ff_healer', 'healer', 'practitioner', 'um_doctor', 'um_healer', 'um_practitioner', 'wellness_practitioner', 'healthcare_provider'];
   const ADMIN_ROLE_NAMES = ['administrator', 'shop_manager'];
 
-  function isDoctorOnly(req: Request): boolean {
-    const wpRoles: string[] = (req as any).user?.wpRoles || [];
+  function isDoctorOnly(req: AuthenticatedRequest): boolean {
+    const wpRoles: string[] = req.user?.wpRoles || [];
     const isDoctor = wpRoles.some((r: string) => DOCTOR_ROLE_NAMES.includes(r));
     const isAdmin = wpRoles.some((r: string) => ADMIN_ROLE_NAMES.includes(r));
     return isDoctor && !isAdmin;
   }
 
-  function getUserId(req: Request): string | undefined {
-    return (req as any).user?.id;
+  function getUserId(req: AuthenticatedRequest): string | undefined {
+    return req.user?.id;
   }
 
-  function enforceDoctorOwnership(req: Request, record: { doctorId?: string | null }): void {
+  function enforceDoctorOwnership(req: AuthenticatedRequest, record: { doctorId?: string | null }): void {
     if (isDoctorOnly(req)) {
       const userId = getUserId(req);
       if (!userId || record.doctorId !== userId) {
@@ -160,7 +175,7 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
         submittedAt: intakeForms.submittedAt,
       }).from(intakeForms).orderBy(desc(intakeForms.createdAt)).limit(100);
       res.json(forms);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Protocol Assembly] List intake forms error:', error);
       res.status(500).json({ error: 'Failed to list intake forms' });
     }
@@ -344,7 +359,7 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       const slides = await generateProtocolSlides(protocol as unknown as HealingProtocol, profile as unknown as PatientProfile);
       await updateProtocolSlides(id, slides.presentationId, slides.webViewLink);
       res.json(slides);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Protocol Assembly] Slides error:', error);
       res.status(500).json({ error: 'Failed to generate slides. Please try again.' });
     }
@@ -357,8 +372,8 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       const record = await getProtocol(id);
       if (!record) return res.status(404).json({ error: 'Protocol not found' });
       enforceDoctorOwnership(req, record);
-      const protocol = record.protocol as any;
-      const profile = record.patientProfile as any;
+      const protocol = record.protocol as unknown as HealingProtocol;
+      const profile = record.patientProfile as unknown as PatientProfile;
       let citations;
       try {
         citations = await fetchProtocolCitations(protocol, profile);
@@ -371,7 +386,7 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       res.setHeader('Content-Disposition', `attachment; filename="${safeName}_Protocol_${protocol.generatedDate || 'draft'}.pdf"`);
       res.setHeader('Content-Length', pdfBuffer.length);
       res.send(pdfBuffer);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Protocol Assembly] PDF generation error:', error);
       res.status(500).json({ error: 'Failed to generate PDF. Please try again.' });
     }
@@ -384,15 +399,15 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       const record = await getProtocol(id);
       if (!record) return res.status(404).json({ error: 'Protocol not found' });
       enforceDoctorOwnership(req, record);
-      const protocol = record.protocol as any;
-      const profile = record.patientProfile as any;
+      const protocol = record.protocol as unknown as HealingProtocol;
+      const profile = record.patientProfile as unknown as PatientProfile;
       const pdfBuffer = await generateDailySchedulePDFBuffer(protocol, profile);
       const safeName = (protocol.patientName || 'protocol').replace(/[^a-zA-Z0-9_-]/g, '_');
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${safeName}_Daily_Schedule.pdf"`);
       res.setHeader('Content-Length', pdfBuffer.length);
       res.send(pdfBuffer);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Protocol Assembly] Daily Schedule PDF error:', error);
       res.status(500).json({ error: 'Failed to generate daily schedule PDF.' });
     }
@@ -405,15 +420,15 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       const record = await getProtocol(id);
       if (!record) return res.status(404).json({ error: 'Protocol not found' });
       enforceDoctorOwnership(req, record);
-      const protocol = record.protocol as any;
-      const profile = record.patientProfile as any;
+      const protocol = record.protocol as unknown as HealingProtocol;
+      const profile = record.patientProfile as unknown as PatientProfile;
       const pdfBuffer = await generatePeptideSchedulePDFBuffer(protocol, profile);
       const safeName = (protocol.patientName || 'protocol').replace(/[^a-zA-Z0-9_-]/g, '_');
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${safeName}_Peptide_Schedule.pdf"`);
       res.setHeader('Content-Length', pdfBuffer.length);
       res.send(pdfBuffer);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Protocol Assembly] Peptide Schedule PDF error:', error);
       res.status(500).json({ error: 'Failed to generate peptide schedule PDF.' });
     }
@@ -426,14 +441,14 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       const record = await getProtocol(id);
       if (!record) return res.status(404).json({ error: 'Protocol not found' });
       enforceDoctorOwnership(req, record);
-      const protocol = record.protocol as any;
+      const protocol = record.protocol as unknown as HealingProtocol;
       const qaReport = await runProtocolQA(protocol);
       res.json({
         protocolId: id,
         patientName: record.patientName,
         ...qaReport,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Protocol Assembly] QA validation error:', error);
       res.status(500).json({ error: 'Failed to run QA validation. Please try again.' });
     }
@@ -458,9 +473,9 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
         protocol: result.protocol,
         profile: result.profile,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Protocol Assembly] Kathryn Smith rebuild error:', error);
-      res.status(500).json({ error: 'Failed to rebuild Kathryn Smith protocol. ' + (error.message || '') });
+      res.status(500).json({ error: 'Failed to rebuild Kathryn Smith protocol. ' + (error instanceof Error ? error.message : String(error)) });
     }
   });
 
@@ -471,8 +486,8 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       const record = await getProtocol(id);
       if (!record) return res.status(404).json({ error: 'Protocol not found' });
       enforceDoctorOwnership(req, record);
-      const protocol = record.protocol as any;
-      const profile = record.patientProfile as any;
+      const protocol = record.protocol as unknown as HealingProtocol;
+      const profile = record.patientProfile as unknown as PatientProfile;
       let citations;
       try {
         citations = await fetchProtocolCitations(protocol, profile);
@@ -486,9 +501,9 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
         protocol,
         citations: citations || [],
         generatedDate: protocol.generatedDate,
-        trusteeNotes: profile.practitionerNotes || '',
+        trusteeNotes: '',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Protocol Assembly] Presentation data error:', error);
       res.status(500).json({ error: 'Failed to get presentation data' });
     }
@@ -501,11 +516,11 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       const record = await getProtocol(id);
       if (!record) return res.status(404).json({ error: 'Protocol not found' });
       enforceDoctorOwnership(req, record);
-      const protocol = record.protocol as any;
-      const profile = record.patientProfile as any;
+      const protocol = record.protocol as unknown as HealingProtocol;
+      const profile = record.patientProfile as unknown as PatientProfile;
       const citations = await fetchProtocolCitations(protocol, profile);
       res.json({ protocolId: id, citationCount: citations.length, citations });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Protocol Assembly] Citations error:', error);
       res.status(500).json({ error: 'Failed to fetch citations. Please try again.' });
     }
@@ -525,7 +540,7 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       const record = await getProtocol(id);
       if (!record) return res.status(404).json({ error: 'Protocol not found' });
 
-      const user = (req as any).user;
+      const user = (req as AuthenticatedRequest).user;
       const reviewerUsername = user?.email || user?.firstName || 'trustee';
       const updateData: Record<string, unknown> = {
         status,
@@ -639,8 +654,8 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
             const protocolSummary = protocol.summary || 'See full protocol for details';
 
             const updatedRecord = await getProtocol(id);
-            const dailyLink = (updatedRecord as any)?.dailySchedulePdfWebViewLink || 'Generating...';
-            const peptideLink = (updatedRecord as any)?.peptideSchedulePdfWebViewLink || 'Generating...';
+            const dailyLink = updatedRecord?.dailySchedulePdfWebViewLink || 'Generating...';
+            const peptideLink = updatedRecord?.peptideSchedulePdfWebViewLink || 'Generating...';
 
             await db.insert(doctorPatientMessages).values({
               conversationId,
@@ -671,7 +686,7 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
 
       const updated = await getProtocol(id);
       res.json({ success: true, protocol: updated });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Protocol Assembly] Status update error:', error);
       res.status(500).json({ error: 'Failed to update protocol status' });
     }
@@ -829,7 +844,7 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
         fileId: driveResult.fileId,
         webViewLink: driveResult.webViewLink,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Protocol Assembly] Drive upload error:', error);
       res.status(500).json({ error: 'Failed to upload protocol to Drive' });
     }

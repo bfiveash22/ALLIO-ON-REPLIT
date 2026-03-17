@@ -10,29 +10,38 @@ import {
   generatePeptideSchedulePDFBuffer,
 } from "../src/services/protocol-assembly";
 import { generateProtocolPPTX } from "../src/services/protocol-pptx";
+import type { HealingProtocol, PatientProfile } from "@shared/types/protocol-assembly";
 
+const MEMBER_NAME = "Kathryn Smith";
 const OUTPUT_DIR = path.resolve(process.cwd(), "..", "..", "public", "protocols");
+
+async function findProtocolRecord(): Promise<{ id: number; protocol: HealingProtocol; profile: PatientProfile }> {
+  const records = await db
+    .select()
+    .from(generatedProtocols)
+    .where(eq(generatedProtocols.patientName, MEMBER_NAME))
+    .limit(1);
+
+  if (!records.length || !records[0].protocol) {
+    throw new Error(`No protocol data found for member "${MEMBER_NAME}"`);
+  }
+
+  const record = records[0];
+  const protocol = record.protocol as unknown as HealingProtocol;
+  const profile = record.patientProfile as unknown as PatientProfile;
+  return { id: record.id, protocol, profile };
+}
 
 async function main() {
   if (!fs.existsSync(OUTPUT_DIR)) {
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   }
 
-  console.log("[Regen] Building Kathryn profile from timeline...");
-  const profile = await buildKathrynSmithProfile();
+  console.log(`[Regen] Looking up protocol for "${MEMBER_NAME}"...`);
+  const { id, protocol, profile: storedProfile } = await findProtocolRecord();
+  console.log(`[Regen] Found record id=${id}`);
 
-  console.log("[Regen] Loading protocol data from DB...");
-  const [record] = await db
-    .select()
-    .from(generatedProtocols)
-    .where(eq(generatedProtocols.id, 2))
-    .limit(1);
-
-  if (!record || !record.protocol) {
-    throw new Error("No protocol data found for record id=2");
-  }
-
-  const protocol = record.protocol as unknown as import("@shared/types/protocol-assembly").HealingProtocol;
+  const profile = storedProfile || await buildKathrynSmithProfile();
 
   console.log(`[Regen] Protocol: ${protocol.patientName}, ${protocol.protocolDurationDays} days`);
   console.log(`[Regen] ${protocol.injectablePeptides?.length || 0} injectables, ${protocol.supplements?.length || 0} supplements`);
@@ -62,7 +71,7 @@ async function main() {
   fs.writeFileSync(pptxPath, pptxBuffer);
   console.log(`[Regen] PPTX: ${(pptxBuffer.length / 1024).toFixed(0)} KB`);
 
-  console.log("\n[Regen] All 4 deliverables generated!");
+  console.log(`\n[Regen] All 4 deliverables generated for record id=${id}!`);
   console.log(`  Full Protocol:     ${fullPath}`);
   console.log(`  Daily Schedule:    ${dailyPath}`);
   console.log(`  Peptide Schedule:  ${peptidePath}`);

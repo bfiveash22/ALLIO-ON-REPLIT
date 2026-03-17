@@ -5,10 +5,26 @@ import { generatedProtocols } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { uploadProtocolToDrive } from "../src/services/drive";
 
-const TARGET_PROTOCOL_ID = 2;
+const MEMBER_NAME = "Kathryn Smith";
 const OUTPUT_DIR = path.resolve(process.cwd(), "..", "..", "public", "protocols");
 
+async function resolveTargetId(): Promise<number> {
+  const records = await db
+    .select({ id: generatedProtocols.id })
+    .from(generatedProtocols)
+    .where(eq(generatedProtocols.patientName, MEMBER_NAME))
+    .limit(1);
+
+  if (!records.length) {
+    throw new Error(`No protocol record found for member "${MEMBER_NAME}"`);
+  }
+  return records[0].id;
+}
+
 async function main() {
+  const targetId = await resolveTargetId();
+  console.log(`[Upload] Resolved target protocol record: id=${targetId} for "${MEMBER_NAME}"`);
+
   const fullPath = path.join(OUTPUT_DIR, "Kathryn_Smith_Full_Protocol.pdf");
   const dailyPath = path.join(OUTPUT_DIR, "Kathryn_Smith_Daily_Schedule.pdf");
   const peptidePath = path.join(OUTPUT_DIR, "Kathryn_Smith_Peptide_Schedule.pdf");
@@ -19,8 +35,6 @@ async function main() {
       throw new Error(`File not found: ${p}`);
     }
   }
-
-  console.log(`[Upload] Target protocol record: id=${TARGET_PROTOCOL_ID}`);
 
   console.log("[Upload] Uploading Full Protocol PDF to Drive...");
   const fullBuf = fs.readFileSync(fullPath);
@@ -33,8 +47,8 @@ async function main() {
         pdfDriveFileId: fullResult.fileId,
         pdfDriveWebViewLink: fullResult.webViewLink || null,
       })
-      .where(eq(generatedProtocols.id, TARGET_PROTOCOL_ID));
-    console.log(`[Upload] DB updated: id=${TARGET_PROTOCOL_ID} pdfDriveFileId=${fullResult.fileId}`);
+      .where(eq(generatedProtocols.id, targetId));
+    console.log(`[Upload] DB updated: id=${targetId} pdfDriveFileId=${fullResult.fileId}`);
   }
 
   console.log("[Upload] Uploading Daily Schedule PDF to Drive...");
@@ -48,8 +62,8 @@ async function main() {
         dailySchedulePdfFileId: dailyResult.fileId,
         dailySchedulePdfWebViewLink: dailyResult.webViewLink || null,
       })
-      .where(eq(generatedProtocols.id, TARGET_PROTOCOL_ID));
-    console.log(`[Upload] DB updated: id=${TARGET_PROTOCOL_ID} dailySchedulePdfFileId=${dailyResult.fileId}`);
+      .where(eq(generatedProtocols.id, targetId));
+    console.log(`[Upload] DB updated: id=${targetId} dailySchedulePdfFileId=${dailyResult.fileId}`);
   }
 
   console.log("[Upload] Uploading Peptide Schedule PDF to Drive...");
@@ -63,8 +77,8 @@ async function main() {
         peptideSchedulePdfFileId: peptideResult.fileId,
         peptideSchedulePdfWebViewLink: peptideResult.webViewLink || null,
       })
-      .where(eq(generatedProtocols.id, TARGET_PROTOCOL_ID));
-    console.log(`[Upload] DB updated: id=${TARGET_PROTOCOL_ID} peptideSchedulePdfFileId=${peptideResult.fileId}`);
+      .where(eq(generatedProtocols.id, targetId));
+    console.log(`[Upload] DB updated: id=${targetId} peptideSchedulePdfFileId=${peptideResult.fileId}`);
   }
 
   console.log("[Upload] Uploading PPTX Presentation to Drive...");
@@ -82,11 +96,11 @@ async function main() {
         slidesPresentationId: pptxResult.fileId,
         slidesWebViewLink: pptxResult.webViewLink || null,
       })
-      .where(eq(generatedProtocols.id, TARGET_PROTOCOL_ID));
-    console.log(`[Upload] DB updated: id=${TARGET_PROTOCOL_ID} slidesPresentationId=${pptxResult.fileId}`);
+      .where(eq(generatedProtocols.id, targetId));
+    console.log(`[Upload] DB updated: id=${targetId} slidesPresentationId=${pptxResult.fileId}`);
   }
 
-  console.log(`\n[Upload] All 4 deliverables uploaded to Drive and DB record id=${TARGET_PROTOCOL_ID} updated!`);
+  console.log(`\n[Upload] All 4 deliverables uploaded to Drive and DB record id=${targetId} updated!`);
   process.exit(0);
 }
 

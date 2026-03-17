@@ -698,27 +698,28 @@ function enforceRequiredModalities(protocol: HealingProtocol, profile: PatientPr
   }
 }
 
-const CATALOG_PRODUCTS = [
-  "bpc-157", "thymosin alpha-1", "ta-1", "tb-500", "thymosin beta-4", "kpv", "ghk-cu",
-  "ipamorelin", "cjc-1295", "sermorelin", "tesamorelin", "glp-1", "semaglutide", "tirzepatide",
-  "pt-141", "bremelanotide", "mots-c", "humanin", "ss-31", "epithalon", "epitalon",
-  "selank", "semax", "dihexa", "cerebrolysin", "oxytocin", "gonadorelin", "kisspeptin",
-  "aod-9604", "fragment 176-191", "snap-8", "argireline",
-  "glutathione", "nad+", "nad", "nicotinamide", "myers", "meyer", "vitamin c",
-  "high-dose vitamin c", "alpha lipoic acid", "ala", "chelation", "edta", "dmso",
-  "hydrogen peroxide", "ozone", "phosphatidylcholine", "plaquex",
-  "lipo-b", "methyl-b12", "b12", "testosterone", "progesterone", "estradiol",
-  "resveratrol", "pterostilbene", "quercetin", "fisetin", "coq10", "ubiquinol",
-  "pqq", "d-ribose", "l-carnitine", "nmn", "nr", "nicotinamide riboside",
-  "glycine", "nac", "n-acetyl cysteine",
-  "cbd", "cbg", "cbn", "thc", "cbdv", "thcv", "cbda", "cbga",
-  "mitoguard", "mitostac", "bio-vitamin", "mighty blue", "reds", "greens",
-  "elixir for everything", "elixir", "kaneh bosem",
-  "ivermectin", "fenbendazole", "albendazole", "mebendazole",
-  "liposomal glutathione", "liposomal curcumin", "liposomal d3", "liposomal k2",
-  "astaxanthin", "dim", "i3c", "indole-3-carbinol",
-  "colostrum", "l-glutamine", "probiotics", "digestive enzymes",
-  "iodine", "selenium", "zinc", "magnesium", "copper",
+import {
+  peptides as knowledgePeptides,
+  ivTherapies as knowledgeIV,
+  imTherapies as knowledgeIM,
+  bioregulators as knowledgeBioregulators,
+  oralPeptides as knowledgeOralPeptides,
+  suppositories as knowledgeSuppositories,
+  supplements as knowledgeSupplements,
+  exosomes as knowledgeExosomes,
+  topicals as knowledgeTopicals,
+} from "../protocol-knowledge";
+
+const CATALOG_PRODUCTS: string[] = [
+  ...knowledgePeptides.map(p => p.name.toLowerCase()),
+  ...knowledgeIV.map(p => p.name.toLowerCase()),
+  ...knowledgeIM.map(p => p.name.toLowerCase()),
+  ...knowledgeBioregulators.map(p => p.name.toLowerCase()),
+  ...knowledgeOralPeptides.map(p => p.name.toLowerCase()),
+  ...knowledgeSuppositories.map(p => p.name.toLowerCase()),
+  ...knowledgeSupplements.map(p => p.name.toLowerCase()),
+  ...knowledgeExosomes.map(p => p.name.toLowerCase()),
+  ...knowledgeTopicals.map(p => p.name.toLowerCase()),
 ];
 
 const DOSING_PATTERNS: Record<string, RegExp> = {
