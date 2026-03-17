@@ -53,8 +53,8 @@ const HEADER_FONT = "Playfair Display";
 const BODY_FONT = "Source Sans 3";
 
 const REFERENCE_PPTX_DRIVE_FILE_ID = "1Tc_hVN7M6c2Q41151GXsvrH8OWAZ7hPL";
-const TRUSTEE_TEMPLATE_FILE = "FFPMA_Trustee_Final_Protocol_Template_1773746354505.pptx";
-const REFERENCE_PPTX_PROVENANCE = `Structural template derived from Trustee FINAL reference PPTX (Drive: ${REFERENCE_PPTX_DRIVE_FILE_ID}). Color theme: Navy (#1A2440/#0A0E1A) + Gold (#C9A54E) + Lavender (#E8EDF5/#C8CFE0). Fonts: Playfair Display (headers) + Source Sans 3 (body). Based on ${TRUSTEE_TEMPLATE_FILE}. 32-slide structure.`;
+const TRUSTEE_TEMPLATE_FILE = "Trustee_FFPMA_Protocol_Final_Template_1773763070654.pptx";
+const REFERENCE_PPTX_PROVENANCE = `Structural template derived from Trustee FINAL reference PPTX (Drive: ${REFERENCE_PPTX_DRIVE_FILE_ID}). Color theme: Navy (#1A2440/#0A0E1A) + Gold (#C9A54E) + Lavender (#E8EDF5/#C8CFE0). Fonts: Playfair Display (headers) + Source Sans 3 (body). Based on ${TRUSTEE_TEMPLATE_FILE}. 34-slide structure.`;
 
 const REFERENCE_SLIDE_ORDER = [
   "cover",
@@ -64,33 +64,31 @@ const REFERENCE_SLIDE_ORDER = [
   "5rs-phases",
   "diagnostic-framework",
   "program-structure",
-  "member-info",
-  "timeline",
-  "trustee-analysis",
-  "root-causes",
+  "intake-personal",
+  "intake-health-history",
+  "intake-symptoms-goals",
   "peptide-therapy-intro",
-  "injectable-peptides",
-  "oral-peptides",
-  "bioregulators",
-  "supplements",
-  "supplement-timing",
-  "iv-im-therapies",
+  "peptides-immune",
+  "peptides-cellular-cancer",
+  "peptides-metabolic-hormonal",
+  "peptides-longevity",
   "hbot-therapy",
-  "detox-protocols",
-  "parasite-antiviral",
+  "hbot-systems",
+  "detox-iv-sequence",
   "home-protocols",
+  "dental-biological",
   "dietary-protocol",
-  "ecs-protocol",
-  "suppositories",
-  "sirtuin-mito",
   "advanced-modalities",
+  "mitostac-phase4",
+  "mito-pathway-map",
+  "cannabinoid-ligand-map",
+  "protocol-builder",
   "daily-schedule",
-  "products-ff",
-  "follow-up",
+  "program-timeline",
+  "monitoring-followup",
   "ai-research-tool",
   "research-links",
-  "drive-links",
-  "books",
+  "library-resources",
   "protocol-summary",
   "closing",
 ] as const;
@@ -125,70 +123,70 @@ export async function generateProtocolPPTX(
 
   slideDiagnosticFramework(pres, protocol);
   slideProgramStructure(pres, protocol);
-  slideMemberInfo(pres, protocol, profile, resources);
-  slideTimeline(pres, profile);
-  slideTrusteeAnalysis(pres, protocol);
-  slideRootCauses(pres, protocol);
+
+  slideIntakePersonal(pres, protocol, profile);
+  slideIntakeHealthHistory(pres, protocol, profile);
+  slideIntakeSymptomsGoals(pres, protocol, profile);
 
   slidePeptideTherapyIntro(pres, protocol);
-  if (protocol.injectablePeptides?.length) {
-    slideInjectablePeptides(pres, protocol);
-  }
-  if (protocol.oralPeptides?.length) {
-    slideOralPeptides(pres, protocol);
-  }
-  if (protocol.bioregulators?.length) {
-    slideBioregulators(pres, protocol);
-  }
-  if (protocol.supplements?.length) {
-    slideSupplements(pres, protocol);
-    slideSupplementTiming(pres, protocol);
-  }
-  if (protocol.ivTherapies?.length || protocol.imTherapies?.length) {
-    slideIVIM(pres, protocol);
-  }
+
+  const allPeptides = [
+    ...(protocol.injectablePeptides || []),
+    ...(protocol.oralPeptides || []),
+    ...(protocol.bioregulators || []),
+  ];
+  const immunePeptides = allPeptides.filter((p: any) => /immun|ll-?37|thymo|kpv|antimicro/i.test(`${p.name} ${p.category || ''} ${p.mechanism || ''}`));
+  const cancerPeptides = allPeptides.filter((p: any) => /cancer|tumor|pnc|foxo|p53|senol/i.test(`${p.name} ${p.category || ''} ${p.mechanism || ''}`));
+  const metabolicPeptides = allPeptides.filter((p: any) => /metabol|hormon|retatrutide|semaglutide|glp|weight|insulin/i.test(`${p.name} ${p.category || ''} ${p.mechanism || ''}`));
+  const longevityPeptides = allPeptides.filter((p: any) => /longev|aging|epithalon|pinealon|telomer|bioregul/i.test(`${p.name} ${p.category || ''} ${p.mechanism || ''}`));
+
+  if (immunePeptides.length > 0) slidePeptideCategory(pres, "IMMUNE SUPPORT", "Immune Surveillance & Defense", immunePeptides);
+  if (cancerPeptides.length > 0) slidePeptideCategory(pres, "CELLULAR & CANCER", "Cellular Repair & Tumor Suppression", cancerPeptides);
+  if (metabolicPeptides.length > 0) slidePeptideCategory(pres, "METABOLIC & HORMONAL", "Metabolic Reset & Hormonal Balance", metabolicPeptides);
+  if (longevityPeptides.length > 0) slidePeptideCategory(pres, "LONGEVITY", "Anti-Aging & Cellular Longevity", longevityPeptides);
+
+  const uncategorized = allPeptides.filter((p: any) =>
+    !immunePeptides.includes(p) && !cancerPeptides.includes(p) &&
+    !metabolicPeptides.includes(p) && !longevityPeptides.includes(p)
+  );
+  if (uncategorized.length > 0) slidePeptideCategory(pres, "ADDITIONAL PEPTIDES", "Additional Peptide Protocols", uncategorized);
 
   slideHBOTTherapy(pres, protocol);
+  slideHBOTSystems(pres);
 
-  if (protocol.detoxProtocols?.length) {
-    slideDetox(pres, protocol);
-  }
-  if (protocol.parasiteAntiviralProtocols?.length) {
-    slideParasite(pres, protocol);
+  if (protocol.detoxProtocols?.length || protocol.ivTherapies?.length) {
+    slideDetoxIVSequence(pres, protocol);
   }
 
   slideHomeProtocols(pres, protocol);
+  slideDentalBiological(pres);
 
   if (protocol.dietaryProtocol?.phases?.length) {
     slideDietaryProtocol(pres, protocol);
   }
-  if (protocol.ecsProtocol?.overview) {
-    slideECS(pres, protocol);
-  }
-  if (protocol.suppositories?.length) {
-    slideSuppositories(pres, protocol);
-  }
-  if (protocol.sirtuinStack?.mitoSTAC) {
-    slideSirtuinMito(pres, protocol);
-  }
 
   slideAdvancedModalities(pres, protocol);
 
-  slideDailySchedule(pres, protocol);
+  if (protocol.sirtuinStack?.mitoSTAC) {
+    slideSirtuinMito(pres, protocol);
+  }
+  slideMitoPathwayMap(pres);
 
-  slideProductsFF(pres, protocol);
+  if (protocol.ecsProtocol?.overview) {
+    slideCannabinoidLigandMap(pres, protocol);
+  }
+
+  slideProtocolBuilder(pres, protocol);
+  slideDailySchedule(pres, protocol);
+  slideProgramTimeline(pres, protocol);
 
   if (protocol.followUpPlan?.length || protocol.labsRequired?.length) {
-    slideFollowUp(pres, protocol);
+    slideMonitoringFollowup(pres, protocol);
   }
 
   slideAIResearchTool(pres);
   slideResearchLinks(pres, resources);
-  slideDriveLinks(pres, resources);
-
-  if (resources.books.length > 0) {
-    slideBooks(pres, resources);
-  }
+  slideLibraryResources(pres, resources);
 
   slideProtocolSummary(pres, protocol, profile);
   slideClosing(pres);
@@ -894,6 +892,824 @@ function slideClosing(pres: PptxPresentation) {
     x: 0, y: 5.1, w: 10, h: 0.3,
     fontSize: 8, fontFace: BODY_FONT, color: "5A6B8A", align: "center",
   });
+}
+
+function slideIntakePersonal(pres: PptxPresentation, protocol: HealingProtocol, profile: PatientProfile) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: ACCENT } });
+
+  slide.addText("PATIENT INTAKE — SECTION 1 OF 3", {
+    x: 0.3, y: 0.15, w: 9.4, h: 0.4,
+    fontSize: 10, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("Personal Information", {
+    x: 0.5, y: 0.5, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  const p = profile as any;
+  const fields = [
+    { label: "Full Legal Name", value: protocol.patientName || "[Enter full name]" },
+    { label: "Date of Birth", value: p.dateOfBirth || "MM / DD / YYYY" },
+    { label: "Phone Number", value: p.phone || "(___) ___-____" },
+    { label: "Email Address", value: p.email || "email@example.com" },
+    { label: "Mailing Address", value: profile.location || "Street, City, State, ZIP" },
+    { label: "Emergency Contact", value: p.emergencyContact || "Name & phone number" },
+    { label: "Height / Weight", value: p.heightWeight || "___ft ___in / ___lbs" },
+    { label: "Gender", value: profile.gender || "Select..." },
+  ];
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 0.5, y: 1.1, w: 9, h: 4.2,
+    fill: { color: CARD_BG }, rectRadius: 0.1,
+  });
+
+  fields.forEach((f, i) => {
+    const row = Math.floor(i / 2);
+    const col = i % 2;
+    const x = 0.7 + col * 4.3;
+    const y = 1.3 + row * 0.95;
+
+    slide.addText(f.label, {
+      x, y, w: 3.8, h: 0.25,
+      fontSize: 9, fontFace: BODY_FONT, color: ACCENT, bold: true,
+    });
+    slide.addText(f.value, {
+      x, y: y + 0.25, w: 3.8, h: 0.35,
+      fontSize: 11, fontFace: BODY_FONT, color: WHITE,
+    });
+  });
+}
+
+function slideIntakeHealthHistory(pres: PptxPresentation, protocol: HealingProtocol, profile: PatientProfile) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: ACCENT } });
+
+  slide.addText("PATIENT INTAKE — SECTION 2 OF 3", {
+    x: 0.3, y: 0.15, w: 9.4, h: 0.4,
+    fontSize: 10, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("Health History & Current Conditions", {
+    x: 0.5, y: 0.5, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 0.5, y: 1.1, w: 9, h: 4.2,
+    fill: { color: CARD_BG }, rectRadius: 0.1,
+  });
+
+  const p = profile as any;
+  const sections = [
+    { label: "Primary Health Concern(s)", value: (profile.chiefComplaints || []).join(", ") || "Describe your main health concerns..." },
+    { label: "Previous Diagnoses", value: (profile.currentDiagnoses || []).join(", ") || "List any diagnoses received..." },
+    { label: "Current Medications & Supplements", value: (profile.currentMedications || []).join(", ") || "Include dosages if known..." },
+    { label: "Known Allergies", value: (p.allergies || []).join(", ") || "Medications, foods, environmental..." },
+    { label: "Family History", value: p.familyHistory || "Cancer, autoimmune, cardiovascular..." },
+    { label: "Prior Surgeries / Procedures", value: (profile.surgicalHistory || []).join(", ") || "List with approximate dates..." },
+  ];
+
+  sections.forEach((s, i) => {
+    const y = 1.3 + i * 0.65;
+    slide.addText(s.label, {
+      x: 0.7, y, w: 8.6, h: 0.2,
+      fontSize: 9, fontFace: BODY_FONT, color: ACCENT, bold: true,
+    });
+    slide.addText(s.value, {
+      x: 0.7, y: y + 0.2, w: 8.6, h: 0.35,
+      fontSize: 10, fontFace: BODY_FONT, color: TEAL,
+    });
+  });
+}
+
+function slideIntakeSymptomsGoals(pres: PptxPresentation, protocol: HealingProtocol, profile: PatientProfile) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: ACCENT } });
+
+  slide.addText("PATIENT INTAKE — SECTION 3 OF 3", {
+    x: 0.3, y: 0.15, w: 9.4, h: 0.4,
+    fontSize: 10, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("Symptoms, Lifestyle & Goals", {
+    x: 0.5, y: 0.5, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  const symptoms = [
+    "Chronic fatigue", "Joint/muscle pain", "Brain fog", "Digestive issues",
+    "Insomnia / poor sleep", "Weight gain/loss", "Skin issues", "Mood / anxiety / depression",
+    "Hormonal imbalance", "Autoimmune flare-ups", "Frequent infections", "Chemical sensitivity",
+  ];
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 0.5, y: 1.1, w: 4.3, h: 2.5,
+    fill: { color: CARD_BG }, rectRadius: 0.1,
+  });
+
+  slide.addText("Current Symptoms (check all that apply)", {
+    x: 0.7, y: 1.15, w: 4.0, h: 0.25,
+    fontSize: 9, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+
+  const complaintSet = new Set((profile.chiefComplaints || []).map(c => c.toLowerCase()));
+  symptoms.forEach((s, i) => {
+    const col = Math.floor(i / 6);
+    const row = i % 6;
+    const checked = complaintSet.has(s.toLowerCase()) ? "☑" : "☐";
+    slide.addText(`${checked} ${s}`, {
+      x: 0.7 + col * 2.0, y: 1.5 + row * 0.3, w: 1.9, h: 0.25,
+      fontSize: 8, fontFace: BODY_FONT, color: WHITE,
+    });
+  });
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 5.2, y: 1.1, w: 4.3, h: 2.5,
+    fill: { color: CARD_BG }, rectRadius: 0.1,
+  });
+
+  slide.addText("Lifestyle & Environmental", {
+    x: 5.4, y: 1.15, w: 4.0, h: 0.25,
+    fontSize: 9, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+
+  const pAny = profile as any;
+  const toxicList = [
+    profile.environmentalExposures?.moldExposure ? "Mold" : "",
+    profile.environmentalExposures?.heavyMetals ? "Heavy metals" : "",
+    profile.environmentalExposures?.pesticides ? "Pesticides" : "",
+    profile.environmentalExposures?.radiation ? "Radiation" : "",
+    ...(profile.environmentalExposures?.otherToxins || []),
+  ].filter(Boolean);
+
+  const lifestyleFields = [
+    { label: "Diet Type", value: pAny.dietType || "Standard / Keto / Paleo / Vegan..." },
+    { label: "Exercise Frequency", value: pAny.exerciseFrequency || "None / 1-2x / 3-5x / Daily" },
+    { label: "Toxic Exposures", value: toxicList.length > 0 ? toxicList.join(", ") : "Mold, heavy metals, pesticides..." },
+    { label: "Stress Level", value: pAny.stressLevel || "Low / Moderate / High / Severe" },
+  ];
+
+  lifestyleFields.forEach((f, i) => {
+    slide.addText(f.label, { x: 5.4, y: 1.55 + i * 0.55, w: 4.0, h: 0.18, fontSize: 8, fontFace: BODY_FONT, color: ACCENT, bold: true });
+    slide.addText(f.value, { x: 5.4, y: 1.73 + i * 0.55, w: 4.0, h: 0.25, fontSize: 9, fontFace: BODY_FONT, color: TEAL });
+  });
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 0.5, y: 3.8, w: 9, h: 1.5,
+    fill: { color: CARD_BG }, rectRadius: 0.1,
+  });
+
+  slide.addText("Health Goals & Desired Outcomes", {
+    x: 0.7, y: 3.85, w: 8.6, h: 0.25,
+    fontSize: 9, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+
+  const goals = ((protocol as any).healthGoals || []).slice(0, 4) as string[];
+  if (goals.length > 0) {
+    slide.addText(goals.map((g: string, i: number) => ({
+      text: g, options: { bullet: true, breakLine: i < goals.length - 1, fontSize: 10, color: WHITE },
+    })), { x: 0.7, y: 4.2, w: 8.6, h: 1.0, fontFace: BODY_FONT, valign: "top" });
+  } else {
+    slide.addText("What are your top health goals for this 90-day program?", {
+      x: 0.7, y: 4.2, w: 8.6, h: 0.4, fontSize: 10, fontFace: BODY_FONT, color: TEAL, italic: true,
+    });
+  }
+}
+
+function slidePeptideCategory(pres: PptxPresentation, category: string, subtitle: string, peptides: any[]) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: ACCENT } });
+
+  slide.addText(`PEPTIDE PROTOCOLS — ${category}`, {
+    x: 0.3, y: 0.15, w: 9.4, h: 0.4,
+    fontSize: 10, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText(subtitle, {
+    x: 0.5, y: 0.5, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  const maxCards = Math.min(peptides.length, 4);
+  const cardW = maxCards <= 2 ? 4.3 : 2.1;
+  const startX = 0.5;
+  const gap = maxCards <= 2 ? 0.4 : 0.2;
+
+  peptides.slice(0, maxCards).forEach((pep: any, i: number) => {
+    const x = startX + i * (cardW + gap);
+
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x, y: 1.1, w: cardW, h: 4.1,
+      fill: { color: CARD_BG }, rectRadius: 0.1,
+    });
+
+    slide.addText(pep.name || "Peptide", {
+      x: x + 0.1, y: 1.2, w: cardW - 0.2, h: 0.35,
+      fontSize: 13, fontFace: HEADER_FONT, color: ACCENT, bold: true,
+    });
+
+    const subtitle2 = pep.category || pep.type || "";
+    if (subtitle2) {
+      slide.addText(subtitle2, {
+        x: x + 0.1, y: 1.55, w: cardW - 0.2, h: 0.2,
+        fontSize: 8, fontFace: BODY_FONT, color: TEAL, italic: true,
+      });
+    }
+
+    const desc = pep.mechanism || pep.description || pep.rationale || "";
+    if (desc) {
+      slide.addText(desc.substring(0, 200), {
+        x: x + 0.1, y: 1.8, w: cardW - 0.2, h: 1.2,
+        fontSize: 8, fontFace: BODY_FONT, color: WHITE, valign: "top",
+      });
+    }
+
+    const details = [
+      { label: "Dose:", value: pep.dosage || pep.dose || "As directed" },
+      { label: "Route:", value: pep.route || "SubQ" },
+      { label: "Frequency:", value: pep.frequency || "Daily" },
+      { label: "Cycle:", value: pep.cycleDuration || pep.duration || "30 days" },
+    ];
+
+    details.forEach((d, j) => {
+      slide.addText(`${d.label}`, {
+        x: x + 0.1, y: 3.1 + j * 0.4, w: 0.8, h: 0.3,
+        fontSize: 8, fontFace: BODY_FONT, color: ACCENT, bold: true,
+      });
+      slide.addText(d.value, {
+        x: x + 0.9, y: 3.1 + j * 0.4, w: cardW - 1.1, h: 0.3,
+        fontSize: 8, fontFace: BODY_FONT, color: WHITE,
+      });
+    });
+  });
+
+  if (peptides.length > 4) {
+    slide.addText(`+ ${peptides.length - 4} additional peptides in this category`, {
+      x: 0.5, y: 5.2, w: 9, h: 0.3,
+      fontSize: 9, fontFace: BODY_FONT, color: TEAL, align: "center", italic: true,
+    });
+  }
+}
+
+function slideHBOTSystems(pres: PptxPresentation) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: ACCENT } });
+
+  slide.addText("HBOT SYSTEMS", {
+    x: 0.3, y: 0.15, w: 9.4, h: 0.4,
+    fontSize: 10, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("Chamber Options", {
+    x: 0.5, y: 0.5, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  const chambers = [
+    {
+      name: "HE5000 Plus", tier: "Premium",
+      desc: "Clinical-grade hard-shell chamber with full 1.5 ATA capability. Walk-in design seats 5 people. Ideal for families, clinics, and high-volume use.",
+      features: ["1.5 ATA maximum pressure", "Walk-in, 5-person capacity", "Medical-grade oxygen concentrator", "Built-in cooling system"],
+    },
+    {
+      name: "Vitaeris 320", tier: "Standard",
+      desc: "Portable soft-shell chamber rated to 1.3 ATA. Single-person design, easy setup. Perfect for daily home use and maintenance protocols.",
+      features: ["1.3 ATA maximum pressure", "Single-person portable", "Easy home setup", "Quiet operation"],
+    },
+    {
+      name: "Military Grade", tier: "Professional",
+      desc: "Dual-person hard-shell chamber rated to 2.0 ATA. Hospital-grade construction with advanced monitoring. For clinics and serious practitioners.",
+      features: ["2.0 ATA maximum pressure", "Dual-person capacity", "Hospital-grade construction", "Advanced pressure monitoring"],
+    },
+  ];
+
+  chambers.forEach((ch, i) => {
+    const x = 0.5 + i * 3.15;
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x, y: 1.1, w: 2.95, h: 4.2,
+      fill: { color: CARD_BG }, rectRadius: 0.1,
+    });
+
+    slide.addText(ch.name, {
+      x: x + 0.1, y: 1.2, w: 2.75, h: 0.35,
+      fontSize: 14, fontFace: HEADER_FONT, color: WHITE, bold: true,
+    });
+    slide.addText(ch.tier, {
+      x: x + 0.1, y: 1.55, w: 2.75, h: 0.2,
+      fontSize: 9, fontFace: BODY_FONT, color: ACCENT, bold: true,
+    });
+    slide.addText(ch.desc, {
+      x: x + 0.1, y: 1.85, w: 2.75, h: 1.2,
+      fontSize: 8, fontFace: BODY_FONT, color: TEAL, valign: "top",
+    });
+
+    ch.features.forEach((f, j) => {
+      slide.addText(`▸ ${f}`, {
+        x: x + 0.1, y: 3.2 + j * 0.35, w: 2.75, h: 0.3,
+        fontSize: 8, fontFace: BODY_FONT, color: WHITE,
+      });
+    });
+  });
+}
+
+function slideDetoxIVSequence(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: ACCENT } });
+
+  slide.addText("DETOXIFICATION PROTOCOLS", {
+    x: 0.3, y: 0.15, w: 9.4, h: 0.4,
+    fontSize: 10, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("5-Step Detox IV Sequence", {
+    x: 0.5, y: 0.5, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  slide.addText("Administered sequentially in-clinic to chelate heavy metals, replenish nutrients, and support detox pathways", {
+    x: 0.5, y: 1.0, w: 9, h: 0.35,
+    fontSize: 10, fontFace: BODY_FONT, color: TEAL, align: "center",
+  });
+
+  const ivSteps = [
+    { num: "1", name: "EDTA", desc: "Chelation therapy — binds and removes lead, mercury, cadmium, arsenic from bloodstream" },
+    { num: "2", name: "Myers' Cocktail", desc: "Magnesium, calcium, B-vitamins, vitamin C — replenishes minerals depleted by chelation" },
+    { num: "3", name: "Glutathione Push", desc: "Master antioxidant — supports liver detox pathways, protects cells during chelation" },
+    { num: "4", name: "High-Dose Vitamin C", desc: "25–75g IV — generates hydrogen peroxide in cancer cells, spares healthy tissue" },
+    { num: "5", name: "Phosphatidylcholine", desc: "Cell membrane repair — restores lipid bilayer integrity damaged by toxins" },
+  ];
+
+  const protocolDetox = protocol.detoxProtocols || [];
+  const ivTherapies = protocol.ivTherapies || [];
+  const allItems = [...ivSteps];
+
+  allItems.forEach((item, i) => {
+    const y = 1.5 + i * 0.8;
+    slide.addShape(pres.shapes.OVAL, {
+      x: 0.6, y: y + 0.05, w: 0.5, h: 0.5,
+      fill: { color: ACCENT },
+    });
+    slide.addText(item.num, {
+      x: 0.6, y: y + 0.05, w: 0.5, h: 0.5,
+      fontSize: 16, fontFace: HEADER_FONT, color: DARK_BG, align: "center", valign: "middle", bold: true,
+    });
+    slide.addText(item.name, {
+      x: 1.3, y, w: 2.0, h: 0.35,
+      fontSize: 12, fontFace: HEADER_FONT, color: WHITE, bold: true,
+    });
+    slide.addText(item.desc, {
+      x: 1.3, y: y + 0.35, w: 8.0, h: 0.35,
+      fontSize: 9, fontFace: BODY_FONT, color: TEAL,
+    });
+  });
+}
+
+function slideDentalBiological(pres: PptxPresentation) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: RED_ACCENT } });
+
+  slide.addText("CRITICAL PREREQUISITE — BIOLOGICAL DENTISTRY", {
+    x: 0.3, y: 0.15, w: 9.4, h: 0.4,
+    fontSize: 10, fontFace: BODY_FONT, color: RED_ACCENT, bold: true,
+  });
+  slide.addText("Dental Dangers & Disease", {
+    x: 0.5, y: 0.5, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  slide.addText('"Fix the roof before it rains — amalgam, cavitations, and root canals are silent drivers of systemic disease"', {
+    x: 0.5, y: 1.0, w: 9, h: 0.4,
+    fontSize: 10, fontFace: BODY_FONT, color: TEAL, italic: true, align: "center",
+  });
+
+  const dangers = [
+    { title: "Mercury Amalgam Fillings", desc: "Each amalgam filling contains ~50% mercury — a potent neurotoxin. Mercury vapor is released 24/7, accumulating in brain, kidneys, and gut. Safe removal by IAOMT-certified dentist required.", color: RED_ACCENT },
+    { title: "Root Canals & Cavitations", desc: "Dead teeth harbor anaerobic bacteria that produce potent toxins (thioethers). These drain into the bloodstream, contributing to autoimmune disease, cancer, and chronic inflammation.", color: RED_ACCENT },
+    { title: "Galvanic Currents", desc: "Mixed metals in the mouth create battery-like electrical currents that disrupt the nervous system and accelerate mercury release from amalgam fillings.", color: ORANGE_ACCENT },
+  ];
+
+  dangers.forEach((d, i) => {
+    const y = 1.6 + i * 1.3;
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x: 0.5, y, w: 9, h: 1.1,
+      fill: { color: CARD_BG }, rectRadius: 0.1,
+      line: { color: d.color, width: 1.5 },
+    });
+    slide.addText(d.title, {
+      x: 0.7, y: y + 0.1, w: 8.6, h: 0.3,
+      fontSize: 13, fontFace: HEADER_FONT, color: d.color, bold: true,
+    });
+    slide.addText(d.desc, {
+      x: 0.7, y: y + 0.45, w: 8.6, h: 0.55,
+      fontSize: 9, fontFace: BODY_FONT, color: WHITE, valign: "top",
+    });
+  });
+}
+
+function slideMitoPathwayMap(pres: PptxPresentation) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: ACCENT } });
+
+  slide.addText("MITOCHONDRIAL PATHWAY MAP", {
+    x: 0.3, y: 0.15, w: 9.4, h: 0.4,
+    fontSize: 10, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("MitoSTAC Activation Cascade", {
+    x: 0.5, y: 0.5, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  const inputs = [
+    { name: "NMN / NR", desc: "NAD+ precursors" },
+    { name: "Resveratrol + Quercetin", desc: "STAC activators" },
+    { name: "CoQ10 + PQQ", desc: "ETC cofactors" },
+    { name: "ALA + Glutathione", desc: "Antioxidant shield" },
+    { name: "Fisetin + Curcumin", desc: "Senolytic + NF-kB" },
+  ];
+
+  slide.addText("Input Compounds", {
+    x: 0.3, y: 1.1, w: 2.5, h: 0.3,
+    fontSize: 11, fontFace: HEADER_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("Oral / IV / Suppository", {
+    x: 0.3, y: 1.35, w: 2.5, h: 0.2,
+    fontSize: 8, fontFace: BODY_FONT, color: TEAL,
+  });
+
+  inputs.forEach((inp, i) => {
+    const y = 1.7 + i * 0.65;
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x: 0.3, y, w: 2.5, h: 0.55,
+      fill: { color: CARD_BG }, rectRadius: 0.05,
+    });
+    slide.addText(inp.name, { x: 0.4, y, w: 2.3, h: 0.3, fontSize: 9, fontFace: BODY_FONT, color: WHITE, bold: true });
+    slide.addText(inp.desc, { x: 0.4, y: y + 0.25, w: 2.3, h: 0.25, fontSize: 7, fontFace: BODY_FONT, color: TEAL });
+  });
+
+  [1.9, 2.55, 3.2].forEach(y => {
+    slide.addText("→", { x: 2.9, y, w: 0.5, h: 0.3, fontSize: 16, color: ACCENT, align: "center" });
+  });
+
+  const targets = [
+    { name: "NAD+ Pool ↑", desc: "Sirtuin activation" },
+    { name: "ETC Efficiency ↑", desc: "ATP production" },
+    { name: "Senescent Cell ↓", desc: "Zombie cell clearance" },
+    { name: "Inflammation ↓", desc: "NF-kB suppression" },
+  ];
+
+  slide.addText("Cellular Targets", {
+    x: 3.5, y: 1.1, w: 2.5, h: 0.3,
+    fontSize: 11, fontFace: HEADER_FONT, color: ACCENT, bold: true,
+  });
+
+  targets.forEach((t, i) => {
+    const y = 1.7 + i * 0.75;
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x: 3.5, y, w: 2.5, h: 0.6,
+      fill: { color: CARD_BG }, rectRadius: 0.05,
+    });
+    slide.addText(t.name, { x: 3.6, y, w: 2.3, h: 0.3, fontSize: 9, fontFace: BODY_FONT, color: GREEN_ACCENT, bold: true });
+    slide.addText(t.desc, { x: 3.6, y: y + 0.3, w: 2.3, h: 0.25, fontSize: 7, fontFace: BODY_FONT, color: TEAL });
+  });
+
+  const outcomes = [
+    "↑ Cellular energy (ATP)",
+    "↑ DNA repair capacity",
+    "↓ Oxidative stress",
+    "↓ Biological age markers",
+    "↑ Telomere maintenance",
+  ];
+
+  slide.addText("Outcomes", {
+    x: 6.8, y: 1.1, w: 2.8, h: 0.3,
+    fontSize: 11, fontFace: HEADER_FONT, color: ACCENT, bold: true,
+  });
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 6.8, y: 1.5, w: 2.8, h: 3.5,
+    fill: { color: CARD_BG }, rectRadius: 0.1,
+  });
+
+  outcomes.forEach((o, i) => {
+    slide.addText(o, {
+      x: 7.0, y: 1.7 + i * 0.6, w: 2.4, h: 0.4,
+      fontSize: 9, fontFace: BODY_FONT, color: WHITE,
+    });
+  });
+}
+
+function slideCannabinoidLigandMap(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: GREEN_ACCENT } });
+
+  slide.addText("CANNABINOID LIGAND PATHWAY MAP", {
+    x: 0.3, y: 0.15, w: 9.4, h: 0.4,
+    fontSize: 10, fontFace: BODY_FONT, color: GREEN_ACCENT, bold: true,
+  });
+  slide.addText("Endocannabinoid System & Ligand Pathways", {
+    x: 0.5, y: 0.5, w: 9, h: 0.5,
+    fontSize: 22, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  slide.addText("Source: Cannabinoid Ligand Pathway Research (FFPMA Drive) — CB1/CB2 receptor signaling cascade", {
+    x: 0.5, y: 1.0, w: 9, h: 0.25,
+    fontSize: 8, fontFace: BODY_FONT, color: TEAL, italic: true, align: "center",
+  });
+
+  const cb1 = {
+    title: "CB1 Receptors", location: "Brain, CNS, Nervous System",
+    functions: ["Pain modulation", "Mood & anxiety regulation", "Appetite control", "Memory & cognition"],
+  };
+
+  const cb2 = {
+    title: "CB2 Receptors", location: "Immune System, Periphery",
+    functions: ["Immune modulation", "Anti-inflammatory signaling", "Bone density regulation", "Gut barrier integrity"],
+  };
+
+  [cb1, cb2].forEach((receptor, i) => {
+    const x = 0.5 + i * 4.8;
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x, y: 1.4, w: 4.5, h: 3.5,
+      fill: { color: CARD_BG }, rectRadius: 0.1,
+    });
+    slide.addText(receptor.title, {
+      x: x + 0.15, y: 1.5, w: 4.2, h: 0.35,
+      fontSize: 14, fontFace: HEADER_FONT, color: GREEN_ACCENT, bold: true,
+    });
+    slide.addText(receptor.location, {
+      x: x + 0.15, y: 1.85, w: 4.2, h: 0.2,
+      fontSize: 9, fontFace: BODY_FONT, color: TEAL, italic: true,
+    });
+    receptor.functions.forEach((f, j) => {
+      slide.addText(`▸ ${f}`, {
+        x: x + 0.15, y: 2.2 + j * 0.4, w: 4.2, h: 0.35,
+        fontSize: 10, fontFace: BODY_FONT, color: WHITE,
+      });
+    });
+  });
+
+  const ecsData = protocol.ecsProtocol;
+  if (ecsData?.overview) {
+    slide.addText(ecsData.overview.substring(0, 120), {
+      x: 0.5, y: 5.0, w: 9, h: 0.4,
+      fontSize: 8, fontFace: BODY_FONT, color: TEAL, align: "center", italic: true,
+    });
+  }
+}
+
+function slideProtocolBuilder(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: ACCENT } });
+
+  slide.addText("PROTOCOL BUILDER — MODALITY SELECTION", {
+    x: 0.3, y: 0.15, w: 9.4, h: 0.4,
+    fontSize: 10, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("Build Your Custom Protocol", {
+    x: 0.5, y: 0.5, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+  slide.addText("Select all modalities and products for this member's program", {
+    x: 0.5, y: 1.0, w: 9, h: 0.25,
+    fontSize: 10, fontFace: BODY_FONT, color: TEAL, align: "center",
+  });
+
+  const allPeptideNames = [
+    ...(protocol.injectablePeptides || []).map((p: any) => p.name),
+    ...(protocol.oralPeptides || []).map((p: any) => p.name),
+    ...(protocol.bioregulators || []).map((p: any) => p.name),
+  ];
+
+  const categories = [
+    { title: "Peptide Selection", items: allPeptideNames.length > 0 ? allPeptideNames : ["LL-37", "Thymosin Alpha-1", "PNC-27", "FOXO4-DRI", "Retatrutide", "Epithalon"] },
+    { title: "HBOT Chamber", items: ["HE5000 Plus (1.5 ATA)", "Vitaeris 320 (1.3 ATA)", "Military Grade (2.0 ATA)"] },
+    { title: "IV Protocols", items: ["EDTA Chelation", "Myers' Cocktail", "Glutathione Push", "High-Dose Vit C", "Phosphatidylcholine"] },
+    { title: "Additional Modalities", items: ["Detox Bath Protocol", "Biological Dentistry", "5-Day Fast", "Cannabinoid Pathway", "MitoSTAC Stack"] },
+  ];
+
+  categories.forEach((cat, i) => {
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    const x = 0.5 + col * 4.8;
+    const y = 1.4 + row * 2.1;
+
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x, y, w: 4.5, h: 1.9,
+      fill: { color: CARD_BG }, rectRadius: 0.1,
+    });
+
+    slide.addText(cat.title, {
+      x: x + 0.15, y: y + 0.1, w: 4.2, h: 0.25,
+      fontSize: 11, fontFace: HEADER_FONT, color: ACCENT, bold: true,
+    });
+
+    const maxItems = Math.min(cat.items.length, 6);
+    cat.items.slice(0, maxItems).forEach((item, j) => {
+      const selected = allPeptideNames.includes(item) || protocol.ivTherapies?.some((iv: any) => item.includes(iv.name));
+      const check = selected ? "☑" : "☐";
+      slide.addText(`${check} ${item}`, {
+        x: x + 0.15, y: y + 0.45 + j * 0.22, w: 4.2, h: 0.2,
+        fontSize: 8, fontFace: BODY_FONT, color: WHITE,
+      });
+    });
+  });
+}
+
+function slideProgramTimeline(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: ACCENT } });
+
+  slide.addText("PROGRAM TIMELINE", {
+    x: 0.3, y: 0.15, w: 9.4, h: 0.4,
+    fontSize: 10, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("90-Day Schedule", {
+    x: 0.5, y: 0.5, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  const phases = [
+    {
+      title: "Weeks 1–4: Foundation", items: [
+        "Week 1: Intake + labs + detox bath begins",
+        "Week 2: First IV sequence + immune peptides",
+        "Week 3: 5-day fast (supervised)",
+        "Week 4: Liver cleanse + HBOT starts",
+      ]
+    },
+    {
+      title: "Weeks 5–8: Rebuild", items: [
+        "Week 5: Full peptide stack active",
+        "Week 6: Daily HBOT sessions begin",
+        "Week 7: Mid-protocol labs",
+        "Week 8: Bioregulator cycle starts",
+      ]
+    },
+    {
+      title: "Weeks 9–12: Optimize", items: [
+        "Week 9: Advanced modalities introduced",
+        "Week 10: MitoSTAC activation",
+        "Week 11: Cannabinoid pathway tuning",
+        "Week 12: Final labs + protocol review",
+      ]
+    },
+    {
+      title: "Phase 4: Maintain", items: [
+        "Monthly HBOT maintenance",
+        "Quarterly lab monitoring",
+        "Bioregulator cycling continues",
+        "Lifestyle protocol maintenance",
+      ]
+    },
+  ];
+
+  phases.forEach((phase, i) => {
+    const x = 0.3 + i * 2.4;
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x, y: 1.1, w: 2.3, h: 4.2,
+      fill: { color: CARD_BG }, rectRadius: 0.1,
+    });
+
+    slide.addText(phase.title, {
+      x: x + 0.1, y: 1.2, w: 2.1, h: 0.4,
+      fontSize: 10, fontFace: HEADER_FONT, color: ACCENT, bold: true,
+    });
+
+    phase.items.forEach((item, j) => {
+      slide.addText(item, {
+        x: x + 0.1, y: 1.7 + j * 0.7, w: 2.1, h: 0.6,
+        fontSize: 8, fontFace: BODY_FONT, color: WHITE, valign: "top",
+      });
+    });
+  });
+}
+
+function slideMonitoringFollowup(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: ACCENT } });
+
+  slide.addText("MONITORING & FOLLOW-UP", {
+    x: 0.3, y: 0.15, w: 9.4, h: 0.4,
+    fontSize: 10, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("Progress Tracking & Lab Schedule", {
+    x: 0.5, y: 0.5, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+
+  const labSchedule = [
+    { timing: "Baseline Labs", week: "Week 1", tests: "CBC, CMP, thyroid panel, hormone panel, inflammatory markers (CRP, ESR), heavy metals, mycotoxins, vitamin D, B12, folate" },
+    { timing: "Mid-Protocol Labs", week: "Week 6", tests: "Repeat inflammatory markers, metabolic panel, hormone re-check, liver enzymes, kidney function" },
+    { timing: "Final Labs", week: "Week 12", tests: "Full repeat of baseline panel, before/after comparison, P53 markers, telomere length" },
+    { timing: "Maintenance Labs", week: "Quarterly", tests: "Inflammatory markers, metabolic panel, vitamin levels, hormone panel" },
+  ];
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 0.5, y: 1.1, w: 9, h: 2.8,
+    fill: { color: CARD_BG }, rectRadius: 0.1,
+  });
+
+  slide.addText("Lab Work Schedule", {
+    x: 0.7, y: 1.15, w: 8.6, h: 0.3,
+    fontSize: 12, fontFace: HEADER_FONT, color: ACCENT, bold: true,
+  });
+
+  labSchedule.forEach((lab, i) => {
+    const y = 1.55 + i * 0.55;
+    slide.addText(lab.timing, { x: 0.7, y, w: 1.8, h: 0.25, fontSize: 9, fontFace: BODY_FONT, color: ACCENT, bold: true });
+    slide.addText(lab.week, { x: 2.5, y, w: 0.8, h: 0.25, fontSize: 9, fontFace: BODY_FONT, color: WHITE, bold: true });
+    slide.addText(lab.tests, { x: 3.3, y, w: 6.0, h: 0.45, fontSize: 7, fontFace: BODY_FONT, color: TEAL });
+  });
+
+  const followUps = protocol.followUpPlan || [];
+  if (followUps.length > 0) {
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x: 0.5, y: 4.1, w: 9, h: 1.2,
+      fill: { color: CARD_BG }, rectRadius: 0.1,
+    });
+    slide.addText("Follow-Up Schedule", {
+      x: 0.7, y: 4.15, w: 8.6, h: 0.3,
+      fontSize: 12, fontFace: HEADER_FONT, color: ACCENT, bold: true,
+    });
+    followUps.slice(0, 4).forEach((fu: any, i: number) => {
+      slide.addText(`▸ ${fu.milestone || fu}`, {
+        x: 0.7, y: 4.5 + i * 0.2, w: 8.6, h: 0.2,
+        fontSize: 8, fontFace: BODY_FONT, color: WHITE,
+      });
+    });
+  }
+}
+
+function slideLibraryResources(pres: PptxPresentation, resources: ReturnType<typeof getPatientResources>) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: DARK_BG };
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: ACCENT } });
+
+  slide.addText("LIBRARY & RESOURCES", {
+    x: 0.3, y: 0.15, w: 9.4, h: 0.4,
+    fontSize: 10, fontFace: BODY_FONT, color: ACCENT, bold: true,
+  });
+  slide.addText("Your Protocol Library", {
+    x: 0.5, y: 0.5, w: 9, h: 0.5,
+    fontSize: 24, fontFace: HEADER_FONT, color: WHITE, bold: true,
+  });
+  slide.addText("All books, research documents, schedules, and protocol guides in one place", {
+    x: 0.5, y: 1.0, w: 9, h: 0.25,
+    fontSize: 10, fontFace: BODY_FONT, color: TEAL, align: "center",
+  });
+
+  if (resources.books.length > 0) {
+    slide.addShape(pres.shapes.RECTANGLE, {
+      x: 0.5, y: 1.4, w: 4.3, h: 3.5,
+      fill: { color: CARD_BG }, rectRadius: 0.1,
+    });
+    slide.addText("Recommended Reading", {
+      x: 0.7, y: 1.5, w: 4.0, h: 0.3,
+      fontSize: 11, fontFace: HEADER_FONT, color: ACCENT, bold: true,
+    });
+    resources.books.slice(0, 6).forEach((book, i) => {
+      slide.addText(book.title, {
+        x: 0.7, y: 1.9 + i * 0.5, w: 4.0, h: 0.2,
+        fontSize: 9, fontFace: BODY_FONT, color: WHITE, bold: true,
+      });
+      slide.addText(book.reason, {
+        x: 0.7, y: 2.1 + i * 0.5, w: 4.0, h: 0.2,
+        fontSize: 7, fontFace: BODY_FONT, color: TEAL,
+      });
+    });
+  }
+
+  slide.addShape(pres.shapes.RECTANGLE, {
+    x: 5.2, y: 1.4, w: 4.3, h: 3.5,
+    fill: { color: CARD_BG }, rectRadius: 0.1,
+  });
+  slide.addText("Drive Resources", {
+    x: 5.4, y: 1.5, w: 4.0, h: 0.3,
+    fontSize: 11, fontFace: HEADER_FONT, color: ACCENT, bold: true,
+  });
+
+  const driveLinks = (resources as any).driveLinks || [];
+  if (driveLinks.length > 0) {
+    driveLinks.slice(0, 8).forEach((link: any, i: number) => {
+      slide.addText(`▸ ${link.label || link.name || link}`, {
+        x: 5.4, y: 1.9 + i * 0.35, w: 4.0, h: 0.3,
+        fontSize: 8, fontFace: BODY_FONT, color: WHITE,
+      });
+    });
+  } else {
+    slide.addText("Protocol documents, research papers, and guides will be shared via Google Drive after onboarding.", {
+      x: 5.4, y: 1.9, w: 4.0, h: 1.0,
+      fontSize: 9, fontFace: BODY_FONT, color: TEAL,
+    });
+  }
 }
 
 function slideSummary(pres: PptxPresentation, protocol: HealingProtocol) {
@@ -2129,6 +2945,12 @@ export function validatePptxParity(
   const presentSections: string[] = [];
   const missingSections: string[] = [];
 
+  const allPeptides = [
+    ...(protocol.injectablePeptides || []),
+    ...(protocol.oralPeptides || []),
+    ...(protocol.bioregulators || []),
+  ];
+
   const checks: Array<{ section: typeof REFERENCE_SLIDE_ORDER[number]; present: boolean }> = [
     { section: "cover", present: true },
     { section: "about-pma", present: true },
@@ -2137,33 +2959,31 @@ export function validatePptxParity(
     { section: "5rs-phases", present: true },
     { section: "diagnostic-framework", present: true },
     { section: "program-structure", present: true },
-    { section: "member-info", present: true },
-    { section: "timeline", present: (profile.medicalTimeline?.length || 0) > 0 },
-    { section: "trustee-analysis", present: true },
-    { section: "root-causes", present: true },
+    { section: "intake-personal", present: true },
+    { section: "intake-health-history", present: true },
+    { section: "intake-symptoms-goals", present: true },
     { section: "peptide-therapy-intro", present: true },
-    { section: "injectable-peptides", present: (protocol.injectablePeptides?.length || 0) > 0 },
-    { section: "oral-peptides", present: (protocol.oralPeptides?.length || 0) > 0 },
-    { section: "bioregulators", present: (protocol.bioregulators?.length || 0) > 0 },
-    { section: "supplements", present: (protocol.supplements?.length || 0) > 0 },
-    { section: "supplement-timing", present: (protocol.supplements?.length || 0) > 0 || (protocol.liposomals?.length || 0) > 0 },
-    { section: "iv-im-therapies", present: (protocol.ivTherapies?.length || 0) > 0 || (protocol.imTherapies?.length || 0) > 0 },
+    { section: "peptides-immune", present: allPeptides.some((p: any) => /immun|ll-?37|thymo|kpv|antimicro/i.test(`${p.name} ${p.category || ''} ${p.mechanism || ''}`)) },
+    { section: "peptides-cellular-cancer", present: allPeptides.some((p: any) => /cancer|tumor|pnc|foxo|p53|senol/i.test(`${p.name} ${p.category || ''} ${p.mechanism || ''}`)) },
+    { section: "peptides-metabolic-hormonal", present: allPeptides.some((p: any) => /metabol|hormon|retatrutide|semaglutide|glp|weight|insulin/i.test(`${p.name} ${p.category || ''} ${p.mechanism || ''}`)) },
+    { section: "peptides-longevity", present: allPeptides.some((p: any) => /longev|aging|epithalon|pinealon|telomer|bioregul/i.test(`${p.name} ${p.category || ''} ${p.mechanism || ''}`)) },
     { section: "hbot-therapy", present: true },
-    { section: "detox-protocols", present: (protocol.detoxProtocols?.length || 0) > 0 },
-    { section: "parasite-antiviral", present: true },
+    { section: "hbot-systems", present: true },
+    { section: "detox-iv-sequence", present: (protocol.detoxProtocols?.length || 0) > 0 || (protocol.ivTherapies?.length || 0) > 0 },
     { section: "home-protocols", present: true },
+    { section: "dental-biological", present: true },
     { section: "dietary-protocol", present: !!protocol.dietaryProtocol?.phases?.length },
-    { section: "ecs-protocol", present: !!protocol.ecsProtocol || (protocol.suppositories?.length || 0) > 0 },
-    { section: "suppositories", present: (protocol.suppositories?.length || 0) > 0 },
-    { section: "sirtuin-mito", present: !!protocol.sirtuinStack },
     { section: "advanced-modalities", present: true },
+    { section: "mitostac-phase4", present: !!protocol.sirtuinStack },
+    { section: "mito-pathway-map", present: true },
+    { section: "cannabinoid-ligand-map", present: !!protocol.ecsProtocol },
+    { section: "protocol-builder", present: true },
     { section: "daily-schedule", present: true },
-    { section: "products-ff", present: true },
-    { section: "follow-up", present: true },
+    { section: "program-timeline", present: true },
+    { section: "monitoring-followup", present: (protocol.followUpPlan?.length || 0) > 0 || (protocol.labsRequired?.length || 0) > 0 },
     { section: "ai-research-tool", present: true },
     { section: "research-links", present: true },
-    { section: "drive-links", present: true },
-    { section: "books", present: true },
+    { section: "library-resources", present: true },
     { section: "protocol-summary", present: true },
     { section: "closing", present: true },
   ];
