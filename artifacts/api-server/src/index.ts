@@ -215,6 +215,17 @@ registerHealthRoutes(app);
   const { registerAutomationRoutes } = await import("./routes/automation-routes");
   registerAutomationRoutes(app);
 
+  const { requireRole } = await import("./middleware/auth");
+  app.get("/api/ai-health", requireRole("admin"), async (_req, res) => {
+    try {
+      const { getAIHealthReport } = await import("./services/ai-fallback");
+      const report = getAIHealthReport();
+      res.json(report);
+    } catch (err: any) {
+      res.status(500).json({ error: "Failed to generate AI health report", details: err.message });
+    }
+  });
+
   try {
     const { seedDatabase } = await import('./seed');
     await seedDatabase();

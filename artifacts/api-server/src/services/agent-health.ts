@@ -2,7 +2,7 @@ import { db } from '../db';
 import { agentRegistry, agentTasks } from '@shared/schema';
 import { eq, desc, sql, and } from 'drizzle-orm';
 import { agents } from '@shared/agents';
-import { getAvailableProviders } from './ai-fallback';
+import { getAvailableProviders, getAIHealthReport } from './ai-fallback';
 
 export interface AgentHealthStatus {
   agentId: string;
@@ -29,6 +29,7 @@ export interface SystemHealthReport {
   totalCompletedTasks: number;
   totalFailedTasks: number;
   availableAIProviders: string[];
+  aiHealthReport?: any;
   agents: AgentHealthStatus[];
   divisions: Record<string, {
     name: string;
@@ -133,8 +134,10 @@ export async function getAgentHealthReport(): Promise<SystemHealthReport> {
   }
 
   let availableProviders: string[] = [];
+  let aiHealth: any = null;
   try {
     availableProviders = getAvailableProviders();
+    aiHealth = getAIHealthReport();
   } catch {
     availableProviders = [];
   }
@@ -151,6 +154,7 @@ export async function getAgentHealthReport(): Promise<SystemHealthReport> {
     totalCompletedTasks: totalCompleted,
     totalFailedTasks: failedTaskCount,
     availableAIProviders: availableProviders,
+    aiHealthReport: aiHealth,
     agents: agentStatuses,
     divisions,
   };

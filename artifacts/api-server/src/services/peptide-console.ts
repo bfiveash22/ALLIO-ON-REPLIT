@@ -148,77 +148,80 @@ export function registerPeptideConsoleRoutes(app: Express): void {
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
 
-      if (ABACUSAI_API_KEY) {
-        // Use Abacus AI if configured
-        const response = await fetch('https://apps.abacus.ai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${ABACUSAI_API_KEY}`
-          },
-          body: JSON.stringify({
-            model: 'gpt-4.1-mini', // or the configured abacus model
-            messages,
-            stream: true,
-            max_tokens: 1500
-          })
+      const { callWithFallbackStreaming, isTerminalFailure } = await import('./ai-fallback');
+
+      try {
+        const streamResult = await callWithFallbackStreaming(messages, {
+          preferredProvider: 'abacus',
+          preferredModel: 'gpt-4.1-mini',
+          maxTokens: 1500,
+          callType: 'peptide-console',
         });
 
-        if (!response.ok) {
-          throw new Error('Abacus API error');
-        }
+        console.log(`[Peptide Console] Streaming via ${streamResult.provider}/${streamResult.model}`);
 
-        const body = response.body;
-        if (!body) throw new Error("No response body");
-
-        const reader = body.getReader();
-        const decoder = new TextDecoder();
-        let done = false;
-        while (!done) {
-          const result = await reader.read();
-          done = result.done;
-          if (result.value) {
-            const text = decoder.decode(result.value, { stream: true });
-            const lines = text.split('\n');
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6);
-                if (data === '[DONE]') {
-                  res.write('data: {"done":true}\n\n');
-                  continue;
-                }
-                try {
-                  const parsed = JSON.parse(data);
-                  const content = parsed.choices?.[0]?.delta?.content || '';
-                  if (content) {
-                    res.write(`data: ${JSON.stringify({ content })}\n\n`);
+        if (streamResult.provider === 'abacus') {
+          const body = streamResult.stream as ReadableStream;
+          const reader = (body as any).getReader();
+          const decoder = new TextDecoder();
+          let done = false;
+          while (!done) {
+            const result = await reader.read();
+            done = result.done;
+            if (result.value) {
+              const text = decoder.decode(result.value, { stream: true });
+              const lines = text.split('\n');
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  const data = line.slice(6);
+                  if (data === '[DONE]') {
+                    res.write('data: {"done":true}\n\n');
+                    continue;
                   }
-                } catch (e) { /* ignore parse errors */ }
+                  try {
+                    const parsed = JSON.parse(data);
+                    const content = parsed.choices?.[0]?.delta?.content || '';
+                    if (content) {
+                      res.write(`data: ${JSON.stringify({ content })}\n\n`);
+                    }
+                  } catch (e) { /* ignore parse errors */ }
+                }
               }
             }
           }
-        }
-        res.end();
-
-      } else {
-        // Fallback to OpenAI if Abacus is not configured
-        const OpenAI = (await import('openai')).default;
-        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-        
-        const stream = await openai.chat.completions.create({
-          model: "gpt-4",
-          messages: messages as any,
-          stream: true,
-        });
-
-        for await (const chunk of stream) {
-          const content = chunk.choices[0]?.delta?.content || "";
-          if (content) {
-            res.write(`data: ${JSON.stringify({ content })}\n\n`);
+          res.end();
+        } else if (streamResult.provider === 'openai') {
+          const stream = streamResult.stream as AsyncIterable<any>;
+          for await (const chunk of stream) {
+            const content = chunk.choices?.[0]?.delta?.content || "";
+            if (content) {
+              res.write(`data: ${JSON.stringify({ content })}\n\n`);
+            }
           }
+          res.write('data: {"done":true}\n\n');
+          res.end();
+        } else if (streamResult.provider === 'claude') {
+          const stream = streamResult.stream as any;
+          for await (const event of stream) {
+            if (event.type === 'content_block_delta' && event.delta?.text) {
+              res.write(`data: ${JSON.stringify({ content: event.delta.text })}\n\n`);
+            }
+          }
+          res.write('data: {"done":true}\n\n');
+          res.end();
+        } else {
+          res.write('data: {"done":true}\n\n');
+          res.end();
         }
-        res.write('data: {"done":true}\n\n');
-        res.end();
+      } catch (streamErr: any) {
+        if (isTerminalFailure(streamErr)) {
+          console.error(`[Peptide Console] Terminal failure: ${streamErr.message}`);
+          res.write(`data: ${JSON.stringify({ content: '\n\n[Error: Our AI systems are temporarily unable to process this request. Please try again in a few minutes.]' })}\n\n`);
+          res.write('data: {"done":true}\n\n');
+          res.end();
+        } else {
+          throw streamErr;
+        }
       }
 
     } catch (error) {

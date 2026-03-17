@@ -6,31 +6,243 @@ export interface AIProviderResult {
   provider: string;
   model: string;
   fallbackUsed: boolean;
+  escalationUsed: boolean;
+  qualityScore: number;
+  latencyMs: number;
+  attempts: AICallAttempt[];
+}
+
+export interface AICallAttempt {
+  provider: string;
+  model: string;
+  tier: ModelTier;
+  latencyMs: number;
+  responseLength: number;
+  qualityScore: number;
+  success: boolean;
+  error?: string;
+  escalated: boolean;
+  timestamp: string;
+}
+
+export interface QualityValidationResult {
+  score: number;
+  pass: boolean;
+  reasons: string[];
+}
+
+export type ModelTier = 'economy' | 'standard' | 'premium';
+
+export type CallType =
+  | 'protocol-generation'
+  | 'agent-chat'
+  | 'document-generation'
+  | 'peptide-console'
+  | 'protocol-builder'
+  | 'analysis'
+  | 'general';
+
+interface ModelConfig {
+  model: string;
+  tier: ModelTier;
 }
 
 interface ProviderConfig {
   name: string;
-  model: string;
-  enabled: boolean;
-  call: (prompt: string, systemPrompt?: string, maxTokens?: number) => Promise<string>;
+  models: ModelConfig[];
+  enabled: () => boolean;
+  call: (prompt: string, model: string, systemPrompt?: string, maxTokens?: number) => Promise<string>;
+}
+
+export interface AICallLog {
+  timestamp: string;
+  callType: CallType;
+  providerChain: string[];
+  finalProvider: string;
+  finalModel: string;
+  latencyMs: number;
+  responseLength: number;
+  qualityScore: number;
+  fallbackUsed: boolean;
+  escalationUsed: boolean;
+  success: boolean;
+  error?: string;
+}
+
+interface ProviderHealthWindow {
+  calls: AICallLog[];
+  lastUpdated: string;
+}
+
+const QUALITY_THRESHOLDS: Record<CallType, { minLength: number; minScore: number }> = {
+  'protocol-generation': { minLength: 500, minScore: 60 },
+  'agent-chat': { minLength: 20, minScore: 40 },
+  'document-generation': { minLength: 200, minScore: 55 },
+  'peptide-console': { minLength: 30, minScore: 40 },
+  'protocol-builder': { minLength: 100, minScore: 50 },
+  'analysis': { minLength: 100, minScore: 50 },
+  'general': { minLength: 10, minScore: 30 },
+};
+
+const FAILURE_PATTERNS = [
+  /^i cannot/i,
+  /^i'm unable to/i,
+  /^as an ai/i,
+  /^i apologize,? but i/i,
+  /^sorry,? (but )?i (can't|cannot|am unable)/i,
+  /^unfortunately,? i (can't|cannot|am unable)/i,
+];
+
+const TRUNCATION_PATTERNS = [
+  /\.{3,}$/,
+  /[^.!?]\s*$/,
+  /\w+$/,
+];
+
+const REPETITION_THRESHOLD = 3;
+
+const PMA_PROHIBITED_TERMS = [
+  'treatment', 'treat', 'diagnosis', 'diagnose', 'prescribe',
+  'prescription', 'patient', 'medical advice', 'cure',
+];
+
+const healthWindow: Record<string, ProviderHealthWindow> = {};
+const ROLLING_WINDOW_SIZE = 100;
+
+function recordCall(log: AICallLog): void {
+  const provider = log.finalProvider;
+  if (!healthWindow[provider]) {
+    healthWindow[provider] = { calls: [], lastUpdated: new Date().toISOString() };
+  }
+  healthWindow[provider].calls.push(log);
+  if (healthWindow[provider].calls.length > ROLLING_WINDOW_SIZE) {
+    healthWindow[provider].calls = healthWindow[provider].calls.slice(-ROLLING_WINDOW_SIZE);
+  }
+  healthWindow[provider].lastUpdated = new Date().toISOString();
+
+  if (!healthWindow['_all']) {
+    healthWindow['_all'] = { calls: [], lastUpdated: new Date().toISOString() };
+  }
+  healthWindow['_all'].calls.push(log);
+  if (healthWindow['_all'].calls.length > ROLLING_WINDOW_SIZE * 5) {
+    healthWindow['_all'].calls = healthWindow['_all'].calls.slice(-ROLLING_WINDOW_SIZE * 5);
+  }
+  healthWindow['_all'].lastUpdated = new Date().toISOString();
+}
+
+export function validateAIResponse(
+  response: string,
+  callType: CallType = 'general',
+  expectedFields?: string[]
+): QualityValidationResult {
+  const reasons: string[] = [];
+  let score = 100;
+  const thresholds = QUALITY_THRESHOLDS[callType] || QUALITY_THRESHOLDS['general'];
+
+  if (!response || response.trim().length === 0) {
+    return { score: 0, pass: false, reasons: ['Empty response'] };
+  }
+
+  if (response.length < thresholds.minLength) {
+    const penalty = Math.min(40, Math.round((1 - response.length / thresholds.minLength) * 40));
+    score -= penalty;
+    reasons.push(`Response too short (${response.length} < ${thresholds.minLength})`);
+  }
+
+  for (const pattern of FAILURE_PATTERNS) {
+    if (pattern.test(response.trim())) {
+      score -= 50;
+      reasons.push(`Detected refusal pattern: "${response.trim().substring(0, 60)}..."`);
+      break;
+    }
+  }
+
+  const sentences = response.split(/[.!?]+/).filter(s => s.trim().length > 10);
+  if (sentences.length >= REPETITION_THRESHOLD) {
+    const normalized = sentences.map(s => s.trim().toLowerCase());
+    const uniqueRatio = new Set(normalized).size / normalized.length;
+    if (uniqueRatio < 0.5) {
+      score -= 30;
+      reasons.push(`High repetition detected (${Math.round(uniqueRatio * 100)}% unique)`);
+    }
+  }
+
+  if (response.length > 200) {
+    for (const pattern of TRUNCATION_PATTERNS) {
+      if (pattern.test(response.trim()) && !response.trim().endsWith('.') && !response.trim().endsWith('!') && !response.trim().endsWith('?')) {
+        score -= 10;
+        reasons.push('Possible truncation detected');
+        break;
+      }
+    }
+  }
+
+  if (callType === 'protocol-generation' || callType === 'protocol-builder' || callType === 'document-generation') {
+    let pmaViolations = 0;
+    const lowerResponse = response.toLowerCase();
+    for (const term of PMA_PROHIBITED_TERMS) {
+      const regex = new RegExp(`\\b${term}\\b`, 'gi');
+      const matches = lowerResponse.match(regex);
+      if (matches) {
+        pmaViolations += matches.length;
+      }
+    }
+    if (pmaViolations > 0) {
+      const penalty = Math.min(20, pmaViolations * 3);
+      score -= penalty;
+      reasons.push(`PMA compliance: ${pmaViolations} prohibited term(s) found`);
+    }
+  }
+
+  if (expectedFields && expectedFields.length > 0) {
+    try {
+      const parsed = JSON.parse(response);
+      const missingFields = expectedFields.filter(f => !(f in parsed));
+      if (missingFields.length > 0) {
+        const penalty = Math.min(30, Math.round((missingFields.length / expectedFields.length) * 30));
+        score -= penalty;
+        reasons.push(`Missing fields: ${missingFields.join(', ')}`);
+      }
+    } catch {
+      if (callType === 'protocol-generation') {
+        let fieldCount = 0;
+        for (const field of expectedFields) {
+          if (response.toLowerCase().includes(field.toLowerCase())) fieldCount++;
+        }
+        if (fieldCount < expectedFields.length * 0.5) {
+          score -= 15;
+          reasons.push(`Response may be missing expected structure (${fieldCount}/${expectedFields.length} fields found in text)`);
+        }
+      }
+    }
+  }
+
+  score = Math.max(0, Math.min(100, score));
+  const pass = score >= thresholds.minScore;
+
+  if (reasons.length === 0) {
+    reasons.push('All quality checks passed');
+  }
+
+  return { score, pass, reasons };
 }
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-async function callOpenAI(prompt: string, systemPrompt?: string, maxTokens?: number): Promise<string> {
+async function callOpenAI(prompt: string, model: string, systemPrompt?: string, maxTokens?: number): Promise<string> {
   const messages: ChatCompletionMessageParam[] = [];
   if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
   messages.push({ role: 'user', content: prompt });
 
   const completion = await openai.chat.completions.create({
-    model: maxTokens && maxTokens > 4096 ? 'gpt-4o' : 'gpt-4o-mini',
+    model,
     messages,
     max_completion_tokens: maxTokens || 2048,
   });
   return completion.choices[0]?.message?.content || '';
 }
 
-async function callClaude(prompt: string, systemPrompt?: string, maxTokens?: number): Promise<string> {
+async function callClaude(prompt: string, model: string, systemPrompt?: string, maxTokens?: number): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY || process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY;
   const baseURL = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL || 'https://api.anthropic.com';
   if (!apiKey) throw new Error('No Anthropic API key available');
@@ -38,7 +250,7 @@ async function callClaude(prompt: string, systemPrompt?: string, maxTokens?: num
   const Anthropic = (await import('@anthropic-ai/sdk')).default;
   const client = new Anthropic({ apiKey, baseURL });
   const response = await client.messages.create({
-    model: maxTokens && maxTokens > 4096 ? 'claude-sonnet-4-20250514' : 'claude-haiku-4-5',
+    model,
     max_tokens: maxTokens || 2048,
     system: systemPrompt || undefined,
     messages: [{ role: 'user', content: prompt }],
@@ -47,24 +259,27 @@ async function callClaude(prompt: string, systemPrompt?: string, maxTokens?: num
   return textBlock && 'text' in textBlock ? textBlock.text : '';
 }
 
-async function callGemini(prompt: string, systemPrompt?: string): Promise<string> {
-  const { analyzeWithGemini } = await import('./gemini-provider');
+async function callGemini(prompt: string, model: string, systemPrompt?: string): Promise<string> {
+  const { GoogleGenAI } = await import('@google/genai');
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
+  if (!apiKey) throw new Error('Gemini API key not configured');
+  const ai = new GoogleGenAI({ apiKey });
   const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
-  return await analyzeWithGemini(fullPrompt);
+  const response = await ai.models.generateContent({
+    model,
+    contents: fullPrompt,
+  });
+  return response.text || '';
 }
 
-async function callSelfHosted(prompt: string, systemPrompt?: string): Promise<string> {
+async function callSelfHosted(prompt: string, _model: string, systemPrompt?: string): Promise<string> {
   const endpoint = process.env.SELF_HOSTED_AI_ENDPOINT;
   if (!endpoint) throw new Error('SELF_HOSTED_AI_ENDPOINT not configured');
 
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      prompt,
-      system: systemPrompt,
-      max_tokens: 2048,
-    }),
+    body: JSON.stringify({ prompt, system: systemPrompt, max_tokens: 2048 }),
   });
 
   if (!response.ok) {
@@ -75,72 +290,154 @@ async function callSelfHosted(prompt: string, systemPrompt?: string): Promise<st
   return String(data.response || data.text || data.content || '');
 }
 
-async function callAbacus(prompt: string, systemPrompt?: string): Promise<string> {
+async function callAbacus(prompt: string, model: string, systemPrompt?: string, maxTokens?: number): Promise<string> {
   const apiKey = process.env.ABACUSAI_API_KEY;
   if (!apiKey) throw new Error('No Abacus AI API key available');
 
-  const response = await fetch("https://api.abacus.ai/api/v0/predict", {
-    method: "POST",
+  const isDeploymentCall = model === 'deployment:dr-formula-protocol';
+
+  if (isDeploymentCall) {
+    const response = await fetch("https://api.abacus.ai/api/v0/predict", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        deploymentId: "dr-formula-protocol",
+        queryData: {
+          systemPrompt: systemPrompt || "",
+          userMessage: prompt,
+          model: "gpt-4.1-mini",
+          maxTokens: maxTokens || 12000,
+          temperature: 0.4,
+          responseFormat: "json",
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Abacus AI (deployment) returned ${response.status}: ${await response.text()}`);
+    }
+
+    const data = await response.json() as Record<string, unknown>;
+    const rawResult = data.result || data.prediction || data.response;
+    if (typeof rawResult === "string" && rawResult.length > 0) return rawResult;
+    throw new Error('Abacus AI (deployment) returned empty/invalid response');
+  }
+
+  const response = await fetch('https://apps.abacus.ai/v1/chat/completions', {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      deploymentId: "dr-formula-protocol",
-      queryData: {
-        systemPrompt: systemPrompt || "",
-        userMessage: prompt,
-        model: "gpt-4.1-mini",
-        maxTokens: 12000,
-        temperature: 0.4,
-        responseFormat: "json",
-      },
+      model,
+      messages: [
+        ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+        { role: 'user', content: prompt },
+      ],
+      max_tokens: maxTokens || 4096,
     }),
   });
 
   if (!response.ok) {
-    throw new Error(`Abacus AI returned ${response.status}: ${await response.text()}`);
+    throw new Error(`Abacus AI (chat) returned ${response.status}: ${await response.text()}`);
   }
 
-  const data = await response.json() as Record<string, unknown>;
-  const rawResult = data.result || data.prediction || data.response;
-  if (typeof rawResult === "string" && rawResult.length > 0) return rawResult;
-  throw new Error('Abacus AI returned empty/invalid response');
+  const data = await response.json() as any;
+  const content = data.choices?.[0]?.message?.content;
+  if (content && content.length > 0) return content;
+  throw new Error('Abacus AI (chat) returned empty response');
 }
 
 function getProviderChain(): ProviderConfig[] {
   return [
     {
       name: 'abacus',
-      model: 'gpt-4.1-mini',
-      enabled: !!process.env.ABACUSAI_API_KEY,
+      models: [
+        { model: 'gpt-4.1-mini', tier: 'economy' },
+        { model: 'gpt-4.1', tier: 'standard' },
+        { model: 'claude-sonnet-4-20250514', tier: 'standard' },
+        { model: 'gpt-4o', tier: 'premium' },
+        { model: 'deployment:dr-formula-protocol', tier: 'standard' },
+      ],
+      enabled: () => !!process.env.ABACUSAI_API_KEY,
       call: callAbacus,
     },
     {
       name: 'openai',
-      model: 'gpt-4o-mini',
-      enabled: !!process.env.OPENAI_API_KEY,
+      models: [
+        { model: 'gpt-4o-mini', tier: 'economy' },
+        { model: 'gpt-4o', tier: 'standard' },
+      ],
+      enabled: () => !!process.env.OPENAI_API_KEY,
       call: callOpenAI,
     },
     {
       name: 'claude',
-      model: 'claude-haiku-4-5',
-      enabled: !!(process.env.ANTHROPIC_API_KEY || process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY),
+      models: [
+        { model: 'claude-haiku-4-5', tier: 'economy' },
+        { model: 'claude-sonnet-4-20250514', tier: 'standard' },
+      ],
+      enabled: () => !!(process.env.ANTHROPIC_API_KEY || process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY),
       call: callClaude,
     },
     {
       name: 'gemini',
-      model: 'gemini-1.5-pro',
-      enabled: !!process.env.GOOGLE_GEMINI_API_KEY,
+      models: [
+        { model: 'gemini-2.5-flash', tier: 'economy' },
+        { model: 'gemini-2.5-pro', tier: 'standard' },
+      ],
+      enabled: () => !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY),
       call: callGemini,
     },
     {
       name: 'self-hosted',
-      model: 'self-hosted',
-      enabled: !!process.env.SELF_HOSTED_AI_ENDPOINT,
+      models: [
+        { model: 'self-hosted', tier: 'economy' },
+      ],
+      enabled: () => !!process.env.SELF_HOSTED_AI_ENDPOINT,
       call: callSelfHosted,
     },
   ];
+}
+
+function getModelsForTierEscalation(provider: ProviderConfig, startTier: ModelTier): ModelConfig[] {
+  const tierOrder: ModelTier[] = ['economy', 'standard', 'premium'];
+  const startIdx = tierOrder.indexOf(startTier);
+  return provider.models
+    .filter(m => tierOrder.indexOf(m.tier) >= startIdx)
+    .sort((a, b) => tierOrder.indexOf(a.tier) - tierOrder.indexOf(b.tier));
+}
+
+export interface TerminalFailureError {
+  isTerminalFailure: true;
+  message: string;
+  userMessage: string;
+  attempts: AICallAttempt[];
+  providersAttempted: string[];
+}
+
+function createTerminalFailure(attempts: AICallAttempt[]): TerminalFailureError {
+  const providersAttempted = [...new Set(attempts.map(a => a.provider))];
+  const errorSummary = attempts
+    .filter(a => a.error)
+    .map(a => `${a.provider}/${a.model}: ${a.error}`)
+    .join('; ');
+
+  return {
+    isTerminalFailure: true,
+    message: `[AI Fallback] All providers exhausted. Attempted: ${providersAttempted.join(' → ')}. Errors: ${errorSummary}`,
+    userMessage: 'Our AI systems are temporarily unable to process this request. Please try again in a few minutes, or contact support if the issue persists.',
+    attempts,
+    providersAttempted,
+  };
+}
+
+export function isTerminalFailure(err: any): err is TerminalFailureError {
+  return err && err.isTerminalFailure === true;
 }
 
 export async function callWithFallback(
@@ -148,12 +445,27 @@ export async function callWithFallback(
   options?: {
     systemPrompt?: string;
     preferredProvider?: string;
+    preferredModel?: string;
     maxRetries?: number;
     maxTokens?: number;
+    callType?: CallType;
+    expectedFields?: string[];
+    startTier?: ModelTier;
+    skipQualityCheck?: boolean;
   }
 ): Promise<AIProviderResult> {
-  const chain = getProviderChain().filter(p => p.enabled);
-  const { systemPrompt, preferredProvider, maxRetries = 1, maxTokens } = options || {};
+  const chain = getProviderChain().filter(p => p.enabled());
+  const {
+    systemPrompt,
+    preferredProvider,
+    preferredModel,
+    maxRetries = 1,
+    maxTokens,
+    callType = 'general',
+    expectedFields,
+    startTier = 'economy',
+    skipQualityCheck = false,
+  } = options || {};
 
   if (preferredProvider) {
     const preferredIdx = chain.findIndex(p => p.name === preferredProvider);
@@ -164,40 +476,394 @@ export async function callWithFallback(
   }
 
   if (chain.length === 0) {
-    throw new Error('[AI Fallback] No AI providers are configured. Set at least one API key.');
+    const failure = createTerminalFailure([]);
+    throw failure;
   }
 
-  let lastError: Error | null = null;
+  const allAttempts: AICallAttempt[] = [];
   let fallbackUsed = false;
 
   for (let i = 0; i < chain.length; i++) {
     const provider = chain[i];
     if (i > 0) fallbackUsed = true;
 
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        console.log(`[AI Fallback] Trying ${provider.name} (${provider.model})${attempt > 0 ? ` retry ${attempt}` : ''}${fallbackUsed ? ' [fallback]' : ''}`);
-        const response = await provider.call(prompt, systemPrompt, maxTokens);
+    let modelsToTry: ModelConfig[];
+    if (preferredModel && i === 0) {
+      const exactModel = provider.models.find(m => m.model === preferredModel);
+      if (exactModel) {
+        const remaining = getModelsForTierEscalation(provider, exactModel.tier)
+          .filter(m => m.model !== preferredModel);
+        modelsToTry = [exactModel, ...remaining];
+      } else {
+        modelsToTry = getModelsForTierEscalation(provider, startTier);
+      }
+    } else {
+      modelsToTry = getModelsForTierEscalation(provider, startTier);
+    }
 
-        if (response && response.length > 0) {
-          console.log(`[AI Fallback] Success via ${provider.name} (${provider.model}), response length: ${response.length}`);
-          return {
-            response,
+    if (modelsToTry.length === 0) {
+      modelsToTry = provider.models.slice(0, 1);
+    }
+
+    for (let modelIdx = 0; modelIdx < modelsToTry.length; modelIdx++) {
+      const modelConfig = modelsToTry[modelIdx];
+      const escalated = modelIdx > 0;
+
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        const startTime = Date.now();
+        try {
+          const label = `${provider.name}/${modelConfig.model} [${modelConfig.tier}]`;
+          console.log(
+            `[AI Fallback] Trying ${label}` +
+            `${attempt > 0 ? ` retry ${attempt}` : ''}` +
+            `${escalated ? ' [escalated]' : ''}` +
+            `${fallbackUsed ? ' [fallback]' : ''}` +
+            ` (type: ${callType})`
+          );
+
+          const response = await provider.call(prompt, modelConfig.model, systemPrompt, maxTokens);
+          const latencyMs = Date.now() - startTime;
+
+          let qualityResult: QualityValidationResult;
+          if (skipQualityCheck) {
+            qualityResult = { score: 100, pass: true, reasons: ['Quality check skipped'] };
+          } else {
+            qualityResult = validateAIResponse(response, callType, expectedFields);
+          }
+
+          const attemptLog: AICallAttempt = {
             provider: provider.name,
-            model: provider.model,
-            fallbackUsed,
+            model: modelConfig.model,
+            tier: modelConfig.tier,
+            latencyMs,
+            responseLength: response.length,
+            qualityScore: qualityResult.score,
+            success: qualityResult.pass,
+            escalated,
+            timestamp: new Date().toISOString(),
           };
+          allAttempts.push(attemptLog);
+
+          if (qualityResult.pass) {
+            console.log(
+              `[AI Fallback] Success via ${label}, ` +
+              `length: ${response.length}, quality: ${qualityResult.score}/100, ` +
+              `latency: ${latencyMs}ms`
+            );
+
+            const callLog: AICallLog = {
+              timestamp: new Date().toISOString(),
+              callType,
+              providerChain: chain.map(p => p.name),
+              finalProvider: provider.name,
+              finalModel: modelConfig.model,
+              latencyMs,
+              responseLength: response.length,
+              qualityScore: qualityResult.score,
+              fallbackUsed,
+              escalationUsed: escalated,
+              success: true,
+            };
+            recordCall(callLog);
+
+            return {
+              response,
+              provider: provider.name,
+              model: modelConfig.model,
+              fallbackUsed,
+              escalationUsed: escalated,
+              qualityScore: qualityResult.score,
+              latencyMs,
+              attempts: allAttempts,
+            };
+          }
+
+          console.warn(
+            `[AI Fallback] ${label} quality check failed ` +
+            `(score: ${qualityResult.score}): ${qualityResult.reasons.join(', ')}`
+          );
+
+          if (modelIdx < modelsToTry.length - 1) {
+            console.log(`[AI Fallback] Escalating within ${provider.name}...`);
+            break;
+          }
+        } catch (err: any) {
+          const latencyMs = Date.now() - startTime;
+          const attemptLog: AICallAttempt = {
+            provider: provider.name,
+            model: modelConfig.model,
+            tier: modelConfig.tier,
+            latencyMs,
+            responseLength: 0,
+            qualityScore: 0,
+            success: false,
+            error: err.message,
+            escalated,
+            timestamp: new Date().toISOString(),
+          };
+          allAttempts.push(attemptLog);
+
+          console.warn(
+            `[AI Fallback] ${provider.name}/${modelConfig.model} failed` +
+            `${attempt > 0 ? ` (attempt ${attempt + 1})` : ''}: ${err.message}`
+          );
         }
-      } catch (err: unknown) {
-        lastError = err instanceof Error ? err : new Error(String(err));
-        console.warn(`[AI Fallback] ${provider.name} failed${attempt > 0 ? ` (attempt ${attempt + 1})` : ''}: ${lastError.message}`);
       }
     }
   }
 
-  throw new Error(`[AI Fallback] All providers failed. Last error: ${lastError?.message}`);
+  const failureLog: AICallLog = {
+    timestamp: new Date().toISOString(),
+    callType,
+    providerChain: chain.map(p => p.name),
+    finalProvider: allAttempts.length > 0 ? allAttempts[allAttempts.length - 1].provider : 'none',
+    finalModel: allAttempts.length > 0 ? allAttempts[allAttempts.length - 1].model : 'none',
+    latencyMs: allAttempts.reduce((sum, a) => sum + a.latencyMs, 0),
+    responseLength: 0,
+    qualityScore: 0,
+    fallbackUsed,
+    escalationUsed: allAttempts.some(a => a.escalated),
+    success: false,
+    error: 'All providers exhausted',
+  };
+  recordCall(failureLog);
+
+  throw createTerminalFailure(allAttempts);
+}
+
+export async function callWithFallbackStreaming(
+  messages: Array<{ role: string; content: string }>,
+  options?: {
+    preferredProvider?: string;
+    preferredModel?: string;
+    maxTokens?: number;
+    callType?: CallType;
+  }
+): Promise<{ stream: ReadableStream | AsyncIterable<any>; provider: string; model: string; cleanup: () => void }> {
+  const {
+    preferredProvider,
+    preferredModel,
+    maxTokens = 2000,
+    callType = 'general',
+  } = options || {};
+
+  const chain = getProviderChain().filter(p => p.enabled());
+  if (preferredProvider) {
+    const idx = chain.findIndex(p => p.name === preferredProvider);
+    if (idx > 0) {
+      const [preferred] = chain.splice(idx, 1);
+      chain.unshift(preferred);
+    }
+  }
+
+  if (chain.length === 0) {
+    throw createTerminalFailure([]);
+  }
+
+  const startTime = Date.now();
+
+  for (let provIdx = 0; provIdx < chain.length; provIdx++) {
+    const provider = chain[provIdx];
+    const model = (provIdx === 0 && preferredProvider && preferredModel && provider.name === preferredProvider)
+      ? preferredModel
+      : provider.models[0]?.model || 'unknown';
+
+    try {
+      if (provider.name === 'abacus') {
+        const apiKey = process.env.ABACUSAI_API_KEY;
+        if (!apiKey) continue;
+
+        const response = await fetch('https://apps.abacus.ai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({ model, messages, stream: true, max_tokens: maxTokens }),
+        });
+
+        if (!response.ok) throw new Error(`Abacus streaming returned ${response.status}`);
+        if (!response.body) throw new Error('No response body from Abacus');
+
+        console.log(`[AI Fallback Streaming] Using ${provider.name}/${model} (type: ${callType})`);
+        recordCall({
+          timestamp: new Date().toISOString(),
+          callType,
+          providerChain: chain.map(p => p.name),
+          finalProvider: provider.name,
+          finalModel: model,
+          latencyMs: Date.now() - startTime,
+          responseLength: 0,
+          qualityScore: -1,
+          fallbackUsed: provIdx > 0,
+          escalationUsed: false,
+          success: true,
+        });
+
+        return {
+          stream: response.body as any,
+          provider: provider.name,
+          model,
+          cleanup: () => {},
+        };
+      }
+
+      if (provider.name === 'openai') {
+        const stream = await openai.chat.completions.create({
+          model,
+          messages: messages as any,
+          stream: true,
+          max_completion_tokens: maxTokens,
+        });
+
+        console.log(`[AI Fallback Streaming] Using ${provider.name}/${model} (type: ${callType})`);
+        recordCall({
+          timestamp: new Date().toISOString(),
+          callType,
+          providerChain: chain.map(p => p.name),
+          finalProvider: provider.name,
+          finalModel: model,
+          latencyMs: Date.now() - startTime,
+          responseLength: 0,
+          qualityScore: -1,
+          fallbackUsed: provIdx > 0,
+          escalationUsed: false,
+          success: true,
+        });
+
+        return {
+          stream: stream as any,
+          provider: provider.name,
+          model,
+          cleanup: () => {},
+        };
+      }
+
+      if (provider.name === 'claude') {
+        const apiKey = process.env.ANTHROPIC_API_KEY || process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY;
+        const baseURL = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL || 'https://api.anthropic.com';
+        if (!apiKey) continue;
+
+        const Anthropic = (await import('@anthropic-ai/sdk')).default;
+        const client = new Anthropic({ apiKey, baseURL });
+
+        const systemMsg = messages.find(m => m.role === 'system');
+        const nonSystemMsgs = messages.filter(m => m.role !== 'system');
+
+        const stream = client.messages.stream({
+          model,
+          max_tokens: maxTokens,
+          system: systemMsg?.content || undefined,
+          messages: nonSystemMsgs.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+        });
+
+        console.log(`[AI Fallback Streaming] Using ${provider.name}/${model} (type: ${callType})`);
+        recordCall({
+          timestamp: new Date().toISOString(),
+          callType,
+          providerChain: chain.map(p => p.name),
+          finalProvider: provider.name,
+          finalModel: model,
+          latencyMs: Date.now() - startTime,
+          responseLength: 0,
+          qualityScore: -1,
+          fallbackUsed: provIdx > 0,
+          escalationUsed: false,
+          success: true,
+        });
+
+        return {
+          stream: stream as any,
+          provider: provider.name,
+          model,
+          cleanup: () => { stream.abort(); },
+        };
+      }
+    } catch (err: any) {
+      console.warn(`[AI Fallback Streaming] ${provider.name} failed: ${err.message}`);
+      continue;
+    }
+  }
+
+  throw createTerminalFailure([]);
 }
 
 export function getAvailableProviders(): string[] {
-  return getProviderChain().filter(p => p.enabled).map(p => `${p.name}:${p.model}`);
+  return getProviderChain().filter(p => p.enabled()).map(p => `${p.name}:${p.models.map(m => m.model).join(',')}`);
+}
+
+export interface AIHealthReport {
+  timestamp: string;
+  providers: Record<string, {
+    name: string;
+    available: boolean;
+    models: ModelConfig[];
+    recentCalls: number;
+    successRate: number;
+    averageLatencyMs: number;
+    averageQualityScore: number;
+    lastCallAt: string | null;
+    recentErrors: string[];
+  }>;
+  overallStats: {
+    totalCalls: number;
+    successRate: number;
+    averageLatencyMs: number;
+    averageQualityScore: number;
+    callsByType: Record<string, number>;
+    last24hCalls: number;
+  };
+}
+
+export function getAIHealthReport(): AIHealthReport {
+  const now = new Date();
+  const providers: AIHealthReport['providers'] = {};
+  const providerChain = getProviderChain();
+
+  for (const provider of providerChain) {
+    const window = healthWindow[provider.name];
+    const calls = window?.calls || [];
+    const successCalls = calls.filter(c => c.success);
+    const qualityCalls = calls.filter(c => c.qualityScore >= 0);
+    const recentErrors = calls
+      .filter(c => !c.success && c.error)
+      .slice(-5)
+      .map(c => c.error!);
+
+    providers[provider.name] = {
+      name: provider.name,
+      available: provider.enabled(),
+      models: provider.models,
+      recentCalls: calls.length,
+      successRate: calls.length > 0 ? Math.round((successCalls.length / calls.length) * 100) : 0,
+      averageLatencyMs: calls.length > 0 ? Math.round(calls.reduce((s, c) => s + c.latencyMs, 0) / calls.length) : 0,
+      averageQualityScore: qualityCalls.length > 0 ? Math.round(qualityCalls.reduce((s, c) => s + c.qualityScore, 0) / qualityCalls.length) : 0,
+      lastCallAt: window?.lastUpdated || null,
+      recentErrors,
+    };
+  }
+
+  const allCalls = healthWindow['_all']?.calls || [];
+  const allSuccess = allCalls.filter(c => c.success);
+  const allQuality = allCalls.filter(c => c.qualityScore >= 0);
+  const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+  const last24h = allCalls.filter(c => c.timestamp > twentyFourHoursAgo);
+
+  const callsByType: Record<string, number> = {};
+  for (const call of allCalls) {
+    callsByType[call.callType] = (callsByType[call.callType] || 0) + 1;
+  }
+
+  return {
+    timestamp: now.toISOString(),
+    providers,
+    overallStats: {
+      totalCalls: allCalls.length,
+      successRate: allCalls.length > 0 ? Math.round((allSuccess.length / allCalls.length) * 100) : 0,
+      averageLatencyMs: allCalls.length > 0 ? Math.round(allCalls.reduce((s, c) => s + c.latencyMs, 0) / allCalls.length) : 0,
+      averageQualityScore: allQuality.length > 0 ? Math.round(allQuality.reduce((s, c) => s + c.qualityScore, 0) / allQuality.length) : 0,
+      callsByType,
+      last24hCalls: last24h.length,
+    },
+  };
 }

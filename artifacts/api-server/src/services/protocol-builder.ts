@@ -231,59 +231,59 @@ WRITING STYLE - BE A CLINICAL MENTOR:
       { role: 'user', content: message }
     ];
 
-    // Abacus AI is the preferred model based on original implementation
-    // Using streaming response
-    const response = await fetch('https://apps.abacus.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.ABACUSAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        messages,
-        stream: true,
-        max_tokens: 2000
-      })
-    });
+    const { callWithFallbackStreaming, isTerminalFailure } = await import('./ai-fallback');
 
-    if (!response.ok) {
-      // Fallback to OpenAI if Abacus AI fails or is unconfigured
-      const OpenAI = (await import('openai')).default;
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-      
-      const stream = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: messages,
-        stream: true,
-      });
-
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-
-      for await (const chunk of stream) {
-        const text = chunk.choices[0]?.delta?.content || "";
-        if (text) {
-          res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`);
-        }
-      }
-      res.write('data: [DONE]\n\n');
-      res.end();
-      return;
-    }
-
-    // Proxy the Abacus stream
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
-    
-    if (response.body) {
-      const { Readable } = await import('node:stream');
-      const nodeStream = Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0]);
-      nodeStream.pipe(res);
-    } else {
-      res.end();
+
+    try {
+      const streamResult = await callWithFallbackStreaming(messages, {
+        preferredProvider: 'abacus',
+        preferredModel: 'claude-sonnet-4-20250514',
+        maxTokens: 2000,
+        callType: 'protocol-builder',
+      });
+
+      console.log(`[Protocol Builder] Streaming via ${streamResult.provider}/${streamResult.model}`);
+
+      if (streamResult.provider === 'abacus') {
+        const body = streamResult.stream as ReadableStream;
+        const { Readable } = await import('node:stream');
+        const nodeStream = Readable.fromWeb(body as any);
+        nodeStream.pipe(res);
+      } else if (streamResult.provider === 'openai') {
+        const stream = streamResult.stream as AsyncIterable<any>;
+        for await (const chunk of stream) {
+          const text = chunk.choices?.[0]?.delta?.content || "";
+          if (text) {
+            res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`);
+          }
+        }
+        res.write('data: [DONE]\n\n');
+        res.end();
+      } else if (streamResult.provider === 'claude') {
+        const stream = streamResult.stream as any;
+        for await (const event of stream) {
+          if (event.type === 'content_block_delta' && event.delta?.text) {
+            res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: event.delta.text } }] })}\n\n`);
+          }
+        }
+        res.write('data: [DONE]\n\n');
+        res.end();
+      } else {
+        res.write('data: [DONE]\n\n');
+        res.end();
+      }
+    } catch (streamErr: any) {
+      if (isTerminalFailure(streamErr)) {
+        console.error(`[Protocol Builder] Terminal failure: ${streamErr.message}`);
+        res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: '\n\n[Error: Our AI systems are temporarily unable to process this request. Please try again in a few minutes.]' } }] })}\n\n`);
+        res.write('data: [DONE]\n\n');
+        res.end();
+      } else {
+        throw streamErr;
+      }
     }
 
   } catch (error: unknown) {

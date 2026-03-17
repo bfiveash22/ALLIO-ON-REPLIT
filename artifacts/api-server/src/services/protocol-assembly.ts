@@ -511,16 +511,46 @@ Return ONLY valid JSON, no markdown.`;
 
   const userPrompt = `PATIENT PROFILE:\n${JSON.stringify(profile, null, 2)}`;
 
-  const { callWithFallback } = await import("./ai-fallback");
-  console.log("[Protocol Assembly] Generating protocol via AI fallback chain (Abacus → OpenAI → Claude → Gemini)...");
-  const aiResult = await callWithFallback(userPrompt, {
-    systemPrompt,
-    preferredProvider: "abacus",
-    maxRetries: 1,
-    maxTokens: 12000,
-  });
+  const { callWithFallback, isTerminalFailure } = await import("./ai-fallback");
+  console.log("[Protocol Assembly] Generating protocol via centralized AI fallback chain with quality validation...");
+  let aiResult;
+  try {
+    aiResult = await callWithFallback(userPrompt, {
+      systemPrompt,
+      preferredProvider: "abacus",
+      preferredModel: "deployment:dr-formula-protocol",
+      maxRetries: 1,
+      maxTokens: 12000,
+      callType: "protocol-generation",
+      startTier: "economy",
+      expectedFields: [
+        "patientName", "summary", "rootCauseAnalysis", "phases",
+        "dailySchedule", "injectablePeptides", "supplements",
+      ],
+    });
+  } catch (err: any) {
+    if (isTerminalFailure(err)) {
+      console.error(`[Protocol Assembly] Terminal failure: ${err.message}`);
+      try {
+        await db.insert(generatedProtocols).values({
+          patientName: profile.name || "Unknown",
+          patientAge: profile.age || 0,
+          sourceType: "intake_form",
+          patientProfile: profile as unknown as Record<string, unknown>,
+          protocol: {} as Record<string, unknown>,
+          status: "ai_failed",
+          generatedBy: "system",
+        });
+        console.log(`[Protocol Assembly] Saved failed attempt to DB for retry (patient: ${profile.name || "Unknown"})`);
+      } catch (dbErr) {
+        console.error("[Protocol Assembly] Could not persist terminal failure to DB:", dbErr);
+      }
+      throw new Error(err.userMessage);
+    }
+    throw err;
+  }
   const content = aiResult.response;
-  console.log(`[Protocol Assembly] Protocol generated via ${aiResult.provider} (${aiResult.model})${aiResult.fallbackUsed ? " [fallback]" : ""}, length: ${content.length}`);
+  console.log(`[Protocol Assembly] Protocol generated via ${aiResult.provider} (${aiResult.model}), quality: ${aiResult.qualityScore}/100${aiResult.fallbackUsed ? " [fallback]" : ""}${aiResult.escalationUsed ? " [escalated]" : ""}, length: ${content.length}`);
 
   if (!content || content.length < 100) throw new Error("Failed to generate protocol from any provider");
 
