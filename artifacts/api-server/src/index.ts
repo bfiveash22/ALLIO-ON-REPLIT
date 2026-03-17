@@ -329,6 +329,7 @@ registerHealthRoutes(app);
       'artifacts/ffpma/src/pages/protocols.tsx',
       'artifacts/ffpma/src/pages/protocol-assembly.tsx',
       'artifacts/ffpma/src/components/ConsultAITeam.tsx',
+      'artifacts/ffpma/src/components/XRayAnalysisUpload.tsx',
       'artifacts/ffpma/src/locales/en/common.json',
       'artifacts/ffpma/src/locales/es/common.json',
     ];

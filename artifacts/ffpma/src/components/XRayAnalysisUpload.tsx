@@ -427,7 +427,7 @@ export function XRayAnalysisUpload({ onAnalysisComplete, patientId: propPatientI
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-sm font-medium truncate">
-                    {analysis.patientUploadId || "Unknown Patient"}
+                    {analysis.patientUploadId || "Unknown Member"}
                   </p>
                   <p className="text-white/40 text-xs">
                     {analysis.model} &bull; {analysis.completedAt ? new Date(analysis.completedAt).toLocaleDateString() : "Processing"}
