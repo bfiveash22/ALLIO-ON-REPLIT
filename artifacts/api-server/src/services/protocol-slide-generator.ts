@@ -157,7 +157,7 @@ export async function generateAnnetteGomerSlides(): Promise<ProtocolSlideResult>
       },
     });
     requests.push({
-      insertText: { objectId: boxId, text },
+      insertText: { objectId: boxId, text: sanitizePmaLanguage(text) },
     });
     requests.push({
       updateTextStyle: {
@@ -886,7 +886,7 @@ export async function generateKathrynSmithSlides(): Promise<ProtocolSlideResult>
       },
     });
     requests.push({
-      insertText: { objectId: boxId, text },
+      insertText: { objectId: boxId, text: sanitizePmaLanguage(text) },
     });
     requests.push({
       updateTextStyle: {
@@ -1058,7 +1058,7 @@ export async function generateKathrynSmithSlides(): Promise<ProtocolSlideResult>
       '',
       'CANCER HISTORY:',
       '• ~2018: First breast cancer — lumpectomy, right breast (no root cause protocol)',
-      '• Feb 18, 2026: Biopsy → Feb 24: Diagnosis (ER+, PR+, HER2+)',
+      '• Feb 18, 2026: Biopsy → Feb 24: Assessment (ER+, PR+, HER2+)',
       '• Feb 26, 2026: Consultation with Michael Blake / Forgotten Formula PMA',
       '• Lymph node involvement (right armpit) — indicates potential spread',
     ].join('\n')
@@ -1152,7 +1152,7 @@ export async function generateKathrynSmithSlides(): Promise<ProtocolSlideResult>
       'MYCOTOXIN BINDERS (Weeks 1-12):',
       '• Activated Charcoal: 1000mg, 2x daily (away from food)',
       '• Bentonite Clay: 1 tsp in water daily',
-      '• Cholestyramine: As prescribed (detox binder)',
+      '• Cholestyramine: As suggested (detox binder)',
       '• Modified Citrus Pectin: 5g, 2x daily',
       '',
       'ANTIFUNGAL SUPPORT:',

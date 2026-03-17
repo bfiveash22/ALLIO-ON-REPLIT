@@ -64,6 +64,7 @@ export function sanitizePmaLanguage(text: string): string {
     .replace(/\bTreatment Phases\b/g, "Wellness Phases")
     .replace(/\btreatment plan\b/gi, "wellness protocol")
     .replace(/\btreatment protocol\b/gi, "wellness protocol")
+    .replace(/\btreatment\b/gi, (match) => match[0] === match[0].toUpperCase() ? "Protocol" : "protocol")
     .replace(/\bmedical advice\b/gi, "wellness guidance")
     .replace(/\bdoctor-patient\b/gi, "trustee-member")
     .replace(/\bpatient overview\b/gi, "member overview")

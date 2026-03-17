@@ -90,7 +90,7 @@ function drawSectionHeader(doc: PDFKit.PDFDocument, text: string, color?: string
   checkPage(doc, 80);
   const startY = doc.y;
   doc.rect(55, startY, doc.page.width - 110, 28).fill(color || COLORS.primary);
-  doc.fontSize(13).fillColor(COLORS.white).text(text.toUpperCase(), 65, startY + 7, { width: doc.page.width - 130 });
+  doc.fontSize(13).fillColor(COLORS.white).text(sanitizePmaLanguage(text).toUpperCase(), 65, startY + 7, { width: doc.page.width - 130 });
   doc.y = startY + 36;
   doc.moveDown(0.3);
 }
@@ -99,24 +99,24 @@ function drawSubheader(doc: PDFKit.PDFDocument, text: string) {
   checkPage(doc, 50);
   doc.moveDown(0.3);
   doc.moveTo(55, doc.y).lineTo(55 + 3, doc.y).strokeColor(COLORS.secondary).lineWidth(3).stroke();
-  doc.fontSize(12).fillColor(COLORS.secondary).text(`  ${text}`, 58, doc.y - 5);
+  doc.fontSize(12).fillColor(COLORS.secondary).text(`  ${sanitizePmaLanguage(text)}`, 58, doc.y - 5);
   doc.moveDown(0.2);
 }
 
 function drawBody(doc: PDFKit.PDFDocument, text: string) {
-  doc.fontSize(10).fillColor(COLORS.text).text(text, 55, undefined, { width: doc.page.width - 110 });
+  doc.fontSize(10).fillColor(COLORS.text).text(sanitizePmaLanguage(text), 55, undefined, { width: doc.page.width - 110 });
 }
 
 function drawBullet(doc: PDFKit.PDFDocument, text: string, indent: number = 0) {
   checkPage(doc, 20);
   doc.fontSize(10).fillColor(COLORS.teal).text("\u2022", 60 + indent, doc.y, { continued: true });
-  doc.fillColor(COLORS.text).text(` ${text}`, { width: doc.page.width - 130 - indent });
+  doc.fillColor(COLORS.text).text(` ${sanitizePmaLanguage(text)}`, { width: doc.page.width - 130 - indent });
 }
 
 function drawLabelValue(doc: PDFKit.PDFDocument, label: string, value: string) {
   checkPage(doc, 18);
-  doc.fontSize(10).fillColor(COLORS.secondary).text(`${label}: `, 65, doc.y, { continued: true });
-  doc.fillColor(COLORS.text).text(value);
+  doc.fontSize(10).fillColor(COLORS.secondary).text(`${sanitizePmaLanguage(label)}: `, 65, doc.y, { continued: true });
+  doc.fillColor(COLORS.text).text(sanitizePmaLanguage(value));
 }
 
 function drawInfoBox(doc: PDFKit.PDFDocument, text: string, bgColor: string = COLORS.sectionBg) {
@@ -124,7 +124,7 @@ function drawInfoBox(doc: PDFKit.PDFDocument, text: string, bgColor: string = CO
   const startY = doc.y;
   doc.rect(55, startY, doc.page.width - 110, 30).fill(bgColor);
   doc.rect(55, startY, 3, 30).fill(COLORS.secondary);
-  doc.fontSize(9).fillColor(COLORS.text).text(text, 65, startY + 9, { width: doc.page.width - 135 });
+  doc.fontSize(9).fillColor(COLORS.text).text(sanitizePmaLanguage(text), 65, startY + 9, { width: doc.page.width - 135 });
   doc.y = startY + 36;
 }
 
