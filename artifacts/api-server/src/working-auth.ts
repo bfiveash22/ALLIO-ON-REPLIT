@@ -271,7 +271,7 @@ export function setupWorkingAuth(app: any) {
     }
   });
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== 'production' && process.env.ENABLE_DEV_LOGIN !== 'false') {
     app.post('/api/auth/dev-login', async (req: any, res: any) => {
       try {
         const { userId, email } = req.body;
