@@ -5,6 +5,7 @@ import { sentinel, AGENT_DIVISIONS, Division } from './sentinel';
 import { marketingOrchestrator } from './marketing-orchestrator';
 import { autoImplementer } from './auto-implementer';
 import { lockManager } from './agent-locks';
+import { dispatchWebhook } from './webhook-dispatcher';
 
 const BASE_CHECK_INTERVAL = 10 * 60 * 1000; // 10 minutes baseline
 const HIGH_ACTIVITY_CHECK_INTERVAL_MIN = 5 * 60 * 1000; // 5 minutes when 10+ agents
@@ -20,10 +21,12 @@ let marketingInterval: NodeJS.Timeout | null = null;
 let uiReviewInterval: NodeJS.Timeout | null = null;
 let ecosystemInterval: NodeJS.Timeout | null = null;
 let autoImplementInterval: NodeJS.Timeout | null = null;
+let wpFullSyncInterval: NodeJS.Timeout | null = null;
 const MARKETING_CHECK_INTERVAL = 60 * 60 * 1000; // Run every hour
 const UI_REVIEW_INTERVAL = 24 * 60 * 60 * 1000; // Run every 24 hours
 const ECOSYSTEM_ENHANCEMENT_INTERVAL = 24 * 60 * 60 * 1000; // Run every 24 hours
 const AUTO_IMPLEMENT_INTERVAL = 15 * 60 * 1000; // Run every 15 mins
+const WP_FULL_SYNC_INTERVAL = parseInt(process.env.WP_FULL_SYNC_INTERVAL_MS || '', 10) || (6 * 60 * 60 * 1000); // Default: 6 hours
 let activeExecutions = 0;
 let lastCrossDivisionCheck = new Date();
 
@@ -287,6 +290,19 @@ async function handleTaskCompletion(task: any, result: any): Promise<void> {
   }
 
   await checkProductionPipeline(task, result);
+
+  try {
+    await dispatchWebhook('task.completed', {
+      taskId: task.id,
+      title: task.title,
+      agentId: task.agentId,
+      division: task.division,
+      outputUrl: result?.outputUrl || null,
+      completedAt: new Date().toISOString(),
+    });
+  } catch (err: any) {
+    log(`[SENTINEL] Failed to dispatch task.completed webhook: ${err.message}`, 'agent-scheduler');
+  }
 }
 
 async function handleCrossDivisionSupportCompletion(task: any, result: any): Promise<void> {
@@ -738,6 +754,43 @@ export async function startAgentScheduler(): Promise<void> {
     }
   }, 70000); // 70 seconds after boot
 
+  // WordPress Full Sync: products, categories, library — configurable interval (default: 6 hours)
+  wpFullSyncInterval = setInterval(async () => {
+    try {
+      log('[WP-SYNC] Running scheduled full WordPress sync (products, categories, library)...', 'agent-scheduler');
+      const { syncFromWordPress } = await import('./wordpress-sync');
+      const result = await syncFromWordPress();
+      log(`[WP-SYNC] Full WordPress sync complete: categories=${result.categories}, products=${result.products}, libraryItems=${result.libraryItems}`, 'agent-scheduler');
+    } catch (err: any) {
+      log(`[WP-SYNC] Scheduled full sync error: ${err.message}`, 'agent-scheduler');
+    }
+  }, WP_FULL_SYNC_INTERVAL);
+
+  // Kick off first full WordPress sync shortly after startup
+  setTimeout(async () => {
+    try {
+      log('[WP-SYNC] Running initial full WordPress sync on startup (products, categories, library)...', 'agent-scheduler');
+      const { syncFromWordPress } = await import('./wordpress-sync');
+      const result = await syncFromWordPress();
+      log(`[WP-SYNC] Initial full WordPress sync complete: categories=${result.categories}, products=${result.products}, libraryItems=${result.libraryItems}`, 'agent-scheduler');
+    } catch (err: any) {
+      log(`[WP-SYNC] Initial full sync error: ${err.message}`, 'agent-scheduler');
+    }
+  }, 30000); // 30 seconds after boot
+
+  // Log WordPress/WooCommerce sync schedule for operator visibility
+  const wpUrl = process.env.WORDPRESS_URL || process.env.WP_URL || '(not configured)';
+  const wpSecretConfigured = !!(process.env.WP_WEBHOOK_SECRET);
+  const wpCredConfigured = !!(process.env.WP_PASSWORD || process.env.WP_APPLICATION_PASSWORD);
+  log('[WP-SYNC] ═══════════════════════════════════════════════════════', 'agent-scheduler');
+  log(`[WP-SYNC] WordPress/WooCommerce Configuration Status`, 'agent-scheduler');
+  log(`[WP-SYNC]   Site URL        : ${wpUrl}`, 'agent-scheduler');
+  log(`[WP-SYNC]   API Credentials : ${wpCredConfigured ? 'CONFIGURED' : 'NOT CONFIGURED'}`, 'agent-scheduler');
+  log(`[WP-SYNC]   Webhook Secret  : ${wpSecretConfigured ? 'CONFIGURED' : 'NOT CONFIGURED'}`, 'agent-scheduler');
+  log('[WP-SYNC]   Sync Schedule   : Clinic sync - every 1 hour (immediate on startup)', 'agent-scheduler');
+  log(`[WP-SYNC]   Sync Schedule   : Full sync (products/categories/library) - every ${Math.round(WP_FULL_SYNC_INTERVAL / 3600000)}h (env: WP_FULL_SYNC_INTERVAL_MS, immediate on startup)`, 'agent-scheduler');
+  log('[WP-SYNC] ═══════════════════════════════════════════════════════', 'agent-scheduler');
+
   log('[SENTINEL] Agent scheduler started successfully', 'agent-scheduler');
 }
 
@@ -765,6 +818,10 @@ export function stopAgentScheduler(): void {
   if (autoImplementInterval) {
     clearInterval(autoImplementInterval);
     autoImplementInterval = null;
+  }
+  if (wpFullSyncInterval) {
+    clearInterval(wpFullSyncInterval);
+    wpFullSyncInterval = null;
   }
   schedulerRunning = false;
   status.running = false;
@@ -1108,13 +1165,20 @@ export async function scheduleWeeklyMedicalEnhancement(): Promise<void> {
     }
 
     // 4. Skin Cancer Detection Auto-Enhancement
-    await storage.createAgentTask({
-      agentId: 'DR-TRIAGE',
-      division: 'support',
-      title: `Weekly Skin Cancer AI Auto-Enhancement (${now})`,
-      description: `Audit the recent outputs of the Melanoma/Skin anomaly detection model (VRJBro/skin-cancer-detection). Check for the latest medical journals on dermatological imaging features to enhance the diagnostic confidence threshold. Review ABCDE criteria annotations for accuracy.`,
-      priority: 3,
-    });
+    const recentSkinCancerTask = allTasks.some(t =>
+      t.title.includes('Weekly Skin Cancer AI Auto-Enhancement') &&
+      t.createdAt && new Date(t.createdAt) > sevenDaysAgo
+    );
+
+    if (!recentSkinCancerTask) {
+      await storage.createAgentTask({
+        agentId: 'DR-TRIAGE',
+        division: 'support',
+        title: `Weekly Skin Cancer AI Auto-Enhancement (${now})`,
+        description: `Audit the recent outputs of the Melanoma/Skin anomaly detection model (VRJBro/skin-cancer-detection). Check for the latest medical journals on dermatological imaging features to enhance the diagnostic confidence threshold. Review ABCDE criteria annotations for accuracy.`,
+        priority: 3,
+      });
+    }
 
     log('[SENTINEL] Medical auto-enhancement tasks successfully deployed to Science and Support agents.', 'agent-scheduler');
   } catch (error: any) {

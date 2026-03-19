@@ -398,6 +398,11 @@ export function startScheduler(): void {
   log('Starting hourly clinic sync scheduler...', 'scheduler');
   clinicSyncInterval = setInterval(runClinicSync, CLINIC_SYNC_INTERVAL);
 
+  // Run clinic sync immediately on startup instead of waiting a full hour
+  setTimeout(() => {
+    runClinicSync().catch(err => log(`Error during startup clinic sync: ${err.message}`, 'scheduler'));
+  }, 10000); // 10 seconds after boot
+
   log('Scheduler started successfully.', 'scheduler');
 }
 
