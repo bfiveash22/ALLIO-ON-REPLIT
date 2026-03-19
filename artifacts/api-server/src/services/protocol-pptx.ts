@@ -899,7 +899,7 @@ function slideIntakePersonal(pres: PptxPresentation, protocol: HealingProtocol, 
   slide.background = { color: DARK_BG };
   slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: ACCENT } });
 
-  slide.addText("PATIENT INTAKE — SECTION 1 OF 3", {
+  slide.addText("MEMBER INTAKE — SECTION 1 OF 3", {
     x: 0.3, y: 0.15, w: 9.4, h: 0.4,
     fontSize: 10, fontFace: BODY_FONT, color: ACCENT, bold: true,
   });
@@ -947,7 +947,7 @@ function slideIntakeHealthHistory(pres: PptxPresentation, protocol: HealingProto
   slide.background = { color: DARK_BG };
   slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: ACCENT } });
 
-  slide.addText("PATIENT INTAKE — SECTION 2 OF 3", {
+  slide.addText("MEMBER INTAKE — SECTION 2 OF 3", {
     x: 0.3, y: 0.15, w: 9.4, h: 0.4,
     fontSize: 10, fontFace: BODY_FONT, color: ACCENT, bold: true,
   });
@@ -989,7 +989,7 @@ function slideIntakeSymptomsGoals(pres: PptxPresentation, protocol: HealingProto
   slide.background = { color: DARK_BG };
   slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: ACCENT } });
 
-  slide.addText("PATIENT INTAKE — SECTION 3 OF 3", {
+  slide.addText("MEMBER INTAKE — SECTION 3 OF 3", {
     x: 0.3, y: 0.15, w: 9.4, h: 0.4,
     fontSize: 10, fontFace: BODY_FONT, color: ACCENT, bold: true,
   });
