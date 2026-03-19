@@ -24,10 +24,10 @@ export const AGENT_MODEL_ASSIGNMENTS: Record<string, AIModelConfig> = {
   'SENTINEL': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['orchestration', 'coordination', 'routing'] },
   'ATHENA': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['communications', 'scheduling', 'inbox'] },
   'OPENCLAW': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['communication', 'triaging', 'ml-analysis'] },
-  'HERMES': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['workspace', 'organization', 'sync'] },
+  'HERMES': { provider: 'openrouter', model: 'deepseek/deepseek-chat-v3-0324', specialty: ['workspace', 'organization', 'sync'] },
 
   // Marketing Division
-  'MUSE': { provider: 'openai', model: 'gpt-4o', specialty: ['content', 'marketing', 'campaigns'] },
+  'MUSE': { provider: 'openrouter', model: 'meta-llama/llama-4-maverick', specialty: ['content', 'marketing', 'campaigns'] },
   'PRISM': { provider: 'huggingface', model: 'video-generation', specialty: ['video', 'motion', 'cinematic'] },
   'PEXEL': { provider: 'huggingface', model: 'image-generation', specialty: ['images', 'graphics', 'visuals'] },
   'AURORA': { provider: 'huggingface', model: 'audio-generation', specialty: ['frequency', 'audio', 'rife'] },
@@ -46,10 +46,10 @@ export const AGENT_MODEL_ASSIGNMENTS: Record<string, AIModelConfig> = {
   'FORGE': { provider: 'openai', model: 'gpt-4o', specialty: ['engineering', 'integration', 'automation'] },
   'DAEDALUS': { provider: 'openai', model: 'gpt-4o', specialty: ['architecture', 'full-stack', 'technical-vision'] },
   'CYPHER': { provider: 'openai', model: 'gpt-4o', specialty: ['ai-ml', 'neural-networks', 'analytics'] },
-  'NEXUS': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['infrastructure', 'devops', 'reliability'] },
-  'ARACHNE': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['css', 'frontend', 'responsive-design'] },
-  'ARCHITECT': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['html', 'semantic-markup', 'accessibility'] },
-  'SERPENS': { provider: 'openai', model: 'gpt-4o', specialty: ['python', 'data-pipelines', 'automation'] },
+  'NEXUS': { provider: 'openrouter', model: 'deepseek/deepseek-chat-v3-0324', specialty: ['infrastructure', 'devops', 'reliability'] },
+  'ARACHNE': { provider: 'openrouter', model: 'deepseek/deepseek-chat-v3-0324', specialty: ['css', 'frontend', 'responsive-design'] },
+  'ARCHITECT': { provider: 'openrouter', model: 'deepseek/deepseek-chat-v3-0324', specialty: ['html', 'semantic-markup', 'accessibility'] },
+  'SERPENS': { provider: 'openrouter', model: 'qwen/qwen3.5-122b-a10b', specialty: ['python', 'data-pipelines', 'automation'] },
   'ANTIGRAVITY': { provider: 'openai', model: 'gpt-4o', specialty: ['vps', 'deployment', 'system-routing'] },
   'BLOCKFORGE': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['blockchain', 'smart-contracts', 'tokenomics'] },
   'RONIN': { provider: 'openai', model: 'gpt-4o', specialty: ['payments', 'failover', 'fraud-prevention'] },
@@ -71,13 +71,13 @@ export const AGENT_MODEL_ASSIGNMENTS: Record<string, AIModelConfig> = {
   'QUANTUM': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['quantum-biology', 'computing', 'biophotonics'] },
 
   // Support Division
-  'DIANE': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['nutrition', 'diet', 'candida-protocols'] },
-  'PETE': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['peptides', 'glp1', 'bioregulators'] },
-  'SAM': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['shipping', 'logistics', 'tracking'] },
-  'PAT': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['products', 'supplements', 'recommendations'] },
+  'DIANE': { provider: 'openrouter', model: 'deepseek/deepseek-chat-v3-0324', specialty: ['nutrition', 'diet', 'candida-protocols'] },
+  'PETE': { provider: 'openrouter', model: 'deepseek/deepseek-chat-v3-0324', specialty: ['peptides', 'glp1', 'bioregulators'] },
+  'SAM': { provider: 'openrouter', model: 'deepseek/deepseek-chat-v3-0324', specialty: ['shipping', 'logistics', 'tracking'] },
+  'PAT': { provider: 'openrouter', model: 'deepseek/deepseek-chat-v3-0324', specialty: ['products', 'supplements', 'recommendations'] },
   'DR-TRIAGE': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['diagnostics', 'protocols', 'triage'] },
-  'MAX-MINERAL': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['nutrients', 'minerals', 'supplementation'] },
-  'ALLIO-SUPPORT': { provider: 'openai', model: 'gpt-4o-mini', specialty: ['membership', 'pma-guidance', 'account-support'] },
+  'MAX-MINERAL': { provider: 'openrouter', model: 'deepseek/deepseek-chat-v3-0324', specialty: ['nutrients', 'minerals', 'supplementation'] },
+  'ALLIO-SUPPORT': { provider: 'openrouter', model: 'deepseek/deepseek-chat-v3-0324', specialty: ['membership', 'pma-guidance', 'account-support'] },
   'CHIRO': { provider: 'claude', model: 'claude-sonnet-4-5', specialty: ['chiropractic', 'net', 'quantum-methods'] },
 };
 

@@ -290,6 +290,40 @@ async function callSelfHosted(prompt: string, _model: string, systemPrompt?: str
   return String(data.response || data.text || data.content || '');
 }
 
+async function callOpenRouter(prompt: string, model: string, systemPrompt?: string, maxTokens?: number): Promise<string> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new Error('No OpenRouter API key available');
+
+  const messages: Array<{ role: string; content: string }> = [];
+  if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
+  messages.push({ role: 'user', content: prompt });
+
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      'HTTP-Referer': 'https://ffpma.replit.app',
+      'X-Title': 'Forgotten Formula PMA',
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      max_tokens: maxTokens || 4096,
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`OpenRouter returned ${response.status}: ${errText}`);
+  }
+
+  const data = await response.json() as any;
+  const content = data.choices?.[0]?.message?.content;
+  if (content && content.length > 0) return content;
+  throw new Error('OpenRouter returned empty response');
+}
+
 async function callAbacus(prompt: string, model: string, systemPrompt?: string, maxTokens?: number): Promise<string> {
   const apiKey = process.env.ABACUSAI_API_KEY;
   if (!apiKey) throw new Error('No Abacus AI API key available');
@@ -392,6 +426,18 @@ function getProviderChain(): ProviderConfig[] {
       ],
       enabled: () => !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY),
       call: callGemini,
+    },
+    {
+      name: 'openrouter',
+      models: [
+        { model: 'deepseek/deepseek-chat-v3-0324', tier: 'economy' },
+        { model: 'meta-llama/llama-4-maverick', tier: 'economy' },
+        { model: 'qwen/qwen3.5-122b-a10b', tier: 'standard' },
+        { model: 'mistralai/mistral-large', tier: 'standard' },
+        { model: 'x-ai/grok-4-fast', tier: 'premium' },
+      ],
+      enabled: () => !!process.env.OPENROUTER_API_KEY,
+      call: callOpenRouter,
     },
     {
       name: 'self-hosted',
@@ -733,6 +779,47 @@ export async function callWithFallbackStreaming(
 
         return {
           stream: stream as any,
+          provider: provider.name,
+          model,
+          cleanup: () => {},
+        };
+      }
+
+      if (provider.name === 'openrouter') {
+        const orApiKey = process.env.OPENROUTER_API_KEY;
+        if (!orApiKey) continue;
+
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${orApiKey}`,
+            'HTTP-Referer': 'https://ffpma.replit.app',
+            'X-Title': 'Forgotten Formula PMA',
+          },
+          body: JSON.stringify({ model, messages, stream: true, max_tokens: maxTokens }),
+        });
+
+        if (!response.ok) throw new Error(`OpenRouter streaming returned ${response.status}`);
+        if (!response.body) throw new Error('No response body from OpenRouter');
+
+        console.log(`[AI Fallback Streaming] Using ${provider.name}/${model} (type: ${callType})`);
+        recordCall({
+          timestamp: new Date().toISOString(),
+          callType,
+          providerChain: chain.map(p => p.name),
+          finalProvider: provider.name,
+          finalModel: model,
+          latencyMs: Date.now() - startTime,
+          responseLength: 0,
+          qualityScore: -1,
+          fallbackUsed: provIdx > 0,
+          escalationUsed: false,
+          success: true,
+        });
+
+        return {
+          stream: response.body as any,
           provider: provider.name,
           model,
           cleanup: () => {},

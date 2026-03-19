@@ -82,6 +82,7 @@ Includes an AI agent network with:
 - Diane AI assistant for member support.
 - **Gemini CLI (v0.34.0)**: Installed globally (`npm install -g @google/gemini-cli@latest`). All agents have Gemini-powered tools: `gemini_deep_analysis`, `gemini_summarize`, `gemini_research`, `gemini_code_review`, `gemini_transform`. Service: `gemini-provider.ts`.
 - **NotebookLM Integration**: Source-grounded analysis tools powered by Gemini, replicating Google NotebookLM capabilities. Tools: `notebook_source_query` (source-cited Q&A), `notebook_study_guide` (study guides), `notebook_briefing_doc` (briefing documents), `notebook_multi_doc_synthesis` (multi-document synthesis), `notebook_audio_script` (podcast-style audio scripts). Automatically gathers sources from knowledge base, Google Drive, and research APIs. Service: `notebooklm-provider.ts`.
+- **OpenRouter Integration**: Universal AI fallback provider with 200+ models. Economy tier: DeepSeek V3, Llama 4 Maverick. Standard tier: Qwen 3.5 122B, Mistral Large. Premium tier: Grok 4 Fast. Provider chain: Abacus → OpenAI → Claude → Gemini → OpenRouter → Self-hosted. 13 agents routed through OpenRouter for cost optimization (HERMES, MUSE, NEXUS, ARACHNE, ARCHITECT, SERPENS, DIANE, PETE, SAM, PAT, MAX-MINERAL, ALLIO-SUPPORT). Streaming support included. Secret: `OPENROUTER_API_KEY`.
 
 ### Legal Division & Constitutional Law Framework
 - **Agents**: JURIS (Chief Legal AI), LEXICON (Contract Specialist), AEGIS (PMA Sovereignty Guardian), SCRIBE (Document Automation). All trained on 1st/14th Amendment constitutional law foundations.
@@ -103,7 +104,7 @@ Includes an AI agent network with:
 
 ## External Dependencies
 
-- **AI Services**: OpenAI, Anthropic, Google Gemini, HuggingFace
+- **AI Services**: OpenAI, Anthropic, Google Gemini, HuggingFace, OpenRouter (200+ models via single API)
 - **Payments**: Stripe (Checkout Sessions, webhooks)
 - **E-commerce**: WooCommerce (product sync)
 - **Database**: PostgreSQL
