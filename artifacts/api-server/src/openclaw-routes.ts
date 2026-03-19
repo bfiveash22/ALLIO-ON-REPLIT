@@ -280,7 +280,16 @@ export function registerOpenClawRoutes(app: Express): void {
       console.log(`[OpenClaw] Task created: ${task.id} from ${agent_id} (${task_type})`);
 
       forwardTaskToWebhook(agent_id, task_type || 'general', description, priority || 'normal')
-        .catch(() => {});
+        .then(ok => {
+          if (ok) {
+            console.log(`[OpenClaw] Task ${task.id} forwarded to webhook successfully`);
+          } else {
+            console.warn(`[OpenClaw] Task ${task.id} webhook forwarding failed after retries`);
+          }
+        })
+        .catch(err => {
+          console.error(`[OpenClaw] Task ${task.id} webhook forwarding error:`, err.message);
+        });
 
       res.status(201).json({
         message_id: task.id,
