@@ -400,6 +400,13 @@ function Router() {
           </AppLayout>
         </ProtectedRoute>
       )} />
+      <Route path="/resources/detox-protocols" component={() => (
+        <ProtectedRoute>
+          <AppLayout>
+            <DetoxProtocolsPage />
+          </AppLayout>
+        </ProtectedRoute>
+      )} />
       <Route path="/resources/compound-interactions" component={() => (
         <ProtectedRoute>
           <AppLayout>
