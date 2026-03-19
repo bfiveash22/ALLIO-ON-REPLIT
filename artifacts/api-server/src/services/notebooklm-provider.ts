@@ -26,13 +26,11 @@ async function gatherSources(topic: string, sourceTypes: string[] = ['knowledge'
     if (sourceTypes.includes('knowledge')) {
         promises.push(
             searchAllKnowledge(topic).then(results => {
-                if (results && Array.isArray(results)) {
-                    for (const r of results.slice(0, 5)) {
-                        sources.push({
-                            source: `Knowledge Base: ${r.title || r.source || 'Internal'}`,
-                            content: typeof r === 'string' ? r : (r.content || r.text || r.snippet || JSON.stringify(r)),
-                        });
-                    }
+                if (results && typeof results === 'string') {
+                    sources.push({
+                        source: 'Knowledge Base: Internal',
+                        content: results,
+                    });
                 }
             }).catch(() => {})
         );
@@ -44,8 +42,8 @@ async function gatherSources(topic: string, sourceTypes: string[] = ['knowledge'
                 if (results && Array.isArray(results)) {
                     for (const r of results.slice(0, 5)) {
                         sources.push({
-                            source: `Google Drive: ${r.name || r.title || 'Document'}`,
-                            content: r.snippet || r.content || r.name || '',
+                            source: `Google Drive: ${r.name || 'Document'}`,
+                            content: r.name || '',
                         });
                     }
                 }
