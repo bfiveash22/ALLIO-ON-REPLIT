@@ -68,6 +68,7 @@ export interface PatientProfile {
 
   rawTranscript?: string;
   intakeFormId?: number;
+  additionalProtocolNotes?: string;
 }
 
 export interface TimelineEvent {
