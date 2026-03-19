@@ -145,6 +145,8 @@ export async function flushPendingMessages(): Promise<{ processed: number; deliv
   let totalProcessed = 0;
   let totalDelivered = 0;
   let totalFailed = 0;
+  let iteration = 0;
+  const startTime = Date.now();
 
   console.log('[OpenClaw] Starting flush of pending messages...');
 
@@ -152,40 +154,64 @@ export async function flushPendingMessages(): Promise<{ processed: number; deliv
     .set({ status: 'pending' })
     .where(eq(openclawMessages.status, 'sending'));
 
-  const allPending = await db.select({ id: openclawMessages.id, fromAgent: openclawMessages.fromAgent, message: openclawMessages.message, priority: openclawMessages.priority })
-    .from(openclawMessages)
-    .where(
-      and(
-        eq(openclawMessages.status, 'pending'),
-        eq(openclawMessages.direction, 'outbound')
+  while (iteration < MAX_FLUSH_ITERATIONS) {
+    iteration++;
+
+    const batch = await db.select({ id: openclawMessages.id, fromAgent: openclawMessages.fromAgent, message: openclawMessages.message, priority: openclawMessages.priority })
+      .from(openclawMessages)
+      .where(
+        and(
+          eq(openclawMessages.status, 'pending'),
+          eq(openclawMessages.direction, 'outbound')
+        )
       )
-    );
+      .limit(FLUSH_BATCH_SIZE);
 
-  if (allPending.length === 0) {
-    console.log('[OpenClaw] Flush complete: 0 processed, 0 delivered, 0 failed');
-    return { processed: 0, delivered: 0, failed: 0 };
-  }
+    if (batch.length === 0) break;
 
-  console.log(`[OpenClaw] Flush: ${allPending.length} pending messages to process`);
+    let batchDelivered = 0;
+    let batchFailed = 0;
 
-  for (const msg of allPending) {
-    totalProcessed++;
-    const delivered = await forwardToWebhook(
-      msg.fromAgent,
-      msg.message,
-      (msg.priority as PriorityLevel) || 'normal'
-    );
+    for (const msg of batch) {
+      totalProcessed++;
+      const delivered = await forwardToWebhook(
+        msg.fromAgent,
+        msg.message,
+        (msg.priority as PriorityLevel) || 'normal'
+      );
 
-    if (delivered) {
-      await db.update(openclawMessages)
-        .set({ status: 'delivered', deliveredAt: new Date() })
-        .where(eq(openclawMessages.id, msg.id));
-      totalDelivered++;
-    } else {
-      totalFailed++;
+      if (delivered) {
+        await db.update(openclawMessages)
+          .set({ status: 'delivered', deliveredAt: new Date() })
+          .where(eq(openclawMessages.id, msg.id));
+        totalDelivered++;
+        batchDelivered++;
+      } else {
+        await db.update(openclawMessages)
+          .set({ status: 'pending' })
+          .where(eq(openclawMessages.id, msg.id));
+        totalFailed++;
+        batchFailed++;
+      }
     }
+
+    console.log(`[OpenClaw] Flush batch ${iteration}: ${batch.length} processed, ${batchDelivered} delivered, ${batchFailed} failed`);
+
+    if (batchFailed === batch.length) {
+      console.warn('[OpenClaw] Flush: entire batch failed — webhook may be down, stopping flush');
+      break;
+    }
+
+    if (batch.length < FLUSH_BATCH_SIZE) break;
+
+    await new Promise(r => setTimeout(r, 500));
   }
 
-  console.log(`[OpenClaw] Flush complete: ${totalProcessed} processed, ${totalDelivered} delivered, ${totalFailed} failed`);
+  if (iteration >= MAX_FLUSH_ITERATIONS) {
+    console.warn(`[OpenClaw] Flush hit iteration limit (${MAX_FLUSH_ITERATIONS}). Some messages may remain pending.`);
+  }
+
+  const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(`[OpenClaw] Flush complete in ${duration}s: ${totalProcessed} processed, ${totalDelivered} delivered, ${totalFailed} failed (${iteration} batches)`);
   return { processed: totalProcessed, delivered: totalDelivered, failed: totalFailed };
 }
