@@ -14,7 +14,7 @@ const openai = new OpenAI({
 const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
 
 interface AIModelConfig {
-  provider: 'openai' | 'claude' | 'huggingface' | 'gemini' | 'research';
+  provider: 'openai' | 'claude' | 'huggingface' | 'gemini' | 'research' | 'openrouter';
   model: string;
   specialty: string[];
 }
