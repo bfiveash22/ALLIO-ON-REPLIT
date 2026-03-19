@@ -1,6 +1,6 @@
 import { db } from '../db';
 import { openclawMessages, openclawTasks } from '@shared/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 type PriorityLevel = 'urgent' | 'high' | 'normal' | 'low';
 
@@ -145,58 +145,45 @@ export async function flushPendingMessages(): Promise<{ processed: number; deliv
   let totalProcessed = 0;
   let totalDelivered = 0;
   let totalFailed = 0;
-  let iteration = 0;
 
   console.log('[OpenClaw] Starting flush of pending messages...');
 
-  while (iteration < MAX_FLUSH_ITERATIONS) {
-    iteration++;
+  await db.update(openclawMessages)
+    .set({ status: 'pending' })
+    .where(eq(openclawMessages.status, 'sending'));
 
-    const batch = await db.select({ id: openclawMessages.id, fromAgent: openclawMessages.fromAgent, message: openclawMessages.message, priority: openclawMessages.priority })
-      .from(openclawMessages)
-      .where(
-        and(
-          eq(openclawMessages.status, 'pending'),
-          eq(openclawMessages.direction, 'outbound')
-        )
+  const allPending = await db.select({ id: openclawMessages.id, fromAgent: openclawMessages.fromAgent, message: openclawMessages.message, priority: openclawMessages.priority })
+    .from(openclawMessages)
+    .where(
+      and(
+        eq(openclawMessages.status, 'pending'),
+        eq(openclawMessages.direction, 'outbound')
       )
-      .limit(FLUSH_BATCH_SIZE);
+    );
 
-    if (batch.length === 0) break;
-
-    const batchIds = batch.map(m => m.id);
-    await db.update(openclawMessages)
-      .set({ status: 'sending' as string })
-      .where(inArray(openclawMessages.id, batchIds));
-
-    for (const msg of batch) {
-      totalProcessed++;
-      const delivered = await forwardToWebhook(
-        msg.fromAgent,
-        msg.message,
-        (msg.priority as PriorityLevel) || 'normal'
-      );
-
-      if (delivered) {
-        await db.update(openclawMessages)
-          .set({ status: 'delivered', deliveredAt: new Date() })
-          .where(eq(openclawMessages.id, msg.id));
-        totalDelivered++;
-      } else {
-        await db.update(openclawMessages)
-          .set({ status: 'failed' })
-          .where(eq(openclawMessages.id, msg.id));
-        totalFailed++;
-      }
-    }
-
-    if (batch.length < FLUSH_BATCH_SIZE) break;
-
-    await new Promise(r => setTimeout(r, 500));
+  if (allPending.length === 0) {
+    console.log('[OpenClaw] Flush complete: 0 processed, 0 delivered, 0 failed');
+    return { processed: 0, delivered: 0, failed: 0 };
   }
 
-  if (iteration >= MAX_FLUSH_ITERATIONS) {
-    console.warn(`[OpenClaw] Flush hit iteration limit (${MAX_FLUSH_ITERATIONS}). Some messages may remain pending.`);
+  console.log(`[OpenClaw] Flush: ${allPending.length} pending messages to process`);
+
+  for (const msg of allPending) {
+    totalProcessed++;
+    const delivered = await forwardToWebhook(
+      msg.fromAgent,
+      msg.message,
+      (msg.priority as PriorityLevel) || 'normal'
+    );
+
+    if (delivered) {
+      await db.update(openclawMessages)
+        .set({ status: 'delivered', deliveredAt: new Date() })
+        .where(eq(openclawMessages.id, msg.id));
+      totalDelivered++;
+    } else {
+      totalFailed++;
+    }
   }
 
   console.log(`[OpenClaw] Flush complete: ${totalProcessed} processed, ${totalDelivered} delivered, ${totalFailed} failed`);
