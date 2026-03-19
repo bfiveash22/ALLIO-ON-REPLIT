@@ -219,6 +219,24 @@ registerHealthRoutes(app);
   const { startFailoverScheduler } = await import("./services/clinic-node-service");
   startFailoverScheduler(60000);
 
+  import("./services/openclaw").then(({ flushPendingMessages }) => {
+    setTimeout(() => {
+      flushPendingMessages()
+        .then(result => {
+          if (result.processed > 0) {
+            log(`[startup] OpenClaw flush: ${result.delivered} delivered, ${result.failed} failed out of ${result.processed}`, 'openclaw');
+          } else {
+            log('[startup] OpenClaw: no pending messages to flush', 'openclaw');
+          }
+        })
+        .catch(err => {
+          log(`[startup] OpenClaw flush failed (non-fatal): ${err.message}`, 'openclaw');
+        });
+    }, 5000);
+  }).catch(err => {
+    log(`[startup] OpenClaw module load failed (non-fatal): ${err.message}`, 'openclaw');
+  });
+
   const { requireRole } = await import("./middleware/auth");
   app.get("/api/ai-health", requireRole("admin"), async (_req, res) => {
     try {

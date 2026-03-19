@@ -3,6 +3,7 @@ import { db } from './db';
 import { openclawMessages, openclawTasks } from '@shared/schema';
 import { eq, desc, sql, and, count, gte, lte } from 'drizzle-orm';
 import { requireAuth, requireRole } from './working-auth';
+import { flushPendingMessages, forwardTaskToWebhook } from './services/openclaw';
 
 function requireOpenClawAuth(req: Request, res: Response, next: NextFunction): void {
   const apiKey = process.env.OPENCLAW_API_KEY;
@@ -278,6 +279,9 @@ export function registerOpenClawRoutes(app: Express): void {
 
       console.log(`[OpenClaw] Task created: ${task.id} from ${agent_id} (${task_type})`);
 
+      forwardTaskToWebhook(agent_id, task_type || 'general', description, priority || 'normal')
+        .catch(() => {});
+
       res.status(201).json({
         message_id: task.id,
         status: 'pending',
@@ -344,6 +348,21 @@ export function registerOpenClawRoutes(app: Express): void {
     } catch (error: any) {
       console.error('[OpenClaw Response] POST error:', error);
       res.status(500).json({ error: error.message || 'Failed to update task' });
+    }
+  });
+
+  app.post('/api/openclaw/flush', requireAuth, requireRole('admin', 'trustee'), async (_req: Request, res: Response) => {
+    try {
+      console.log('[OpenClaw] Manual flush triggered by admin');
+      const result = await flushPendingMessages();
+      res.json({
+        success: true,
+        ...result,
+      });
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      console.error('[OpenClaw Flush] error:', errMsg);
+      res.status(500).json({ error: errMsg || 'Failed to flush messages' });
     }
   });
 
