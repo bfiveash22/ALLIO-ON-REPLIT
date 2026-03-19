@@ -47,11 +47,11 @@ Generate a complete, legally formatted Articles of Association document with the
 Format as a professional legal document with proper headers, numbered sections, and formal language. Include the date and location. Do NOT include any medical claims or treatment descriptions.`;
 
   const result = await callWithFallback(prompt, {
-    type: "document-generation" as any,
-    tier: "standard",
+    callType: "document-generation" as any,
+    startTier: "standard",
   });
 
-  return result.content;
+  return result.response;
 }
 
 export async function generateBylaws(data: ClinicPMAData): Promise<string> {
@@ -96,11 +96,11 @@ Generate complete Bylaws with these sections:
 Format as a professional legal document. Do NOT include medical claims.`;
 
   const result = await callWithFallback(prompt, {
-    type: "document-generation" as any,
-    tier: "standard",
+    callType: "document-generation" as any,
+    startTier: "standard",
   });
 
-  return result.content;
+  return result.response;
 }
 
 export function generateUnifiedMembershipContract(data: ClinicPMAData): string {
@@ -281,9 +281,9 @@ Question from a clinic owner/officer: ${question}
 Provide a clear, detailed answer:`;
 
   const result = await callWithFallback(prompt, {
-    type: "document-generation" as any,
-    tier: "economy",
+    callType: "document-generation" as any,
+    startTier: "economy",
   });
 
-  return result.content;
+  return result.response;
 }
