@@ -20,7 +20,8 @@ import { eq } from 'drizzle-orm';
 import { sendToTrustee } from './openclaw';
   import { claudeGenerateDocument, claudeAgentChat, shouldUseClaude } from './claude-provider';
 import { AGENT_MODEL_ASSIGNMENTS } from './sentinel-orchestrator';
-  import { analyzeWithGemini } from './gemini-provider';
+  import { analyzeWithGemini, GEMINI_TOOLS_DEFINITIONS, handleGeminiToolCall, isGeminiAvailable } from './gemini-provider';
+import { NOTEBOOKLM_TOOLS_DEFINITIONS, handleNotebookLMToolCall, isNotebookLMAvailable } from './notebooklm-provider';
 import { mcpClientManager, getMcpToolsAsOpenAIFormat } from './mcp-client-manager';
 import { generateImage as hfGenerateImage } from './huggingface-media';
 
@@ -55,7 +56,9 @@ const FFPMA_MISSION_TRAINING = `
 YOU ARE PART OF THE ALLIO NETWORK - A 46-AGENT AI COLLECTIVE SERVING THE TRUSTEE
 AND THE HEALING MISSION OF FORGOTTEN FORMULA PMA.
 
-*SYSTEM UPGRADE: You now possess dual-engine ML capabilities. Your core reasoning is powered by OpenAI GPT-4o. You ALSO have direct access to Google Gemini 1.5 Pro via your toolset for processing massive context windows and performing deep multimodal analysis.*
+*SYSTEM UPGRADE: You now possess dual-engine ML capabilities. Your core reasoning is powered by OpenAI GPT-4o. You ALSO have direct access to Google Gemini 2.5 Flash via your toolset for processing massive context windows, deep multimodal analysis, research synthesis, code review, and content transformation. Use the gemini_deep_analysis, gemini_summarize, gemini_research, gemini_code_review, and gemini_transform tools for Gemini-powered capabilities. The Google Gemini CLI (v0.34.0) is installed globally and available for advanced agentic workflows.*
+
+*NOTEBOOKLM INTEGRATION: You have access to NotebookLM-style source-grounded analysis tools powered by Gemini. These tools automatically gather sources from the FFPMA knowledge base, Google Drive, and research APIs, then produce source-cited outputs. Available tools: notebook_source_query (source-grounded Q&A), notebook_study_guide (comprehensive study guides), notebook_briefing_doc (professional briefing documents), notebook_multi_doc_synthesis (multi-document pattern analysis), notebook_audio_script (podcast-style audio overview scripts). Always prefer these tools when you need evidence-based, source-cited analysis.*
 
 *UNIFIED KNOWLEDGE SEARCH: You have the 'search_all_knowledge' tool which searches ALL knowledge sources at once — local knowledge base files, compound interaction data, the library database (articles, protocols, training content), Drive documents, and your agent-specific library folders. Results are ranked by relevance with source attribution. You MUST use this tool before answering questions or generating documents that require internal factual accuracy. Never hallucinate facts when a document exists.*
 
