@@ -110,6 +110,7 @@ app.use('/api/programs', readRateLimiter);
 app.use('/api/doctor', readRateLimiter);
 app.use('/api/settings', writeRateLimiter);
 app.use('/api/enrollment', writeRateLimiter);
+app.use('/api/pma-filing', writeRateLimiter);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -216,6 +217,8 @@ registerHealthRoutes(app);
   registerAutomationRoutes(app);
   const { registerClinicNodeRoutes } = await import("./routes/clinic-node-routes");
   registerClinicNodeRoutes(app);
+  const { registerPMAFilingRoutes } = await import("./routes/pma-filing-routes");
+  registerPMAFilingRoutes(app);
   const { startFailoverScheduler } = await import("./services/clinic-node-service");
   startFailoverScheduler(60000);
 

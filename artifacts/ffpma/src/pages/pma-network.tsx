@@ -27,7 +27,7 @@ import {
   CircleDot,
 } from "lucide-react";
 
-const PMA_EXTERNAL_URL = "https://ffpmaclinicpmacreation.replit.app";
+import PMAFilingManager from "@/components/pma-filing-manager";
 
 const tabs = [
   { id: "overview", label: "Network Overview", icon: Building2 },
@@ -94,14 +94,14 @@ const filingSteps = [
     title: "Access Your Clinic Portal",
     description:
       "Navigate to the PMA Filing Manager and log in with your clinic credentials. If you don't have an account yet, contact the FF PMA administration to get started.",
-    link: PMA_EXTERNAL_URL,
+    link: null,
   },
   {
     number: 2,
     title: "Enter Clinic Information",
     description:
       "Provide your clinic's legal name, physical address, contact information, and practice type. This information will be used to generate your Articles of Association.",
-    link: `${PMA_EXTERNAL_URL}/pma/new`,
+    link: null,
   },
   {
     number: 3,
@@ -136,7 +136,7 @@ const filingSteps = [
     title: "Complete Your Filing",
     description:
       "Upload your IRS CP 575 letter and completed Form 8832 (Entity Classification Election) to the filing manager. Once verified, your Affiliated Clinic Association will be officially registered in the FF PMA network.",
-    link: PMA_EXTERNAL_URL,
+    link: null,
   },
   {
     number: 8,
@@ -431,33 +431,19 @@ export default function PMANetworkPage() {
               <div className="flex gap-3">
                 <Button
                   className="bg-cyan-600 hover:bg-cyan-700 text-white"
-                  asChild
+                  onClick={() => setActiveTab("manager")}
                   data-testid="button-filing-manager"
                 >
-                  <a
-                    href={PMA_EXTERNAL_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    PMA Filing Manager
-                    <ExternalLink className="h-3 w-3 ml-2" />
-                  </a>
+                  <FileText className="h-4 w-4 mr-2" />
+                  PMA Filing Manager
                 </Button>
                 <Button
                   className="bg-amber-500 hover:bg-amber-600 text-black font-medium"
-                  asChild
+                  onClick={() => setActiveTab("manager")}
                   data-testid="button-create-division"
                 >
-                  <a
-                    href={`${PMA_EXTERNAL_URL}/pma/new`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Building2 className="h-4 w-4 mr-2" />
-                    Create New Affiliated Clinic PMA
-                    <ExternalLink className="h-3 w-3 ml-2" />
-                  </a>
+                  <Building2 className="h-4 w-4 mr-2" />
+                  Create New Affiliated Clinic PMA
                 </Button>
               </div>
             </div>
@@ -865,18 +851,11 @@ export default function PMANetworkPage() {
               </div>
               <Button
                 className="bg-amber-500 hover:bg-amber-600 text-black font-medium"
-                asChild
+                onClick={() => setActiveTab("manager")}
                 data-testid="button-start-filing"
               >
-                <a
-                  href={`${PMA_EXTERNAL_URL}/guide`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Start Filing Process
-                  <ExternalLink className="h-3 w-3 ml-2" />
-                </a>
+                <FileText className="h-4 w-4 mr-2" />
+                Start Filing Process
               </Button>
             </div>
 
@@ -932,47 +911,7 @@ export default function PMANetworkPage() {
 
         {activeTab === "manager" && (
           <div data-testid="panel-manager">
-            <Card className="bg-slate-900 border-slate-800 mb-4">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500/20">
-                      <Globe className="h-5 w-5 text-cyan-400" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-white">
-                        Interactive PMA Filing Manager
-                      </h2>
-                      <p className="text-sm text-slate-400">
-                        Create, manage, and track your Affiliated Clinic Association filings
-                        directly from this embedded portal.
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
-                    onClick={() =>
-                      window.open(PMA_EXTERNAL_URL, "_blank", "noopener,noreferrer")
-                    }
-                    data-testid="button-open-new-tab"
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Open in New Tab
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="rounded-lg overflow-hidden border border-slate-800">
-              <iframe
-                src={PMA_EXTERNAL_URL}
-                className="w-full border-0"
-                style={{ minHeight: "80vh" }}
-                title="PMA Filing Manager"
-                data-testid="iframe-filing-manager"
-              />
-            </div>
+            <PMAFilingManager />
           </div>
         )}
       </div>

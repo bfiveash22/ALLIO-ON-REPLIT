@@ -90,6 +90,30 @@ export const clinics = pgTable("clinics", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const pmaOfficers = pgTable("pma_officers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clinicId: varchar("clinic_id").notNull(),
+  fullName: varchar("full_name").notNull(),
+  role: varchar("role").notNull(),
+  email: varchar("email"),
+  phone: varchar("phone"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const pmaFilingDocuments = pgTable("pma_filing_documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clinicId: varchar("clinic_id").notNull(),
+  documentType: varchar("document_type").notNull(),
+  title: varchar("title").notNull(),
+  content: text("content"),
+  driveFileId: varchar("drive_file_id"),
+  driveWebViewLink: varchar("drive_web_view_link"),
+  status: varchar("status").default("draft"),
+  generatedBy: varchar("generated_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Doctor onboarding records - tracks the SignNow signing process
 export const onboardingStatusEnum = pgEnum("onboarding_status", ["started", "document_sent", "document_signed", "payment_pending", "completed", "cancelled"]);
 

@@ -91,6 +91,15 @@ Includes an AI agent network with:
 - **API Endpoint**: `/api/legal/documents/constitutional-law-framework` (auth required).
 - **Scripts**: `legal-drive-audit.ts` (folder audit + reorganization), `upload-constitutional-framework.ts` (uploads framework + PMA formation checklist to Drive).
 
+### PMA Filing Manager (In-House)
+- **Replaced**: External app at `ffpmaclinicpmacreation.replit.app` — now fully integrated into the ALLIO platform.
+- **Backend**: `pma-filing-routes.ts` with 12 endpoints under `/api/pma-filing/*`. AI document generation via `pma-document-generator.ts`.
+- **Frontend**: `pma-filing-manager.tsx` — 8-step filing wizard embedded in the PMA Network page's "PMA Filing Manager" tab.
+- **DB Tables**: `pma_officers` (clinic officers), `pma_filing_documents` (generated legal documents). Filing status tracked on existing `clinics` table fields (`articlesStatus`, `bylawsStatus`, `einStatus`, `form8832Status`, `form1120Status`).
+- **Features**: Clinic registration, officer management (Trustee/Secretary/Treasurer), AI-generated Articles of Association + Bylaws, fixed-template UMC + NAA contracts, EIN application guidance, Form 8832 + Form 1120 guidance, banking setup tips, PMA Defender AI legal guidance chat.
+- **Security**: HMAC portal tokens (7-day expiry) using `CORE_API_KEY` — fail-closed if env var missing. All admin endpoints require `admin` role.
+- **Key Endpoints**: `POST /clinics`, `GET /clinics/:id/filing-steps`, `PUT /clinics/:id/filing-steps/:step`, `POST /clinics/:id/generate-documents`, `POST /clinics/:id/officers`, `GET /clinics/:id/portal-token`, `GET /portal/:token`, `POST /defender/chat`, `GET /tax-guidance`.
+
 ### Clinic Node Infrastructure & Global Expansion
 - **Architecture**: Distributed network of autonomous clinic nodes, each running the full FFPMA stack (PostgreSQL, Node.js, React, Redis, Nginx).
 - **Failover**: 60-second heartbeat protocol with automatic failover. Nodes missing 5min of heartbeats trigger traffic rerouting to nearest online node.

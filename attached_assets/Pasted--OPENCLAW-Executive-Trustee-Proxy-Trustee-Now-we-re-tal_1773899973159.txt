@@ -1,0 +1,124 @@
+**OPENCLAW | Executive Trustee Proxy**
+
+---
+
+**Trustee,**
+
+**Now we're talking.**
+
+I've got full visibility on the PMA Filing Manager build. This is **solid infrastructure** — Michael Blake built something production-grade here.
+
+---
+
+## **INTEGRATION ASSESSMENT: COMPLETE**
+
+### **WHAT'S ALREADY BUILT (AND WORKING):**
+
+✅ **67 clinics registered** across 11 states  
+✅ **57 members onboarded**  
+✅ **AI-powered legal document generation** (Articles, Bylaws)  
+✅ **Fixed-template contracts** (UMC-2.0, NAA-1.0)  
+✅ **Tax compliance guidance** (EIN, Form 8832, Form 1120)  
+✅ **PMA Defender AI assistant** (real-time legal guidance)  
+✅ **HMAC-secured member portals** (no login needed for clinic owners)  
+✅ **Email automation** via Gmail API  
+✅ **File storage** via Google Cloud Storage  
+✅ **Security hardened** (rate limiting, Zod validation, SSN stripped server-side)
+
+**Tech Stack:**
+- Frontend: React + TypeScript + Tailwind
+- Backend: Express.js + PostgreSQL + Drizzle ORM
+- AI: OpenAI + Anthropic
+- Hosting: Replit (autoscale)
+
+---
+
+## **ALLIO INTEGRATION PATHWAYS**
+
+Here's how we connect this to the **ALLIO Healing Ecosystem**:
+
+### **IMMEDIATE ACTIONS (Phase 1):**
+
+**1. AGENT NETWORK HOOKUP**
+- **ATHENA** (Strategic Operations) → monitors clinic onboarding progress, member growth
+- **SENTINEL** (Legal/Compliance) → oversees document generation, constitutional compliance
+- **FORGE** (Infrastructure) → manages deployment, API gateway integration
+- **SPARK** (Innovation) → connects PMA Defender AI to broader ALLIO agent network
+
+**2. API INTEGRATION**
+Route key endpoints to relevant agents:
+- `GET /api/pmas` → **ATHENA** (clinic status dashboard)
+- `GET /api/pmas/:id/filing-steps` → **SENTINEL** (compliance tracking)
+- `GET /api/pmas/:id/members` → **ATHENA** (member growth analytics)
+- `GET /api/documents` → **SENTINEL** (legal document oversight)
+
+**3. TELEGRAM BRIDGE**
+- Direct clinic status updates to Trustee via **OPENCLAW**
+- Critical compliance alerts routed through **SENTINEL**
+- Member onboarding milestones reported by **ATHENA**
+
+---
+
+### **DEPLOYMENT OPTIONS (Choose One):**
+
+| Option | URL Structure | Integration Method |
+|--------|---------------|-------------------|
+| **Subdomain** | `pma.forgottenformula.com` | Standalone service, DNS pointed to Replit |
+| **Path-based** | `forgottenformula.com/pma/` | Reverse proxy through main domain |
+| **Iframe Embed** | Inside ALLIO dashboard | Embedded panel for Trustee oversight |
+
+**My recommendation: Subdomain** — cleanest separation, easiest to manage, professional appearance.
+
+---
+
+### **WHAT ALLIO NEEDS TO PROVIDE (When Ready):**
+
+| Item | Purpose | Priority |
+|------|---------|----------|
+| **SSO/OAuth** | Unified Trustee login across ALLIO platform | Medium (current auth works fine) |
+| **Custom domain** | Production URL (`pma.forgottenformula.com`) | High (branding consistency) |
+| **Shared email service** | Move off Gmail to ALLIO-controlled email | Low (Gmail API works) |
+| **Analytics integration** | Track events across ALLIO modules | Medium (visibility improvement) |
+
+---
+
+## **NEXT STEPS — ACTION PLAN:**
+
+**IMMEDIATE (This Week):**
+1. **FORGE** — Set up subdomain DNS (`pma.forgottenformula.com`)
+2. **ATHENA** — Begin pulling clinic/member data via API for dashboard
+3. **SENTINEL** — Review all generated legal docs for constitutional compliance
+4. **OPENCLAW** — Establish Telegram notification pipeline for critical events
+
+**SHORT-TERM (Next 2 Weeks):**
+5. **SPARK** — Integrate PMA Defender AI chat with broader ALLIO agent network
+6. **FORGE** — Implement API gateway for secure agent-to-PMA communication
+7. **ATHENA** — Build executive dashboard showing real-time clinic/member metrics
+
+**LONG-TERM (Next Month):**
+8. **SSO Integration** — Once ALLIO has central auth, swap `requireAuth` middleware
+9. **Email Migration** — Move to ALLIO-controlled email service if desired
+10. **Voice Interface** — Add voice capability to PMA Defender assistant
+
+---
+
+## **CRITICAL QUESTIONS FOR YOU, TRUSTEE:**
+
+1. **Domain preference?** Do you want `pma.forgottenformula.com` or something else?
+2. **Agent priority?** Which agents get API access first? (Recommend: ATHENA, SENTINEL, FORGE)
+3. **Telegram routing?** What types of events do you want pushed directly to you?
+4. **Dashboard visibility?** Do you want a unified executive view of all 67 clinics in one place?
+
+---
+
+**Trustee, this is ready to integrate NOW.**
+
+The foundation is rock-solid. We just need to wire it into the ALLIO network and give the agents visibility.
+
+**What's your call?** Which integration path do we take, and which agents get connected first?
+
+---
+
+*"Priority override: ENGAGED"*
+
+**Standing by for execution orders.**
