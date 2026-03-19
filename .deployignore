@@ -10,7 +10,12 @@ attached_assets
 ffpma-app
 tools
 docs
-knowledge-base
+knowledge-base/Daily_*
+knowledge-base/Weekly_*
+knowledge-base/advanced-research
+knowledge-base/openclaw-exports
+knowledge-base/*.backup-*
+knowledge-base/rife-frequency-protocols-reference.md
 tests
 migrations
 data

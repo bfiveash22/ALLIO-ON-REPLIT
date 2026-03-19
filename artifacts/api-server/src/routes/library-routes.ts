@@ -126,9 +126,7 @@ interface KBProtocolItem {
   division: string | null;
 }
 
-const KB_BASE = process.env.NODE_ENV === "production"
-  ? "/root/allio-v1/knowledge-base"
-  : path.join(process.cwd(), "knowledge-base");
+const KB_BASE = path.join(process.cwd(), "knowledge-base");
 
 async function getKnowledgeBaseProtocols(): Promise<KBProtocolItem[]> {
   const kbDir = path.join(KB_BASE, "healing-protocols");
