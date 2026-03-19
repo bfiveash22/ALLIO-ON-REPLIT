@@ -44,6 +44,8 @@ export function registerAdminRoutes(app: Express): void {
         storage.getPrograms(),
       ]);
 
+      const doctorCount = members.filter((m: any) => m.role === 'doctor').length;
+
       let productCount = 0;
       try {
         const result = await wooCommerceService.getProducts(1, 1);
@@ -54,7 +56,7 @@ export function registerAdminRoutes(app: Express): void {
 
       const responseData = {
         memberCount: members.length,
-        clinicCount: clinics.length,
+        clinicCount: doctorCount,
         productCount,
         programCount: programs.length,
         lastUpdated: new Date().toISOString(),
