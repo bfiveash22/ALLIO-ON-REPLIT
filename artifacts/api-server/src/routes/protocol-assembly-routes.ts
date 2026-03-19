@@ -862,7 +862,7 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       type MemberDef = { name: string; buildProfile: () => PatientProfile; filePrefix: string };
       const allMembers: MemberDef[] = [
         { name: 'Annette Gomer', buildProfile: buildAnnetteGomerProfile, filePrefix: 'Annette_Gomer' },
-        { name: 'John D.', buildProfile: buildCropDusterProfile, filePrefix: 'Crop_Duster_80M' },
+        { name: 'Michael Hanneman', buildProfile: buildCropDusterProfile, filePrefix: 'Michael_Hanneman' },
         { name: 'Margaret R.', buildProfile: buildBreastCancer75FProfile, filePrefix: 'Breast_Cancer_75F' },
       ];
 

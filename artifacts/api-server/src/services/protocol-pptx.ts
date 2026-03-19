@@ -83,6 +83,14 @@ const REFERENCE_SLIDE_ORDER = [
   "mito-pathway-map",
   "cannabinoid-ligand-map",
   "protocol-builder",
+  "ff-core-products",
+  "ecs-protocol",
+  "suppositories",
+  "liposomals",
+  "nebulization",
+  "topicals",
+  "nascent-iodine",
+  "exosomes",
   "daily-schedule",
   "program-timeline",
   "monitoring-followup",
@@ -174,6 +182,25 @@ export async function generateProtocolPPTX(
 
   if (protocol.ecsProtocol?.overview) {
     slideCannabinoidLigandMap(pres, protocol);
+  }
+
+  slideProductsFF(pres, protocol);
+
+  if (protocol.ecsProtocol?.overview) {
+    slideECS(pres, protocol);
+  }
+
+  if (protocol.suppositories?.length) {
+    slideSuppositories(pres, protocol);
+  }
+
+  slideLiposomals(pres, protocol);
+  slideNebulization(pres, protocol);
+  slideTopicals(pres, protocol);
+  slideNascentIodine(pres, protocol);
+
+  if (protocol.exosomes?.length) {
+    slideExosomes(pres, protocol);
   }
 
   slideProtocolBuilder(pres, protocol);
@@ -2039,34 +2066,54 @@ function slideProductsFF(pres: PptxPresentation, protocol: HealingProtocol) {
   const slide = addSanitizedSlide(pres);
   slide.background = { color: LIGHT_GRAY };
 
-  slide.addText("Therapeutics: Forgotten Formula Products", {
-    x: 0.5, y: 0.3, w: 9, h: 0.6,
-    fontSize: 24, fontFace: HEADER_FONT, color: PRIMARY, bold: true, margin: 0,
+  slide.addText("Forgotten Formula Core Product Line", {
+    x: 0.5, y: 0.15, w: 9, h: 0.5,
+    fontSize: 22, fontFace: HEADER_FONT, color: PRIMARY, bold: true, margin: 0,
+  });
+  slide.addText("Every protocol includes these foundational products — available at forgottenformula.com/shop", {
+    x: 0.5, y: 0.6, w: 9, h: 0.3,
+    fontSize: 10, fontFace: BODY_FONT, color: TEXT_MED,
   });
 
-  const allItems: string[] = [];
-  protocol.supplements?.forEach(s => allItems.push(`${s.name} — ${s.dose} (${s.timing})`));
-  protocol.detoxProtocols?.forEach(d => allItems.push(`${d.name} — ${d.method}`));
+  const findSupp = (pattern: RegExp) => protocol.supplements?.find(s => pattern.test(s.name));
+  const coreProducts = [
+    { name: "ECS Suppositories (Day + Night)", desc: "CBD/CBG/CBN/THC in cacao butter + DMSO — rectal delivery for 80%+ bioavailability", color: ACCENT },
+    { name: "Elixir for Everything", desc: "12 non-psychoactive cannabinoids sublingual tincture — full ECS activation", color: ACCENT },
+    { name: "Nascent Iodine", desc: findSupp(/iodine|lugol/i)?.dose || "1-3 drops titrating up — thyroid, breast tissue, whole-body repletion", color: TEAL },
+    { name: "MitoStac (Sirtuin Activator)", desc: "Resveratrol + Pterostilbene + Quercetin + Fisetin — mitochondrial longevity complex", color: TEAL },
+    { name: "90 Essential Nutrients", desc: "Dr. Wallach framework — complete mineral, vitamin, amino acid, and fatty acid repletion", color: SECONDARY },
+    { name: "Bio-Vitamin", desc: "Whole-food bioavailable vitamin complex", color: SECONDARY },
+    { name: "Mighty Blue", desc: "Antioxidant superfood blend", color: SECONDARY },
+    { name: "Reds + Greens", desc: "Organic phytonutrient powder — alkalizing and nutrient-dense", color: SECONDARY },
+    { name: "GlyNAC (Glycine + NAC)", desc: findSupp(/glynac|glycine.*nac/i)?.dose || "Glutathione precursors — master antioxidant production", color: TEAL },
+    { name: "Liposomal Glutathione", desc: "Enhanced absorption — detox, immune, and cellular defense", color: PRIMARY },
+    { name: "Liposomal Curcumin", desc: "Anti-inflammatory — NF-kB suppression, joint and tissue support", color: PRIMARY },
+    { name: "Liposomal Vitamin C", desc: "High-dose bioavailable C — immune, collagen, antioxidant", color: PRIMARY },
+    { name: "Liposomal D3/K2 + Astaxanthin", desc: "Bone, immune, and cardiovascular support", color: PRIMARY },
+    { name: "Kaneh Bosem (Ancient Healing Oil)", desc: "Topical CBD/CBG/DMSO blend — targeted transdermal delivery", color: ACCENT },
+  ];
 
-  slide.addShape(pres.shapes.RECTANGLE, {
-    x: 0.5, y: 1.0, w: 9, h: 4.2,
-    fill: { color: WHITE }, shadow: makeShadow(),
-  });
+  const col1 = coreProducts.slice(0, 7);
+  const col2 = coreProducts.slice(7);
 
-  const textItems = allItems.slice(0, 16).map((item, i) => ({
-    text: item,
-    options: { bullet: true, breakLine: i < Math.min(allItems.length, 16) - 1, fontSize: 11, color: TEXT_DARK },
-  }));
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0.3, y: 0.95, w: 4.55, h: 4.3, fill: { color: WHITE }, shadow: makeShadow() });
+  const col1Items = col1.map(p => ([
+    { text: `${p.name}`, options: { bold: true, color: p.color, fontSize: 10, breakLine: true } },
+    { text: p.desc, options: { color: TEXT_MED, fontSize: 8, breakLine: true } },
+    { text: "", options: { fontSize: 3, breakLine: true } },
+  ])).flat();
+  slide.addText(col1Items, { x: 0.5, y: 1.0, w: 4.15, h: 4.1, fontFace: BODY_FONT, valign: "top" });
 
-  if (textItems.length > 0) {
-    slide.addText(textItems, {
-      x: 0.7, y: 1.1, w: 8.6, h: 3.5,
-      fontFace: BODY_FONT, valign: "top",
-    });
-  }
+  slide.addShape(pres.shapes.RECTANGLE, { x: 5.15, y: 0.95, w: 4.55, h: 4.3, fill: { color: WHITE }, shadow: makeShadow() });
+  const col2Items = col2.map(p => ([
+    { text: `${p.name}`, options: { bold: true, color: p.color, fontSize: 10, breakLine: true } },
+    { text: p.desc, options: { color: TEXT_MED, fontSize: 8, breakLine: true } },
+    { text: "", options: { fontSize: 3, breakLine: true } },
+  ])).flat();
+  slide.addText(col2Items, { x: 5.35, y: 1.0, w: 4.15, h: 4.1, fontFace: BODY_FONT, valign: "top" });
 
   slide.addText(`Shop: ${FF_SHOP}`, {
-    x: 0.7, y: 4.7, w: 8.6, h: 0.4,
+    x: 0.5, y: 5.0, w: 9, h: 0.3,
     fontSize: 10, fontFace: BODY_FONT, color: ACCENT, hyperlink: { url: FF_SHOP },
   });
 }
@@ -2797,18 +2844,30 @@ function slideLiposomals(pres: PptxPresentation, protocol: HealingProtocol) {
     x: 0.5, y: 0.2, w: 9, h: 0.5,
     fontSize: 22, fontFace: HEADER_FONT, color: PRIMARY, bold: true,
   });
+  slide.addText("Enhanced bioavailability through phospholipid encapsulation — 5-10x absorption vs standard oral supplements", {
+    x: 0.5, y: 0.65, w: 9, h: 0.3,
+    fontSize: 10, fontFace: BODY_FONT, color: TEXT_MED,
+  });
 
-  const items = (protocol.liposomals || []).map(l => ([
+  const lipos = protocol.liposomals?.length ? protocol.liposomals : [
+    { name: "Liposomal Glutathione", dose: "500mg daily", timing: "Morning empty stomach", purpose: "Master antioxidant — detoxification, immune defense, cellular protection" },
+    { name: "Liposomal Curcumin", dose: "500-1000mg daily", timing: "With meals", purpose: "Anti-inflammatory — NF-kB suppression, joint support, tumor inhibition" },
+    { name: "Liposomal Vitamin C", dose: "1000-2000mg daily", timing: "Morning + afternoon", purpose: "Immune support, collagen synthesis, antioxidant defense" },
+    { name: "Liposomal D3/K2 + Astaxanthin", dose: "5000 IU D3 / 200mcg K2", timing: "With breakfast", purpose: "Bone, cardiovascular, and immune support — K2 directs calcium to bones" },
+  ];
+
+  const items = lipos.map(l => ([
     { text: `${l.name}`, options: { bold: true, color: PRIMARY, fontSize: 11, breakLine: false } },
     { text: ` — ${l.dose} (${l.timing})`, options: { color: TEXT_DARK, fontSize: 10, breakLine: true } },
     { text: `   Purpose: ${l.purpose}`, options: { color: TEXT_MED, fontSize: 9, breakLine: true } },
+    { text: "", options: { fontSize: 4, breakLine: true } },
   ])).flat();
 
   slide.addShape(pres.shapes.RECTANGLE, {
-    x: 0.5, y: 0.8, w: 9, h: 4.5,
+    x: 0.5, y: 1.0, w: 9, h: 4.3,
     fill: { color: WHITE }, shadow: makeShadow(),
   });
-  slide.addText(items, { x: 0.7, y: 0.9, w: 8.6, h: 4.3, fontFace: BODY_FONT, valign: "top" });
+  slide.addText(items, { x: 0.7, y: 1.1, w: 8.6, h: 4.1, fontFace: BODY_FONT, valign: "top" });
 }
 
 function slideNebulization(pres: PptxPresentation, protocol: HealingProtocol) {
@@ -2818,8 +2877,17 @@ function slideNebulization(pres: PptxPresentation, protocol: HealingProtocol) {
     x: 0.5, y: 0.2, w: 9, h: 0.5,
     fontSize: 22, fontFace: HEADER_FONT, color: PRIMARY, bold: true,
   });
+  slide.addText("Direct pulmonary delivery — bypasses GI tract for immediate systemic absorption", {
+    x: 0.5, y: 0.65, w: 9, h: 0.3,
+    fontSize: 10, fontFace: BODY_FONT, color: TEXT_MED,
+  });
 
-  const items = (protocol.nebulization || []).map(n => ([
+  const nebs = protocol.nebulization?.length ? protocol.nebulization : [
+    { name: "Nebulized Glutathione", solution: "200mg reduced glutathione in 3mL saline", dose: "200mg per session", frequency: "3x weekly", duration: "10-15 min", purpose: "Lung tissue repair, systemic detox, antioxidant delivery directly to respiratory epithelium" },
+    { name: "Nebulized Colloidal Silver", solution: "10ppm colloidal silver", dose: "3-5mL per session", frequency: "As needed / 2-3x weekly", duration: "10 min", purpose: "Antimicrobial — respiratory infections, mold exposure, sinus support" },
+  ];
+
+  const items = nebs.map(n => ([
     { text: n.name, options: { bold: true, color: PRIMARY, fontSize: 11, breakLine: true } },
     { text: `Solution: ${n.solution} | Dose: ${n.dose}`, options: { color: TEXT_DARK, fontSize: 10, breakLine: true } },
     { text: `Frequency: ${n.frequency} | Duration: ${n.duration}`, options: { color: TEXT_DARK, fontSize: 10, breakLine: true } },
@@ -2828,10 +2896,10 @@ function slideNebulization(pres: PptxPresentation, protocol: HealingProtocol) {
   ])).flat();
 
   slide.addShape(pres.shapes.RECTANGLE, {
-    x: 0.5, y: 0.8, w: 9, h: 4.5,
+    x: 0.5, y: 1.0, w: 9, h: 4.3,
     fill: { color: WHITE }, shadow: makeShadow(),
   });
-  slide.addText(items, { x: 0.7, y: 0.9, w: 8.6, h: 4.3, fontFace: BODY_FONT, valign: "top" });
+  slide.addText(items, { x: 0.7, y: 1.1, w: 8.6, h: 4.1, fontFace: BODY_FONT, valign: "top" });
 }
 
 function slideTopicals(pres: PptxPresentation, protocol: HealingProtocol) {
@@ -2842,7 +2910,12 @@ function slideTopicals(pres: PptxPresentation, protocol: HealingProtocol) {
     fontSize: 22, fontFace: HEADER_FONT, color: PRIMARY, bold: true,
   });
 
-  const items = (protocol.topicals || []).map(t => ([
+  const tops = protocol.topicals?.length ? protocol.topicals : [
+    { name: "Kaneh Bosem (Ancient Healing Oil)", form: "Topical oil", application: "Apply to affected areas, lymph nodes, or tumor sites — massage into skin 2-3x daily", frequency: "2-3x daily", purpose: "CBD/CBG/DMSO transdermal delivery — anti-inflammatory, pain relief, targeted cannabinoid therapy" },
+    { name: "DMSO Cream with Magnesium", form: "Cream", application: "Apply to joints, muscles, or areas of inflammation", frequency: "1-2x daily", purpose: "Transdermal magnesium delivery + DMSO carrier for deep tissue penetration" },
+  ];
+
+  const items = tops.map(t => ([
     { text: `${t.name} (${t.form})`, options: { bold: true, color: PRIMARY, fontSize: 11, breakLine: true } },
     { text: `Application: ${t.application} | Frequency: ${t.frequency}`, options: { color: TEXT_DARK, fontSize: 10, breakLine: true } },
     { text: `Purpose: ${t.purpose}`, options: { color: TEXT_MED, fontSize: 9, breakLine: true } },
@@ -2854,6 +2927,56 @@ function slideTopicals(pres: PptxPresentation, protocol: HealingProtocol) {
     fill: { color: WHITE }, shadow: makeShadow(),
   });
   slide.addText(items, { x: 0.7, y: 0.9, w: 8.6, h: 4.3, fontFace: BODY_FONT, valign: "top" });
+}
+
+function slideNascentIodine(pres: PptxPresentation, protocol: HealingProtocol) {
+  const slide = addSanitizedSlide(pres);
+  slide.background = { color: LIGHT_GRAY };
+  slide.addText("Nascent Iodine Protocol", {
+    x: 0.5, y: 0.2, w: 9, h: 0.5,
+    fontSize: 22, fontFace: HEADER_FONT, color: PRIMARY, bold: true,
+  });
+
+  slide.addText("Thyroid, breast tissue, and whole-body iodine repletion — the most universally deficient mineral in modern populations", {
+    x: 0.5, y: 0.7, w: 9, h: 0.4,
+    fontSize: 10, fontFace: BODY_FONT, color: TEXT_MED,
+  });
+
+  const iodineFromSupps = protocol.supplements?.find(s => /iodine|lugol/i.test(s.name));
+  const seleniumFromSupps = protocol.supplements?.find(s => /selenium/i.test(s.name));
+
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0.3, y: 1.2, w: 4.5, h: 2.8, fill: { color: WHITE }, shadow: makeShadow() });
+  slide.addText([
+    { text: "NASCENT IODINE", options: { bold: true, color: PRIMARY, fontSize: 14, breakLine: true } },
+    { text: "", options: { fontSize: 4, breakLine: true } },
+    { text: `Product: ${iodineFromSupps?.name || "Nascent Iodine (Detoxified Form)"}`, options: { fontSize: 11, color: TEXT_DARK, breakLine: true } },
+    { text: `Starting Dose: ${iodineFromSupps?.dose || "1-3 drops in water"}`, options: { fontSize: 11, color: TEXT_DARK, breakLine: true } },
+    { text: `Titration: Increase by 1 drop every 3-5 days`, options: { fontSize: 10, color: TEXT_DARK, breakLine: true } },
+    { text: `Target: 12-50mg daily (condition-dependent)`, options: { fontSize: 10, color: TEXT_DARK, breakLine: true } },
+    { text: `Timing: ${iodineFromSupps?.timing || "Morning on empty stomach"}`, options: { fontSize: 10, color: TEXT_DARK, breakLine: true } },
+    { text: "", options: { fontSize: 4, breakLine: true } },
+    { text: "Why Nascent: Atomic form (I\u00B2) is immediately bioavailable — no conversion needed by thyroid peroxidase enzyme", options: { fontSize: 9, color: TEXT_MED, breakLine: true } },
+  ], { x: 0.5, y: 1.3, w: 4.1, h: 2.6, fontFace: BODY_FONT, valign: "top" });
+
+  slide.addShape(pres.shapes.RECTANGLE, { x: 5.2, y: 1.2, w: 4.5, h: 2.8, fill: { color: WHITE }, shadow: makeShadow() });
+  slide.addText([
+    { text: "SELENIUM COMPANION", options: { bold: true, color: SECONDARY, fontSize: 14, breakLine: true } },
+    { text: "", options: { fontSize: 4, breakLine: true } },
+    { text: `Product: ${seleniumFromSupps?.name || "Selenium (Selenomethionine)"}`, options: { fontSize: 11, color: TEXT_DARK, breakLine: true } },
+    { text: `Dose: ${seleniumFromSupps?.dose || "200-400mcg daily"}`, options: { fontSize: 11, color: TEXT_DARK, breakLine: true } },
+    { text: `Timing: ${seleniumFromSupps?.timing || "Take WITH iodine"}`, options: { fontSize: 10, color: TEXT_DARK, breakLine: true } },
+    { text: "", options: { fontSize: 4, breakLine: true } },
+    { text: "CRITICAL: Always pair iodine with selenium — selenium activates glutathione peroxidase (GPx) which neutralizes H\u2082O\u2082 generated during iodine uptake by thyroid", options: { fontSize: 9, color: TEXT_MED, breakLine: true } },
+    { text: "", options: { fontSize: 4, breakLine: true } },
+    { text: "Also supports: Thyroid hormone T4→T3 conversion, heavy metal chelation, immune modulation", options: { fontSize: 9, color: TEXT_MED, breakLine: true } },
+  ], { x: 5.4, y: 1.3, w: 4.1, h: 2.6, fontFace: BODY_FONT, valign: "top" });
+
+  slide.addShape(pres.shapes.RECTANGLE, { x: 0.3, y: 4.2, w: 9.4, h: 1.1, fill: { color: WHITE }, shadow: makeShadow() });
+  slide.addText([
+    { text: "IODINE LOADING PROTOCOL", options: { bold: true, color: PRIMARY, fontSize: 11, breakLine: true } },
+    { text: "Week 1-2: 1-3 drops nascent iodine AM  |  Week 3-4: 5-7 drops  |  Week 5+: Titrate to therapeutic dose per labs", options: { fontSize: 10, color: TEXT_DARK, breakLine: true } },
+    { text: "Monitor: 24-hour iodine loading test (urinary iodine) every 90 days  |  TSH, Free T3/T4 at baseline and 6 weeks", options: { fontSize: 9, color: TEXT_MED, breakLine: true } },
+  ], { x: 0.5, y: 4.3, w: 9.0, h: 0.9, fontFace: BODY_FONT, valign: "top" });
 }
 
 function slideExosomes(pres: PptxPresentation, protocol: HealingProtocol) {

@@ -145,7 +145,7 @@ export function buildAnnetteGomerProfile(): PatientProfile {
 
 export function buildCropDusterProfile(): PatientProfile {
   return {
-    name: "John D.",
+    name: "Michael Hanneman",
     age: 80,
     gender: "male",
     location: "Rural United States",
@@ -300,6 +300,15 @@ export function buildCropDusterProfile(): PatientProfile {
       "Reduce systemic inflammation from toxin burden",
       "Improve quality of life and functional capacity at 80",
     ],
+
+    additionalProtocolNotes: `PEPTIDE & BIOREGULATOR PROTOCOL (from Trustee assessment):
+RENAL SUPPORT: Pancragen (10mg SC daily x20 days, repeat Q3-6mo) + Kidney-Specific Peptides (10mg SC daily x10-20 days).
+DETOX/OXIDATIVE STRESS: SS-31/Elamipretide (0.5-1.0mg/kg SC daily x4-6 weeks — mitochondrial targeting), Epithalon (10mg SC daily x10 days Q6mo — telomerase activation), Liver-Specific Peptides for detox pathway enhancement.
+INFLAMMATION/IMMUNE: Thymosin Alpha-1 (1.6-3.2mg SC 2-3x weekly x4-12 weeks), BPC-157 (500-1000mcg SC daily x4-6 weeks), LL-37 (200-400mcg SC daily x4-8 weeks — antimicrobial/immune modulation).
+MITOCHONDRIAL/CELLULAR: MOTS-C (10mg SC 2-3x weekly x4-6 weeks), Humanin (1-2mg SC daily x10-30 days).
+CARDIOVASCULAR/METABOLIC: CJC-1295/Ipamorelin blend (200-300mcg each SC daily before bed x8-12 weeks).
+MONITORING: Renal function (creatinine, BUN, GFR) every 2 weeks. CRP/ESR for inflammation. Oxidative stress markers. WBC/immune markers.
+NOTE: All dosing must be kidney-adjusted. Go slow with chelation.`,
   };
 }
 
