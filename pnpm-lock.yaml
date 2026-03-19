@@ -278,6 +278,9 @@ importers:
       jsdom:
         specifier: ^28.1.0
         version: 28.1.0
+      jszip:
+        specifier: ^3.10.1
+        version: 3.10.1
       mammoth:
         specifier: ^1.12.0
         version: 1.12.0
@@ -369,6 +372,9 @@ importers:
       '@types/fluent-ffmpeg':
         specifier: ^2.1.28
         version: 2.1.28
+      '@types/jszip':
+        specifier: ^3.4.1
+        version: 3.4.1
       '@types/memoizee':
         specifier: ^0.4.12
         version: 0.4.12
@@ -2572,6 +2578,10 @@ packages:
 
   '@types/jsdom@28.0.0':
     resolution: {integrity: sha512-A8TBQQC/xAOojy9kM8E46cqT00sF0h7dWjV8t8BJhUi2rG6JRh7XXQo/oLoENuZIQEpXsxLccLCnknyQd7qssQ==}
+
+  '@types/jszip@3.4.1':
+    resolution: {integrity: sha512-TezXjmf3lj+zQ651r6hPqvSScqBLvyPI9FxdXBqpEwBijNGQ2NXpaFW/7joGzveYkKQUil7iiDHLo6LV71Pc0A==}
+    deprecated: This is a stub types definition. jszip provides its own type definitions, so you do not need this installed.
 
   '@types/memoizee@0.4.12':
     resolution: {integrity: sha512-EdtpwNYNhe3kZ+4TlXj/++pvBoU0KdrAICMzgI7vjWgu9sIvvUhu9XR8Ks4L6Wh3sxpZ22wkZR7yCLAqUjnZuQ==}
@@ -7640,6 +7650,10 @@ snapshots:
       '@types/tough-cookie': 4.0.5
       parse5: 7.3.0
       undici-types: 7.24.3
+
+  '@types/jszip@3.4.1':
+    dependencies:
+      jszip: 3.10.1
 
   '@types/memoizee@0.4.12': {}
 

@@ -629,12 +629,12 @@ export async function rebuildKathrynSmithProtocol(): Promise<{
   let pdfUrl = "";
   let driveLinks: { full?: string; daily?: string; peptide?: string; pptx?: string; fullFileId?: string; dailyFileId?: string; peptideFileId?: string; pptxFileId?: string } = {};
   try {
-    const { generateProtocolPPTX } = await import("./protocol-pptx");
+    const { generateProtocolPPTXFromTemplate } = await import("./protocol-pptx-template");
     [pdfBuffer, dailyPdfBuffer, peptidePdfBuffer, pptxBuffer] = await Promise.all([
       generateProtocolPDFBuffer(protocol, profile, citations),
       generateDailySchedulePDFBuffer(protocol, profile),
       generatePeptideSchedulePDFBuffer(protocol, profile),
-      generateProtocolPPTX(protocol, profile),
+      generateProtocolPPTXFromTemplate(protocol, profile),
     ]);
     const dateStr = protocol.generatedDate || new Date().toISOString().split("T")[0];
     pdfUrl = persistPDF(pdfBuffer, protocol.patientName, dateStr);

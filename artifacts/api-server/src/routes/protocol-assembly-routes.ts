@@ -857,7 +857,7 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
         buildCropDusterProfile,
         buildBreastCancer75FProfile,
       } = await import('../services/backlog-member-protocols');
-      const { generateProtocolPPTX } = await import('../services/protocol-pptx');
+      const { generateProtocolPPTXFromTemplate } = await import('../services/protocol-pptx-template');
 
       type MemberDef = { name: string; buildProfile: () => PatientProfile; filePrefix: string };
       const allMembers: MemberDef[] = [
@@ -915,7 +915,7 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
             fs.writeFileSync(path.join(outDir, `${t.filePrefix}_Peptide_Schedule.pdf`), peptidePdf);
             console.log(`[Batch Generate] 3 PDFs written for ${t.name}`);
 
-            const pptxBuf = await generateProtocolPPTX(protocol, profile);
+            const pptxBuf = await generateProtocolPPTXFromTemplate(protocol, profile);
             fs.writeFileSync(path.join(outDir, `${t.filePrefix}_Protocol_Presentation.pptx`), pptxBuf);
             console.log(`[Batch Generate] PPTX written for ${t.name} (${(pptxBuf.length / 1024).toFixed(0)} KB)`);
 

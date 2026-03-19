@@ -19,14 +19,16 @@ import {
   Download,
   ExternalLink,
   FolderOpen,
+  RefreshCw,
+  HardDrive,
 } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { LibraryItem } from "@shared/schema";
 
 interface ExtendedLibraryItem extends LibraryItem {
-  webViewLink?: string;
-  webContentLink?: string;
-  mimeType?: string;
-  fileSize?: string;
+  webViewLink?: string | null;
+  webContentLink?: string | null;
+  mimeType?: string | null;
   isDriveDocument?: boolean;
 }
 
@@ -52,13 +54,32 @@ function formatDate(date: Date | string | null) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+function formatCategoryName(slug: string): string {
+  return slug
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export default function LibraryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
+  const queryClient = useQueryClient();
+
   const { data: libraryItems = [], isLoading } = useQuery<ExtendedLibraryItem[]>({
     queryKey: ["/api/library"],
+  });
+
+  const syncMutation = useMutation({
+    mutationFn: async () => {
+      const resp = await fetch("/api/library/sync-drive", { method: "POST", credentials: "include" });
+      if (!resp.ok) throw new Error("Sync failed");
+      return resp.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/library"] });
+    },
   });
 
   const filteredItems = libraryItems.filter((item) => {
@@ -77,14 +98,37 @@ export default function LibraryPage() {
   return (
     <main className="flex-1 overflow-auto">
       <div className="container mx-auto px-4 py-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight mb-2" data-testid="text-page-title">
-            Library
-          </h1>
-          <p className="text-muted-foreground">
-            Browse our collection of protocols, training materials, and educational content
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight mb-2" data-testid="text-page-title">
+              Library
+            </h1>
+            <p className="text-muted-foreground">
+              Browse our collection of books, protocols, and educational resources
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => syncMutation.mutate()}
+            disabled={syncMutation.isPending}
+            data-testid="button-sync-drive"
+          >
+            <RefreshCw className={`h-4 w-4 mr-1 ${syncMutation.isPending ? "animate-spin" : ""}`} />
+            {syncMutation.isPending ? "Syncing..." : "Sync Drive"}
+          </Button>
         </div>
+
+        {syncMutation.isSuccess && (
+          <div className="mb-4 p-3 rounded-md bg-green-50 dark:bg-green-950 text-green-800 dark:text-green-200 text-sm">
+            {(syncMutation.data as any)?.message}
+          </div>
+        )}
+        {syncMutation.isError && (
+          <div className="mb-4 p-3 rounded-md bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-200 text-sm">
+            Sync failed. Please try again.
+          </div>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
@@ -142,7 +186,7 @@ export default function LibraryPage() {
                 onClick={() => setSelectedCategory(cat)}
                 data-testid={`button-category-${cat.toLowerCase().replace(/\s+/g, "-")}`}
               >
-                {cat}
+                {formatCategoryName(cat)}
               </Button>
             ))}
           </div>
@@ -169,7 +213,7 @@ export default function LibraryPage() {
             <p className="text-muted-foreground">
               {searchTerm || selectedType
                 ? "Try adjusting your search or filters"
-                : "Library content will appear here once synced from WordPress"}
+                : "Click 'Sync Drive' to import your Google Drive Library"}
             </p>
           </div>
         ) : (
@@ -216,7 +260,7 @@ export default function LibraryPage() {
                       {item.categorySlug && (
                         <span className="flex items-center gap-1">
                           <FolderOpen className="h-3 w-3" />
-                          {item.categorySlug}
+                          {formatCategoryName(item.categorySlug)}
                         </span>
                       )}
                       {item.createdAt && (
@@ -233,23 +277,23 @@ export default function LibraryPage() {
                       )}
                     </div>
                     {item.isDriveDocument ? (
-                      <div className="flex gap-2">
-                        {item.webViewLink && (
-                          <Button variant="outline" className="flex-1" asChild>
-                            <a href={item.webViewLink} target="_blank" rel="noopener noreferrer" data-testid={`link-view-${item.id}`}>
-                              <ExternalLink className="h-4 w-4 mr-1" />
-                              View
-                            </a>
-                          </Button>
+                      <div className="space-y-2">
+                        {item.fileSize && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <HardDrive className="h-3 w-3" />
+                            {item.fileSize}
+                          </div>
                         )}
-                        {item.webContentLink && (
-                          <Button variant="outline" className="flex-1" asChild>
-                            <a href={item.webContentLink} target="_blank" rel="noopener noreferrer" data-testid={`link-download-${item.id}`}>
-                              <Download className="h-4 w-4 mr-1" />
-                              Download
-                            </a>
-                          </Button>
-                        )}
+                        <div className="flex gap-2">
+                          {item.webViewLink && (
+                            <Button variant="outline" className="flex-1" asChild>
+                              <a href={item.webViewLink} target="_blank" rel="noopener noreferrer" data-testid={`link-view-${item.id}`}>
+                                <ExternalLink className="h-4 w-4 mr-1" />
+                                Open
+                              </a>
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     ) : (
                       <Button variant="outline" className="w-full" asChild>
