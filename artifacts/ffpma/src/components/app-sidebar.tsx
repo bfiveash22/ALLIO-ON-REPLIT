@@ -142,6 +142,7 @@ export function AppSidebar({ userRole = "member" }: AppSidebarProps) {
   const getRoleBadgeVariant = (role: UserRole) => {
     switch (role) {
       case "admin":
+      case "trustee":
         return "destructive";
       case "doctor":
       case "clinic":
@@ -155,6 +156,8 @@ export function AppSidebar({ userRole = "member" }: AppSidebarProps) {
     switch (role) {
       case "admin":
         return "Admin";
+      case "trustee":
+        return "Trustee";
       case "doctor":
         return "Doctor";
       case "clinic":
@@ -260,7 +263,7 @@ export function AppSidebar({ userRole = "member" }: AppSidebarProps) {
           </>
         )}
 
-        {(userRole === "doctor" || userRole === "clinic") && (
+        {(userRole === "doctor" || userRole === "clinic" || userRole === "admin" || userRole === "trustee") && (
           <>
             <SidebarSeparator className="bg-white/5 my-2" />
             <SidebarGroup>
@@ -287,7 +290,7 @@ export function AppSidebar({ userRole = "member" }: AppSidebarProps) {
           </>
         )}
 
-        {userRole === "admin" && (
+        {(userRole === "admin" || userRole === "trustee") && (
           <>
             <SidebarSeparator className="bg-white/5 my-2" />
             <SidebarGroup>
