@@ -2,12 +2,12 @@ import type { Express, Request, Response } from "express";
 import { requireAuth, requireRole } from "../working-auth";
 import { storage } from "../storage";
 import { db } from "../db";
-import { eq } from "drizzle-orm";
+import { eq, sql, count } from "drizzle-orm";
 import { lockManager } from "../services/agent-locks";
 import { signNowService } from "../services/signnow";
 import { sendEmail } from "../services/gmail";
 import { submitIntakeForm } from "../services/intake";
-import { intakeForms } from "@shared/schema";
+import { intakeForms, products, categories, orders, memberProfiles, contracts, chatRooms, chatMessages, chatParticipants } from "@shared/schema";
 import { fetchCatalogContent, searchCatalog, getCatalogSections, getProductInfo } from "../services/catalog-service";
 import { indexAllMarketingAssets, searchAssets, checkExistingAsset, getAssetStats } from "../services/asset-catalog";
 import { connectSourceMaterials, autoConnectByKeywordMatch } from "../seeds/connect-source-materials-seed";
@@ -649,6 +649,120 @@ export function registerMiscRoutes(app: Express): void {
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/products", async (_req: Request, res: Response) => {
+    try {
+      const allProducts = await db.select().from(products).where(eq(products.isActive, true));
+      res.json(allProducts);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: msg });
+    }
+  });
+
+  app.get("/api/categories", async (_req: Request, res: Response) => {
+    try {
+      const allCategories = await db.select().from(categories);
+      res.json(allCategories);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: msg });
+    }
+  });
+
+  app.get("/api/orders", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req.user as { id: string })?.id;
+      if (!userId) return res.status(401).json({ error: "Authentication required" });
+      const userOrders = await db.select().from(orders).where(eq(orders.userId, userId));
+      res.json(userOrders);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: msg });
+    }
+  });
+
+  app.get("/api/admin/members", requireRole("admin", "trustee"), async (_req: Request, res: Response) => {
+    try {
+      const members = await storage.getAllMembers();
+      res.json(members);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: msg });
+    }
+  });
+
+  app.get("/api/admin/member-stats", requireRole("admin", "trustee"), async (_req: Request, res: Response) => {
+    try {
+      const members = await storage.getAllMembers();
+      const byRole: Record<string, number> = {};
+      const byWpRole: Record<string, number> = {};
+      for (const m of members) {
+        const role = (m as { role?: string }).role || "member";
+        byRole[role] = (byRole[role] || 0) + 1;
+        const wpRoles = (m as { wpRoles?: string[] }).wpRoles || [];
+        for (const wr of wpRoles) {
+          byWpRole[wr] = (byWpRole[wr] || 0) + 1;
+        }
+      }
+      res.json({ total: members.length, byRole, byWpRole });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: msg });
+    }
+  });
+
+  app.get("/api/admin/contracts", requireRole("admin", "trustee"), async (_req: Request, res: Response) => {
+    try {
+      const allContracts = await db.select().from(contracts);
+      res.json(allContracts);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: msg });
+    }
+  });
+
+  app.get("/api/chat/rooms", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req.user as { id: string })?.id;
+      if (!userId) return res.status(401).json({ error: "Authentication required" });
+      const rooms = await db.select().from(chatRooms);
+      res.json(rooms);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: msg });
+    }
+  });
+
+  app.get("/api/chat/rooms/:roomId/messages", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { roomId } = req.params;
+      const msgs = await db.select().from(chatMessages).where(eq(chatMessages.roomId, roomId));
+      res.json(msgs);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: msg });
+    }
+  });
+
+  app.post("/api/chat/rooms/:roomId/messages", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { roomId } = req.params;
+      const { content } = req.body;
+      const userId = (req.user as { id: string })?.id;
+      if (!userId) return res.status(401).json({ error: "Authentication required" });
+      if (!content) return res.status(400).json({ error: "Message content required" });
+      const [newMsg] = await db.insert(chatMessages).values({
+        roomId,
+        userId,
+        content,
+      }).returning();
+      res.json(newMsg);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: msg });
     }
   });
 }

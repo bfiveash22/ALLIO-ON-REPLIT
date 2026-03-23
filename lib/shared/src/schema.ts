@@ -7,7 +7,11 @@ import { z } from "zod";
 export * from "./models/auth";
 import { users } from "./models/auth";
 
-// Re-export chat models
+// Re-export legacy chat models (chat_threads + messages)
+// DEPRECATED: Use chatRooms/chatMessages for member messaging,
+// dianeConversations/dianeMessages for Diane AI, or
+// supportConversations/supportMessages for support agents.
+// Retained for backward compatibility with Global Agent Chat.
 export * from "./models/chat";
 
 export * from "./schema/intake";

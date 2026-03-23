@@ -82,9 +82,12 @@ A marketing studio feature enabling video generation:
 - **Certification Course**: A 17-module LBA Practitioner Certification course with quizzes and a 100-question final exam.
 - **Achievement Badges**: Awards badges upon completion, leading to "LBA Practitioner Certified" status.
 
+### Completion Verification Rule (Task #119)
+All tasks must pass `.agents/rules/completion-verification.md` before marking complete. Enforced in `.alliorules.md` Section 5 and automated via `scripts/post-merge.sh`. Full audit report: `.agents/audit/task-119-ecosystem-audit.md`.
+
 ### Agent Network
 Includes an AI agent network with:
-- 51 backend services.
+- 47 registered agents across multiple divisions.
 - An agent scheduler for automated tasks.
 - A Sentinel monitoring system.
 - Diane AI assistant for member support.

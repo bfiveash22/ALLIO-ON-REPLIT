@@ -1,0 +1,21 @@
+**Task #119: Full Ecosystem Audit, Fix & Completion Verification Rule**
+
+The Trustee has mandated that we eliminate all half-implemented stubs, broken API endpoints, and silently failing routes. Another agent has already rebuilt the [agent-executor.ts](cci:7://file:///c:/Users/adminstrators1/Allio%20Antigravity%20work%202026/allioffpma.com/server/services/agent-executor.ts:0:0-0:0) engine, so DO NOT modify [server/services/agent-executor.ts](cci:7://file:///c:/Users/adminstrators1/Allio%20Antigravity%20work%202026/allioffpma.com/server/services/agent-executor.ts:0:0-0:0). Your focus is purely on the UI, API stability, and database schemas.
+
+Please execute the following three phases systematically:
+
+**Phase 1: Audit & Document**
+- Manually run `curl` against all endpoints in `admin-routes.ts`, `member-routes.ts`, `doctor-routes.ts`, etc., to identify 500s or placeholder responses.
+- Audit the database schema in `schema.ts`. Identify conflicts like duplicate chat systems (e.g., `chat_threads` vs. `chatRooms`) and resolve the Drive columns on `library_items` without data loss.
+
+**Phase 2: Fix All Broken Features**
+- Fix any pages in `src/App.tsx` and related components that render blank or throw missing import errors. Add React error boundaries to everything.
+- Fix all API routes generating 500s. Remove all "stubs" and replace them with properly handled try/catch blocks.
+- Fix the WordPress sync error (400 Bad Request on library content page 2) and MCP server-fetch NPM package errors.
+
+**Phase 3: Establish Completion Verification Rule**
+- Create `.agents/rules/completion-verification.md` with a strict checklist requiring visual verification, API `curl` tests, and a zero-TypeScript-error state before *any* future task can be marked complete.
+- Update `.alliorules.md` to enforce this rule system-wide.
+- Hook this checklist into [scripts/post-merge.sh](cci:7://file:///c:/Users/adminstrators1/Allio%20Antigravity%20work%202026/allioffpma.com/scripts/post-merge.sh:0:0-0:0).
+
+Please begin Phase 1 now and report your findings before moving to Phase 2.
