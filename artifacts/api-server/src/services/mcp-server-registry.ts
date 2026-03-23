@@ -51,7 +51,7 @@ const mcpServerRegistry: McpServerConfig[] = [
     name: 'Web Fetch MCP Server',
     description: 'Fetch and extract content from web URLs. Useful for retrieving documentation, web pages, and API responses.',
     transport: 'stdio',
-    enabled: false,
+    enabled: true,
     allowedDivisions: ['engineering', 'science', 'executive'],
     stdio: {
       command: 'npx',
