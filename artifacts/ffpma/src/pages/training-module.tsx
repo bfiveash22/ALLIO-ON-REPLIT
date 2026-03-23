@@ -32,6 +32,7 @@ import { InteractiveQuiz, AITutor, ECS_QUIZ, type QuizQuestion } from "@/compone
 import { InteractiveTrainingPlayer, AudioNarrationButton } from "@/components/InteractiveTrainingPlayer";
 import { EnhancedInteractiveModule } from "@/components/EnhancedInteractiveModule";
 import { AchievementToast } from "@/components/AchievementToast";
+import { useAuth } from "@/hooks/use-auth";
 import { getKnowledgeChecksForModule, hasKnowledgeCheck } from "@shared/training-knowledge-checks";
 
 function isPlaceholderVideoUrl(url?: string | null): boolean {
@@ -1536,6 +1537,7 @@ export default function TrainingModulePage() {
   const [match, params] = useRoute("/training/:slug");
   const slug = params?.slug;
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isCompleted, setIsCompleted] = useState(false);
   const [showCertificate, setShowCertificate] = useState(false);
@@ -1574,6 +1576,7 @@ export default function TrainingModulePage() {
     verificationCode: string | null;
     score: number | null;
     issuedAt: string | null;
+    referenceId: string;
     referenceTitle: string;
     status: string;
   }
@@ -1584,7 +1587,7 @@ export default function TrainingModulePage() {
   });
 
   const moduleCert = certData?.certifications?.find(
-    (c) => c.referenceTitle === module?.title && c.status === "passed"
+    (c) => c.status === "passed" && (c.referenceId === module?.id || c.referenceTitle === module?.title)
   );
 
   const markCompleteMutation = useMutation({
@@ -1913,7 +1916,7 @@ export default function TrainingModulePage() {
             type="module"
             title={module?.title || "Training Module"}
             completedAt={moduleCert?.issuedAt ? new Date(moduleCert.issuedAt) : (progressData?.updatedAt ? new Date(progressData.updatedAt) : new Date())}
-            userName="Practitioner"
+            userName={user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (user?.email || "Practitioner")}
             duration={module?.duration || undefined}
             certificateNumber={moduleCert?.certificateNumber}
             verificationCode={moduleCert?.verificationCode}
