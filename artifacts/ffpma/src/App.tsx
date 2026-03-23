@@ -80,6 +80,7 @@ import MemberHomePage from "@/pages/member-home";
 import MemberOnboardingPage from "@/pages/member-onboarding";
 import MyContractsPage from "@/pages/my-contracts";
 import TrusteeDashboard from "@/pages/trustee-dashboard";
+import AgentActivityDashboard from "@/pages/agent-activity-dashboard";
 import VideoStudioPage from "@/pages/video-studio";
 import PMANetworkPage from "@/pages/pma-network";
 import ContractReviewPage from "@/pages/contract-review";
@@ -637,6 +638,11 @@ function Router() {
           <AppLayout>
             <ContractReviewPage />
           </AppLayout>
+        </RoleProtectedRoute>
+      )} />
+      <Route path="/trustee/agents" component={() => (
+        <RoleProtectedRoute allowedRoles={["admin", "trustee"]}>
+          <AgentActivityDashboard />
         </RoleProtectedRoute>
       )} />
       <Route path="/frequency-library" component={() => (

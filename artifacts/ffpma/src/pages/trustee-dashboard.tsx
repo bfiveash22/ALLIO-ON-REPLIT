@@ -4100,6 +4100,16 @@ export default function TrusteeDashboard() {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
+                        <Link href="/trustee/agents">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/10"
+                          >
+                            <Activity className="w-4 h-4 mr-2" />
+                            Activity Dashboard
+                          </Button>
+                        </Link>
                         <Button
                           onClick={() => setCmdShowTaskForm(!cmdShowTaskForm)}
                           className="bg-cyan-500 hover:bg-cyan-600 text-black"

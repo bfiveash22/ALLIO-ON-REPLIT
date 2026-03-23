@@ -614,4 +614,300 @@ export function registerAgentRoutes(app: Express): void {
       res.status(500).json({ success: false, error: error.message });
     }
   });
+
+  app.get("/api/admin/agents/activity", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { agentTasks, agentRegistry } = await import("@shared/schema");
+      const { desc, gte, and, sql: drizzleSql } = await import("drizzle-orm");
+
+      const timeRangeHours = parseInt(req.query.timeRange as string) || 24;
+      const divisionFilter = req.query.division as string | undefined;
+      const agentFilter = req.query.agentId as string | undefined;
+      const statusFilter = req.query.status as string | undefined;
+      const limitParam = parseInt(req.query.limit as string) || 100;
+
+      const since = new Date(Date.now() - timeRangeHours * 60 * 60 * 1000);
+
+      const conditions: any[] = [gte(agentTasks.createdAt, since)];
+      if (divisionFilter) {
+        const { eq } = await import("drizzle-orm");
+        conditions.push(eq(agentTasks.division, divisionFilter as any));
+      }
+      if (agentFilter) {
+        const { ilike } = await import("drizzle-orm");
+        conditions.push(ilike(agentTasks.agentId, agentFilter));
+      }
+      if (statusFilter) {
+        const { eq } = await import("drizzle-orm");
+        conditions.push(eq(agentTasks.status, statusFilter as any));
+      }
+
+      const tasks = await db
+        .select()
+        .from(agentTasks)
+        .where(and(...conditions))
+        .orderBy(desc(agentTasks.createdAt))
+        .limit(limitParam);
+
+      const enriched = tasks.map(task => {
+        let toolCallCount = 0;
+        let toolCallNames: string[] = [];
+        if (task.toolCalls) {
+          try {
+            const parsed = JSON.parse(task.toolCalls);
+            if (Array.isArray(parsed)) {
+              toolCallCount = parsed.length;
+              toolCallNames = parsed.slice(0, 5).map((t: any) => t.tool || t.name || 'unknown');
+            }
+          } catch {}
+        }
+
+        const durationMs = task.completedAt && task.createdAt
+          ? new Date(task.completedAt).getTime() - new Date(task.createdAt).getTime()
+          : null;
+
+        return {
+          ...task,
+          toolCallCount,
+          toolCallNames,
+          durationMs,
+          durationFormatted: durationMs != null
+            ? durationMs < 60000
+              ? `${Math.round(durationMs / 1000)}s`
+              : `${Math.round(durationMs / 60000)}m ${Math.round((durationMs % 60000) / 1000)}s`
+            : null,
+        };
+      });
+
+      res.json({
+        tasks: enriched,
+        total: enriched.length,
+        timeRangeHours,
+        generatedAt: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error("[Admin Agent Activity] Error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/agents/:agentId/history", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { agentId } = req.params;
+      const { agentTasks } = await import("@shared/schema");
+      const { desc, ilike } = await import("drizzle-orm");
+      const limitParam = parseInt(req.query.limit as string) || 50;
+
+      const tasks = await db
+        .select()
+        .from(agentTasks)
+        .where(ilike(agentTasks.agentId, agentId))
+        .orderBy(desc(agentTasks.createdAt))
+        .limit(limitParam);
+
+      const completedTasks = tasks.filter(t => t.status === 'completed');
+      const failedTasks = tasks.filter(t => t.status === 'failed');
+      const inProgressTasks = tasks.filter(t => t.status === 'in_progress');
+
+      const durations = completedTasks
+        .filter(t => t.completedAt && t.createdAt)
+        .map(t => new Date(t.completedAt!).getTime() - new Date(t.createdAt!).getTime());
+      const avgDurationMs = durations.length > 0
+        ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
+        : 0;
+
+      const toolUsage: Record<string, number> = {};
+      tasks.forEach(task => {
+        if (task.toolCalls) {
+          try {
+            const parsed = JSON.parse(task.toolCalls);
+            if (Array.isArray(parsed)) {
+              parsed.forEach((t: any) => {
+                const name = t.tool || t.name || 'unknown';
+                toolUsage[name] = (toolUsage[name] || 0) + 1;
+              });
+            }
+          } catch {}
+        }
+      });
+
+      const topTools = Object.entries(toolUsage)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 10)
+        .map(([name, count]) => ({ name, count }));
+
+      const recentErrors = failedTasks
+        .slice(0, 5)
+        .map(t => ({
+          taskId: t.id,
+          title: t.title,
+          errorLog: t.errorLog,
+          failedAt: t.updatedAt,
+        }));
+
+      const enrichedTasks = tasks.map(task => {
+        let toolCallCount = 0;
+        let toolCallNames: string[] = [];
+        if (task.toolCalls) {
+          try {
+            const parsed = JSON.parse(task.toolCalls);
+            if (Array.isArray(parsed)) {
+              toolCallCount = parsed.length;
+              toolCallNames = parsed.slice(0, 5).map((t: any) => t.tool || t.name || 'unknown');
+            }
+          } catch {}
+        }
+        const durationMs = task.completedAt && task.createdAt
+          ? new Date(task.completedAt).getTime() - new Date(task.createdAt).getTime()
+          : null;
+        return {
+          ...task,
+          toolCallCount,
+          toolCallNames,
+          durationMs,
+          durationFormatted: durationMs != null
+            ? durationMs < 60000
+              ? `${Math.round(durationMs / 1000)}s`
+              : `${Math.round(durationMs / 60000)}m ${Math.round((durationMs % 60000) / 1000)}s`
+            : null,
+        };
+      });
+
+      res.json({
+        agentId,
+        tasks: enrichedTasks,
+        stats: {
+          total: tasks.length,
+          completed: completedTasks.length,
+          failed: failedTasks.length,
+          inProgress: inProgressTasks.length,
+          pending: tasks.filter(t => t.status === 'pending').length,
+          successRate: tasks.length > 0
+            ? Math.round((completedTasks.length / tasks.length) * 100)
+            : 0,
+          avgDurationMs,
+          avgDurationFormatted: avgDurationMs < 60000
+            ? `${Math.round(avgDurationMs / 1000)}s`
+            : `${Math.round(avgDurationMs / 60000)}m ${Math.round((avgDurationMs % 60000) / 1000)}s`,
+          totalIterations: tasks.reduce((sum, t) => sum + (t.agenticIterations || 0), 0),
+        },
+        topTools,
+        recentErrors,
+      });
+    } catch (error: any) {
+      console.error("[Admin Agent History] Error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/agents/health", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { agentTasks } = await import("@shared/schema");
+      const { desc, gte, eq, and } = await import("drizzle-orm");
+      const { agents: agentProfiles } = await import("@shared/agents");
+      const { AGENT_DIVISIONS } = await import("../services/sentinel");
+
+      const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+      const [recentTasks, weekTasks] = await Promise.all([
+        db.select().from(agentTasks).where(gte(agentTasks.createdAt, since24h)).orderBy(desc(agentTasks.createdAt)),
+        db.select().from(agentTasks).where(gte(agentTasks.createdAt, since7d)),
+      ]);
+
+      const divisionHealth: Record<string, any> = {};
+      for (const [divKey, divInfo] of Object.entries(AGENT_DIVISIONS)) {
+        const divTasks24h = recentTasks.filter(t => t.division === divKey);
+        const divTasks7d = weekTasks.filter(t => t.division === divKey);
+        const completed24h = divTasks24h.filter(t => t.status === 'completed');
+        const failed24h = divTasks24h.filter(t => t.status === 'failed');
+
+        const durations = completed24h
+          .filter(t => t.completedAt && t.createdAt)
+          .map(t => new Date(t.completedAt!).getTime() - new Date(t.createdAt!).getTime());
+        const avgResponseMs = durations.length > 0
+          ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
+          : 0;
+
+        const errorRate = divTasks24h.length > 0
+          ? Math.round((failed24h.length / divTasks24h.length) * 100)
+          : 0;
+
+        const throughput7d = divTasks7d.filter(t => t.status === 'completed').length;
+
+        divisionHealth[divKey] = {
+          division: divKey,
+          name: divInfo.name,
+          lead: divInfo.lead,
+          agentCount: divInfo.agents.length,
+          health: errorRate > 30 ? 'degraded' : errorRate > 10 ? 'warning' : 'healthy',
+          tasks24h: divTasks24h.length,
+          completed24h: completed24h.length,
+          failed24h: failed24h.length,
+          inProgress24h: divTasks24h.filter(t => t.status === 'in_progress').length,
+          errorRate,
+          avgResponseMs,
+          avgResponseFormatted: avgResponseMs < 60000
+            ? `${Math.round(avgResponseMs / 1000)}s`
+            : `${Math.round(avgResponseMs / 60000)}m`,
+          throughput7d,
+        };
+      }
+
+      const agentHealth = agentProfiles.map(agent => {
+        const agentTasks24h = recentTasks.filter(t => t.agentId.toLowerCase() === agent.id.toLowerCase());
+        const completed = agentTasks24h.filter(t => t.status === 'completed');
+        const failed = agentTasks24h.filter(t => t.status === 'failed');
+        const inProgress = agentTasks24h.filter(t => t.status === 'in_progress');
+        const lastActivity = agentTasks24h[0];
+
+        const errorRate = agentTasks24h.length > 0
+          ? Math.round((failed.length / agentTasks24h.length) * 100)
+          : 0;
+
+        let liveStatus: 'active' | 'idle' | 'error' = 'idle';
+        if (inProgress.length > 0) liveStatus = 'active';
+        else if (failed.length > 0 && completed.length === 0) liveStatus = 'error';
+
+        return {
+          agentId: agent.id,
+          name: agent.name,
+          title: agent.title,
+          division: agent.division,
+          liveStatus,
+          tasks24h: agentTasks24h.length,
+          completed24h: completed.length,
+          failed24h: failed.length,
+          inProgress24h: inProgress.length,
+          errorRate,
+          lastActivityAt: lastActivity?.updatedAt || null,
+          currentTaskId: inProgress[0]?.id || null,
+          currentTaskTitle: inProgress[0]?.title || null,
+        };
+      });
+
+      const overall = {
+        totalTasks24h: recentTasks.length,
+        completedTasks24h: recentTasks.filter(t => t.status === 'completed').length,
+        failedTasks24h: recentTasks.filter(t => t.status === 'failed').length,
+        inProgressTasks24h: recentTasks.filter(t => t.status === 'in_progress').length,
+        activeAgents: agentHealth.filter(a => a.liveStatus === 'active').length,
+        errorAgents: agentHealth.filter(a => a.liveStatus === 'error').length,
+        idleAgents: agentHealth.filter(a => a.liveStatus === 'idle').length,
+        overallErrorRate: recentTasks.length > 0
+          ? Math.round((recentTasks.filter(t => t.status === 'failed').length / recentTasks.length) * 100)
+          : 0,
+      };
+
+      res.json({
+        overall,
+        divisionHealth,
+        agentHealth,
+        generatedAt: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error("[Admin Agent Health] Error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
 }
