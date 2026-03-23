@@ -11,7 +11,7 @@ export function registerBloodResearchRoutes(app: Express): void {
     tags: z.string().max(500).optional()
   });
 
-  app.get("/api/blood-samples", requireRole("admin"), async (req: Request, res: Response) => {
+  app.get("/api/blood-samples", requireRole("admin", "trustee", "doctor", "clinic"), async (req: Request, res: Response) => {
     try {
       const parsed = bloodSampleQuerySchema.safeParse(req.query);
       if (!parsed.success) {
@@ -33,7 +33,7 @@ export function registerBloodResearchRoutes(app: Express): void {
     }
   });
 
-  app.get("/api/blood-samples/tags", requireRole("admin"), async (req: Request, res: Response) => {
+  app.get("/api/blood-samples/tags", requireRole("admin", "trustee", "doctor", "clinic"), async (req: Request, res: Response) => {
     try {
       const tags = await storage.getAllBloodSampleTags();
       res.json(tags);
@@ -47,7 +47,7 @@ export function registerBloodResearchRoutes(app: Express): void {
     limit: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1).max(50)).optional()
   });
 
-  app.get("/api/blood-samples/search-for-ai", requireRole("admin"), async (req: Request, res: Response) => {
+  app.get("/api/blood-samples/search-for-ai", requireRole("admin", "trustee", "doctor", "clinic"), async (req: Request, res: Response) => {
     try {
       const parsed = aiSearchQuerySchema.safeParse(req.query);
       if (!parsed.success) {
@@ -64,7 +64,7 @@ export function registerBloodResearchRoutes(app: Express): void {
     }
   });
 
-  app.get("/api/blood-samples/:id", requireRole("admin"), async (req: Request, res: Response) => {
+  app.get("/api/blood-samples/:id", requireRole("admin", "trustee", "doctor", "clinic"), async (req: Request, res: Response) => {
     try {
       const sample = await storage.getBloodSampleById(req.params.id);
       if (!sample) {
@@ -78,7 +78,7 @@ export function registerBloodResearchRoutes(app: Express): void {
     }
   });
 
-  app.get("/api/blood-samples/:id/tags", requireRole("admin"), async (req: Request, res: Response) => {
+  app.get("/api/blood-samples/:id/tags", requireRole("admin", "trustee", "doctor", "clinic"), async (req: Request, res: Response) => {
     try {
       const tags = await storage.getBloodSampleTags(req.params.id);
       res.json(tags);
@@ -94,7 +94,7 @@ export function registerBloodResearchRoutes(app: Express): void {
     specificQuestions: z.array(z.string()).optional()
   });
 
-  app.post("/api/blood-analysis/analyze", requireRole("admin"), async (req: Request, res: Response) => {
+  app.post("/api/blood-analysis/analyze", requireRole("admin", "trustee", "doctor", "clinic"), async (req: Request, res: Response) => {
     try {
       const parsed = bloodAnalysisSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -110,7 +110,7 @@ export function registerBloodResearchRoutes(app: Express): void {
     }
   });
 
-  app.get("/api/blood-analysis/status", requireRole("admin"), async (req: Request, res: Response) => {
+  app.get("/api/blood-analysis/status", requireRole("admin", "trustee", "doctor", "clinic"), async (req: Request, res: Response) => {
     try {
       const { checkHuggingFaceStatus } = await import("../services/huggingface-blood-analysis");
       const status = await checkHuggingFaceStatus();
@@ -133,7 +133,7 @@ export function registerBloodResearchRoutes(app: Express): void {
     })).optional()
   });
 
-  app.post("/api/blood-analysis/pattern-match", requireRole("admin"), async (req: Request, res: Response) => {
+  app.post("/api/blood-analysis/pattern-match", requireRole("admin", "trustee", "doctor", "clinic"), async (req: Request, res: Response) => {
     try {
       const parsed = patternMatchSchema.safeParse(req.body);
       if (!parsed.success) {

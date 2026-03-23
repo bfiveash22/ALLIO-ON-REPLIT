@@ -148,7 +148,7 @@ export function registerDriveRoutes(app: Express): void {
     catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
   });
 
-  app.post("/api/blood-analysis/upload", requireRole("admin"), upload.single("file"), async (req: Request, res: Response) => {
+  app.post("/api/blood-analysis/upload", requireRole("admin", "trustee", "doctor", "clinic"), upload.single("file"), async (req: Request, res: Response) => {
     try {
       if (!req.file) return res.status(400).json({ success: false, error: "No file uploaded" });
       const { patientId, analysisType } = req.body;
@@ -160,7 +160,7 @@ export function registerDriveRoutes(app: Express): void {
     } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
   });
 
-  app.get("/api/blood-analysis/uploads", requireRole("admin"), async (req: Request, res: Response) => {
+  app.get("/api/blood-analysis/uploads", requireRole("admin", "trustee", "doctor", "clinic"), async (req: Request, res: Response) => {
     try { res.json({ success: true, uploads: await getBloodAnalysisUploads() }); }
     catch (error: any) { res.status(500).json({ success: false, error: error.message, uploads: [] }); }
   });

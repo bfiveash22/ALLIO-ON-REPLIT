@@ -180,7 +180,7 @@ export function registerMiscRoutes(app: Express): void {
     } catch (error: any) { res.status(500).json({ error: "Failed to generate audio", details: error?.message }); }
   });
 
-  app.post("/api/vision/analyze-blood", requireRole("trustee"), async (req: Request, res: Response) => {
+  app.post("/api/vision/analyze-blood", requireRole("admin", "trustee", "doctor", "clinic"), async (req: Request, res: Response) => {
     try {
       const { imageBase64 } = req.body;
       if (!imageBase64) return res.status(400).json({ error: "imageBase64 is required" });
