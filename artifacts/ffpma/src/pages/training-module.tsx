@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Certificate } from "@/components/certificate";
 import { 
   BookOpen, 
   Clock, 
@@ -23,6 +25,7 @@ import {
   Dna,
   FlaskConical,
   Loader2,
+  Award,
 } from "lucide-react";
 import type { TrainingModule } from "@shared/schema";
 import { InteractiveQuiz, AITutor, ECS_QUIZ, type QuizQuestion } from "@/components/InteractiveQuiz";
@@ -1535,6 +1538,7 @@ export default function TrainingModulePage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCompleted, setIsCompleted] = useState(false);
+  const [showCertificate, setShowCertificate] = useState(false);
   const [achievementData, setAchievementData] = useState<{ name: string; description: string; points: number; color?: string } | null>(null);
 
   const { data: module, isLoading, error } = useQuery<TrainingModule>({
@@ -1592,26 +1596,40 @@ export default function TrainingModulePage() {
           type: string;
           points: number;
           color: string | null;
+          criteria: { modulesCompleted?: number } | null;
         }
-        const achRes = await fetch("/api/achievements", { credentials: "include" });
+        const [achRes, progressRes] = await Promise.all([
+          fetch("/api/achievements", { credentials: "include" }),
+          fetch("/api/learning/progress", { credentials: "include" }),
+        ]);
         if (achRes.ok) {
           const allAchievements: AchievementRecord[] = await achRes.json();
-          const moduleAch = allAchievements.find((a) => a.type === "module_complete");
-          if (moduleAch) {
-            const awardRes = await fetch(`/api/my/achievements/${moduleAch.id}`, {
+          let completedModuleCount = 1;
+          if (progressRes.ok) {
+            const progressList: { status: string }[] = await progressRes.json();
+            completedModuleCount = progressList.filter((p) => p.status === "completed").length;
+          }
+          const moduleAchievements = allAchievements
+            .filter((a) => a.type === "module_complete")
+            .sort((a, b) => (b.criteria?.modulesCompleted ?? 0) - (a.criteria?.modulesCompleted ?? 0));
+          const eligible = moduleAchievements.find(
+            (a) => (a.criteria?.modulesCompleted ?? 1) <= completedModuleCount
+          );
+          if (eligible) {
+            const awardRes = await fetch(`/api/my/achievements/${eligible.id}`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               credentials: "include",
-              body: JSON.stringify({ metadata: { moduleSlug: slug, moduleTitle: module?.title } }),
+              body: JSON.stringify({ metadata: { moduleSlug: slug, moduleTitle: module?.title, modulesCompleted: completedModuleCount } }),
             });
             if (awardRes.ok) {
               const awarded: { alreadyEarned: boolean } = await awardRes.json();
               if (!awarded.alreadyEarned) {
                 setAchievementData({
-                  name: moduleAch.name,
-                  description: moduleAch.description,
-                  points: moduleAch.points || 50,
-                  color: moduleAch.color || "gold",
+                  name: eligible.name,
+                  description: eligible.description,
+                  points: eligible.points || 50,
+                  color: eligible.color || "gold",
                 });
               }
             }
@@ -1855,7 +1873,32 @@ export default function TrainingModulePage() {
           )}
           {alreadyCompleted ? "Completed" : markCompleteMutation.isPending ? "Saving..." : "Mark as Complete"}
         </Button>
+        {alreadyCompleted && (
+          <Button
+            variant="outline"
+            onClick={() => setShowCertificate(true)}
+            className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
+          >
+            <Award className="mr-2 h-4 w-4" />
+            View Certificate
+          </Button>
+        )}
       </div>
+
+      <Dialog open={showCertificate} onOpenChange={setShowCertificate}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Certificate of Completion</DialogTitle>
+          </DialogHeader>
+          <Certificate
+            type="module"
+            title={module?.title || "Training Module"}
+            completedAt={progressData?.updatedAt ? new Date(progressData.updatedAt) : new Date()}
+            userName="Practitioner"
+            duration={module?.duration || undefined}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
