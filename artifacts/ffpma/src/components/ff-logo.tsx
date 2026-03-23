@@ -12,7 +12,7 @@ export function FFLogo({ className = "", size = "md" }: FFLogoProps) {
 
   return (
     <img
-      src="/assets/ff_pma_2026_logo.png"
+      src="/assets/ff_pma_header_logo.png"
       alt="FF PMA"
       className={`object-contain ${sizeClasses[size]} ${className}`}
     />
@@ -23,7 +23,7 @@ export function FFLogoFull({ className = "" }: { className?: string }) {
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <img
-        src="/assets/ff_pma_2026_logo.png"
+        src="/assets/ff_pma_header_logo.png"
         alt="Forgotten Formula PMA"
         className="h-10 w-10 object-contain"
       />
@@ -40,7 +40,7 @@ export function AllioLogoText({ className = "" }: { className?: string }) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <img
-        src="/assets/ff_pma_2026_logo.png"
+        src="/assets/ff_pma_header_logo.png"
         alt="Forgotten Formula PMA"
         className="h-8 w-8 object-contain"
       />
