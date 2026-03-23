@@ -962,6 +962,14 @@ export async function seedInitialTasks(): Promise<{ created: number; tasks: stri
 
   for (const taskData of seedTasks) {
     try {
+      const alreadyExists = existingTasks.some(t =>
+        t.agentId.toLowerCase() === taskData.agentId.toLowerCase() &&
+        t.title.toLowerCase().trim() === taskData.title.toLowerCase().trim()
+      );
+      if (alreadyExists) {
+        log(`[Seed] Task already exists, skipping: ${taskData.title}`, 'agent-scheduler');
+        continue;
+      }
       const task = await storage.createAgentTask(taskData);
       createdTasks.push(`${taskData.agentId}: ${taskData.title}`);
       log(`[Seed] Created task: ${taskData.title}`, 'agent-scheduler');
@@ -1206,23 +1214,37 @@ export async function scheduleDailyResourceOptimization(): Promise<void> {
   const now = new Date().toISOString().split('T')[0];
 
   try {
-    // DIANE - Clinical Knowledge updates
-    await storage.createAgentTask({
-      agentId: 'DIANE',
-      division: 'support',
-      title: `Daily Clinical Resource Review (${now})`,
-      description: `Review the newest protocols generated from the Science Division today. Analyze the 'diane_knowledge' table and propose draft revisions to patient-facing material (PDFs, healing guides, dietary programs). Ensure resources are up-to-date with FFPMA findings.`,
-      priority: 3,
-    });
+    const allTasks = await storage.getAllAgentTasks();
+    const dianeTitle = `Daily Clinical Resource Review (${now})`;
+    const samTitle = `Daily Logistics & Intake Review (${now})`;
 
-    // SAM - Operational/Support updates
-    await storage.createAgentTask({
-      agentId: 'SAM',
-      division: 'support',
-      title: `Daily Logistics & Intake Review (${now})`,
-      description: `Audit recent patient intake completions and WooCommerce supplement fulfillment timelines. Propose automated workflow optimizations to decrease turnaround time for patient protocol delivery.`,
-      priority: 3,
-    });
+    const dianeExists = allTasks.some(t => t.title === dianeTitle && (t.status === 'pending' || t.status === 'in_progress'));
+    const samExists = allTasks.some(t => t.title === samTitle && (t.status === 'pending' || t.status === 'in_progress'));
+
+    if (dianeExists && samExists) {
+      log(`[SENTINEL] Resource optimization tasks for ${now} already exist. Skipping.`, 'agent-scheduler');
+      return;
+    }
+
+    if (!dianeExists) {
+      await storage.createAgentTask({
+        agentId: 'DIANE',
+        division: 'support',
+        title: dianeTitle,
+        description: `Review the newest protocols generated from the Science Division today. Analyze the 'diane_knowledge' table and propose draft revisions to patient-facing material (PDFs, healing guides, dietary programs). Ensure resources are up-to-date with FFPMA findings.`,
+        priority: 3,
+      });
+    }
+
+    if (!samExists) {
+      await storage.createAgentTask({
+        agentId: 'SAM',
+        division: 'support',
+        title: samTitle,
+        description: `Audit recent patient intake completions and WooCommerce supplement fulfillment timelines. Propose automated workflow optimizations to decrease turnaround time for patient protocol delivery.`,
+        priority: 3,
+      });
+    }
 
     log('[SENTINEL] Daily resource optimization tasks scheduled successfully.', 'agent-scheduler');
   } catch (error: any) {
@@ -1233,8 +1255,21 @@ export async function scheduleDailyResourceOptimization(): Promise<void> {
 export async function scheduleWeeklyModelEvolution(): Promise<void> {
   log('[SENTINEL] Scheduling weekly AI model evolution audit', 'agent-scheduler');
   const now = new Date().toISOString().split('T')[0];
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
   try {
+    const allTasks = await storage.getAllAgentTasks();
+    const recentModelTask = allTasks.some(t =>
+      t.title.includes('Weekly HuggingFace AI Model Evolution') &&
+      t.createdAt && new Date(t.createdAt) > sevenDaysAgo
+    );
+
+    if (recentModelTask) {
+      log(`[SENTINEL] Weekly model evolution task already exists within 7 days. Skipping.`, 'agent-scheduler');
+      return;
+    }
+
     await storage.createAgentTask({
       agentId: 'ARCHITECT',
       division: 'engineering',
