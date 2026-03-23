@@ -50,8 +50,9 @@ export function auditLog() {
 
       if (source.type === 'apiKey' && source.id) {
         db.insert(apiAuditLogs).values({
-          apiKeyId: source.id,
-          endpoint: req.path,
+          sourceType: source.type,
+          sourceId: source.id,
+          path: req.path,
           method: req.method,
           statusCode: res.statusCode,
           responseTimeMs,
