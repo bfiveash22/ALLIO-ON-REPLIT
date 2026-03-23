@@ -1,4 +1,4 @@
-import { type User, type UpsertUser, type Contract, type InsertContract, type LegalDocument, type InsertLegalDocument, type AgentTask, type InsertAgentTask, type TrainingModule, type TrainingTrack, type Quiz, type DriveDocument, type Program, type ProgramEnrollment, type InsertProgramEnrollment, type UserProgress, type InsertUserProgress, type AgentConfiguration, type InsertAgentConfiguration, type AthenaEmailApproval, type InsertAthenaEmailApproval, type AgentTaskReview, type InsertAgentTaskReview, type DivisionLead, type InsertDivisionLead, type BloodSample, type InsertBloodSample, type BloodSampleTag, type InsertBloodSampleTag, type DianeKnowledge, type Achievement, type InsertAchievement, type UserAchievement, type InsertUserAchievement, type ModuleBookmark, type InsertModuleBookmark, type DiscussionThread, type InsertDiscussionThread, type DiscussionReply, type InsertDiscussionReply, type PatientRecord, type InsertPatientRecord, type PatientUpload, type InsertPatientUpload, type PatientProtocol, type InsertPatientProtocol, type DoctorPatientMessage, type InsertDoctorPatientMessage, type Conversation, type InsertConversation, type QuizAttempt, type QuizResponse, type UiRefactorProposal, type InsertUiRefactorProposal, type Frequency, type InsertFrequency, type FrequencyCategory, type InsertFrequencyCategory, type LabOrder, type InsertLabOrder, type LabResult, type InsertLabResult, type SavedTestPanel, type InsertSavedTestPanel, users, contracts, legalDocuments, memberProfiles, agentTasks, clinics, trainingModules, trainingTracks, quizzes, quizQuestions, quizAnswers, moduleQuizzes, driveDocuments, programs, programEnrollments, userProgress, agentConfigurations, athenaEmailApprovals, agentTaskReviews, divisionLeads, userWpRoles, bloodSamples, bloodSampleTags, dianeKnowledge, achievements, userAchievements, moduleBookmarks, discussionThreads, discussionReplies, patientRecords, patientUploads, patientProtocols, doctorPatientMessages, conversations, quizAttempts, quizResponses, uiRefactorProposals, openclawMessages, frequencies, frequencyCategories, labOrders, labResults, savedTestPanels } from "@shared/schema";
+import { type User, type UpsertUser, type Contract, type InsertContract, type LegalDocument, type InsertLegalDocument, type AgentTask, type InsertAgentTask, type TrainingModule, type TrainingTrack, type Quiz, type DriveDocument, type Program, type ProgramEnrollment, type InsertProgramEnrollment, type UserProgress, type InsertUserProgress, type AgentConfiguration, type InsertAgentConfiguration, type AthenaEmailApproval, type InsertAthenaEmailApproval, type AgentTaskReview, type InsertAgentTaskReview, type DivisionLead, type InsertDivisionLead, type BloodSample, type InsertBloodSample, type BloodSampleTag, type InsertBloodSampleTag, type DianeKnowledge, type Achievement, type InsertAchievement, type UserAchievement, type InsertUserAchievement, type ModuleBookmark, type InsertModuleBookmark, type DiscussionThread, type InsertDiscussionThread, type DiscussionReply, type InsertDiscussionReply, type PatientRecord, type InsertPatientRecord, type PatientUpload, type InsertPatientUpload, type PatientProtocol, type InsertPatientProtocol, type DoctorPatientMessage, type InsertDoctorPatientMessage, type Conversation, type InsertConversation, type QuizAttempt, type QuizResponse, type UiRefactorProposal, type InsertUiRefactorProposal, type Frequency, type InsertFrequency, type FrequencyCategory, type InsertFrequencyCategory, type LabOrder, type InsertLabOrder, type LabResult, type InsertLabResult, type SavedTestPanel, type InsertSavedTestPanel, type BloodworkUpload, type InsertBloodworkUpload, users, contracts, legalDocuments, memberProfiles, agentTasks, clinics, trainingModules, trainingTracks, quizzes, quizQuestions, quizAnswers, moduleQuizzes, driveDocuments, programs, programEnrollments, userProgress, agentConfigurations, athenaEmailApprovals, agentTaskReviews, divisionLeads, userWpRoles, bloodSamples, bloodSampleTags, dianeKnowledge, achievements, userAchievements, moduleBookmarks, discussionThreads, discussionReplies, patientRecords, patientUploads, patientProtocols, doctorPatientMessages, conversations, quizAttempts, quizResponses, uiRefactorProposals, openclawMessages, frequencies, frequencyCategories, labOrders, labResults, savedTestPanels, bloodworkUploads } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, inArray, sql } from "drizzle-orm";
 
@@ -151,6 +151,13 @@ export interface IStorage {
   createSavedTestPanel(panel: InsertSavedTestPanel): Promise<SavedTestPanel>;
   updateSavedTestPanel(id: string, updates: Partial<SavedTestPanel>): Promise<SavedTestPanel | undefined>;
   deleteSavedTestPanel(id: string): Promise<boolean>;
+  // Bloodwork Uploads
+  getBloodworkUploads(memberId: string): Promise<BloodworkUpload[]>;
+  getBloodworkUploadsByDoctor(doctorId: string): Promise<BloodworkUpload[]>;
+  getBloodworkUpload(id: string): Promise<BloodworkUpload | undefined>;
+  createBloodworkUpload(upload: InsertBloodworkUpload): Promise<BloodworkUpload>;
+  updateBloodworkUpload(id: string, updates: Partial<BloodworkUpload>): Promise<BloodworkUpload | undefined>;
+  deleteBloodworkUpload(id: string): Promise<boolean>;
 }
 
 let membersCache: { data: any, timestamp: number } | null = null;
@@ -1179,6 +1186,34 @@ export class DatabaseStorage implements IStorage {
   async deleteSavedTestPanel(id: string): Promise<boolean> {
     const [deleted] = await db.update(savedTestPanels).set({ isActive: false }).where(eq(savedTestPanels.id, id)).returning();
     return !!deleted;
+  }
+
+  async getBloodworkUploads(memberId: string): Promise<BloodworkUpload[]> {
+    return await db.select().from(bloodworkUploads).where(eq(bloodworkUploads.memberId, memberId)).orderBy(desc(bloodworkUploads.createdAt));
+  }
+
+  async getBloodworkUploadsByDoctor(doctorId: string): Promise<BloodworkUpload[]> {
+    return await db.select().from(bloodworkUploads).where(eq(bloodworkUploads.doctorId, doctorId)).orderBy(desc(bloodworkUploads.createdAt));
+  }
+
+  async getBloodworkUpload(id: string): Promise<BloodworkUpload | undefined> {
+    const [upload] = await db.select().from(bloodworkUploads).where(eq(bloodworkUploads.id, id));
+    return upload || undefined;
+  }
+
+  async createBloodworkUpload(upload: InsertBloodworkUpload): Promise<BloodworkUpload> {
+    const [newUpload] = await db.insert(bloodworkUploads).values(upload).returning();
+    return newUpload;
+  }
+
+  async updateBloodworkUpload(id: string, updates: Partial<BloodworkUpload>): Promise<BloodworkUpload | undefined> {
+    const [updated] = await db.update(bloodworkUploads).set({ ...updates, updatedAt: new Date() }).where(eq(bloodworkUploads.id, id)).returning();
+    return updated || undefined;
+  }
+
+  async deleteBloodworkUpload(id: string): Promise<boolean> {
+    await db.delete(bloodworkUploads).where(eq(bloodworkUploads.id, id));
+    return true;
   }
 }
 

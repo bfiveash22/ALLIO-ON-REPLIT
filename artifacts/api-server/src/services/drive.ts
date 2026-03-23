@@ -738,16 +738,29 @@ export async function uploadBloodAnalysisFile(
       bloodAnalysisFolderId = newFolder.id;
     }
 
+    // Create per-member subfolder for organized storage
+    let memberFolderId = bloodAnalysisFolderId;
+    if (patientId) {
+      const memberFolderName = `member_${patientId}`;
+      const existingMemberFolder = await findFolderByName(bloodAnalysisFolderId, memberFolderName);
+      if (existingMemberFolder) {
+        memberFolderId = existingMemberFolder;
+      } else {
+        const newMemberFolder = await createSubfolder(bloodAnalysisFolderId, memberFolderName);
+        memberFolderId = newMemberFolder.id;
+      }
+    }
+
     const timestamp = new Date().toISOString().slice(0, 10);
-    const sanitizedFileName = `${timestamp}_${patientId || 'unknown'}_${analysisType || 'lba'}_${fileName}`;
+    const sanitizedFileName = `${timestamp}_${analysisType || 'lab-report'}_${fileName}`;
 
     const { Readable } = await import('stream');
     const bufferStream = Readable.from(buffer);
 
     const fileMetadata = {
       name: sanitizedFileName,
-      parents: [bloodAnalysisFolderId],
-      description: `Blood analysis upload: ${analysisType || 'LBA'} for patient ${patientId || 'unknown'}`
+      parents: [memberFolderId],
+      description: `Bloodwork lab report: ${analysisType || 'lab-report'} for member ${patientId || 'unknown'}`
     };
 
     const media = {

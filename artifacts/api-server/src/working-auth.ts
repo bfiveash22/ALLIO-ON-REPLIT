@@ -388,7 +388,13 @@ export function requireRole(...roles: string[]) {
     if (!hasRole) {
       if (userRoles.includes('administrator') || userRoles.includes('shop_manager')) {
         hasRole = roles.includes('admin') || roles.includes('trustee');
-      } else if (userRoles.includes('doctor') || userRoles.includes('physician')) {
+      } else if (
+        userRoles.some((r: string) =>
+          ['doctor', 'physician', 'ff_doctor', 'ff_healer', 'healer', 'practitioner',
+           'um_doctor', 'um_healer', 'um_practitioner', 'wellness_practitioner',
+           'healthcare_provider'].includes(r)
+        )
+      ) {
         hasRole = roles.includes('doctor') || roles.includes('clinic');
       }
     }

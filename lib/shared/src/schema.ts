@@ -2375,6 +2375,58 @@ export const insertSavedTestPanelSchema = createInsertSchema(savedTestPanels).om
 export type InsertSavedTestPanel = z.infer<typeof insertSavedTestPanelSchema>;
 export type SavedTestPanel = typeof savedTestPanels.$inferSelect;
 
+// Bloodwork Uploads - PDFs and images of lab reports uploaded by doctors
+export const bloodworkUploadStatusEnum = pgEnum("bloodwork_upload_status", [
+  "pending", "analyzing", "completed", "failed"
+]);
+
+export const bloodworkUploads = pgTable("bloodwork_uploads", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  memberId: varchar("member_id").notNull(),
+  memberName: varchar("member_name"),
+  doctorId: varchar("doctor_id").notNull(),
+  fileName: varchar("file_name").notNull(),
+  fileType: varchar("file_type").notNull(), // pdf, image
+  mimeType: varchar("mime_type"),
+  fileSize: integer("file_size"),
+  driveFileId: varchar("drive_file_id"),
+  driveWebViewLink: varchar("drive_web_view_link"),
+  status: bloodworkUploadStatusEnum("status").default("pending").notNull(),
+  // AI Analysis Results
+  aiAnalyzed: boolean("ai_analyzed").default(false),
+  aiAnalyzedAt: timestamp("ai_analyzed_at"),
+  analysisError: text("analysis_error"),
+  // Structured biomarker extraction
+  extractedMarkers: jsonb("extracted_markers").$type<Array<{
+    testName: string;
+    category: string;
+    value: number;
+    unit: string;
+    referenceMin?: number;
+    referenceMax?: number;
+    status: "normal" | "low" | "high" | "critical_low" | "critical_high";
+    confidence: number;
+    notes?: string;
+  }>>(),
+  // AI summary
+  clinicalSummary: text("clinical_summary"),
+  aiObservations: jsonb("ai_observations").$type<string[]>(),
+  protocolAlignments: jsonb("protocol_alignments").$type<string[]>(),
+  abnormalFlags: jsonb("abnormal_flags").$type<string[]>(),
+  confidence: varchar("confidence"), // high, moderate, low
+  // Linkage to protocol
+  linkedProtocolId: integer("linked_protocol_id"),
+  notes: text("notes"),
+  collectionDate: timestamp("collection_date"),
+  labName: varchar("lab_name"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertBloodworkUploadSchema = createInsertSchema(bloodworkUploads).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertBloodworkUpload = z.infer<typeof insertBloodworkUploadSchema>;
+export type BloodworkUpload = typeof bloodworkUploads.$inferSelect;
+
 export const vitalityAssessmentStatusEnum = pgEnum("vitality_assessment_status", ["draft", "completed"]);
 
 export const vitalityAssessments = pgTable("vitality_assessments", {

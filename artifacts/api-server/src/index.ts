@@ -199,6 +199,8 @@ app.use(requestLogger);
   registerBloodResearchRoutes(app);
   const { registerBloodworkRoutes } = await import("./routes/bloodwork-routes");
   registerBloodworkRoutes(app);
+  const { registerBloodworkUploadRoutes } = await import("./routes/bloodwork-upload-routes");
+  registerBloodworkUploadRoutes(app);
   const { registerPaymentRoutes } = await import("./routes/payment-routes");
   registerPaymentRoutes(app);
   const { registerAdminRoutes } = await import("./routes/admin-routes");

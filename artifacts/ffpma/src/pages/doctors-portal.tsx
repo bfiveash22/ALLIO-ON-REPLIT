@@ -66,6 +66,7 @@ import { EnrollMemberModal } from "@/components/EnrollMemberModal";
 import { BloodworkLabs } from "@/components/BloodworkLabs";
 import { SkinAnalysisUpload } from "@/components/SkinAnalysisUpload";
 import { ConsultAITeam } from "@/components/ConsultAITeam";
+import { BloodworkUploadPanel } from "@/components/BloodworkUploadPanel";
 
 interface DoctorReferralInfo {
   doctorCode: string | null;
@@ -1567,7 +1568,32 @@ export default function DoctorsPortal() {
             </TabsContent>
 
             <TabsContent value="bloodwork" className="space-y-6">
-              <BloodworkLabs />
+              <Tabs defaultValue="ai-upload">
+                <TabsList className="bg-white/5 border border-white/10 p-1 rounded-xl mb-4">
+                  <TabsTrigger value="ai-upload" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white rounded-lg text-white/60 text-sm">
+                    AI Lab Report Upload
+                  </TabsTrigger>
+                  <TabsTrigger value="manual" className="data-[state=active]:bg-white/10 data-[state=active]:text-white rounded-lg text-white/60 text-sm">
+                    Manual Entry
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="ai-upload">
+                  <div className="glass-panel rounded-2xl p-6 border border-white/10">
+                    <div className="mb-4">
+                      <h3 className="text-lg font-semibold text-white">AI-Powered Lab Report Analysis</h3>
+                      <p className="text-white/50 text-sm mt-1">Upload PDF lab reports or images. AI extracts all biomarkers and flags abnormals, with results feeding into DR_FORMULA protocol generation.</p>
+                    </div>
+                    <BloodworkUploadPanel
+                      memberId={selectedPatient || undefined}
+                      memberName={selectedPatient ? enrolledMembers.find(m => m.id === selectedPatient)?.name : undefined}
+                      showHistory={true}
+                    />
+                  </div>
+                </TabsContent>
+                <TabsContent value="manual">
+                  <BloodworkLabs />
+                </TabsContent>
+              </Tabs>
             </TabsContent>
 
             <TabsContent value="ai-consult" className="space-y-6">

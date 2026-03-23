@@ -72,7 +72,33 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       if (transcript.length > 500000) {
         return res.status(400).json({ error: 'Transcript exceeds maximum length of 500,000 characters' });
       }
-      const profile = await analyzeTranscript(transcript);
+
+      let enrichedTranscript = transcript;
+      if (memberId) {
+        try {
+          const { storage: dbStorage } = await import('../storage');
+          const { buildBloodworkProtocolContext } = await import('../services/bloodwork-ai-analyzer');
+          let uploads;
+          if (isDoctorOnly(req as AuthenticatedRequest)) {
+            const doctorId = getUserId(req as AuthenticatedRequest);
+            const doctorUploads = doctorId ? await dbStorage.getBloodworkUploadsByDoctor(doctorId) : [];
+            uploads = doctorUploads.filter((u) => u.memberId === memberId);
+          } else {
+            uploads = await dbStorage.getBloodworkUploads(memberId);
+          }
+          const completedUploads = uploads.filter((u) => u.status === 'completed');
+          if (completedUploads.length > 0) {
+            const bloodworkContext = buildBloodworkProtocolContext(completedUploads);
+            enrichedTranscript = `${transcript}\n\n${bloodworkContext}`;
+            console.log(`[Protocol Assembly] Injected bloodwork context for member ${memberId}: ${completedUploads.length} lab reports`);
+          }
+        } catch (ctxErr: unknown) {
+          const msg = ctxErr instanceof Error ? ctxErr.message : String(ctxErr);
+          console.warn('[Protocol Assembly] Failed to inject bloodwork context:', msg);
+        }
+      }
+
+      const profile = await analyzeTranscript(enrichedTranscript);
       const protocol = await generateProtocol(profile);
 
       let agentValidation: { valid: boolean; issues: string[]; suggestions: string[]; catalogMatchRate: number } | null = null;
