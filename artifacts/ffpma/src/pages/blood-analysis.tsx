@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { LiveCapturePanel } from "@/components/LiveCapturePanel";
 import { BloodworkUploadPanel } from "@/components/BloodworkUploadPanel";
 
@@ -35,6 +36,7 @@ interface AnalysisResult {
 export default function BloodAnalysisPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -108,7 +110,7 @@ export default function BloodAnalysisPage() {
 
       const formData = new FormData();
       formData.append("file", blob, filename);
-      formData.append("patientId", "unassigned");
+      formData.append("patientId", user?.id?.toString() || "unassigned");
       formData.append("analysisType", "live-blood");
 
       const response = await fetch("/api/blood-analysis/upload", {
@@ -143,7 +145,7 @@ export default function BloodAnalysisPage() {
 
     const formData = new FormData();
     formData.append("file", recordedVideo.blob, recordedVideo.filename);
-    formData.append("patientId", "unassigned");
+    formData.append("patientId", user?.id?.toString() || "unassigned");
     formData.append("analysisType", "live-blood");
 
     try {
