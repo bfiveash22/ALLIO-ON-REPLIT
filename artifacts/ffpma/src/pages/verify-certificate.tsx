@@ -23,14 +23,14 @@ export default function VerifyCertificatePage() {
   const [manualCode, setManualCode] = useState("");
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [lastSearchedCode, setLastSearchedCode] = useState<string | null>(null);
 
   const codeFromUrl = params?.code;
 
   const verify = useCallback(async (code: string) => {
     if (!code.trim()) return;
     setLoading(true);
-    setHasSearched(true);
+    setLastSearchedCode(code.trim());
     try {
       const res = await fetch(`/api/certifications/verify/${encodeURIComponent(code.trim())}`);
       const data = await res.json();
@@ -43,10 +43,10 @@ export default function VerifyCertificatePage() {
   }, []);
 
   useEffect(() => {
-    if (codeFromUrl && !hasSearched) {
+    if (codeFromUrl && codeFromUrl !== lastSearchedCode) {
       verify(codeFromUrl);
     }
-  }, [codeFromUrl, hasSearched, verify]);
+  }, [codeFromUrl, lastSearchedCode, verify]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
