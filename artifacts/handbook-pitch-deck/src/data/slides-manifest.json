@@ -76,7 +76,7 @@
     "position": 10,
     "filepath": "src/pages/slides/TrusteeToolsSlide.tsx",
     "title": "Daily Operations Dashboard",
-    "description": "Trustee tools — protocol queue, agent monitor, legal tracker, and communication hub.",
+    "description": "Trustee tools — protocol queue, agent monitor, SENTINEL multi-agent contract review (JURIS/LEXICON/AEGIS/SCRIBE), and communication hub.",
     "speakerNotes": ""
   },
   {
@@ -91,8 +91,8 @@
     "id": "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b",
     "position": 12,
     "filepath": "src/pages/slides/DoctorWorkflowSlide.tsx",
-    "title": "From Patient Intake to Protocol Delivery",
-    "description": "Doctor's workflow — five-step process from consultation to follow-up.",
+    "title": "From Member Intake to Protocol Delivery",
+    "description": "Doctor's workflow — five-step automated pipeline from intake to Google Slides delivery, including Vision AI blood analysis and SignNow contract verification.",
     "speakerNotes": ""
   },
   {
@@ -108,7 +108,7 @@
     "position": 14,
     "filepath": "src/pages/slides/AllioOverviewSlide.tsx",
     "title": "Meet ALLIO — 48 AI Agents, 7 Divisions",
-    "description": "Agent directory overview — all seven divisions of the ALLIO ecosystem.",
+    "description": "Agent directory overview — all seven divisions: Science (14), Engineering (11), Support (8), Marketing (5), Legal (5), Executive (4), Financial (1).",
     "speakerNotes": ""
   },
   {
@@ -116,7 +116,7 @@
     "position": 15,
     "filepath": "src/pages/slides/AgentHighlightsSlide.tsx",
     "title": "Agents That Power the Ecosystem",
-    "description": "Key agent profiles — DR. FORMULA, TRUE VISION, RESEARCH SCOUT, AUTO-IMPLEMENTER, GUARDIAN, and ALLIO MONITOR.",
+    "description": "Key agent profiles — DR. FORMULA (90-day protocol generation), SENTINEL (orchestration), PROMETHEUS (Science Division lead), JURIS Legal Team (SENTINEL contract review), ATHENA (Trustee bridge), and PARACELSUS (Peptide Console).",
     "speakerNotes": ""
   },
   {

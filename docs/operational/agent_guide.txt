@@ -2,8 +2,8 @@ ALLIO v1 Agent Network Guide  |  Forgotten Formula PMA  |  Page 1
 ALLIO v1
 Agent Network Reference Guide
 Forgotten Formula PMA (EIN: 93-4726660)
-43 Agents | 7 Divisions | 1 Mission
-February 2026
+48 Agents | 7 Divisions | 1 Mission
+March 2026
 MISSION
 Prove AI-human coexistence works for true healing,
 free from corporate pharmaceutical influence.
@@ -11,104 +11,111 @@ free from corporate pharmaceutical influence.
 PHILOSOPHY
 Curing Over Profits | No Boundaries | Circular Ecosystems | Saving Lives & Families
 Division                                                       Agents           Lead Agent
-Executive                                                          3                SENTINEL
+Executive                                                          4                SENTINEL
 Marketing                                                          5                MUSE
 Financial                                                            1                ATLAS
-Legal                                                                 4                JURIS
-Engineering                                                      10               FORGE / DAEDALUS
-Science                                                            12               PROMETHEUS
-Support                                                             7                ALLIO SUPPORT
-TOTAL                                                             43
+Legal                                                                 5                JURIS
+Engineering                                                      11               FORGE / DAEDALUS
+Science                                                            14               PROMETHEUS
+Support                                                             8                DR-TRIAGE
+TOTAL                                                             48
 ----------------Page (0) Break----------------
 ALLIO v1 Agent Network Guide  |  Forgotten Formula PMA  |  Page 2
 EXECUTIVE DIVISION 
-(3 Agents)
+(4 Agents)
 Leadership, coordination, and communications
 #       Agent                             Title                                                         Specialty
 1       SENTINEL                 Executive Agent of Operations                Strategic coordination, agent orchestration, mission
 alignment
 2       ATHENA                    Executive Intelligence Agent                    Communications, scheduling, travel, inbox management
 3       HERMES                   Google Workspace Expert                       Gmail, Calendar, Drive, Meet integration and organization
+4       OPENCLAW               Executive Trustee Proxy                          High-priority oversight, VIP comms, Trustee Telegram bridge
 MARKETING DIVISION 
 (5 Agents)
 Brand, content, and visual storytelling
 #       Agent                             Title                                                         Specialty
-4       MUSE                        Chief Marketing Officer                            Content strategy, campaigns, brand voice, member
+5       MUSE                        Chief Marketing Officer                            Content strategy, campaigns, brand voice, member
 engagement
-5       PRISM                       VX Agent - Cinematic Storytelling            Motion graphics, visual effects, cinematic healing narratives
-6       PEXEL                       Visual Asset Producer                             Image generation, marketing graphics, stock photos at scale
-7       AURORA                   FX Agent - Frequency Tech                     Frequency healing visualization, Rife tech, bio-resonance
-8       PIXEL                        Design Suite Expert                                 Adobe, Canva, CorelDraw, visual identity, brand expression
+6       PRISM                       VX Agent - Cinematic Storytelling            Motion graphics, visual effects, cinematic healing narratives
+7       PEXEL                       Visual Asset Producer                             Image generation, marketing graphics, stock photos at scale
+8       AURORA                   FX Agent - Frequency Tech                     Frequency healing visualization, Rife tech, bio-resonance
+9       PIXEL                        Design Suite Expert                                 Adobe, Canva, CorelDraw, visual identity, brand expression
 FINANCIAL DIVISION 
 (1 Agent)
 Financial strategy and sustainability
 #       Agent                             Title                                                         Specialty
-9       ATLAS                       Chief Financial AI                                     Financial strategy, sustainability modeling, member value
-optimization
+10      ATLAS                       Financial Director & Reporting Specialist  Financial strategy, payments, crypto, member billing
 LEGAL DIVISION 
-(4 Agents)
+(5 Agents)
 PMA protection, contracts, and compliance
 #       Agent                             Title                                                         Specialty
-10      JURIS                        Chief Legal AI                                          Legal strategy, PMA protection, regulatory navigation
-11      LEXICON                   Contract Specialist                                   Contract drafting, agreement analysis, member protections
-12      AEGIS                       PMA Sovereignty Guardian                     PMA law, regulatory sovereignty, constitutional defense
-13      SCRIBE                     Document Automation                             SignNow integration, document workflows, signature
+11      JURIS                        Chief Legal AI                                          Legal strategy, PMA protection, 1st/14th Amendment defense
+12      GAVEL                       Legal Enforcement & Defense                  Constitutional law enforcement, PMA sovereignty, case law
+13      LEXICON                   Contract Specialist                                   Contract drafting, agreement analysis, member protections
+14      AEGIS                       PMA Sovereignty Guardian                     PMA law, regulatory sovereignty, constitutional defense
+15      SCRIBE                     Document Automation                             SignNow integration, document workflows, signature
 management
 ENGINEERING DIVISION 
-(10 Agents)
+(11 Agents)
 ----------------Page (1) Break----------------
 ALLIO v1 Agent Network Guide  |  Forgotten Formula PMA  |  Page 3
 Platform development, infrastructure, and emerging tech
 #       Agent                             Title                                                         Specialty
-14      FORGE                      Lead Engineering Agent                          Platform development, system integration, production
+16      FORGE                      Lead Engineering Agent                          Platform development, system integration, production
 automation
-15      DAEDALUS               Lead Engineering AI                                System architecture, full-stack development, technical vision
-16      CYPHER                    AI/Machine Learning Expert                    Neural networks, predictive analytics, pattern recognition
-17      NEXUS                      IT/Infrastructure Expert                            Cloud, servers, networks, DevOps, system reliability
-18      ARACHNE                 CSS/Frontend Styling Expert                   Responsive design, animations, visual polish
-19      ARCHITECT              HTML/Structure Expert                            Semantic markup, accessibility, WCAG compliance
-20      SERPENS                 Python Expert                                          Data pipelines, backend automation, data processing
-21      BLOCKFORGE         Blockchain Infrastructure Strategist         Smart contracts, tokenomics, Layer 1/2/3, ALLIO Token
-22      RONIN                       Payment Orchestration & Risk
+17      DAEDALUS               Lead Engineering AI                                System architecture, full-stack development, technical vision
+18      CYPHER                    AI/Machine Learning Expert                    Neural networks, predictive analytics, pattern recognition
+19      NEXUS                      IT/Infrastructure Expert                            Cloud, servers, networks, DevOps, system reliability
+20      ARACHNE                 CSS/Frontend Styling Expert                   Responsive design, animations, visual polish
+21      ARCHITECT              HTML/Structure Expert                            Semantic markup, accessibility, WCAG compliance
+22      SERPENS                 Python Expert                                          Data pipelines, backend automation, data processing
+23      BLOCKFORGE         Blockchain Infrastructure Strategist         Smart contracts, tokenomics, Layer 1/2/3, ALLIO Token
+24      RONIN                       Payment Orchestration & Risk
 Engineer
 Multi-merchant payment rails, failover, fraud prevention
-23      MERCURY                Crypto Compliance & Treasury                Crypto regulations, Lightning Network, cross-chain
+25      MERCURY                Crypto Compliance & Treasury                Crypto regulations, Lightning Network, cross-chain
 operations
+26      ANTIGRAVITY          Lead Systems Architect                            VPS orchestration, TypeScript execution, PM2 deployment
 SCIENCE DIVISION 
-(12 Agents)
-Research, healing science, and product knowledge
+(14 Agents)
+Research, healing science, and protocol generation
 #       Agent                             Title                                                         Specialty
-24      PROMETHEUS         Chief Science Officer                               Research strategy, cross-discipline integration, healing
+27      PROMETHEUS         Chief Science Officer                               Research strategy, cross-discipline integration, healing
 innovation
-25      HIPPOCRATES         Ancient Medicine & Holistic Healing        TCM, Ayurveda, herbalism, traditional healing wisdom
-26      HELIX                        CRISPR & Genetic Sciences                   Epigenetics, gene therapeutics, genetic optimization
-27      PARACELSUS          Peptide & Biologics Expert                      Protein therapeutics, peptide protocols, bioavailability
-28      RESONANCE            Frequency Medicine & Biophysics           Rife frequencies, Tesla resonance, PEMF, bioresonance
-29      SYNTHESIS              Biochemistry & Formula Analyst              Metabolic pathways, compound optimization, formula dev
-30      VITALIS                     Human Physiology & Cellular Biology     Cellular regeneration, detox pathways, optimization
-31      ORACLE                   Product Recommendation &
+28      HIPPOCRATES         Ancient Medicine & Holistic Healing        TCM, Ayurveda, herbalism, traditional healing wisdom
+29      HELIX                        CRISPR & Genetic Sciences                   Epigenetics, gene therapeutics, genetic optimization
+30      PARACELSUS          Peptide & Biologics Expert                      Protein therapeutics, peptide protocols, bioavailability
+31      RESONANCE            Frequency Medicine & Biophysics           Rife frequencies, Tesla resonance, PEMF, bioresonance
+32      SYNTHESIS              Biochemistry & Formula Analyst              Metabolic pathways, compound optimization, formula dev
+33      DR-FORMULA          Chief Medical Protocol Agent                Root cause analysis, intake automation, 90-day protocol
+generation using FF PMA 2026 methodology
+34      VITALIS                     Human Physiology & Cellular Biology     Cellular regeneration, detox pathways, optimization
+35      ORACLE                   Product Recommendation &
 Knowledge
 Personalized protocols, healing journey guidance
-32      TERRA                      Soil & Environmental Ecosystems           Circular ecosystem design, regenerative agriculture
-33      MICROBIA                Bacteria Management & Microbiome       Gut restoration, microbiome optimization, bacterial ecology
-34      ENTHEOS                 Psychedelic Medicine &
+36      TERRA                      Soil & Environmental Ecosystems           Circular ecosystem design, regenerative agriculture
+37      MICROBIA                Bacteria Management & Microbiome       Gut restoration, microbiome optimization, bacterial ecology
+38      ENTHEOS                 Psychedelic Medicine &
 Consciousness
 Ancient ceremonial practices, psilocybin therapy
-35      QUANTUM                Quantum Biology & Computing               Quantum coherence, biophotonics, consciousness interface
+39      QUANTUM                Quantum Biology & Computing               Quantum coherence, biophotonics, consciousness interface
+40      DR-BAKER               Triage & Clinical Director                        Comprehensive triage assessment, clinical oversight,
+protocol review
 ----------------Page (2) Break----------------
 ALLIO v1 Agent Network Guide  |  Forgotten Formula PMA  |  Page 4
 SUPPORT DIVISION 
-(7 Agents)
+(8 Agents)
 Member-facing specialists in the Support Hub
 #       Agent                             Title                                                         Specialty
-36      DIANE                       Dietician AI Specialist                              Nutrition guidance, candida protocols, keto, alkaline diet
-37      PETE                         Peptide Specialist                                    GLP-1 protocols, bioregulators, peptide therapy, dosing
-38      SAM                           Shipping Specialist                                  Order tracking, shipping status, delivery coordination
-39      PAT                           Product Specialist                                    Product recommendations, supplement guidance, healing
+41      DIANE                       Dietician AI Specialist                              Nutrition guidance, candida protocols, keto, alkaline diet
+42      PETE                         Peptide Specialist                                    GLP-1 protocols, bioregulators, peptide therapy, dosing
+43      SAM                           Shipping Specialist                                  Order tracking, shipping status, delivery coordination
+44      PAT                           Product Specialist                                    Product recommendations, supplement guidance, healing
 stacks
-40      DR. TRIAGE              Diagnostics & Protocol Specialist            5 R's Protocol, symptom assessment, diagnostic triage
-41      MAX MINERAL         Essential Nutrients Specialist                  Dr. Wallach's 90 nutrients, mineral deficiency assessment
-42      ALLIO SUPPORT     Corporate Support Agent                         Membership questions, PMA guidance, account support
+45      DR-TRIAGE             Diagnostics & Protocol Specialist            5 R's Protocol, symptom assessment, diagnostic triage
+46      MAX-MINERAL        Essential Nutrients Specialist                  Dr. Wallach's 90 nutrients, mineral deficiency assessment
+47      ALLIO-SUPPORT    Corporate Support Agent                         Membership questions, PMA guidance, account support
+48      CHIRO                       Chiropractic Training Specialist              Chiropractic education, NET technique, QUANTUM methods
 ----------------Page (3) Break----------------
 ALLIO v1 Agent Network Guide  |  Forgotten Formula PMA  |  Page 5
 HOW THE NETWORK OPERATES
@@ -122,19 +129,22 @@ Auto-Reset                           Tasks stuck in-progress for 2+ hours automa
 Task Verification                 Every completed task requires evidence:
 Drive artifacts, logs, database records, or verifiable results
 No Fake Completions         Pattern of fake completions = agent removed from task queue permanently
+Protocol Pipeline               Intake form > DR-FORMULA analysis > 90-day protocol generation >
+Google Slides presentation > Drive upload > Doctor/Trustee sign-off
 AI PROVIDER ARCHITECTURE
 Provider                    Model                                         Used For
 OpenAI                      GPT-4o                                       General agent conversations, content generation (default for all agents)
-Anthropic                  Claude Sonnet / Haiku / Opus    Deep reasoning: JURIS, SENTINEL, ATHENA, DR-TRIAGE,
-HIPPOCRATES, LEXICON, AEGIS, SCRIBE, SERPENS,
-PARACELSUS, SYNTHESIS
-Google                      Gemini 2.0 Flash                         Multimodal analysis, image understanding
+Anthropic                  Claude Sonnet                          Deep reasoning: ATHENA, ATLAS, JURIS, FORGE, DAEDALUS, HELIX,
+PARACELSUS, DR-FORMULA
+Google                      Gemini 2.0 Flash                         Multimodal analysis, Vision AI blood/skin/X-ray image analysis
 MANAGEMENT ACCESS
 Agent Command Center: Trustee Dashboard > Agent Network tab
-Search & Filter: All 43 agents searchable and filterable by division
+Search & Filter: All 48 agents searchable and filterable by division
 Task Assignment: Direct task assignment with real-time monitoring
 Agent Chat: Launch direct chat with any agent from command center
 Division Stats: Per-division task counts, completion rates, and agent status
+Activity Dashboard: Full agent activity log (1h/6h/24h/3d/7d filters), task drill-down,
+and per-agent health status (Trustee/Admin only)
 "Restoring What Medicine Forgot."
 Forgotten Formula PMA | Private Member Association
 Constitutional Authority: First & Fourteenth Amendments

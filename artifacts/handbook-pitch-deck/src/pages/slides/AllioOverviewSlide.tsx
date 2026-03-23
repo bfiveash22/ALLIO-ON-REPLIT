@@ -18,40 +18,40 @@ export default function AllioOverviewSlide() {
 
         <div className="flex-1 flex gap-[1.5vw] items-start mt-[1vh]">
           <div className="flex-1 bg-gradient-to-b from-[#FFD700]/10 to-transparent border border-[#FFD700]/20 rounded-[1vw] p-[1.8vw]">
-            <h3 className="font-body text-[1.5vw] font-bold text-[#FFD700] mb-[1vh]">Medical Division</h3>
-            <p className="font-body text-[1.2vw] text-[#C8D6E5]/60 leading-relaxed">DR. FORMULA, Blood Analyst, ECS Profiler, Research agents — the clinical intelligence core</p>
+            <h3 className="font-body text-[1.5vw] font-bold text-[#FFD700] mb-[1vh]">Science Division</h3>
+            <p className="font-body text-[1.2vw] text-[#C8D6E5]/60 leading-relaxed">DR. FORMULA, PROMETHEUS, HELIX, PARACELSUS, RESONANCE, SYNTHESIS and more — the clinical intelligence core (14 agents)</p>
           </div>
 
           <div className="flex-1 bg-gradient-to-b from-[#2A4F7A]/10 to-transparent border border-[#2A4F7A]/20 rounded-[1vw] p-[1.8vw]">
-            <h3 className="font-body text-[1.5vw] font-bold text-[#2A4F7A] mb-[1vh]">Operations Division</h3>
-            <p className="font-body text-[1.2vw] text-[#C8D6E5]/60 leading-relaxed">Admin, scheduling, onboarding, communications — keeping the clinics running smoothly</p>
+            <h3 className="font-body text-[1.5vw] font-bold text-[#3B9FDD] mb-[1vh]">Engineering Division</h3>
+            <p className="font-body text-[1.2vw] text-[#C8D6E5]/60 leading-relaxed">FORGE, DAEDALUS, CYPHER, NEXUS, ANTIGRAVITY — platform development, infrastructure, and automation (11 agents)</p>
           </div>
 
           <div className="flex-1 bg-gradient-to-b from-[#3B6FA0]/10 to-transparent border border-[#3B6FA0]/20 rounded-[1vw] p-[1.8vw]">
             <h3 className="font-body text-[1.5vw] font-bold text-[#3B6FA0] mb-[1vh]">Legal Division</h3>
-            <p className="font-body text-[1.2vw] text-[#C8D6E5]/60 leading-relaxed">PMA compliance, document management, consent tracking, regulatory monitoring</p>
+            <p className="font-body text-[1.2vw] text-[#C8D6E5]/60 leading-relaxed">JURIS, GAVEL, LEXICON, AEGIS, SCRIBE — PMA compliance, SENTINEL contract review, and document management (5 agents)</p>
           </div>
 
           <div className="flex-1 bg-gradient-to-b from-[#C8D6E5]/10 to-transparent border border-[#C8D6E5]/20 rounded-[1vw] p-[1.8vw]">
-            <h3 className="font-body text-[1.5vw] font-bold text-[#C8D6E5] mb-[1vh]">Engineering Division</h3>
-            <p className="font-body text-[1.2vw] text-[#C8D6E5]/60 leading-relaxed">Platform development, API maintenance, infrastructure, and security management</p>
+            <h3 className="font-body text-[1.5vw] font-bold text-[#C8D6E5] mb-[1vh]">Marketing Division</h3>
+            <p className="font-body text-[1.2vw] text-[#C8D6E5]/60 leading-relaxed">MUSE, PRISM, PEXEL, AURORA, PIXEL — brand, content, visual storytelling, and frequency tech (5 agents)</p>
           </div>
         </div>
 
         <div className="flex gap-[1.5vw] items-start mt-[1.5vh]">
           <div className="flex-1 bg-gradient-to-b from-[#FFD700]/8 to-transparent border border-[#FFD700]/15 rounded-[1vw] p-[1.8vw]">
-            <h3 className="font-body text-[1.5vw] font-bold text-[#FFE44D] mb-[1vh]">Intelligence Division</h3>
-            <p className="font-body text-[1.2vw] text-[#C8D6E5]/60 leading-relaxed">Auto-enhancement, self-evolution, model routing, and continuous improvement cycles</p>
+            <h3 className="font-body text-[1.5vw] font-bold text-[#FFE44D] mb-[1vh]">Support Division</h3>
+            <p className="font-body text-[1.2vw] text-[#C8D6E5]/60 leading-relaxed">DR-TRIAGE, DIANE, PETE, CHIRO and more — member-facing specialists in the Support Hub (8 agents)</p>
           </div>
 
           <div className="flex-1 bg-gradient-to-b from-[#2A4F7A]/8 to-transparent border border-[#2A4F7A]/15 rounded-[1vw] p-[1.8vw]">
-            <h3 className="font-body text-[1.5vw] font-bold text-[#00D4AA] mb-[1vh]">Security Division</h3>
-            <p className="font-body text-[1.2vw] text-[#C8D6E5]/60 leading-relaxed">Data protection, access control, audit logging, and threat monitoring</p>
+            <h3 className="font-body text-[1.5vw] font-bold text-[#00D4AA] mb-[1vh]">Executive Division</h3>
+            <p className="font-body text-[1.2vw] text-[#C8D6E5]/60 leading-relaxed">SENTINEL, ATHENA, HERMES, OPENCLAW — leadership, coordination, and Trustee communications (4 agents)</p>
           </div>
 
           <div className="flex-1 bg-gradient-to-b from-[#3B6FA0]/8 to-transparent border border-[#3B6FA0]/15 rounded-[1vw] p-[1.8vw]">
-            <h3 className="font-body text-[1.5vw] font-bold text-[#33DFBD] mb-[1vh]">Creative Division</h3>
-            <p className="font-body text-[1.2vw] text-[#C8D6E5]/60 leading-relaxed">Content creation, branding, marketing materials, and member-facing communications</p>
+            <h3 className="font-body text-[1.5vw] font-bold text-[#33DFBD] mb-[1vh]">Financial Division</h3>
+            <p className="font-body text-[1.2vw] text-[#C8D6E5]/60 leading-relaxed">ATLAS — financial strategy, payments, crypto treasury, and member billing (1 agent)</p>
           </div>
         </div>
       </div>

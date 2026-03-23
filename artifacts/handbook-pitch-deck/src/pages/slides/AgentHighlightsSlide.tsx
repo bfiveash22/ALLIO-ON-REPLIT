@@ -18,41 +18,41 @@ export default function AgentHighlightsSlide() {
             <div className="flex-1 bg-gradient-to-r from-[#FFD700]/10 to-transparent border border-[#FFD700]/20 rounded-[1vw] p-[2vw]">
               <h3 className="font-body text-[1.6vw] font-bold text-[#FFD700] mb-[1vh]">DR. FORMULA</h3>
               <p className="font-body text-[1.2vw] text-[#F0F4F8]/80 mb-[0.5vh]">Chief Medical Protocol Agent</p>
-              <p className="font-body text-[1.2vw] text-[#C8D6E5]/55 leading-relaxed">Generates complete personalized healing protocols using the FF PMA 2026 methodology and 127+ therapeutic products</p>
+              <p className="font-body text-[1.2vw] text-[#C8D6E5]/55 leading-relaxed">Generates complete personalized 90-day healing protocols using the FF PMA 2026 methodology — root cause analysis, 5R phases, injectable peptides, supplement stacks, and daily schedules</p>
             </div>
 
             <div className="flex-1 bg-gradient-to-r from-[#2A4F7A]/10 to-transparent border border-[#2A4F7A]/20 rounded-[1vw] p-[2vw]">
-              <h3 className="font-body text-[1.6vw] font-bold text-[#2A4F7A] mb-[1vh]">TRUE VISION</h3>
-              <p className="font-body text-[1.2vw] text-[#F0F4F8]/80 mb-[0.5vh]">Blood Analysis Agent</p>
-              <p className="font-body text-[1.2vw] text-[#C8D6E5]/55 leading-relaxed">AI-assisted blood panel interpretation with functional medicine ranges, pattern detection, and root-cause correlation</p>
+              <h3 className="font-body text-[1.6vw] font-bold text-[#3B9FDD] mb-[1vh]">SENTINEL</h3>
+              <p className="font-body text-[1.2vw] text-[#F0F4F8]/80 mb-[0.5vh]">Executive Agent of Operations</p>
+              <p className="font-body text-[1.2vw] text-[#C8D6E5]/55 leading-relaxed">Coordinates all 48 agents, monitors task health, routes cross-division requests, and orchestrates the SENTINEL Contract Review with the Legal Division</p>
             </div>
           </div>
 
           <div className="flex-1 flex flex-col gap-[2vh]">
             <div className="flex-1 bg-gradient-to-r from-[#3B6FA0]/10 to-transparent border border-[#3B6FA0]/20 rounded-[1vw] p-[2vw]">
-              <h3 className="font-body text-[1.6vw] font-bold text-[#3B6FA0] mb-[1vh]">RESEARCH SCOUT</h3>
-              <p className="font-body text-[1.2vw] text-[#F0F4F8]/80 mb-[0.5vh]">Literature Research Agent</p>
-              <p className="font-body text-[1.2vw] text-[#C8D6E5]/55 leading-relaxed">Searches PubMed, clinical trials, and scientific databases to provide peer-reviewed evidence for protocol interventions</p>
+              <h3 className="font-body text-[1.6vw] font-bold text-[#3B6FA0] mb-[1vh]">PROMETHEUS</h3>
+              <p className="font-body text-[1.2vw] text-[#F0F4F8]/80 mb-[0.5vh]">Chief Science Officer</p>
+              <p className="font-body text-[1.2vw] text-[#C8D6E5]/55 leading-relaxed">Leads the Science Division research strategy, integrating 13 specialist agents across genetics, peptides, frequency medicine, detox, and quantum biology</p>
             </div>
 
             <div className="flex-1 bg-gradient-to-r from-[#C8D6E5]/10 to-transparent border border-[#C8D6E5]/20 rounded-[1vw] p-[2vw]">
-              <h3 className="font-body text-[1.6vw] font-bold text-[#C8D6E5] mb-[1vh]">AUTO-IMPLEMENTER</h3>
-              <p className="font-body text-[1.2vw] text-[#F0F4F8]/80 mb-[0.5vh]">Self-Evolution Agent</p>
-              <p className="font-body text-[1.2vw] text-[#C8D6E5]/55 leading-relaxed">Monitors system performance, identifies improvements, and implements enhancements through weekly auto-evolution cycles</p>
+              <h3 className="font-body text-[1.6vw] font-bold text-[#C8D6E5] mb-[1vh]">JURIS & LEGAL TEAM</h3>
+              <p className="font-body text-[1.2vw] text-[#F0F4F8]/80 mb-[0.5vh]">5-Agent Legal Division</p>
+              <p className="font-body text-[1.2vw] text-[#C8D6E5]/55 leading-relaxed">JURIS, GAVEL, LEXICON, AEGIS, and SCRIBE collectively protect PMA sovereignty, review contracts, and manage member agreements via SignNow automation</p>
             </div>
           </div>
 
           <div className="flex-1 flex flex-col gap-[2vh]">
             <div className="flex-1 bg-gradient-to-r from-[#FFE44D]/10 to-transparent border border-[#FFE44D]/20 rounded-[1vw] p-[2vw]">
-              <h3 className="font-body text-[1.6vw] font-bold text-[#FFE44D] mb-[1vh]">GUARDIAN</h3>
-              <p className="font-body text-[1.2vw] text-[#F0F4F8]/80 mb-[0.5vh]">Security Monitoring Agent</p>
-              <p className="font-body text-[1.2vw] text-[#C8D6E5]/55 leading-relaxed">Continuous security monitoring, data protection enforcement, access control management, and threat detection</p>
+              <h3 className="font-body text-[1.6vw] font-bold text-[#FFE44D] mb-[1vh]">ATHENA</h3>
+              <p className="font-body text-[1.2vw] text-[#F0F4F8]/80 mb-[0.5vh]">Executive Intelligence Agent</p>
+              <p className="font-body text-[1.2vw] text-[#C8D6E5]/55 leading-relaxed">Primary bridge between the Trustee and the agent network — handles communications, escalations, and strategic routing of priority requests</p>
             </div>
 
             <div className="flex-1 bg-gradient-to-r from-[#FFD700]/10 to-transparent border border-[#FFD700]/20 rounded-[1vw] p-[2vw]">
-              <h3 className="font-body text-[1.6vw] font-bold text-[#FFD700] mb-[1vh]">ALLIO MONITOR</h3>
-              <p className="font-body text-[1.2vw] text-[#F0F4F8]/80 mb-[0.5vh]">System Health Agent</p>
-              <p className="font-body text-[1.2vw] text-[#C8D6E5]/55 leading-relaxed">Tracks health and performance of all 48 agents, detects failures, generates status reports for the Trustee</p>
+              <h3 className="font-body text-[1.6vw] font-bold text-[#FFD700] mb-[1vh]">PARACELSUS</h3>
+              <p className="font-body text-[1.2vw] text-[#F0F4F8]/80 mb-[0.5vh]">Peptide & Biologics Expert</p>
+              <p className="font-body text-[1.2vw] text-[#C8D6E5]/55 leading-relaxed">Powers the Peptide Console with deep pharmacological knowledge — stacking protocols, dosing guidance, mechanism education, and bioregulator expertise</p>
             </div>
           </div>
         </div>

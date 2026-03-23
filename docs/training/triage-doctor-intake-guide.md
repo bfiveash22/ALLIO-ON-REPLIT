@@ -3,13 +3,13 @@
 
 **For:** Dr. Baker and Triage Physicians  
 **Classification:** Clinical Protocol Document  
-**Updated:** January 2026
+**Updated:** March 2026
 
 ---
 
 ## Overview
 
-This document provides the complete workflow for triage doctor intakes at Forgotten Formula PMA. The triage doctor is the critical first point of clinical contact, responsible for comprehensive assessment and appropriate routing of new members.
+This document provides the complete workflow for triage doctor intakes at Forgotten Formula PMA. The triage doctor is the critical first point of clinical contact, responsible for comprehensive assessment and appropriate routing of new members. Following intake, the platform's automated protocol assembly pipeline generates a personalized 90-day healing roadmap delivered as a Google Slides presentation.
 
 ---
 
@@ -29,16 +29,19 @@ This document provides the complete workflow for triage doctor intakes at Forgot
 - Open member profile in ALLIO
 - Review ATHENA notes from support interactions
 - Check for flagged concerns from intake team
+- Confirm SignNow membership agreement is signed and verified (enrollment gating)
 - Prepare documentation templates
 
 ### 1.2 Required Forms Confirmation
 Ensure member has completed:
-- [ ] Membership Agreement (signed via SignNow)
+- [ ] Membership Agreement (signed via SignNow — required before enrollment is activated)
 - [ ] Health History Questionnaire
 - [ ] Current Medications List
 - [ ] Supplement List
 - [ ] Privacy Acknowledgment
 - [ ] Informed Consent for Services
+
+**Note:** The FFPMA platform automatically gates member enrollment. Intake cannot proceed to protocol generation until SignNow contract verification is confirmed in the Doctor Portal.
 
 ---
 
@@ -224,9 +227,21 @@ Ensure member has completed:
 - Posture and movement quality
 - Eye and nail assessment (if trained)
 
-### 3.3 Preliminary Testing Recommendations
+### 3.3 Vision AI Blood Analysis
 
-**Standard Panel Recommendations:**
+**AI-Assisted Blood Panel Review:**
+Upload available blood work to the Blood Analysis tool in the Doctor Portal. The platform's Vision AI analyzes blood panels and microscopy images to provide:
+- Functional medicine reference range interpretation
+- Pattern detection for root-cause correlation
+- Cellular health observations
+- Protocol recommendations based on findings
+
+**Supported Inputs:**
+- Uploaded blood panel images (JPEG, PNG)
+- Live microscope capture (dark field microscopy integration)
+- Bloodwork lab report PDFs (auto-extracted via AI)
+
+**Preliminary Testing Recommendations:**
 Based on intake findings, recommend appropriate testing:
 
 | Finding/Concern | Recommended Testing |
@@ -242,6 +257,7 @@ Based on intake findings, recommend appropriate testing:
 - Recommend for all new members as baseline
 - Provides immediate visual feedback
 - Helps guide nutritional recommendations
+- Use live capture in the Blood Analysis tool to record video for Drive upload
 
 ---
 
@@ -265,13 +281,38 @@ After intake, trigger HIPPOCRATES to:
 - Flag any concerning patterns
 - Prepare educational materials for member
 
-### 4.2 Member Summary
+### 4.2 Automated Protocol Assembly Pipeline
+
+After completing intake documentation, submit the case to the automated protocol assembly pipeline:
+
+1. **Intake Form Submission** — Submit from the Protocol Assembly page (Doctor Portal > Protocol Assembly). The intake data populates the DR_FORMULA analysis engine.
+
+2. **DR_FORMULA Analysis** — The AI generates a comprehensive 90-day protocol using the FF PMA 2026 methodology, including:
+   - Root cause identification (ranked by priority)
+   - 5R framework phases (Reduce, Restore, Reactivate, Regenerate, Revitalize)
+   - Injectable peptide protocols with reconstitution instructions
+   - Supplement stacks with timing and dosing
+   - Detox protocols
+   - Daily and weekly schedules in checkbox format
+   - Molecular pathway citations (PI3K-AKT, NF-κB, etc.)
+
+3. **Google Slides Presentation** — The system automatically generates a formatted presentation and uploads it to Google Drive. A direct link is provided to the doctor for review.
+
+4. **Doctor Review** — The doctor reviews the generated protocol document and makes any clinical refinements.
+
+5. **Trustee/Admin Sign-Off** — Protocols requiring approval are queued for Trustee review via the Protocol Queue tool.
+
+6. **Member Delivery** — Approved protocols are accessible to the member via their member portal and linked presentation.
+
+**AI protocol generation (DR_FORMULA) typically completes within 60 seconds of intake submission. Final delivery to the member follows after doctor review and Trustee/Admin sign-off, which is typically completed within 24 hours of the appointment.**
+
+### 4.3 Member Summary
 
 Provide member with:
 - Written summary of intake findings
 - Testing recommendations and rationale
-- Initial protocol suggestions
-- Next steps and timeline
+- Protocol delivery timeline
+- Next steps and follow-up schedule
 - Contact information for questions
 
 ---
@@ -315,14 +356,28 @@ Provide member with:
 - Active suicidal ideation with plan
 - Signs of acute infection with fever >103°F
 
-### 5.3 Follow-Up Scheduling
+### 5.3 Protocol Review and Approval Flow
+
+**Standard Protocol Approval:**
+1. Doctor reviews AI-generated protocol in the Protocol Assembly page
+2. Protocol enters Trustee queue (viewable at Trustee Dashboard > Protocol Queue)
+3. Trustee approves, requests revisions, or escalates
+4. Approved protocol is finalized and delivered to member
+5. Follow-up scheduled per complexity level
+
+**Expedited Flow (Level 1):**
+- Doctor may mark protocol as ready for immediate delivery
+- Trustee notified via SENTINEL (Telegram/OpenClaw) for async approval
+
+### 5.4 Follow-Up Scheduling
 
 **Standard Timeline:**
 - Testing: Schedule within 1 week
 - Results review: 2-3 weeks from testing
-- Protocol initiation: After results review
+- Protocol initiation: After results review (or same day if urgent)
 - Progress check: 4-6 weeks into protocol
 - LBA follow-up: 4-8 weeks for comparison
+- Protocol renewal: At 90-day mark
 
 ---
 
@@ -344,6 +399,10 @@ FINDINGS:
 RECOMMENDATIONS:
 [Testing recommendations]
 [Initial protocol suggestions]
+
+YOUR PROTOCOL:
+Our AI system is generating your personalized 90-day protocol. You will receive
+a link to your customized presentation within 24 hours of your appointment.
 
 NEXT STEPS:
 1. [First step with timeline]
@@ -373,11 +432,17 @@ KEY FINDINGS:
 - [Finding 2]
 - [Finding 3]
 
+BLOOD ANALYSIS: [Completed / Pending upload]
+VISION AI FINDINGS: [Summary or "See report in chart"]
+
 MEDICATIONS: [List or "See full list in chart"]
 ALLERGIES: [List flagged items]
 
 COMPLEXITY: Level [1-4]
-RECOMMENDED TRACK: [IV / Peptides / LBA / Detox / etc.]
+RECOMMENDED TRACK: [IV / Peptides / LBA / Detox / ECS / Frequency / etc.]
+
+PROTOCOL STATUS: [Submitted to DR_FORMULA / Awaiting submission]
+SLIDES LINK: [Link when available]
 
 URGENT ITEMS: [Any time-sensitive concerns]
 
@@ -390,6 +455,7 @@ URGENT ITEMS: [Any time-sensitive concerns]
 
 ### Pre-Intake
 - [ ] Review member file
+- [ ] Confirm SignNow contract verified (enrollment gate)
 - [ ] Check form completion
 - [ ] Review any previous records
 - [ ] Prepare documentation
@@ -402,15 +468,18 @@ URGENT ITEMS: [Any time-sensitive concerns]
 - [ ] Medical/family history
 - [ ] Medication/allergy review
 - [ ] Vitals and observations
+- [ ] Upload blood work for Vision AI analysis (if available)
 
 ### Post-Intake
 - [ ] Document in ALLIO
 - [ ] Classify complexity level
 - [ ] Assign routing
+- [ ] Submit intake to Protocol Assembly pipeline
 - [ ] Provide member summary
 - [ ] Schedule follow-up
 - [ ] Notify HIPPOCRATES agent
 - [ ] Handoff to assigned practitioner
+- [ ] Confirm protocol in Trustee queue
 
 ---
 
@@ -428,6 +497,20 @@ Or direct link: [To be added by Trustee]
 
 ---
 
+## Appendix C: Platform Tools Reference
+
+| Tool | Location | Used For |
+|------|----------|---------|
+| Blood Analysis | Doctor Portal > Blood Analysis | Upload/capture blood work for Vision AI |
+| Protocol Assembly | Doctor Portal > Protocol Assembly | Submit intakes, track protocol status |
+| Skin Analysis | Doctor Portal > Diagnostics | Upload skin photos for AI analysis |
+| X-Ray Analysis | Doctor Portal > Diagnostics | Upload imaging for AI pattern detection |
+| Vitality Assessment | Doctor Portal > Vitality | 7-domain health scoring for members |
+| ECS Tool | Member Portal > ECS Tool | Endocannabinoid system profiling |
+| Frequency Library | Member Portal > Frequency | Rife/PEMF frequency prescriptions |
+
+---
+
 *Triage Doctor Protocol - Forgotten Formula PMA*  
 *Developed with Clinical Oversight*  
-*Updated January 2026*
+*Updated March 2026*

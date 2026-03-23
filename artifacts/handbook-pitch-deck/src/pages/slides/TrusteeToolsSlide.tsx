@@ -13,37 +13,37 @@ export default function TrusteeToolsSlide() {
           </h2>
         </div>
 
-        <div className="flex-1 flex gap-[2vw]">
-          <div className="flex-1 bg-[#1E3A5F]/30 border border-[#2A4F7A]/20 rounded-[1vw] p-[2.5vw] flex flex-col">
+        <div className="flex-1 flex gap-[1.5vw]">
+          <div className="flex-1 bg-[#1E3A5F]/30 border border-[#2A4F7A]/20 rounded-[1vw] p-[2vw] flex flex-col">
             <div className="w-[3vw] h-[3vw] rounded-full bg-[#2A4F7A]/20 flex items-center justify-center mb-[1.5vh]">
               <span className="text-[1.5vw]">📋</span>
             </div>
             <h3 className="font-body text-[1.5vw] font-bold text-[#F0F4F8] mb-[1vh]">Protocol Queue</h3>
-            <p className="font-body text-[1.3vw] text-[#C8D6E5]/60 leading-relaxed flex-1">Review pending protocols, approve or request revisions, track delivery status for each patient.</p>
+            <p className="font-body text-[1.2vw] text-[#C8D6E5]/60 leading-relaxed flex-1">Review pending protocols, approve or request revisions, track delivery status for each member. Integrated with SENTINEL Telegram alerts.</p>
           </div>
 
-          <div className="flex-1 bg-[#1E3A5F]/30 border border-[#2A4F7A]/20 rounded-[1vw] p-[2.5vw] flex flex-col">
+          <div className="flex-1 bg-[#1E3A5F]/30 border border-[#2A4F7A]/20 rounded-[1vw] p-[2vw] flex flex-col">
             <div className="w-[3vw] h-[3vw] rounded-full bg-[#2A4F7A]/20 flex items-center justify-center mb-[1.5vh]">
               <span className="text-[1.5vw]">📊</span>
             </div>
             <h3 className="font-body text-[1.5vw] font-bold text-[#F0F4F8] mb-[1vh]">Agent Monitor</h3>
-            <p className="font-body text-[1.3vw] text-[#C8D6E5]/60 leading-relaxed flex-1">Real-time health dashboard for all 48 ALLIO agents across 7 divisions. Track task completion and failures.</p>
+            <p className="font-body text-[1.2vw] text-[#C8D6E5]/60 leading-relaxed flex-1">Real-time health dashboard for all 48 ALLIO agents across 7 divisions. Track task completion, failures, and per-agent performance metrics.</p>
           </div>
 
-          <div className="flex-1 bg-[#1E3A5F]/30 border border-[#2A4F7A]/20 rounded-[1vw] p-[2.5vw] flex flex-col">
+          <div className="flex-1 bg-[#1E3A5F]/30 border border-[#2A4F7A]/20 rounded-[1vw] p-[2vw] flex flex-col">
             <div className="w-[3vw] h-[3vw] rounded-full bg-[#2A4F7A]/20 flex items-center justify-center mb-[1.5vh]">
-              <span className="text-[1.5vw]">📁</span>
+              <span className="text-[1.5vw]">⚖️</span>
             </div>
-            <h3 className="font-body text-[1.5vw] font-bold text-[#F0F4F8] mb-[1vh]">Legal Tracker</h3>
-            <p className="font-body text-[1.3vw] text-[#C8D6E5]/60 leading-relaxed flex-1">Monitor PMA document status, membership agreements, consent forms, and compliance deadlines.</p>
+            <h3 className="font-body text-[1.5vw] font-bold text-[#F0F4F8] mb-[1vh]">SENTINEL Contract Review</h3>
+            <p className="font-body text-[1.2vw] text-[#C8D6E5]/60 leading-relaxed flex-1">Multi-agent legal audit coordinated by SENTINEL. JURIS, LEXICON, AEGIS, and SCRIBE analyze PMA agreements, flag critical issues, and prioritize edits.</p>
           </div>
 
-          <div className="flex-1 bg-[#1E3A5F]/30 border border-[#2A4F7A]/20 rounded-[1vw] p-[2.5vw] flex flex-col">
+          <div className="flex-1 bg-[#1E3A5F]/30 border border-[#2A4F7A]/20 rounded-[1vw] p-[2vw] flex flex-col">
             <div className="w-[3vw] h-[3vw] rounded-full bg-[#2A4F7A]/20 flex items-center justify-center mb-[1.5vh]">
               <span className="text-[1.5vw]">💬</span>
             </div>
             <h3 className="font-body text-[1.5vw] font-bold text-[#F0F4F8] mb-[1vh]">Communication Hub</h3>
-            <p className="font-body text-[1.3vw] text-[#C8D6E5]/60 leading-relaxed flex-1">Direct messaging with doctors, members, and the ALLIO agent network through integrated channels.</p>
+            <p className="font-body text-[1.2vw] text-[#C8D6E5]/60 leading-relaxed flex-1">Direct messaging with doctors, members, and the ALLIO agent network. SENTINEL bridges Telegram for real-time Trustee-to-agent communication.</p>
           </div>
         </div>
 
