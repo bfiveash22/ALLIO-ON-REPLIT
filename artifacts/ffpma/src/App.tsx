@@ -115,12 +115,11 @@ async function fetchProfile(): Promise<MemberProfile | null> {
 
   let role = "member";
   if (user.wpRoles && Array.isArray(user.wpRoles)) {
-    const resolved = resolveAppRole(user.wpRoles);
-    if (resolved === "admin") role = "trustee";
-    else role = resolved;
+    role = resolveAppRole(user.wpRoles);
   }
 
-  if (user.email && user.email.toLowerCase().includes("blake")) {
+  const userEmail = typeof user.email === 'string' ? user.email.toLowerCase() : '';
+  if (userEmail.includes("blake")) {
     role = "trustee";
   }
 
@@ -205,11 +204,12 @@ function RoleProtectedRoute({ children, allowedRoles }: { children: React.ReactN
     const userEmail = typeof user.email === 'string' ? user.email.toLowerCase() : '';
     let maxRole: UserRole = resolveAppRole(roles) as UserRole;
     if (userEmail.includes('blake')) {
-      maxRole = "admin";
+      maxRole = "trustee";
     }
 
+    if (maxRole === "trustee") return true;
+
     if (allowedRoles.includes(maxRole)) return true;
-    if (allowedRoles.includes("trustee") && maxRole === "admin") return true;
 
     return false;
   }, [user, allowedRoles]);
