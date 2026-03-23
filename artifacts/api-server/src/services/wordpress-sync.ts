@@ -486,10 +486,10 @@ export async function syncLibraryContent(): Promise<number> {
       page++;
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
-      if (errMsg.includes('400')) {
-        console.log(`WordPress returned 400 on page ${page} — no more posts available.`);
+      if (errMsg.includes('WordPress API error: 400')) {
+        console.log(`WordPress pagination complete at page ${page} (400 Bad Request = no more pages).`);
       } else {
-        console.log(`WordPress sync stopped at page ${page}: ${errMsg}`);
+        console.error(`[WordPress Sync] ERROR on page ${page}: ${errMsg}`);
       }
       break;
     }

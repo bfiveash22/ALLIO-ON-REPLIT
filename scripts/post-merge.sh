@@ -29,7 +29,9 @@ if curl -sf http://localhost:5000/api/health > /dev/null 2>&1; then
   API_RUNNING=true
   echo "  [PASS] API is running"
 else
-  echo "  [SKIP] API not running — start the app to run full verification"
+  echo "  [FAIL] API is not running — start the app and re-run verification"
+  echo "         Run: PORT=5000 pnpm --filter @workspace/api-server run dev &"
+  ERRORS=$((ERRORS + 1))
 fi
 
 if [ "$API_RUNNING" = true ]; then
