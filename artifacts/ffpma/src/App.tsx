@@ -86,6 +86,7 @@ import VideoStudioPage from "@/pages/video-studio";
 import PMANetworkPage from "@/pages/pma-network";
 import ContractReviewPage from "@/pages/contract-review";
 import BloodAnalysisPage from "@/pages/blood-analysis";
+import TestingHubPage from "@/pages/testing-hub";
 import FrequencyLibraryPage from "@/pages/frequency-library";
 import ResearchViewerPage from "@/pages/research-viewer";
 import VitalityAssessmentPage from "@/pages/vitality-assessment";
@@ -450,6 +451,13 @@ function Router() {
       <Route path="/resources/protocol-builder" component={() => (
         <ProtectedRoute>
           <ProtocolBuilderPage />
+        </ProtectedRoute>
+      )} />
+      <Route path="/resources/testing-hub" component={() => (
+        <ProtectedRoute>
+          <AppLayout>
+            <TestingHubPage />
+          </AppLayout>
         </ProtectedRoute>
       )} />
       <Route path="/resources/blood-samples" component={() => (

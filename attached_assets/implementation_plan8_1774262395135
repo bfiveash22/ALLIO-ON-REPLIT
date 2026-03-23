@@ -1,0 +1,33 @@
+# Full Video Player / Marketing Studio Integration
+
+## Goal Description
+Implement the video generation API using the `Lightricks/LTX-Video` model via Hugging Face Inference and build the full video playback components in the Marketing Studio and Dashboard.
+
+## Proposed Changes
+
+### Backend (Media Generation)
+- **[MODIFY] `server/services/huggingface-media.ts`**
+  - Implement a new `generateVideo(prompt: string)` function that sends a request to the `Lightricks/LTX-Video` model.
+  - Wait for the generation to complete and save the resulting MP4 blob to the local filesystem (e.g., `client/public/generated/`) to avoid massive base64 JSON responses.
+  - Update `checkMediaStatus()` to dynamically detect if `LTX-Video` is available and set `videoGeneration: true`.
+
+- **[MODIFY] `server/routes.ts`**
+  - Add the `POST /api/media/generate-video` endpoint that invokes the new service function and returns the URL of the generated video.
+
+### Frontend (UI & Playback)
+- **[MODIFY] `client/src/pages/marketing-studio.tsx`**
+  - Remove the "Coming Soon / Requires dedicated GPU endpoints" placeholder in the Video Generation tab.
+  - Implement a `Textarea` for the video prompt and a "Generate Video" button.
+  - Add a `<video>` element with custom controls to play back the generated video.
+
+- **[MODIFY] `client/src/pages/dashboard.tsx`**
+  - Replace the mocked "Starting playback... Full video player coming soon!" toast with actual video playback.
+  - Build a modal overlay or an embedded video player within the preview panel to play the generated MP4 file.
+
+## Verification Plan
+
+### Manual Verification
+1. Open the dev server (`npm run dev:client` and `npm run dev`).
+2. Navigate to the **Marketing Studio**, switch to the Video Generation tab, enter a short prompt (e.g., "A cinematic shot of a sunset over the ocean"), and click Generate.
+3. Verify that the `<video>` element appears and plays the successful generation.
+4. Navigate to the **Dashboard** and click "Play Full Video" on a video asset to verify the new playback overlay works seamlessly.

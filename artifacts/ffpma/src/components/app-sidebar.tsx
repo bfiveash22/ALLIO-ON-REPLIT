@@ -32,6 +32,7 @@ import {
   Download,
   Heart,
   History,
+  FlaskConical,
 } from "lucide-react";
 
 import {
@@ -122,6 +123,7 @@ const resourceMenuItems = [
   { title: "Dosage Calculator", url: "/resources/dosage-calculator", icon: Calculator },
   { title: "Compound Interactions", url: "/resources/compound-interactions", icon: Droplets },
   { title: "Frequency Library", url: "/frequency-library", icon: Radio },
+  { title: "At-Home Testing Hub", url: "/resources/testing-hub", icon: FlaskConical },
 ];
 
 const doctorMenuItems = [
