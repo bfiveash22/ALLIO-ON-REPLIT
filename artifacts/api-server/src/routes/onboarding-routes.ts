@@ -6,6 +6,7 @@ import { doctorOnboarding, memberEnrollment, doctorAppointments, users } from "@
 import { signNowService } from "../services/signnow";
 import { wordPressAuthService } from "../services/wordpress-auth";
 import { triggerWelcomeOnSignup } from "../services/enrollment-automation";
+import { notificationService } from "../services/notification-service";
 
 const DOCTOR_ONBOARDING_TEMPLATE = process.env.SIGNNOW_DOCTOR_ONBOARDING_TEMPLATE_ID || '253597f6c6724abd976af62a69b3e0a5b92b38dd';
 const MEMBER_ONBOARDING_TEMPLATE = process.env.SIGNNOW_MEMBER_TEMPLATE_ID || '';
@@ -131,6 +132,17 @@ export function registerOnboardingRoutes(app: Express): void {
       }).catch((err) => {
         console.error(`[enrollment] Welcome email error for ${email}:`, err.message);
       });
+
+      if (doctor.wpUserId) {
+        db.select({ id: users.id }).from(users)
+          .where(eq(users.wpUserId, String(doctor.wpUserId)))
+          .limit(1)
+          .then((rows) => {
+            if (rows[0]) {
+              notificationService.createForUser(rows[0].id, 'member_enrolled', 'New Member Started Enrollment', `A new member has started enrollment using your referral code ${doctorCode}.`, { doctorCode }).catch(() => {});
+            }
+          }).catch(() => {});
+      }
 
       res.json({ success: true, enrollmentId: enrollmentRecord[0].id, signingUrl: signNowResult.signingUrl, documentId: signNowResult.documentId, doctorClinic: doctor.clinicName });
     } catch (error: any) {

@@ -8,6 +8,7 @@ import { signNowService } from "../services/signnow";
 import { sendEmail } from "../services/gmail";
 import { submitIntakeForm } from "../services/intake";
 import { intakeForms, products, categories, orders, contracts, chatRooms, chatMessages, chatParticipants } from "@shared/schema";
+import { notificationService } from "../services/notification-service";
 import { fetchCatalogContent, searchCatalog, getCatalogSections, getProductInfo } from "../services/catalog-service";
 import { indexAllMarketingAssets, searchAssets, checkExistingAsset, getAssetStats } from "../services/asset-catalog";
 import { connectSourceMaterials, autoConnectByKeywordMatch } from "../seeds/connect-source-materials-seed";
@@ -780,6 +781,18 @@ export function registerMiscRoutes(app: Express): void {
         senderId: userId,
         content,
       }).returning();
+
+      db.select({ userId: chatParticipants.userId })
+        .from(chatParticipants)
+        .where(eq(chatParticipants.roomId, roomId))
+        .then((participants) => {
+          for (const p of participants) {
+            if (p.userId !== userId) {
+              notificationService.createForUser(p.userId, 'new_message', 'New Message', `You have a new message in your conversation.`, { roomId, messageId: newMsg.id }).catch(() => {});
+            }
+          }
+        }).catch(() => {});
+
       res.json(newMsg);
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);

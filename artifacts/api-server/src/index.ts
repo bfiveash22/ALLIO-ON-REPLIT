@@ -221,6 +221,8 @@ app.use(requestLogger);
   registerPMAFilingRoutes(app);
   const { registerBackupRoutes } = await import("./routes/backup-routes");
   registerBackupRoutes(app);
+  const { registerNotificationsRoutes } = await import("./routes/notifications-routes");
+  registerNotificationsRoutes(app);
   const { startFailoverScheduler } = await import("./services/clinic-node-service");
   startFailoverScheduler(60000);
 

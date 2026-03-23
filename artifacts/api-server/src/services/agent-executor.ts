@@ -15,8 +15,9 @@ import { rupaHealthAgent } from './rupa-health-agent';
 import { agents, FFPMA_CREED } from '@shared/agents';
 import { searchAllSources } from './research-apis';
 import { db } from '../db';
-import { agentTasks } from '@shared/schema';
+import { agentTasks, memberProfiles } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import { notificationService } from './notification-service';
 import { sendToTrustee } from './openclaw';
   import { claudeGenerateDocument, claudeAgentChat, shouldUseClaude } from './claude-provider';
 import { AGENT_MODEL_ASSIGNMENTS } from './sentinel-orchestrator';
@@ -30,6 +31,18 @@ import { generateImage as hfGenerateImage } from './huggingface-media';
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
+
+async function notifyTrustees(title: string, message: string, metadata?: Record<string, unknown>): Promise<void> {
+  try {
+    const admins = await db.select({ userId: memberProfiles.userId })
+      .from(memberProfiles)
+      .where(eq(memberProfiles.role, 'admin'));
+    for (const admin of admins) {
+      await notificationService.createForUser(admin.userId, 'agent_task_completed', title, message, metadata).catch(() => {});
+    }
+  } catch {
+  }
+}
   
   function getAgentProvider(agentId: string): string {
     const config = AGENT_MODEL_ASSIGNMENTS[agentId.toUpperCase()];
@@ -804,6 +817,7 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
         });
   
         await sentinel.notifyTaskCompleted(agentId, division, task.title, uploadResult.webViewLink, taskId);
+        notifyTrustees(`Agent Task Completed: ${agentId}`, `${task.title} has been completed by the ${division} division.`, { taskId, outputUrl: uploadResult.webViewLink });
   
         return {
           success: true,

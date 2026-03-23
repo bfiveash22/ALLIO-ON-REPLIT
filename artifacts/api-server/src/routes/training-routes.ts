@@ -7,6 +7,7 @@ import { z } from "zod";
 import { trainingModuleSections, trainingModuleKeyPoints, trainingCertifications, quizAttempts, quizzes, trackModules, moduleQuizzes } from "@shared/schema";
 import { insertUserProgressSchema } from "@shared/schema";
 import { and } from "drizzle-orm";
+import { notificationService } from "../services/notification-service";
 import OpenAI from "openai";
 import { cacheMiddleware, CACHE_TTL } from "../lib/cache";
 
@@ -604,6 +605,19 @@ Keep responses helpful, educational, and under 300 words. End with encouragement
         passed,
         completedAt: new Date(),
       });
+
+      if (passed) {
+        const userId = req.user?.id as string;
+        if (userId) {
+          notificationService.createForUser(
+            userId,
+            'training_milestone',
+            'Quiz Passed!',
+            `Congratulations! You passed "${quiz.title}" with a score of ${percentage}%.`,
+            { quizId: quiz.id, score: percentage }
+          ).catch(() => {});
+        }
+      }
 
       res.json({
         attempt: updatedAttempt,

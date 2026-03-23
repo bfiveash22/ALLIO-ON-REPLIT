@@ -1,10 +1,11 @@
 import type { Express, Request, Response } from "express";
 import { requireAuth, requireRole } from "../working-auth";
 import { db } from "../db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, inArray } from "drizzle-orm";
 import { asyncHandler, AppError } from "../middleware/error-handler";
-import { intakeForms, generatedProtocols } from "@shared/schema";
+import { intakeForms, generatedProtocols, memberProfiles } from "@shared/schema";
 import type { HealingProtocol, PatientProfile } from "@shared/types/protocol-assembly";
+import { notificationService } from "../services/notification-service";
 
 interface AuthenticatedUser {
   id: string;
@@ -101,6 +102,15 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
         } catch (slideError) {
           console.error('[Protocol Assembly] Slide generation failed:', (slideError as Error).message);
         }
+      }
+      if (memberId) {
+        const memberRecord = await db.select({ userId: memberProfiles.userId }).from(memberProfiles).where(eq(memberProfiles.id, memberId as string)).limit(1);
+        if (memberRecord[0]) {
+          notificationService.createForUser(memberRecord[0].userId, 'protocol_update', 'Your Protocol Is Ready', `Your personalized wellness protocol has been prepared and is ready for review.`, { protocolId }).catch(() => {});
+        }
+      }
+      if (creatorDoctorId) {
+        notificationService.createForUser(creatorDoctorId, 'protocol_update', 'Protocol Generated', `Protocol for ${profile.name || 'member'} has been generated successfully.`, { protocolId }).catch(() => {});
       }
       res.json({ id: protocolId, profile, protocol, slides, agentValidation, qaStatus });
     } catch (error) {
@@ -680,6 +690,29 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       }
 
       const updated = await getProtocol(id);
+
+      if (status === 'needs_review') {
+        const adminRows = await db.select({ userId: memberProfiles.userId }).from(memberProfiles).where(eq(memberProfiles.role, 'admin'));
+        await Promise.all(adminRows.map(a => notificationService.createForUser(a.userId, 'protocol_approval_request', 'Protocol Ready for Review', `A protocol for ${record.patientName || 'a patient'} has been submitted for Trustee review.`, { protocolId: id }).catch(() => {})));
+        const reviewDoctorId = effectiveDoctorId || record.doctorId;
+        if (reviewDoctorId) {
+          notificationService.createForUser(reviewDoctorId, 'protocol_approval_request', 'Protocol Submitted for Review', `A protocol for ${record.patientName || 'a patient'} has been submitted and is pending Trustee approval.`, { protocolId: id }).catch(() => {});
+        }
+      }
+
+      if (status === 'approved') {
+        const targetDoctorId = effectiveDoctorId || record.doctorId;
+        if (targetDoctorId) {
+          notificationService.createForUser(targetDoctorId, 'protocol_update', 'Protocol Approved — Action Required', `A patient protocol has been reviewed and approved by the Trustee. Please deliver it to the member.`, { protocolId: id }).catch(() => {});
+        }
+        if (record.memberId) {
+          const memberRow = await db.select({ userId: memberProfiles.userId }).from(memberProfiles).where(eq(memberProfiles.id, record.memberId)).limit(1);
+          if (memberRow[0]) {
+            notificationService.createForUser(memberRow[0].userId, 'protocol_update', 'Your Protocol Has Been Approved', 'Your personalized wellness protocol has been reviewed and approved. Your practitioner will be in touch shortly.', { protocolId: id }).catch(() => {});
+          }
+        }
+      }
+
       res.json({ success: true, protocol: updated });
     } catch (error: unknown) {
       console.error('[Protocol Assembly] Status update error:', error);

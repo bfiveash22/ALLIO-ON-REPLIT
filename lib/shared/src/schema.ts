@@ -977,6 +977,46 @@ export const insertAgentTaskSchema = createInsertSchema(agentTasks).omit({ id: t
 export type InsertAgentTask = z.infer<typeof insertAgentTaskSchema>;
 export type AgentTask = typeof agentTasks.$inferSelect;
 
+// User Notifications - Real-time notifications for members, doctors, and trustees
+export const userNotificationTypeEnum = pgEnum("user_notification_type", [
+  "protocol_update", "new_message", "training_milestone", "member_enrolled",
+  "protocol_approval_request", "agent_task_completed", "research_update", "system_alert"
+]);
+
+export const userNotifications = pgTable("user_notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  type: userNotificationTypeEnum("type").notNull(),
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").default(false),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertUserNotificationSchema = createInsertSchema(userNotifications).omit({ id: true, createdAt: true });
+export type InsertUserNotification = z.infer<typeof insertUserNotificationSchema>;
+export type UserNotification = typeof userNotifications.$inferSelect;
+
+export const userNotificationPreferences = pgTable("user_notification_preferences", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+  protocolUpdate: boolean("protocol_update").default(true),
+  newMessage: boolean("new_message").default(true),
+  trainingMilestone: boolean("training_milestone").default(true),
+  memberEnrolled: boolean("member_enrolled").default(true),
+  protocolApprovalRequest: boolean("protocol_approval_request").default(true),
+  agentTaskCompleted: boolean("agent_task_completed").default(true),
+  researchUpdate: boolean("research_update").default(true),
+  systemAlert: boolean("system_alert").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertUserNotificationPreferencesSchema = createInsertSchema(userNotificationPreferences).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertUserNotificationPreferences = z.infer<typeof insertUserNotificationPreferencesSchema>;
+export type UserNotificationPreferences = typeof userNotificationPreferences.$inferSelect;
+
 // Sentinel Notifications - Track alerts to the Trustee
 export const sentinelNotificationTypeEnum = pgEnum("sentinel_notification_type", [
   "task_completed", "research_update", "module_update", "training_update",

@@ -18,6 +18,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { useAuth } from "@/hooks/use-auth";
 import { DevNavPanel } from "@/components/dev-nav-panel";
 import { GlobalAgentChat } from "@/components/GlobalAgentChat";
+import { NotificationBell } from "@/components/NotificationBell";
 import type { MemberProfile, UserRole } from "@shared/schema";
 import { resolveAppRole } from "@/lib/role-utils";
 
@@ -139,7 +140,10 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarInset className="flex flex-1 flex-col">
           <header className="sticky top-0 z-50 flex h-14 items-center justify-between gap-4 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <NotificationBell />
+              <ThemeToggle />
+            </div>
           </header>
           {children}
         </SidebarInset>

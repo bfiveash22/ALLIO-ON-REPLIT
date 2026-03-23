@@ -50,6 +50,13 @@
       "when": 1742659200000,
       "tag": "0006_database_backups",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1742745600000,
+      "tag": "0007_notification_tables",
+      "breakpoints": true
     }
   ]
 }

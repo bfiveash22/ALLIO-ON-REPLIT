@@ -1,8 +1,9 @@
 import { db } from '../db';
-import { sentinelNotifications, InsertSentinelNotification, SentinelNotification } from '@shared/schema';
+import { sentinelNotifications, InsertSentinelNotification, SentinelNotification, memberProfiles } from '@shared/schema';
 import { eq, desc } from 'drizzle-orm';
 
 import { agents } from '@shared/agents';
+import { notificationService } from './notification-service';
 
 // Define the core division metadata
 const DIVISION_METADATA = {
@@ -230,6 +231,10 @@ export class SentinelService {
       outputUrl,
       priority: 2,
     });
+    try {
+      const admins = await db.select({ userId: memberProfiles.userId }).from(memberProfiles).where(eq(memberProfiles.role, 'admin'));
+      await Promise.all(admins.map((a: { userId: string }) => notificationService.createForUser(a.userId, 'research_update', title, message, outputUrl ? { url: outputUrl, agentId } : { agentId }).catch(() => {})));
+    } catch {}
   }
 
   async notifyModuleUpdate(moduleName: string, updateType: string): Promise<void> {
