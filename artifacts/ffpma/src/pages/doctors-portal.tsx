@@ -116,6 +116,7 @@ interface Certification {
   score: number | null;
   passingScore: number | null;
   certificateNumber: string | null;
+  verificationCode: string | null;
   issuedAt: string | null;
 }
 
@@ -1546,36 +1547,69 @@ export default function DoctorsPortal() {
                         certifications.map((cert) => (
                           <div 
                             key={cert.id}
-                            className={`flex items-center gap-3 p-3 rounded-lg ${
+                            className={`p-3 rounded-lg ${
                               cert.status === "passed" ? "bg-cyan-500/10" :
                               cert.status === "in_progress" ? "bg-amber-500/10" :
                               cert.status === "failed" ? "bg-red-500/10" : "bg-white/5"
                             }`}
                           >
-                            {cert.status === "passed" ? (
-                              <CheckCircle2 className="w-5 h-5 text-cyan-400" />
-                            ) : cert.status === "in_progress" ? (
-                              <Clock className="w-5 h-5 text-amber-400" />
-                            ) : cert.status === "failed" ? (
-                              <AlertCircle className="w-5 h-5 text-red-400" />
-                            ) : (
-                              <BookOpen className="w-5 h-5 text-white/40" />
-                            )}
-                            <div className="flex-1">
-                              <p className="font-medium text-sm">{cert.referenceTitle}</p>
-                              <p className="text-xs text-white/50">
-                                {cert.status === "passed" 
-                                  ? `Certified - Score: ${cert.score}%` 
-                                  : cert.status === "in_progress" 
-                                  ? "In Progress"
-                                  : cert.status === "failed"
-                                  ? `Failed - Score: ${cert.score}%`
-                                  : "Pending"}
-                              </p>
-                              {cert.certificateNumber && (
-                                <p className="text-xs text-cyan-400/70 mt-1">#{cert.certificateNumber}</p>
+                            <div className="flex items-center gap-3">
+                              {cert.status === "passed" ? (
+                                <CheckCircle2 className="w-5 h-5 text-cyan-400" />
+                              ) : cert.status === "in_progress" ? (
+                                <Clock className="w-5 h-5 text-amber-400" />
+                              ) : cert.status === "failed" ? (
+                                <AlertCircle className="w-5 h-5 text-red-400" />
+                              ) : (
+                                <BookOpen className="w-5 h-5 text-white/40" />
                               )}
+                              <div className="flex-1">
+                                <p className="font-medium text-sm">{cert.referenceTitle}</p>
+                                <p className="text-xs text-white/50">
+                                  {cert.status === "passed" 
+                                    ? `Certified - Score: ${cert.score}%` 
+                                    : cert.status === "in_progress" 
+                                    ? "In Progress"
+                                    : cert.status === "failed"
+                                    ? `Failed - Score: ${cert.score}%`
+                                    : "Pending"}
+                                </p>
+                                {cert.certificateNumber && (
+                                  <p className="text-xs text-cyan-400/70 mt-1">#{cert.certificateNumber}</p>
+                                )}
+                              </div>
                             </div>
+                            {cert.status === "passed" && cert.verificationCode && (
+                              <div className="mt-2 pt-2 border-t border-white/5 flex items-center gap-2 flex-wrap">
+                                <a
+                                  href={`/verify/${cert.verificationCode}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[11px] text-cyan-400/70 hover:text-cyan-400 underline"
+                                >
+                                  Verify
+                                </a>
+                                <button
+                                  onClick={() => {
+                                    const url = `${window.location.origin}/verify/${cert.verificationCode}`;
+                                    const linkedInUrl = new URL("https://www.linkedin.com/sharing/share-offsite/");
+                                    linkedInUrl.searchParams.set("url", url);
+                                    window.open(linkedInUrl.toString(), "_blank", "noopener,noreferrer,width=600,height=500");
+                                  }}
+                                  className="text-[11px] text-cyan-400/70 hover:text-cyan-400 underline"
+                                >
+                                  Share on LinkedIn
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    await navigator.clipboard.writeText(`${window.location.origin}/verify/${cert.verificationCode}`);
+                                  }}
+                                  className="text-[11px] text-cyan-400/70 hover:text-cyan-400 underline"
+                                >
+                                  Copy Link
+                                </button>
+                              </div>
+                            )}
                           </div>
                         ))
                       ) : (
