@@ -257,6 +257,7 @@ const notificationTypeColors: Record<string, string> = {
   cross_division_request: "bg-pink-500/20 text-pink-400 border-pink-500/30",
 };
 
+
 function SentinelAlertsPanel() {
   const { toast } = useToast();
 

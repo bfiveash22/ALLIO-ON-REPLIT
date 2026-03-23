@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { RoleToggle } from "@/components/role-toggle";
@@ -25,6 +26,7 @@ import {
   Download,
   AlertCircle,
   CheckCircle,
+  CheckCircle2,
   XCircle,
   Loader2,
   Palette,
@@ -39,10 +41,280 @@ import {
   CreditCard,
   DollarSign,
   Stethoscope,
+  Server,
+  Database,
+  Zap,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { User, MemberProfile, Order, TrainingModule, Quiz, UiRefactorProposal, Payment } from "@shared/schema";
+
+interface DatabasePoolDetails {
+  total: number;
+  idle: number;
+  waiting: number;
+}
+
+interface DeepHealthDependency {
+  name: string;
+  status: "pass" | "fail" | "degraded" | "unconfigured";
+  latencyMs?: number;
+  error?: string;
+  details?: DatabasePoolDetails;
+}
+
+interface CircuitBreakerStat {
+  state: "CLOSED" | "OPEN" | "HALF_OPEN";
+  failures: number;
+  successes: number;
+  lastFailure?: string;
+  lastSuccess?: string;
+  openedAt?: string;
+  totalCalls: number;
+  totalFailures: number;
+  totalSuccesses: number;
+}
+
+interface DeepHealthData {
+  status: "healthy" | "degraded" | "critical";
+  timestamp: string;
+  uptime: { seconds: number; formatted: string };
+  dependencies: DeepHealthDependency[];
+  circuitBreakers: Record<string, CircuitBreakerStat>;
+  metrics: {
+    errorRatePercent: number;
+    avgResponseTimeMs: number;
+    recentRequestCount: number;
+  };
+  memory: {
+    rss: string;
+    heapUsed: string;
+    heapTotal: string;
+  };
+  database: {
+    pool: DatabasePoolDetails;
+    latencyMs?: number;
+  };
+  node: {
+    version: string;
+    pid: number;
+    platform: string;
+  };
+}
+
+function SystemHealthDashboard() {
+  const { data: health, isLoading, refetch, isFetching } = useQuery<DeepHealthData>({
+    queryKey: ["/api/health/deep"],
+    queryFn: () => fetch("/api/health/deep").then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    }),
+    refetchInterval: 30000,
+    retry: 1,
+  });
+
+  const statusBg = {
+    healthy: "bg-green-500/20 border-green-500/30",
+    degraded: "bg-amber-500/20 border-amber-500/30",
+    critical: "bg-red-500/20 border-red-500/30",
+  };
+
+  const depStatusBg: Record<string, string> = {
+    pass: "bg-green-500/10 border-green-500/20",
+    degraded: "bg-amber-500/10 border-amber-500/20",
+    fail: "bg-red-500/10 border-red-500/20",
+    unconfigured: "bg-gray-500/10 border-gray-500/20",
+  };
+
+  const depLabels: Record<string, string> = {
+    database: "PostgreSQL Database",
+    stripe: "Stripe Payments",
+    woocommerce: "WooCommerce",
+    signnow: "SignNow",
+    google_drive: "Google Drive",
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Server className="w-5 h-5 text-blue-500" />
+            System Health Monitor
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">Real-time status of all platform dependencies and services</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => refetch()}
+          disabled={isFetching}
+        >
+          {isFetching ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+          Refresh
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        </div>
+      ) : !health ? (
+        <Card className="border-red-500/20">
+          <CardContent className="py-8 text-center">
+            <AlertCircle className="w-10 h-10 mx-auto mb-3 text-red-400" />
+            <p className="text-muted-foreground">Could not load health data. You may not have admin access to this endpoint.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <div className={`rounded-xl border p-6 ${statusBg[health.status]}`}>
+            <div className="flex items-center gap-4">
+              <div className={`w-14 h-14 rounded-full border-2 flex items-center justify-center ${health.status === "healthy" ? "border-green-400 bg-green-500/20" : health.status === "degraded" ? "border-amber-400 bg-amber-500/20" : "border-red-400 bg-red-500/20"}`}>
+                {health.status === "healthy" ? (
+                  <CheckCircle2 className="w-7 h-7 text-green-400" />
+                ) : health.status === "degraded" ? (
+                  <AlertTriangle className="w-7 h-7 text-amber-400" />
+                ) : (
+                  <AlertCircle className="w-7 h-7 text-red-400" />
+                )}
+              </div>
+              <div>
+                <p className={`text-2xl font-bold capitalize ${health.status === "healthy" ? "text-green-600" : health.status === "degraded" ? "text-amber-600" : "text-red-600"}`}>{health.status}</p>
+                <p className="text-sm text-muted-foreground">Last checked: {new Date(health.timestamp).toLocaleTimeString()}</p>
+              </div>
+              <div className="ml-auto grid grid-cols-3 gap-6 text-right">
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Uptime</p>
+                  <p className="text-lg font-semibold">{health.uptime.formatted}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Error Rate</p>
+                  <p className={`text-lg font-semibold ${health.metrics.errorRatePercent > 5 ? "text-red-600" : health.metrics.errorRatePercent > 1 ? "text-amber-600" : "text-green-600"}`}>
+                    {health.metrics.errorRatePercent}%
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Avg Response</p>
+                  <p className={`text-lg font-semibold ${health.metrics.avgResponseTimeMs > 3000 ? "text-red-600" : health.metrics.avgResponseTimeMs > 1000 ? "text-amber-600" : "text-green-600"}`}>
+                    {health.metrics.avgResponseTimeMs}ms
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {health.dependencies.map((dep) => (
+              <Card key={dep.name} className={`border ${depStatusBg[dep.status]}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className="font-medium text-sm">{depLabels[dep.name] || dep.name}</p>
+                      {dep.latencyMs !== undefined && (
+                        <p className="text-xs text-muted-foreground">{dep.latencyMs}ms latency</p>
+                      )}
+                    </div>
+                    <Badge className={`text-xs capitalize ${dep.status === "pass" ? "bg-green-500/20 text-green-700" : dep.status === "degraded" ? "bg-amber-500/20 text-amber-700" : dep.status === "fail" ? "bg-red-500/20 text-red-700" : "bg-gray-500/20 text-gray-700"}`}>
+                      {dep.status}
+                    </Badge>
+                  </div>
+                  {dep.error && (
+                    <p className="text-xs text-red-600 mt-1 line-clamp-2">{dep.error}</p>
+                  )}
+                  {dep.details && dep.name === "database" && (
+                    <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
+                      <span>Pool: {dep.details?.total ?? 0}</span>
+                      <span>Idle: {dep.details?.idle ?? 0}</span>
+                      <span>Waiting: {dep.details?.waiting ?? 0}</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-amber-500" />
+                  Circuit Breakers
+                </CardTitle>
+                <CardDescription>External API call protection status</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {Object.entries(health.circuitBreakers).map(([name, cb]) => (
+                    <div key={name} className="flex items-center justify-between py-2 border-b last:border-0">
+                      <div>
+                        <p className="text-sm font-medium capitalize">{name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {cb.totalCalls} calls · {cb.totalFailures} failures
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <Badge className={`text-xs ${cb.state === "CLOSED" ? "bg-green-500/20 text-green-700" : cb.state === "OPEN" ? "bg-red-500/20 text-red-700" : "bg-amber-500/20 text-amber-700"}`}>
+                          {cb.state}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                  {Object.keys(health.circuitBreakers).length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No circuit breaker activity yet</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Database className="w-4 h-4 text-blue-500" />
+                  System Resources
+                </CardTitle>
+                <CardDescription>Memory usage and runtime information</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Heap Used</span>
+                    <span className="font-medium">{health.memory.heapUsed}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Heap Total</span>
+                    <span className="font-medium">{health.memory.heapTotal}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">RSS</span>
+                    <span className="font-medium">{health.memory.rss}</span>
+                  </div>
+                  <Separator className="my-2" />
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Node.js Version</span>
+                    <span className="font-medium">{health.node.version}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Platform</span>
+                    <span className="font-medium">{health.node.platform}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Process ID</span>
+                    <span className="font-medium">{health.node.pid}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Recent Requests</span>
+                    <span className="font-medium">{health.metrics.recentRequestCount}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 interface UserSyncResult {
   success: boolean;
@@ -411,6 +683,10 @@ export default function AdminDashboardPage() {
           <TabsTrigger value="member-management" data-testid="tab-member-management" className="bg-emerald-500/10 text-emerald-400 data-[state=active]:bg-emerald-500/30">
             <Stethoscope className="h-4 w-4 mr-2" />
             Member Management
+          </TabsTrigger>
+          <TabsTrigger value="system-health" data-testid="tab-system-health">
+            <Server className="h-4 w-4 mr-2" />
+            System Health
           </TabsTrigger>
         </TabsList>
 
@@ -1461,6 +1737,10 @@ export default function AdminDashboardPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="system-health" className="space-y-6">
+          <SystemHealthDashboard />
         </TabsContent>
       </Tabs>
     </div>

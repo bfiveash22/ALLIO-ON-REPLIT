@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { circuitBreakers } from '../lib/circuit-breaker';
+import { logger } from '../lib/logger';
 
 interface SignNowConfig {
   clientId: string;
@@ -54,7 +56,8 @@ class SignNowService {
     );
   }
 
-  private async getAccessToken(): Promise<string> {
+
+    private async getAccessToken(): Promise<string> {
     if (this.accessToken && Date.now() < this.tokenExpiry) {
       return this.accessToken;
     }
@@ -68,27 +71,29 @@ class SignNowService {
     ).toString('base64');
 
     try {
-      const response = await axios.post<TokenResponse>(
-        `${this.baseUrl}/oauth2/token`,
-        new URLSearchParams({
-          grant_type: 'password',
-          username: this.config.username,
-          password: this.config.password,
-          scope: '*',
-        }),
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            Authorization: `Basic ${credentials}`,
-          },
-        }
+      const response = await circuitBreakers.signnow.call(() =>
+        axios.post<TokenResponse>(
+          `${this.baseUrl}/oauth2/token`,
+          new URLSearchParams({
+            grant_type: 'password',
+            username: this.config.username,
+            password: this.config.password,
+            scope: '*',
+          }),
+          {
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              Authorization: `Basic ${credentials}`,
+            },
+          }
+        )
       );
 
       this.accessToken = response.data.access_token;
       this.tokenExpiry = Date.now() + (response.data.expires_in - 60) * 1000;
       return this.accessToken;
     } catch (error: any) {
-      console.error('SignNow auth error:', error.response?.data || error.message);
+      logger.error('SignNow auth error', { source: 'signnow', error: error.message, detail: error.response?.data });
       throw new Error('Failed to authenticate with SignNow');
     }
   }
@@ -179,7 +184,7 @@ class SignNowService {
         templates,
       };
     } catch (error) {
-      console.error("Failed to get document stats:", error);
+      logger.error("Failed to get document stats", { source: "signnow", error: error instanceof Error ? error.message : String(error) });
       return { total: 0, signed: 0, pending: 0, templates: 0 };
     }
   }
@@ -247,7 +252,7 @@ class SignNowService {
       }
     );
 
-    console.log('SignNow embedded invite response:', JSON.stringify(response.data));
+    logger.debug('SignNow embedded invite response', { source: 'signnow', data: typeof response.data === 'object' ? '[object]' : response.data });
     return response.data;
   }
 
@@ -275,10 +280,10 @@ class SignNowService {
 
       return response.data;
     } catch (error: any) {
-      console.error('SignNow link generation error:', error.response?.data);
+      logger.error('SignNow link generation error', { source: 'signnow', error: error.response?.data });
       
       // Try alternative: use email-based invite instead of embedded
-      console.log('Falling back to email invite for document:', documentId);
+      logger.warn('Falling back to email invite', { source: 'signnow', documentId });
       throw error;
     }
   }
@@ -322,7 +327,7 @@ class SignNowService {
       // Return a redirect URL to SignNow for signing
       return `https://app.signnow.com/webapp/document/${documentId}`;
     } catch (error: any) {
-      console.error('SignNow invite error:', error.response?.data);
+      logger.error('SignNow invite error', { source: 'signnow', error: error.response?.data });
       throw error;
     }
   }
@@ -429,11 +434,11 @@ class SignNowService {
     const documentId = docResult.id;
 
     const roles = await this.getDocumentRoles(documentId);
-    console.log('Document roles:', JSON.stringify(roles));
+    logger.debug('Document roles retrieved', { source: 'signnow', count: roles?.length });
     const signerRole = roles.find((r: any) => r.name?.toLowerCase().includes('signer')) || roles[0];
     
     if (!signerRole) {
-      console.log('No signer role found, falling back to email invite');
+      logger.warn('No signer role found, falling back to email invite', { source: 'signnow' });
       const signingUrl = await this.createSigningInviteLink(documentId, signerEmail, signerName);
       return { documentId, signingUrl };
     }
@@ -450,7 +455,7 @@ class SignNowService {
         inviteId = inviteResult.id;
       }
       
-      console.log('Extracted invite ID:', inviteId);
+      logger.debug('Extracted invite ID', { source: 'signnow' });
       
       if (inviteId) {
         try {
@@ -458,21 +463,21 @@ class SignNowService {
           const linkResult = await this.generateSigningLink(documentId, inviteId, 45);
           return { documentId, signingUrl: linkResult.link };
         } catch (linkError: any) {
-          console.error('Failed to generate embedded link:', linkError.response?.data);
+          logger.error('Failed to generate embedded link', { source: 'signnow', error: linkError.response?.data });
           // Since embedded invite was created, we can't create another invite
           // Return direct document URL - signer will need to access via SignNow
-          console.log('Returning direct SignNow document URL as fallback');
+          logger.warn('Returning direct SignNow document URL as fallback', { source: 'signnow' });
           return { documentId, signingUrl: `https://app.signnow.com/webapp/document/${documentId}` };
         }
       }
     } catch (embeddedError: any) {
-      console.error('Failed to create embedded invite:', embeddedError.response?.data);
+      logger.error('Failed to create embedded invite', { source: 'signnow', error: embeddedError.response?.data });
       // Fallback to email invite only if no invite exists yet
       try {
         const signingUrl = await this.createSigningInviteLink(documentId, signerEmail, signerName);
         return { documentId, signingUrl };
       } catch (fallbackError: any) {
-        console.error('Fallback invite also failed:', fallbackError.response?.data);
+        logger.error('Fallback invite also failed', { source: 'signnow', error: fallbackError.response?.data });
         // Return direct document URL as last resort
         return { documentId, signingUrl: `https://app.signnow.com/webapp/document/${documentId}` };
       }
@@ -614,7 +619,7 @@ class SignNowService {
       const templateResult = await this.convertToTemplate(documentId, templateName);
       return { templateId: templateResult.id, documentId };
     } catch (templateError: any) {
-      console.log('Template conversion info, using document directly:', templateError.response?.data || templateError.message);
+      logger.info('Template conversion info, using document directly', { source: 'signnow', info: templateError.response?.data || templateError.message });
       return { templateId: documentId, documentId };
     }
   }
@@ -653,11 +658,11 @@ class SignNowService {
             documentId,
           };
         } catch (linkError: any) {
-          console.error('Embedded link generation failed, using direct URL:', linkError.response?.data);
+          logger.error('Embedded link generation failed, using direct URL', { source: 'signnow', error: linkError.response?.data });
         }
       }
     } catch (embeddedError: any) {
-      console.error('Embedded invite failed:', embeddedError.response?.data);
+      logger.error('Embedded invite failed', { source: 'signnow', error: embeddedError.response?.data });
     }
 
     try {

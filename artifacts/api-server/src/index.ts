@@ -26,6 +26,8 @@ import { requestLogger } from "./middleware/request-logger";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler";
 import { registerHealthRoutes } from "./routes/health-routes";
 import { authRateLimiter, writeRateLimiter, readRateLimiter, agentRateLimiter, webhookRateLimiter } from "./middleware/rate-limiter";
+import { logger } from "./lib/logger";
+import { registerAxiosInterceptors } from "./lib/axios-interceptors";
 
 declare global {
   namespace Express {
@@ -40,25 +42,27 @@ declare global {
   }
 }
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('UNHANDLED PROMISE REJECTION:', reason);
+process.on('unhandledRejection', (reason, _promise) => {
+  logger.error('Unhandled promise rejection', { source: 'process', error: String(reason) });
   try {
     const s = sentinel as any;
     if (s && typeof s.createNotification === 'function') {
-      s.createNotification('system', 'System Monitor', `CRITICAL UNHANDLED REJECTION: ${String(reason)}`).catch(console.error);
+      s.createNotification('system', 'System Monitor', `CRITICAL UNHANDLED REJECTION: ${String(reason)}`).catch(() => {});
     }
-  } catch (e) {}
+  } catch (_e) {}
 });
 
 process.on('uncaughtException', (error) => {
-  console.error('UNCAUGHT EXCEPTION:', error);
+  logger.error('Uncaught exception', { source: 'process', error: error.message, stack: error.stack });
   try {
     const s = sentinel as any;
     if (s && typeof s.createNotification === 'function') {
-      s.createNotification('system', 'System Monitor', `CRITICAL UNCAUGHT EXCEPTION: ${error.message}`).catch(console.error);
+      s.createNotification('system', 'System Monitor', `CRITICAL UNCAUGHT EXCEPTION: ${error.message}`).catch(() => {});
     }
-  } catch (e) {}
+  } catch (_e) {}
 });
+
+registerAxiosInterceptors();
 
 const app = express();
 
@@ -114,14 +118,7 @@ app.use('/api/pma-filing', writeRateLimiter);
 app.use('/api/recruitment', writeRateLimiter);
 
 export function log(message: string, source = "express") {
-  const formattedTime = new Date().toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  });
-
-  console.log(`${formattedTime} [${source}] ${message}`);
+  logger.info(message, { source });
 }
 
 app.use(requestLogger);
@@ -485,18 +482,18 @@ app.use(requestLogger);
   );
 
   function gracefulShutdown(signal: string) {
-    log(`Received ${signal}. Shutting down gracefully...`, 'system');
+    logger.info(`Received ${signal}, starting graceful shutdown`, { source: 'system' });
     stopAgentScheduler();
     stopScheduler();
     import('./services/mcp-client-manager').then(({ mcpClientManager }) => {
       mcpClientManager.disconnectAll().catch(() => {});
     }).catch(() => {});
     httpServer.close(() => {
-      log('HTTP server closed', 'system');
+      logger.info('HTTP server closed, process exiting cleanly', { source: 'system' });
       process.exit(0);
     });
     setTimeout(() => {
-      log('Forcing shutdown after timeout', 'system');
+      logger.warn('Graceful shutdown timed out, forcing exit', { source: 'system' });
       process.exit(1);
     }, 5000);
   }

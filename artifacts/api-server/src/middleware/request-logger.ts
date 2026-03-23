@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
+import { logger } from "../lib/logger";
 
-interface RequestLogEntry {
+export interface RequestLogEntry {
   method: string;
   path: string;
   statusCode: number;
@@ -22,21 +23,26 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
     return next();
   }
 
-  let capturedJsonResponse: Record<string, any> | undefined;
+  let capturedJsonResponse: Record<string, unknown> | undefined;
   const originalResJson = res.json;
-  res.json = function (bodyJson: any, ...args: any[]) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
+  res.json = function (bodyJson: unknown, ...args: unknown[]) {
+    capturedJsonResponse = bodyJson as Record<string, unknown>;
+    return originalResJson.apply(res, [bodyJson, ...(args as [])]);
   };
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    const userId = (req as any).user?.id;
+    const userId = (req as Request & { user?: { id: string } }).user?.id;
     const requestId = req.requestId;
 
     let errorContext: string | undefined;
     if (res.statusCode >= 400 && capturedJsonResponse) {
-      const errMsg = capturedJsonResponse.error?.message || capturedJsonResponse.error || capturedJsonResponse.message;
+      const errMsg =
+        (capturedJsonResponse as { error?: { message?: string } | string; message?: string })
+          ?.error instanceof Object
+          ? ((capturedJsonResponse as { error: { message?: string } }).error.message)
+          : (capturedJsonResponse as { error?: string; message?: string })?.error ||
+            (capturedJsonResponse as { message?: string })?.message;
       if (errMsg) {
         errorContext = typeof errMsg === "string" ? errMsg.substring(0, 200) : JSON.stringify(errMsg).substring(0, 200);
       }
@@ -58,27 +64,19 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
       recentLogs.shift();
     }
 
-    const formattedTime = new Date().toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true,
+    const level = res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : duration > 5000 ? "warn" : "info";
+
+    logger[level](`${req.method} ${reqPath} ${res.statusCode} in ${duration}ms`, {
+      source: "express",
+      requestId,
+      userId,
+      method: req.method,
+      path: reqPath,
+      statusCode: res.statusCode,
+      durationMs: duration,
+      slow: duration > 5000 || undefined,
+      error: errorContext,
     });
-
-    let logLine = `${formattedTime} [express] ${req.method} ${reqPath} ${res.statusCode} in ${duration}ms`;
-    if (requestId) logLine += ` [${requestId.substring(0, 8)}]`;
-    if (userId) logLine += ` user=${userId.substring(0, 8)}`;
-
-    if (duration > 5000) {
-      logLine += ` [SLOW]`;
-    }
-
-    if (capturedJsonResponse && res.statusCode >= 400) {
-      const jsonStr = JSON.stringify(capturedJsonResponse);
-      logLine += ` :: ${jsonStr.length > 200 ? jsonStr.substring(0, 200) + "...[truncated]" : jsonStr}`;
-    }
-
-    console.log(logLine);
   });
 
   next();
@@ -98,4 +96,18 @@ export function getErrorRequests(limit = 50): RequestLogEntry[] {
   return recentLogs
     .filter((entry) => entry.statusCode >= 400)
     .slice(-limit);
+}
+
+export function getErrorRate(logs?: RequestLogEntry[]): number {
+  const entries = logs ?? recentLogs;
+  if (entries.length === 0) return 0;
+  const errors = entries.filter((e) => e.statusCode >= 400).length;
+  return Math.round((errors / entries.length) * 10000) / 100;
+}
+
+export function getAverageResponseTime(logs?: RequestLogEntry[]): number {
+  const entries = logs ?? recentLogs;
+  if (entries.length === 0) return 0;
+  const total = entries.reduce((sum, e) => sum + e.durationMs, 0);
+  return Math.round(total / entries.length);
 }

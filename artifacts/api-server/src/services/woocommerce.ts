@@ -3,6 +3,8 @@ import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { products, categories } from '@shared/schema';
 
+import { circuitBreakers } from '../lib/circuit-breaker';
+import { logger } from '../lib/logger';
 interface WooCommerceProduct {
   id: number;
   name: string;
@@ -205,7 +207,7 @@ class WooCommerceService {
       this.baseUrl = process.env.STAGING_WC_URL || process.env.STAGING_WP_SITE_URL || null;
       this.consumerKey = process.env.STAGING_WC_CONSUMER_KEY || null;
       this.consumerSecret = process.env.STAGING_WC_CONSUMER_SECRET || null;
-      console.log('WooCommerce: Using STAGING environment -', this.baseUrl);
+      logger.info('WooCommerce: Using STAGING environment', { source: 'woocommerce', url: this.baseUrl });
     } else {
       // Use production credentials
       this.baseUrl = process.env.WOOCOMMERCE_URL || process.env.WP_SITE_URL || null;
@@ -249,10 +251,12 @@ class WooCommerceService {
     }
 
     try {
-      const response = await axios.get(this.getApiUrl('system_status'), {
-        params: this.getAuthParams(),
-        timeout: 10000,
-      });
+      const response = await circuitBreakers.woocommerce.call(() =>
+        axios.get(this.getApiUrl('system_status'), {
+          params: this.getAuthParams(),
+          timeout: 10000,
+        })
+      );
 
       return {
         connected: true,
@@ -758,10 +762,12 @@ class WooCommerceService {
       if (status) queryParams.status = status;
       if (after) queryParams.after = after;
 
-      const response = await axios.get(this.getApiUrl('orders'), {
-        params: queryParams,
-        timeout: 15000,
-      });
+      const response = await circuitBreakers.woocommerce.call(() =>
+        axios.get(this.getApiUrl('orders'), {
+          params: queryParams,
+          timeout: 15000,
+        })
+      );
 
       const total = parseInt(response.headers['x-wp-total'] || '0', 10);
       const totalPages = parseInt(response.headers['x-wp-totalpages'] || '0', 10);
@@ -790,7 +796,7 @@ class WooCommerceService {
 
       return { orders, total, totalPages };
     } catch (error: any) {
-      console.error('[WooCommerce] Error fetching orders:', error.message);
+      logger.error('[WooCommerce] Error fetching orders', { source: 'woocommerce', error: error.message });
       return { orders: [], total: 0, totalPages: 0 };
     }
   }
@@ -853,7 +859,7 @@ class WooCommerceService {
         recentRevenue: Math.round(recentRevenue * 100) / 100,
       };
     } catch (error: any) {
-      console.error('[WooCommerce] Error fetching order stats:', error.message);
+      logger.error('[WooCommerce] Error fetching order stats', { source: 'woocommerce', error: error.message });
       return { totalOrders: 0, pendingOrders: 0, processingOrders: 0, completedOrders: 0, recentRevenue: 0 };
     }
   }
@@ -917,7 +923,7 @@ class WooCommerceService {
         checkout_url: checkoutUrl,
       };
     } catch (error: any) {
-      console.error('[WooCommerce] Error creating order:', error.response?.data || error.message);
+      logger.error('[WooCommerce] Error creating order', { source: 'woocommerce', error: typeof error.response?.data === 'string' ? error.response.data : error.message });
       throw new Error(`Failed to create WooCommerce order: ${error.response?.data?.message || error.message}`);
     }
   }

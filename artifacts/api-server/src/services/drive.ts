@@ -1,4 +1,7 @@
 import { google } from 'googleapis';
+import { circuitBreakers } from '../lib/circuit-breaker';
+import { outboundLimiters } from '../lib/rate-limiter';
+import { logger } from '../lib/logger';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -27,7 +30,7 @@ function loadExternalFolderLinks(): Record<string, { folderId: string; label: st
       return data;
     }
   } catch (err) {
-    console.error('[Drive] Error loading external folder links:', err);
+    logger.error('Error loading external folder links', { source: 'drive', error: err instanceof Error ? err.message : String(err) });
   }
   externalFolderLinksCache = JSON.parse(JSON.stringify(SEED_EXTERNAL_FOLDER_LINKS));
   saveExternalFolderLinks(externalFolderLinksCache!);
@@ -41,7 +44,7 @@ function saveExternalFolderLinks(links: Record<string, { folderId: string; label
     fs.writeFileSync(EXTERNAL_LINKS_FILE, JSON.stringify(links, null, 2));
     externalFolderLinksCache = links;
   } catch (err) {
-    console.error('[Drive] Error saving external folder links:', err);
+    logger.error('Error saving external folder links', { source: 'drive', error: err instanceof Error ? err.message : String(err) });
   }
 }
 
@@ -95,21 +98,29 @@ export async function getUncachableGoogleDriveClient() {
   return google.drive({ version: 'v3', auth: oauth2Client });
 }
 
+async function withDriveProtection<T>(fn: () => Promise<T>): Promise<T> {
+  await outboundLimiters.googledrive.consume();
+  return circuitBreakers.googledrive.call(fn);
+}
+
 export async function checkDriveConnection(): Promise<{ connected: boolean; email?: string }> {
   try {
     const drive = await getUncachableGoogleDriveClient();
-    const about = await drive.about.get({ fields: 'user' });
+    const about = await withDriveProtection(() =>
+      drive.about.get({ fields: 'user' })
+    );
     return {
       connected: true,
       email: about.data.user?.emailAddress || undefined
     };
   } catch (error) {
-    console.error('Drive connection check failed:', error);
+    logger.error('Drive connection check failed', { source: 'drive', error: error instanceof Error ? error.message : String(error) });
     return { connected: false };
   }
 }
 
 export async function findAllioFolder(): Promise<{ id: string; name: string } | null> {
+  await outboundLimiters.googledrive.consume();
   // ALWAYS return the official ALLIO folder - NEVER search or create new ones
   // Official folder: https://drive.google.com/drive/folders/16wOdbJPoOVOz5GE0mtlzf84c896JX1UC
   return {
@@ -119,9 +130,10 @@ export async function findAllioFolder(): Promise<{ id: string; name: string } | 
 }
 
 export async function createAllioFolder(): Promise<{ id: string; name: string }> {
+  await outboundLimiters.googledrive.consume();
   // NEVER create new ALLIO folders - always use the official one
   // This function now just returns the official folder
-  console.log('[Drive] WARNING: createAllioFolder called - returning official folder instead of creating new one');
+  logger.warn('createAllioFolder called - returning official folder instead of creating new one', { source: 'drive' });
   return {
     id: OFFICIAL_ALLIO_FOLDER_ID,
     name: 'ALLIO'
@@ -129,13 +141,14 @@ export async function createAllioFolder(): Promise<{ id: string; name: string }>
 }
 
 export async function createSubfolder(parentId: string, folderName: string): Promise<{ id: string; name: string }> {
+  await outboundLimiters.googledrive.consume();
   try {
     const drive = await getUncachableGoogleDriveClient();
 
     // FIRST: Check if folder already exists to prevent duplicates
     const existingFolderId = await findFolderByName(parentId, folderName);
     if (existingFolderId) {
-      console.log(`[Drive] Subfolder "${folderName}" already exists, reusing it`);
+      logger.debug(`[Drive] Subfolder "${folderName}" already exists`, { source: 'drive', folderName });
       return {
         id: existingFolderId,
         name: folderName
@@ -143,7 +156,7 @@ export async function createSubfolder(parentId: string, folderName: string): Pro
     }
 
     // Only create if it doesn't exist
-    console.log(`[Drive] Creating new subfolder: ${folderName}`);
+    logger.debug(`Creating new Drive subfolder`, { source: 'drive', folderName });
     const fileMetadata = {
       name: folderName,
       mimeType: 'application/vnd.google-apps.folder',
@@ -158,7 +171,7 @@ export async function createSubfolder(parentId: string, folderName: string): Pro
       name: file.data.name!
     };
   } catch (error) {
-    console.error(`Error creating subfolder ${folderName}:`, error);
+    logger.error(`Error creating subfolder`, { source: 'drive', folderName, error: error instanceof Error ? error.message : String(error) });
     throw error;
   }
 }
@@ -173,6 +186,7 @@ export async function listFolderContents(folderId: string): Promise<Array<{
   modifiedTime?: string;
   size?: string;
 }>> {
+  await outboundLimiters.googledrive.consume();
   try {
     const drive = await getUncachableGoogleDriveClient();
     const response = await drive.files.list({
@@ -193,7 +207,7 @@ export async function listFolderContents(folderId: string): Promise<Array<{
       size: file.size || undefined
     }));
   } catch (error) {
-    console.error('Error listing folder contents:', error);
+    logger.error('Error listing folder contents', { source: 'drive', error: error instanceof Error ? error.message : String(error) });
     return [];
   }
 }
@@ -237,7 +251,7 @@ export async function getAllioStructure(): Promise<{
       subfolders
     };
   } catch (error) {
-    console.error('Error getting Allio structure:', error);
+    logger.error('Error getting Allio structure', { source: 'drive', error: error instanceof Error ? error.message : String(error) });
     return { allio: null, subfolders: [] };
   }
 }
@@ -298,7 +312,7 @@ export async function getDivisionStructure(divisionName: string): Promise<{
 
     return { allio: allioFolder, subfolders };
   } catch (error) {
-    console.error(`Error getting ${divisionName} structure:`, error);
+    logger.error(`Error getting drive structure`, { source: 'drive', divisionName, error: error instanceof Error ? error.message : String(error) });
     return { allio: null, subfolders: [] };
   }
 }
@@ -368,7 +382,7 @@ export async function getAllDivisionsStructure(): Promise<{
 
     return { allio: allioFolder, divisions };
   } catch (error) {
-    console.error('Error getting all divisions structure:', error);
+    logger.error('Error getting all divisions structure', { source: 'drive', error: error instanceof Error ? error.message : String(error) });
     return { allio: null, divisions: {} };
   }
 }
@@ -379,10 +393,11 @@ export async function uploadTextDocument(
   content: string,
   mimeType: string = 'text/plain'
 ): Promise<{ id: string; webViewLink: string; webContentLink: string } | null> {
+  await outboundLimiters.googledrive.consume();
   try {
 
     if (process.env.GOOGLE_REFRESH_TOKEN === 'dummy-local-token') {
-      console.error(`[Drive] ERROR: Google Drive not configured (dummy-local-token). Cannot upload "${fileName}". Set a real GOOGLE_REFRESH_TOKEN.`);
+      logger.error('Google Drive not configured, cannot upload file', { source: 'drive', fileName });
       return null;
     }
 
@@ -411,7 +426,7 @@ export async function uploadTextDocument(
       webContentLink: file.data.webContentLink || ''
     };
   } catch (error) {
-    console.error('Error uploading document to Drive:', error);
+    logger.error('Error uploading document to Drive', { source: 'drive', error: error instanceof Error ? error.message : String(error) });
     return null;
   }
 }
@@ -422,9 +437,10 @@ export async function uploadPresentation(
   content: string,
   mimeType: string = 'text/plain'
 ): Promise<{ id: string; webViewLink: string; webContentLink: string } | null> {
+  await outboundLimiters.googledrive.consume();
   try {
     if (process.env.GOOGLE_REFRESH_TOKEN === 'dummy-local-token') {
-      console.error(`[Drive] ERROR: Google Drive not configured (dummy-local-token). Cannot upload presentation "${fileName}". Set a real GOOGLE_REFRESH_TOKEN.`);
+      logger.error('Google Drive not configured, cannot upload presentation', { source: 'drive', fileName });
       return null;
     }
 
@@ -453,16 +469,17 @@ export async function uploadPresentation(
       webContentLink: file.data.webContentLink || ''
     };
   } catch (error) {
-    console.error('Error uploading presentation to Drive:', error);
+    logger.error('Error uploading presentation to Drive', { source: 'drive', error: error instanceof Error ? error.message : String(error) });
     return null;
   }
 }
 
 export async function findFolderByName(parentId: string, folderName: string): Promise<string | null> {
+  await outboundLimiters.googledrive.consume();
   try {
 
     if (process.env.GOOGLE_REFRESH_TOKEN === 'dummy-local-token') {
-      console.error(`[Drive] ERROR: Google Drive not configured (dummy-local-token). Cannot search for folder "${folderName}". Set a real GOOGLE_REFRESH_TOKEN.`);
+      logger.error('Google Drive not configured, cannot search for folder', { source: 'drive', folderName });
       return null;
     }
 
@@ -478,7 +495,7 @@ export async function findFolderByName(parentId: string, folderName: string): Pr
     }
     return null;
   } catch (error) {
-    console.error(`Error finding folder ${folderName}:`, error);
+    logger.error(`Error finding Drive folder`, { source: 'drive', folderName, error: error instanceof Error ? error.message : String(error) });
     return null;
   }
 }
@@ -524,7 +541,7 @@ export async function setupAgentFolders(allioFolderId: string): Promise<{
 
     return { success: true, folders: createdFolders };
   } catch (error) {
-    console.error('Error setting up agent folders:', error);
+    logger.error('Error setting up agent folders', { source: 'drive', error: error instanceof Error ? error.message : String(error) });
     return { success: false, folders: createdFolders };
   }
 }
@@ -534,12 +551,13 @@ export async function uploadFileFromPath(
   filePath: string,
   fileName?: string
 ): Promise<{ id: string; name: string; webViewLink: string } | null> {
+  await outboundLimiters.googledrive.consume();
   try {
     const actualFileName = fileName || path.basename(filePath);
 
 
     if (process.env.GOOGLE_REFRESH_TOKEN === 'dummy-local-token') {
-      console.error(`[Drive] ERROR: Google Drive not configured (dummy-local-token). Cannot upload file "${actualFileName}". Set a real GOOGLE_REFRESH_TOKEN.`);
+      logger.error('Google Drive not configured, cannot upload file', { source: 'drive', fileName });
       return null;
     }
 
@@ -582,7 +600,7 @@ export async function uploadFileFromPath(
       webViewLink: file.data.webViewLink || ''
     };
   } catch (error) {
-    console.error(`Error uploading file ${filePath} to Drive:`, error);
+    logger.error(`Error uploading file to Drive`, { source: 'drive', error: error instanceof Error ? error.message : String(error) });
     return null;
   }
 }
@@ -648,7 +666,7 @@ export async function uploadMarketingAssets(): Promise<{
 
     return { success: true, uploaded, errors };
   } catch (error) {
-    console.error('Error uploading marketing assets:', error);
+    logger.error('Error uploading marketing assets', { source: 'drive', error: error instanceof Error ? error.message : String(error) });
     errors.push(`Upload failed: ${error}`);
     return { success: false, uploaded, errors };
   }
@@ -698,7 +716,7 @@ export async function uploadLegalDocuments(): Promise<{
 
     return { success: true, uploaded, errors };
   } catch (error) {
-    console.error('Error uploading legal documents:', error);
+    logger.error('Error uploading legal documents', { source: 'drive', error: error instanceof Error ? error.message : String(error) });
     errors.push(`Upload failed: ${error}`);
     return { success: false, uploaded, errors };
   }
@@ -781,7 +799,7 @@ export async function uploadBloodAnalysisFile(
       thumbnailLink: file.data.thumbnailLink || undefined
     };
   } catch (error: any) {
-    console.error('Error uploading blood analysis file:', error);
+    logger.error('Error uploading blood analysis file', { source: 'drive', error: error instanceof Error ? error.message : String(error) });
     return { success: false, error: error.message || 'Upload failed' };
   }
 }
@@ -847,7 +865,7 @@ export async function uploadXrayFile(
       webViewLink: file.data.webViewLink || undefined
     };
   } catch (error: any) {
-    console.error('Error uploading X-ray file:', error);
+    logger.error('Error uploading X-ray file:', { source: "drive" });
     return { success: false, error: error.message || 'Upload failed' };
   }
 }
@@ -915,7 +933,7 @@ export async function uploadSkinAnalysisFile(
       thumbnailLink: file.data.thumbnailLink || undefined
     };
   } catch (error: any) {
-    console.error('Error uploading skin analysis file:', error);
+    logger.error('Error uploading skin analysis file:', { source: "drive" });
     return { success: false, error: error.message || 'Upload failed' };
   }
 }
@@ -944,12 +962,12 @@ export async function createBakerFilesFolder(): Promise<{
     if (!bakerFolderId) {
       const newFolder = await createSubfolder(memberContentId, 'Baker Files');
       bakerFolderId = newFolder.id;
-      console.log('[Drive] Created Baker Files folder:', bakerFolderId);
+      logger.debug('[Drive] Created Baker Files folder:', { source: "drive" });
     }
 
     return { success: true, folderId: bakerFolderId };
   } catch (error: any) {
-    console.error('Error creating Baker Files folder:', error);
+    logger.error('Error creating Baker Files folder:', { source: "drive" });
     return { success: false, error: error.message || 'Failed to create folder' };
   }
 }
@@ -980,7 +998,7 @@ export async function uploadToBakerFiles(
       webViewLink: result.webViewLink
     };
   } catch (error: any) {
-    console.error('Error uploading to Baker Files:', error);
+    logger.error('Error uploading to Baker Files:', { source: "drive" });
     return { success: false, error: error.message || 'Upload failed' };
   }
 }
@@ -1029,7 +1047,7 @@ export async function getBloodAnalysisUploads(): Promise<Array<{
       description: file.description || undefined
     }));
   } catch (error) {
-    console.error('Error getting blood analysis uploads:', error);
+    logger.error('Error getting blood analysis uploads:', { source: "drive" });
     return [];
   }
 }
@@ -1081,7 +1099,7 @@ export async function uploadVideoToMarketing(
     const result = await uploadFileFromPath(dateFolder, videoPath, fileName);
 
     if (result) {
-      console.log(`[Drive] Video uploaded to 02_DIVISIONS/Marketing/PRISM/output/${today}: ${result.webViewLink}`);
+      logger.debug(`[Drive] Video uploaded to 02_DIVISIONS/Marketing/PRISM/output/${today}: ${result.webViewLink}`, { source: 'drive' });
       return {
         success: true,
         driveLink: result.webViewLink,
@@ -1091,7 +1109,7 @@ export async function uploadVideoToMarketing(
       return { success: false, error: 'Upload failed' };
     }
   } catch (error: any) {
-    console.error('Error uploading video to Marketing:', error);
+    logger.error('Error uploading video to Marketing:', { source: "drive" });
     return { success: false, error: error.message };
   }
 }
@@ -1107,7 +1125,7 @@ export async function scanForBackgroundMusic(): Promise<Array<{
 
     const forgeFolderId = await findFolderByName(allioFolder.id, 'FORGE - Production');
     if (!forgeFolderId) {
-      console.log('[Drive] FORGE folder not found');
+      logger.debug('[Drive] FORGE folder not found', { source: 'drive' });
       return [];
     }
 
@@ -1119,7 +1137,7 @@ export async function scanForBackgroundMusic(): Promise<Array<{
       return audioExts.includes(ext);
     });
 
-    console.log(`[Drive] Found ${musicFiles.length} audio files in FORGE folder`);
+    logger.debug(`[Drive] Found ${musicFiles.length} audio files in FORGE folder`, { source: 'drive' });
 
     const drive = await getUncachableGoogleDriveClient();
     const results: Array<{ id: string; name: string; webContentLink?: string }> = [];
@@ -1138,7 +1156,7 @@ export async function scanForBackgroundMusic(): Promise<Array<{
 
     return results;
   } catch (error) {
-    console.error('[Drive] Error scanning for music:', error);
+    logger.error('[Drive] Error scanning for music:', { source: "drive" });
     return [];
   }
 }
@@ -1160,17 +1178,17 @@ export async function downloadFileById(
     return new Promise((resolve, reject) => {
       response.data
         .on('end', () => {
-          console.log(`[Drive] Downloaded file to ${outputPath}`);
+          logger.debug(`[Drive] Downloaded file to ${outputPath}`, { source: 'drive' });
           resolve(true);
         })
         .on('error', (err: Error) => {
-          console.error('[Drive] Download error:', err);
+          logger.error('[Drive] Download error:', { source: "drive" });
           reject(err);
         })
         .pipe(dest);
     });
   } catch (error) {
-    console.error(`[Drive] Error downloading file ${fileId}:`, error);
+    logger.error(`[Drive] Error downloading file ${fileId}:`, { source: "drive" });
     return false;
   }
 }
@@ -1196,7 +1214,7 @@ export async function uploadAudioToAgentFolder(
     const result = await uploadFileFromPath(folderId, audioPath, fileName);
 
     if (result) {
-      console.log(`[Drive] Audio uploaded to ${agentFolder}: ${result.webViewLink}`);
+      logger.debug(`[Drive] Audio uploaded to ${agentFolder}: ${result.webViewLink}`, { source: 'drive' });
       return {
         success: true,
         driveLink: result.webViewLink,
@@ -1206,7 +1224,7 @@ export async function uploadAudioToAgentFolder(
       return { success: false, error: 'Upload failed' };
     }
   } catch (error: any) {
-    console.error(`Error uploading audio to ${agentFolder}:`, error);
+    logger.error(`Error uploading audio to ${agentFolder}:`, { source: "drive" });
     return { success: false, error: error.message };
   }
 }
@@ -1284,7 +1302,7 @@ export async function searchDriveLibrary(query: string, agentName?: string): Pro
       webViewLink: file.webViewLink || undefined
     }));
   } catch (error) {
-    console.error('[Drive] Error searching library:', error);
+    logger.error('[Drive] Error searching library:', { source: "drive" });
     return [];
   }
 }
@@ -1322,7 +1340,7 @@ export async function searchDriveLibraryScoped(
           folderIds.push({ id: agentFolderId, context: `${agentName} Library` });
         }
       } catch (e) {
-        console.error(`[Drive] Could not resolve agent library folder for ${agentId}:`, e);
+        logger.error(`[Drive] Could not resolve agent library folder for ${agentId}:`, { source: "drive" });
       }
     }
 
@@ -1354,13 +1372,13 @@ export async function searchDriveLibraryScoped(
           });
         }
       } catch (e) {
-        console.error(`[Drive] Error searching folder ${folder.context}:`, e);
+        logger.error(`[Drive] Error searching folder ${folder.context}:`, { source: "drive" });
       }
     }
 
     return allResults;
   } catch (error) {
-    console.error('[Drive] Error in scoped library search:', error);
+    logger.error('[Drive] Error in scoped library search:', { source: "drive" });
     return [];
   }
 }
@@ -1372,10 +1390,10 @@ export async function trashDriveFile(fileId: string): Promise<boolean> {
       fileId: fileId,
       requestBody: { trashed: true }
     });
-    console.log(`[Drive] Trashed file ${fileId}`);
+    logger.debug(`[Drive] Trashed file ${fileId}`, { source: 'drive' });
     return true;
   } catch (error) {
-    console.error(`[Drive] Error trashing file ${fileId}:`, error);
+    logger.error(`[Drive] Error trashing file ${fileId}:`, { source: "drive" });
     return false;
   }
 }
@@ -1384,10 +1402,10 @@ export async function deleteDriveFile(fileId: string): Promise<boolean> {
   try {
     const drive = await getUncachableGoogleDriveClient();
     await drive.files.delete({ fileId });
-    console.log(`[Drive] Permanently deleted file ${fileId}`);
+    logger.debug(`[Drive] Permanently deleted file ${fileId}`, { source: 'drive' });
     return true;
   } catch (error) {
-    console.error(`[Drive] Error deleting file ${fileId}:`, error);
+    logger.error(`[Drive] Error deleting file ${fileId}:`, { source: "drive" });
     return false;
   }
 }
@@ -1400,7 +1418,7 @@ export async function getOrCreateAgentLibrariesFolder(): Promise<string> {
   if (!librariesId) {
     const folder = await createSubfolder(allioFolder.id, 'Agent_Libraries');
     librariesId = folder.id;
-    console.log('[Drive] Created Agent_Libraries folder:', librariesId);
+    logger.debug('[Drive] Created Agent_Libraries folder:', { source: "drive" });
   }
   return librariesId;
 }
@@ -1411,7 +1429,7 @@ export async function getOrCreateAgentLibraryFolder(agentName: string): Promise<
   if (!agentFolderId) {
     const folder = await createSubfolder(librariesId, agentName);
     agentFolderId = folder.id;
-    console.log(`[Drive] Created agent library folder for ${agentName}:`, agentFolderId);
+    logger.debug(`[Drive] Created agent library folder for ${agentName}:`, { source: "drive" });
   }
   return agentFolderId;
 }
@@ -1456,7 +1474,7 @@ export async function uploadToAgentLibrary(
       size: file.data.size ? parseInt(file.data.size) : buffer.length
     };
   } catch (error: any) {
-    console.error(`[Drive] Error uploading to agent library ${agentName}:`, error);
+    logger.error(`[Drive] Error uploading to agent library ${agentName}:`, { source: "drive" });
     return { success: false, error: error.message || 'Upload failed' };
   }
 }
@@ -1514,7 +1532,7 @@ export async function listAgentLibraryFiles(agentName: string): Promise<Array<{
           }
         }
       } catch (err) {
-        console.error(`[Drive] Error listing external folder ${ef.label} (${ef.folderId}) for ${agentName}:`, err);
+        logger.error(`[Drive] Error listing external folder ${ef.label} (${ef.folderId}) for ${agentName}:`, { source: "drive" });
       }
     }
 
@@ -1526,7 +1544,7 @@ export async function listAgentLibraryFiles(agentName: string): Promise<Array<{
 
     return allFiles;
   } catch (error) {
-    console.error(`[Drive] Error listing agent library for ${agentName}:`, error);
+    logger.error(`[Drive] Error listing agent library for ${agentName}:`, { source: "drive" });
     return [];
   }
 }
@@ -1577,12 +1595,12 @@ export async function createPatientProtocolsFolder(): Promise<{
     if (!protocolsFolderId) {
       const newFolder = await createSubfolder(memberContentId, 'Patient Protocols');
       protocolsFolderId = newFolder.id;
-      console.log('[Drive] Created Patient Protocols folder:', protocolsFolderId);
+      logger.debug('[Drive] Created Patient Protocols folder:', { source: "drive" });
     }
 
     return { success: true, folderId: protocolsFolderId };
   } catch (error: any) {
-    console.error('Error creating Patient Protocols folder:', error);
+    logger.error('Error creating Patient Protocols folder:', { source: "drive" });
     return { success: false, error: error.message || 'Failed to create folder' };
   }
 }
@@ -1625,7 +1643,7 @@ export async function uploadProtocolToDrive(
       webViewLink: file.data.webViewLink || undefined,
     };
   } catch (error: any) {
-    console.error('Error uploading protocol to Drive:', error);
+    logger.error('Error uploading protocol to Drive:', { source: "drive" });
     return { success: false, error: error.message || 'Upload failed' };
   }
 }
