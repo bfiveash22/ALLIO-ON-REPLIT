@@ -174,7 +174,7 @@ export function AppSidebar({ userRole = "member" }: AppSidebarProps) {
         <Link href="/" data-testid="link-logo" className="block">
           <div className="p-3 rounded-xl bg-gradient-to-r from-cyan-500/10 via-slate-900/50 to-amber-500/10 border border-cyan-500/20 backdrop-blur-sm hover:border-amber-500/30 transition-all">
             <img 
-              src="/assets/ff_pma_white_blue_helix.png" 
+              src="/assets/ff_pma_2026_logo.png" 
               alt="Forgotten Formula PMA" 
               className="h-16 w-auto mx-auto mb-2"
             />
