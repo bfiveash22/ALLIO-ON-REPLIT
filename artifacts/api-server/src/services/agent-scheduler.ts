@@ -12,6 +12,7 @@ const HIGH_ACTIVITY_CHECK_INTERVAL_MIN = 5 * 60 * 1000; // 5 minutes when 10+ ag
 const HIGH_ACTIVITY_CHECK_INTERVAL_MAX = 7 * 60 * 1000; // 7 minutes when 10+ agents
 const CROSS_DIVISION_CHECK_INTERVAL = 10 * 60 * 1000; // 10 minutes for cross-division routing
 const MAX_CONCURRENT_TASKS = 4; // Increased for more parallel execution
+const TASK_EXECUTION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes max per task execution
 const HIGH_ACTIVITY_THRESHOLD = 10; // Number of active tasks before switching to high-activity mode
 
 let schedulerRunning = false;
@@ -172,18 +173,14 @@ async function determineCheckInterval(): Promise<number> {
 }
 
 async function checkAndExecuteTasks(): Promise<void> {
-  if (activeExecutions >= MAX_CONCURRENT_TASKS) {
-    log(`[Scheduler] At max capacity (${activeExecutions}/${MAX_CONCURRENT_TASKS}). Waiting...`, 'agent-scheduler');
-    return;
-  }
-
   status.lastCheck = new Date();
 
   try {
     const allTasks = await storage.getAllAgentTasks();
 
-    // Handle stuck tasks - reset in_progress tasks older than 2 hours
-    // EXCLUDE: video/audio production tasks which may legitimately take longer
+    // CRITICAL: Handle stuck tasks BEFORE capacity check to prevent deadlock.
+    // If stuck tasks fill all execution slots, the capacity check would bail out
+    // before this cleanup ever runs — permanently blocking the entire pipeline.
     const STUCK_THRESHOLD_MS = 2 * 60 * 60 * 1000; // 2 hours
     const LONG_RUNNING_KEYWORDS = ['video', 'audio', 'render', 'presentation', 'compilation', 'export', 'urgent'];
     const now = Date.now();
@@ -193,11 +190,9 @@ async function checkAndExecuteTasks(): Promise<void> {
       if ((now - updatedAt) <= STUCK_THRESHOLD_MS) return false;
       if ((t.progress || 0) >= 100) return false;
 
-      // Exclude legitimately long-running tasks
       const titleLower = (t.title || '').toLowerCase();
       const isLongRunning = LONG_RUNNING_KEYWORDS.some(kw => titleLower.includes(kw));
       if (isLongRunning && (t.progress || 0) > 0) {
-        // Only exclude if they've made some progress (not completely stuck at 0)
         return false;
       }
 
@@ -215,6 +210,11 @@ async function checkAndExecuteTasks(): Promise<void> {
 
     if (stuckTasks.length > 0) {
       log(`[SENTINEL] Reset ${stuckTasks.length} stuck tasks`, 'agent-scheduler');
+    }
+
+    if (activeExecutions >= MAX_CONCURRENT_TASKS) {
+      log(`[Scheduler] At max capacity (${activeExecutions}/${MAX_CONCURRENT_TASKS}). Waiting...`, 'agent-scheduler');
+      return;
     }
 
     const eligibleTasks = allTasks.filter(t => {
@@ -257,7 +257,13 @@ async function checkAndExecuteTasks(): Promise<void> {
 
       log(`[SENTINEL] Dispatching: ${task.agentId.toUpperCase()} â†’ "${task.title}"`, 'agent-scheduler');
 
-      executeAgentTask(task.id)
+      const timeoutPromise = new Promise<{ success: false; error: string }>((resolve) => {
+        setTimeout(() => {
+          resolve({ success: false, error: 'Task execution timed out after ' + (TASK_EXECUTION_TIMEOUT_MS / 60000) + ' minutes' });
+        }, TASK_EXECUTION_TIMEOUT_MS);
+      });
+
+      Promise.race([executeAgentTask(task.id), timeoutPromise])
         .then(async result => {
           if (result.success) {
             status.tasksProcessed++;
@@ -266,7 +272,16 @@ async function checkAndExecuteTasks(): Promise<void> {
             await handleTaskCompletion(task, result);
           } else {
             status.tasksFailed++;
-            log(`[SENTINEL] âœ— Task failed: ${task.title} - ${result.error}`, 'agent-scheduler');
+            const isTimeout = result.error?.includes('timed out');
+            log(`[SENTINEL] âœ— Task ${isTimeout ? "timed out" : "failed"}: ${task.title} - ${result.error}`, 'agent-scheduler');
+
+            if (isTimeout) {
+              await storage.updateAgentTask(task.id, {
+                status: 'failed',
+                progress: 0,
+                errorLog: 'Execution timed out after ' + (TASK_EXECUTION_TIMEOUT_MS / 60000) + ' minutes at ' + new Date().toISOString(),
+              }).catch(() => {});
+            }
           }
         })
         .catch(error => {
