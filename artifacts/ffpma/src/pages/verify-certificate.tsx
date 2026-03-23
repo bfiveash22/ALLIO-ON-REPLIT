@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRoute } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ export default function VerifyCertificatePage() {
 
   const codeFromUrl = params?.code;
 
-  const verify = async (code: string) => {
+  const verify = useCallback(async (code: string) => {
     if (!code.trim()) return;
     setLoading(true);
     setHasSearched(true);
@@ -40,11 +40,13 @@ export default function VerifyCertificatePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  if (codeFromUrl && !hasSearched) {
-    verify(codeFromUrl);
-  }
+  useEffect(() => {
+    if (codeFromUrl && !hasSearched) {
+      verify(codeFromUrl);
+    }
+  }, [codeFromUrl, hasSearched, verify]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">

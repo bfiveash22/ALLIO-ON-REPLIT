@@ -1585,12 +1585,18 @@ export default function TrainingModulePage() {
         description: `You've successfully completed "${module?.title}".`,
       });
       try {
-        const achRes = await fetch("/api/achievements");
+        interface AchievementRecord {
+          id: string;
+          name: string;
+          description: string;
+          type: string;
+          points: number;
+          color: string | null;
+        }
+        const achRes = await fetch("/api/achievements", { credentials: "include" });
         if (achRes.ok) {
-          const allAchievements = await achRes.json();
-          const moduleAch = allAchievements.find((a: any) =>
-            a.type === "module_complete" || a.name === "First Steps"
-          );
+          const allAchievements: AchievementRecord[] = await achRes.json();
+          const moduleAch = allAchievements.find((a) => a.type === "module_complete");
           if (moduleAch) {
             const awardRes = await fetch(`/api/my/achievements/${moduleAch.id}`, {
               method: "POST",
@@ -1599,8 +1605,8 @@ export default function TrainingModulePage() {
               body: JSON.stringify({ metadata: { moduleSlug: slug, moduleTitle: module?.title } }),
             });
             if (awardRes.ok) {
-              const awarded = await awardRes.json();
-              if (awarded && !awarded.alreadyEarned) {
+              const awarded: { alreadyEarned: boolean } = await awardRes.json();
+              if (!awarded.alreadyEarned) {
                 setAchievementData({
                   name: moduleAch.name,
                   description: moduleAch.description,
