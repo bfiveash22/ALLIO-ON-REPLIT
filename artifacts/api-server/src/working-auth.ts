@@ -219,8 +219,10 @@ export function setupWorkingAuth(app: any) {
       ];
       const normalizedRoles = roles.map((r: string) => r.toLowerCase());
       let redirectTo = '/dashboard';
-      if (normalizedRoles.includes('administrator') || isBlake) {
+      if (isBlake) {
         redirectTo = '/trustee';
+      } else if (normalizedRoles.includes('administrator')) {
+        redirectTo = '/admin';
       } else if (normalizedRoles.includes('clinic_owner')) {
         redirectTo = '/clinic';
       } else if (normalizedRoles.some((r: string) =>
@@ -622,9 +624,15 @@ export function requireRole(...roles: string[]) {
     }
 
     const userRoles = req.user?.wpRoles || [];
+    const email = (req.user?.email || '').toLowerCase();
+    const isTrustee = email.includes('blake');
+
+    if (isTrustee) {
+      return next();
+    }
+
     let hasRole = roles.some(role => userRoles.includes(role));
 
-    // Map wpRoles to Allio roles
     if (!hasRole) {
       const WP_DOCTOR_ROLES = [
         'doctor', 'physician', 'healer', 'practitioner',
@@ -633,22 +641,9 @@ export function requireRole(...roles: string[]) {
         'wellness_practitioner', 'healthcare_provider',
       ];
       if (userRoles.includes('administrator') || userRoles.includes('shop_manager')) {
-        hasRole = roles.includes('admin') || roles.includes('trustee');
+        hasRole = roles.includes('admin');
       } else if (userRoles.some((r: string) => WP_DOCTOR_ROLES.includes(r))) {
         hasRole = roles.includes('doctor') || roles.includes('clinic');
-      }
-    }
-
-    const email = (req.user?.email || '').toLowerCase();
-    const TRUSTEE_EMAILS = ['blake@forgottenformula.com'];
-    const isTrustee = TRUSTEE_EMAILS.includes(email);
-    if (isTrustee && (roles.includes('admin') || roles.includes('trustee'))) {
-      hasRole = true;
-    }
-
-    if (!hasRole && roles.includes('trustee') && !roles.includes('admin')) {
-      if (!userRoles.includes('administrator')) {
-        hasRole = false;
       }
     }
 

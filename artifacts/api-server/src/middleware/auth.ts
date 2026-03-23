@@ -36,8 +36,6 @@ function getAuthSource(req: Request): { type: string; id: string | null } {
   const r = req as any;
   if (r.apiKeyId) return { type: 'apiKey', id: r.apiKeyId };
 
-  // Check standard express-session layout
-  // Removed legacy claims.sub checks
   return { type: 'anonymous', id: null };
 }
 
@@ -50,21 +48,22 @@ export function auditLog() {
       const responseTimeMs = Date.now() - startTime;
       const source = getAuthSource(req);
 
-      db.insert(apiAuditLogs).values({
-        method: req.method,
-        path: req.path,
-        sourceType: source.type,
-        sourceId: source.id,
-        statusCode: res.statusCode,
-        responseTimeMs,
-        ipAddress: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket?.remoteAddress || null,
-        userAgent: req.headers['user-agent'] || null,
-      }).catch((err: any) => {
-        console.error('[AUDIT] Failed to log:', err.message);
-      });
+      if (source.type === 'apiKey' && source.id) {
+        db.insert(apiAuditLogs).values({
+          apiKeyId: source.id,
+          endpoint: req.path,
+          method: req.method,
+          statusCode: res.statusCode,
+          responseTimeMs,
+          ipAddress: req.ip || req.socket.remoteAddress || 'unknown',
+          userAgent: req.headers['user-agent'] || 'unknown',
+        }).catch(err => {
+          console.error('[AUDIT] Failed to log API access:', err.message);
+        });
+      }
 
       return originalEnd.apply(this, args as any);
-    } as any;
+    };
 
     next();
   };
@@ -73,7 +72,6 @@ export function auditLog() {
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const r = req as any;
   if (!r.isAuthenticated || !r.isAuthenticated()) {
-    console.log(`[AUTH MIDDLEWARE] 401 on ${req.method} ${req.path}`);
     return res.status(401).json({ error: 'Authentication required' });
   }
   next();
@@ -83,7 +81,6 @@ export function requireRole(...allowedRoles: string[]) {
   return async (req: Request, res: Response, next: NextFunction) => {
     const r = req as any;
 
-    // API Key fallback for /api/athena and /api/sentinel
     if (!r.isAuthenticated || !r.isAuthenticated()) {
       if (allowedRoles.includes('admin')) {
         const apiResult = await validateApiKey(req);
@@ -103,23 +100,20 @@ export function requireRole(...allowedRoles: string[]) {
     }
 
     const userRoles = r.user?.wpRoles || [];
-    let hasRole = allowedRoles.some(role => userRoles.includes(role));
+    const email = (r.user?.email || '').toLowerCase();
+    const isTrustee = email.includes('blake');
 
-    // Map wpRoles to Allio roles
-    if (!hasRole) {
-      if (userRoles.includes('administrator') || userRoles.includes('shop_manager')) {
-        hasRole = allowedRoles.includes('admin') || allowedRoles.includes('trustee');
-      } else if (userRoles.includes('doctor') || userRoles.includes('physician')) {
-        hasRole = allowedRoles.includes('doctor') || allowedRoles.includes('clinic');
-      }
+    if (isTrustee) {
+      return next();
     }
 
-    // Hardcoded constraint: only blake should have trustee access
-    if (allowedRoles.includes('trustee')) {
-      const email = r.user?.email || '';
-      const isBlake = email.toLowerCase().includes('blake');
-      if (isBlake) {
-        hasRole = true;
+    let hasRole = allowedRoles.some(role => userRoles.includes(role));
+
+    if (!hasRole) {
+      if (userRoles.includes('administrator') || userRoles.includes('shop_manager')) {
+        hasRole = allowedRoles.includes('admin');
+      } else if (userRoles.includes('doctor') || userRoles.includes('physician')) {
+        hasRole = allowedRoles.includes('doctor') || allowedRoles.includes('clinic');
       }
     }
 
