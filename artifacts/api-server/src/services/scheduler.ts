@@ -276,6 +276,7 @@ let lastMorningDate: string | null = null;
 let lastEveningDate: string | null = null;
 let lastHourlyHour: number | null = null;
 let lastUIEvolutionWeek: string | null = null;
+let lastBackupDate: string | null = null;
 
 function checkSchedule(): void {
   const hour = getCSTHour();
@@ -292,6 +293,11 @@ function checkSchedule(): void {
     scheduleUIEvolutionTasks();
   }
 
+  if (hour === 3 && lastBackupDate !== today) {
+    lastBackupDate = today;
+    runScheduledBackup();
+  }
+
   if (hour === 18 && lastEveningDate !== today) {
     lastEveningDate = today;
     sendEveningSummary();
@@ -304,6 +310,37 @@ function checkSchedule(): void {
 
   if (hour < 7 || hour > 17) {
     lastHourlyHour = null;
+  }
+}
+
+async function runScheduledBackup(): Promise<void> {
+  try {
+    log('Starting scheduled nightly database backup (3:00 AM CST)...', 'backup');
+    const { runDatabaseBackup } = await import('./backup-service');
+    const result = await runDatabaseBackup();
+    if (result.success) {
+      log(`Nightly backup completed: ${result.label} (${result.totalRows} rows, ${result.driveFileId ? 'uploaded to Drive' : 'no Drive upload'})`, 'backup');
+      await db.insert(sentinelNotifications).values({
+        type: 'system_alert',
+        title: 'Database Backup Completed',
+        message: `Backup "${result.label}" completed successfully. ${result.totalRows} rows exported. Verification: ${result.verificationStatus}.`,
+        agentId: 'sentinel',
+        division: 'executive',
+        priority: 1,
+      });
+    } else {
+      log(`Nightly backup FAILED: ${result.error}`, 'backup');
+      await db.insert(sentinelNotifications).values({
+        type: 'system_alert',
+        title: 'Database Backup FAILED',
+        message: `Scheduled backup failed: ${result.error}`,
+        agentId: 'sentinel',
+        division: 'executive',
+        priority: 3,
+      });
+    }
+  } catch (err: any) {
+    log(`Error in runScheduledBackup: ${err.message}`, 'backup');
   }
 }
 

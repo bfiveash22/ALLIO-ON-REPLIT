@@ -2495,3 +2495,29 @@ export type InsertClinicNode = typeof clinicNodes.$inferInsert;
 export type ClinicNodeEvent = typeof clinicNodeEvents.$inferSelect;
 export type GlobalJurisdiction = typeof globalJurisdictions.$inferSelect;
 export type NodeReplicationLog = typeof nodeReplicationLogs.$inferSelect;
+
+// Database Backup Records
+export const backupStatusEnum = pgEnum("backup_status", ["pending", "running", "completed", "failed"]);
+export const backupTypeEnum = pgEnum("backup_type", ["daily", "weekly", "monthly", "manual"]);
+
+export const databaseBackups = pgTable("database_backups", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  backupType: backupTypeEnum("backup_type").notNull().default("daily"),
+  status: backupStatusEnum("status").notNull().default("pending"),
+  label: varchar("label").notNull(),
+  tablesExported: text("tables_exported").array(),
+  totalRows: integer("total_rows").default(0),
+  fileSizeBytes: integer("file_size_bytes").default(0),
+  driveFileId: varchar("drive_file_id"),
+  driveWebViewLink: varchar("drive_web_view_link"),
+  driveFolderId: varchar("drive_folder_id"),
+  verificationStatus: varchar("verification_status").default("pending"),
+  verificationDetails: jsonb("verification_details"),
+  errorMessage: text("error_message"),
+  startedAt: timestamp("started_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type DatabaseBackup = typeof databaseBackups.$inferSelect;
+export type InsertDatabaseBackup = typeof databaseBackups.$inferInsert;

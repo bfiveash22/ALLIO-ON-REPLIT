@@ -422,6 +422,198 @@ function SentinelAlertsPanel() {
   );
 }
 
+function BackupStatusWidget() {
+  const { toast } = useToast();
+
+  const { data: statusData, refetch: refetchStatus, isFetching } = useQuery<{
+    success: boolean;
+    lastBackup: any | null;
+    totalBackups: number;
+    lastSuccessfulAt: string | null;
+    lastStatus: string | null;
+  }>({
+    queryKey: ["/api/backup/status"],
+    queryFn: () => apiRequest("GET", "/api/backup/status").then(r => r.json()),
+    refetchInterval: 60000,
+  });
+
+  const { data: listData, refetch: refetchList } = useQuery<{ success: boolean; backups: any[] }>({
+    queryKey: ["/api/backup/list"],
+    queryFn: () => apiRequest("GET", "/api/backup/list?limit=10").then(r => r.json()),
+  });
+
+  const triggerBackupMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/backup/run", { type: "manual" });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Backup Started", description: "Manual backup is running in the background." });
+      setTimeout(() => { refetchStatus(); refetchList(); }, 5000);
+    },
+    onError: (err: any) => {
+      toast({ title: "Backup Failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const lastBackup = statusData?.lastBackup;
+  const lastStatus = statusData?.lastStatus;
+  const totalBackups = statusData?.totalBackups || 0;
+  const lastSuccessfulAt = statusData?.lastSuccessfulAt;
+
+  const statusColor = lastStatus === "completed"
+    ? "text-green-400"
+    : lastStatus === "failed"
+    ? "text-red-400"
+    : lastStatus === "running"
+    ? "text-yellow-400"
+    : "text-white/40";
+
+  const statusBg = lastStatus === "completed"
+    ? "bg-green-500/10 border-green-500/20"
+    : lastStatus === "failed"
+    ? "bg-red-500/10 border-red-500/20"
+    : "bg-white/5 border-white/10";
+
+  return (
+    <Card className={`border ${statusBg}`}>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Database className="w-5 h-5 text-cyan-400" />
+              Database Backup Status
+            </CardTitle>
+            <CardDescription>Automated daily backups to Google Drive</CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-white/10"
+              onClick={() => { refetchStatus(); refetchList(); }}
+              disabled={isFetching}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
+              onClick={() => triggerBackupMutation.mutate()}
+              disabled={triggerBackupMutation.isPending}
+            >
+              {triggerBackupMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4 mr-2" />
+              )}
+              Run Backup Now
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-black/20 rounded-lg p-3 border border-white/10">
+            <p className="text-xs text-white/50 mb-1">Last Status</p>
+            <p className={`font-bold capitalize ${statusColor}`}>
+              {lastStatus || "No backups yet"}
+            </p>
+          </div>
+          <div className="bg-black/20 rounded-lg p-3 border border-white/10">
+            <p className="text-xs text-white/50 mb-1">Total Backups</p>
+            <p className="font-bold text-white">{totalBackups}</p>
+          </div>
+          <div className="bg-black/20 rounded-lg p-3 border border-white/10">
+            <p className="text-xs text-white/50 mb-1">Last Successful</p>
+            <p className="font-bold text-white text-xs">
+              {lastSuccessfulAt ? formatTimeAgo(lastSuccessfulAt) : "Never"}
+            </p>
+          </div>
+          <div className="bg-black/20 rounded-lg p-3 border border-white/10">
+            <p className="text-xs text-white/50 mb-1">Rows Exported</p>
+            <p className="font-bold text-white">
+              {lastBackup?.totalRows?.toLocaleString() || "—"}
+            </p>
+          </div>
+          <div className="bg-black/20 rounded-lg p-3 border border-white/10">
+            <p className="text-xs text-white/50 mb-1">Backup Size</p>
+            <p className="font-bold text-white">
+              {lastBackup?.fileSizeBytes
+                ? lastBackup.fileSizeBytes >= 1048576
+                  ? `${(lastBackup.fileSizeBytes / 1048576).toFixed(1)} MB`
+                  : `${Math.round(lastBackup.fileSizeBytes / 1024)} KB`
+                : "—"}
+            </p>
+          </div>
+        </div>
+
+        {lastBackup && (
+          <div className="bg-black/20 rounded-lg p-3 border border-white/10">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-white/50">Last Backup Label</p>
+              <Badge className={lastBackup.verificationStatus === "passed"
+                ? "bg-green-500/20 text-green-400"
+                : "bg-yellow-500/20 text-yellow-400"}>
+                Verification: {lastBackup.verificationStatus || "pending"}
+              </Badge>
+            </div>
+            <p className="text-sm text-white font-mono">{lastBackup.label}</p>
+            {lastBackup.driveWebViewLink && (
+              <a
+                href={lastBackup.driveWebViewLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 mt-2"
+              >
+                <ExternalLink className="w-3 h-3" /> View in Google Drive
+              </a>
+            )}
+            {lastBackup.errorMessage && (
+              <p className="text-xs text-red-400 mt-2">{lastBackup.errorMessage}</p>
+            )}
+          </div>
+        )}
+
+        {listData?.backups && listData.backups.length > 0 && (
+          <div>
+            <p className="text-xs text-white/50 mb-2 uppercase tracking-wide">Recent Backups</p>
+            <div className="space-y-2">
+              {listData.backups.slice(0, 7).map((b: any) => (
+                <div key={b.id} className="flex items-center justify-between p-2 rounded bg-black/20 border border-white/5">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${b.status === "completed" ? "bg-green-500" : b.status === "failed" ? "bg-red-500" : b.status === "running" ? "bg-yellow-500 animate-pulse" : "bg-gray-500"}`} />
+                    <span className="text-xs font-mono text-white/80">{b.label}</span>
+                    <Badge variant="outline" className="text-xs capitalize border-white/10 text-white/50">
+                      {b.backupType}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-white/40">
+                    <span>{b.totalRows?.toLocaleString() || 0} rows</span>
+                    <span>{formatTimeAgo(b.createdAt)}</span>
+                    {b.driveWebViewLink && (
+                      <a href={b.driveWebViewLink} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300">
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="text-xs text-white/40 pt-2 border-t border-white/10">
+          <p>Schedule: Daily at 3:00 AM CST | Retention: 7 daily + 4 weekly + 3 monthly</p>
+          <p>Tables: users, member_profiles, contracts, legal_documents, agent_tasks, audit_logs, patient_records, patient_protocols, clinics, notifications</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function SecurityTab() {
   const { toast } = useToast();
   const [newKeyName, setNewKeyName] = useState("");
@@ -4691,6 +4883,7 @@ export default function TrusteeDashboard() {
             </TabsContent>
 
             <TabsContent value="security" className="space-y-6">
+              <BackupStatusWidget />
               <SecurityTab />
             </TabsContent>
 

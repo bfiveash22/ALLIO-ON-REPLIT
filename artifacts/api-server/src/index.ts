@@ -219,6 +219,8 @@ app.use(requestLogger);
   registerClinicNodeRoutes(app);
   const { registerPMAFilingRoutes } = await import("./routes/pma-filing-routes");
   registerPMAFilingRoutes(app);
+  const { registerBackupRoutes } = await import("./routes/backup-routes");
+  registerBackupRoutes(app);
   const { startFailoverScheduler } = await import("./services/clinic-node-service");
   startFailoverScheduler(60000);
 

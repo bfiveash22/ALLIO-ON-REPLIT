@@ -43,6 +43,13 @@
       "when": 1742572800000,
       "tag": "0005_agentic_tool_tracking",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1742659200000,
+      "tag": "0006_database_backups",
+      "breakpoints": true
     }
   ]
 }
