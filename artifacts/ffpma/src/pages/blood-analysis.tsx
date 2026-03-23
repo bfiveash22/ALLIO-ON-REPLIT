@@ -16,6 +16,7 @@ import {
   Upload,
   FlaskConical,
   TrendingUp,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -211,14 +212,24 @@ export default function BloodAnalysisPage() {
       <div className="absolute top-0 right-0 -z-10 w-[800px] h-[800px] bg-rose-500/10 rounded-full blur-[100px] opacity-50 mix-blend-screen pointer-events-none" />
       <div className="absolute bottom-0 left-0 -z-10 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[100px] opacity-50 mix-blend-screen pointer-events-none" />
 
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight animated-gradient-text">Blood Analysis Center</h2>
-          <p className="text-muted-foreground mt-1">AI-powered lab analysis and live blood microscopy aligned with the FFPMA 2026 Protocol.</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight animated-gradient-text">Blood Analysis Center</h2>
+            <p className="text-muted-foreground mt-1">AI-powered lab analysis and live blood microscopy aligned with the FFPMA 2026 Protocol.</p>
+          </div>
         </div>
+        <Button
+          variant="outline"
+          className="border-white/20 hover:bg-white/10 text-white/80 hover:text-white"
+          onClick={() => setLocation("/resources/blood-samples")}
+        >
+          <BookOpen className="w-4 h-4 mr-2" />
+          Sample Library
+        </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

@@ -155,12 +155,13 @@ export function registerDriveRoutes(app: Express): void {
       const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'];
       if (!allowedMimeTypes.includes(req.file.mimetype)) return res.status(400).json({ success: false, error: "Invalid file type." });
       if (req.file.size > 100 * 1024 * 1024) return res.status(400).json({ success: false, error: "File too large. Maximum size is 100MB." });
-      const result = await uploadBloodAnalysisFile(req.file.buffer, req.file.originalname, req.file.mimetype, patientId, analysisType);
+      const uploaderId = (req.user as any)?.id || "unknown";
+      const result = await uploadBloodAnalysisFile(req.file.buffer, req.file.originalname, req.file.mimetype, patientId || uploaderId, analysisType);
       res.json(result);
     } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
   });
 
-  app.get("/api/blood-analysis/uploads", requireRole("admin", "trustee", "doctor", "clinic"), async (req: Request, res: Response) => {
+  app.get("/api/blood-analysis/uploads", requireRole("admin", "trustee"), async (req: Request, res: Response) => {
     try { res.json({ success: true, uploads: await getBloodAnalysisUploads() }); }
     catch (error: any) { res.status(500).json({ success: false, error: error.message, uploads: [] }); }
   });
