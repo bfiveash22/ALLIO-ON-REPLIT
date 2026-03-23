@@ -85,7 +85,7 @@ export default function VerifyCertificatePage() {
               </Button>
             </div>
 
-            {hasSearched && result && (
+            {lastSearchedCode && result && (
               <div className="mt-4">
                 {result.success && result.valid ? (
                   <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
