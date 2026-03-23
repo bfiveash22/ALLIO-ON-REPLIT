@@ -2229,8 +2229,28 @@ export const generatedProtocols = pgTable("generated_protocols", {
   reviewedAt: timestamp("reviewed_at", { mode: 'date' }),
   reviewNotes: text("review_notes"),
   notes: text("notes"),
+  // Doctor review step (first approval gate)
+  doctorReviewStatus: varchar("doctor_review_status", { length: 50 }).default("pending").notNull(),
+  doctorReviewedBy: varchar("doctor_reviewed_by", { length: 255 }),
+  doctorReviewedAt: timestamp("doctor_reviewed_at", { mode: 'date' }),
+  doctorReviewNotes: text("doctor_review_notes"),
   createdAt: timestamp("created_at", { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: 'date' }).defaultNow().notNull(),
+});
+
+// Protocol review audit log — tracks every status change with who/when/why
+export const protocolReviewAuditLog = pgTable("protocol_review_audit_log", {
+  id: serial("id").primaryKey(),
+  protocolId: integer("protocol_id").notNull().references(() => generatedProtocols.id, { onDelete: "cascade" }),
+  action: varchar("action", { length: 100 }).notNull(), // e.g. "submitted_for_review", "doctor_approved", "doctor_rejected", "doctor_requested_changes", "trustee_approved", "trustee_rejected"
+  actorId: varchar("actor_id", { length: 255 }),
+  actorName: varchar("actor_name", { length: 255 }),
+  actorRole: varchar("actor_role", { length: 50 }), // "doctor", "trustee", "admin", "system"
+  previousStatus: varchar("previous_status", { length: 50 }),
+  newStatus: varchar("new_status", { length: 50 }),
+  notes: text("notes"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { mode: 'date' }).defaultNow().notNull(),
 });
 
 export const insertGeneratedProtocolSchema = createInsertSchema(generatedProtocols).omit({ id: true, createdAt: true, updatedAt: true });

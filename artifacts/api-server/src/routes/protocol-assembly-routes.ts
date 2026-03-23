@@ -3,7 +3,7 @@ import { requireAuth, requireRole } from "../working-auth";
 import { db } from "../db";
 import { eq, desc, and, inArray } from "drizzle-orm";
 import { asyncHandler, AppError } from "../middleware/error-handler";
-import { intakeForms, generatedProtocols, memberProfiles } from "@shared/schema";
+import { intakeForms, generatedProtocols, memberProfiles, protocolReviewAuditLog } from "@shared/schema";
 import type { HealingProtocol, PatientProfile } from "@shared/types/protocol-assembly";
 import { notificationService } from "../services/notification-service";
 
@@ -325,6 +325,10 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       memberId: generatedProtocols.memberId,
       doctorId: generatedProtocols.doctorId,
       status: generatedProtocols.status,
+      doctorReviewStatus: generatedProtocols.doctorReviewStatus,
+      doctorReviewedBy: generatedProtocols.doctorReviewedBy,
+      doctorReviewedAt: generatedProtocols.doctorReviewedAt,
+      doctorReviewNotes: generatedProtocols.doctorReviewNotes,
       slidesWebViewLink: generatedProtocols.slidesWebViewLink,
       pdfDriveFileId: generatedProtocols.pdfDriveFileId,
       pdfDriveWebViewLink: generatedProtocols.pdfDriveWebViewLink,
@@ -337,7 +341,7 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       createdAt: generatedProtocols.createdAt,
       updatedAt: generatedProtocols.updatedAt,
     }).from(generatedProtocols)
-      .where(eq(generatedProtocols.status, 'needs_review'))
+      .where(inArray(generatedProtocols.status, ['needs_review', 'doctor_approved']))
       .orderBy(desc(generatedProtocols.createdAt));
     res.json(pending);
   }));
@@ -557,13 +561,218 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
     }
   });
 
+  // Helper: insert audit log entry
+  async function logProtocolAudit(params: {
+    protocolId: number;
+    action: string;
+    actorId?: string;
+    actorName?: string;
+    actorRole?: string;
+    previousStatus?: string;
+    newStatus?: string;
+    notes?: string;
+    metadata?: Record<string, unknown>;
+  }) {
+    try {
+      await db.insert(protocolReviewAuditLog).values({
+        protocolId: params.protocolId,
+        action: params.action,
+        actorId: params.actorId,
+        actorName: params.actorName,
+        actorRole: params.actorRole,
+        previousStatus: params.previousStatus,
+        newStatus: params.newStatus,
+        notes: params.notes,
+        metadata: params.metadata,
+      });
+    } catch (err) {
+      console.warn('[Protocol Audit] Failed to write audit log:', err);
+    }
+  }
+
+  // GET /api/protocol-assembly/protocols/doctor-queue — protocols assigned to this doctor pending their review
+  app.get('/api/protocol-assembly/protocols/doctor-queue', requireAuth, requireRole('admin', 'trustee', 'doctor'), asyncHandler(async (req, res) => {
+    const user = (req as AuthenticatedRequest).user;
+    const userId = getUserId(req as AuthenticatedRequest);
+    if (!userId) throw new AppError('User identity required', 403, 'FORBIDDEN');
+
+    const selectFields = {
+      id: generatedProtocols.id,
+      patientName: generatedProtocols.patientName,
+      patientAge: generatedProtocols.patientAge,
+      sourceType: generatedProtocols.sourceType,
+      memberId: generatedProtocols.memberId,
+      doctorId: generatedProtocols.doctorId,
+      status: generatedProtocols.status,
+      doctorReviewStatus: generatedProtocols.doctorReviewStatus,
+      doctorReviewedBy: generatedProtocols.doctorReviewedBy,
+      doctorReviewedAt: generatedProtocols.doctorReviewedAt,
+      doctorReviewNotes: generatedProtocols.doctorReviewNotes,
+      slidesWebViewLink: generatedProtocols.slidesWebViewLink,
+      pdfDriveFileId: generatedProtocols.pdfDriveFileId,
+      pdfDriveWebViewLink: generatedProtocols.pdfDriveWebViewLink,
+      dailySchedulePdfWebViewLink: generatedProtocols.dailySchedulePdfWebViewLink,
+      peptideSchedulePdfWebViewLink: generatedProtocols.peptideSchedulePdfWebViewLink,
+      generatedBy: generatedProtocols.generatedBy,
+      reviewedBy: generatedProtocols.reviewedBy,
+      reviewNotes: generatedProtocols.reviewNotes,
+      createdAt: generatedProtocols.createdAt,
+      updatedAt: generatedProtocols.updatedAt,
+    };
+
+    let queue;
+    if (isDoctorOnly(req as AuthenticatedRequest)) {
+      // Doctors see only their own protocols
+      queue = await db.select(selectFields).from(generatedProtocols)
+        .where(and(
+          eq(generatedProtocols.doctorId, userId),
+          eq(generatedProtocols.status, 'needs_review')
+        ))
+        .orderBy(desc(generatedProtocols.createdAt));
+    } else {
+      // Admin/trustee can see all pending doctor review
+      queue = await db.select(selectFields).from(generatedProtocols)
+        .where(eq(generatedProtocols.status, 'needs_review'))
+        .orderBy(desc(generatedProtocols.createdAt));
+    }
+
+    res.json(queue);
+  }));
+
+  // POST /api/protocol-assembly/protocols/:id/doctor-review — doctor approves, rejects, or requests changes
+  app.post('/api/protocol-assembly/protocols/:id/doctor-review', requireAuth, requireRole('admin', 'trustee', 'doctor'), asyncHandler(async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) throw new AppError('Invalid protocol ID', 400, 'VALIDATION_ERROR');
+
+    const { action, notes } = req.body as { action: 'approve' | 'reject' | 'request_changes'; notes?: string };
+    const validActions = ['approve', 'reject', 'request_changes'];
+    if (!action || !validActions.includes(action)) {
+      throw new AppError(`Invalid action. Must be one of: ${validActions.join(', ')}`, 400, 'VALIDATION_ERROR');
+    }
+
+    const record = await getProtocol(id);
+    if (!record) throw new AppError('Protocol not found', 404, 'NOT_FOUND');
+
+    // Doctors can only review their own protocols; admins/trustees can review any
+    if (isDoctorOnly(req as AuthenticatedRequest)) {
+      const userId = getUserId(req as AuthenticatedRequest);
+      if (!userId || record.doctorId !== userId) {
+        throw new AppError('Forbidden: protocol not assigned to you', 403, 'FORBIDDEN');
+      }
+    }
+
+    // Protocol must be in needs_review state for doctor to act on it
+    if (record.status !== 'needs_review') {
+      throw new AppError(`Cannot review protocol with status "${record.status}". Protocol must be in "needs_review" state.`, 400, 'INVALID_STATE');
+    }
+
+    const user = (req as AuthenticatedRequest).user;
+    const actorName = user?.email || user?.firstName || user?.name || 'doctor';
+    const actorId = getUserId(req as AuthenticatedRequest);
+    const actorRole = isDoctorOnly(req as AuthenticatedRequest) ? 'doctor' : 'admin';
+
+    let doctorReviewStatus: string;
+    let newProtocolStatus: string;
+    let auditAction: string;
+
+    switch (action) {
+      case 'approve':
+        doctorReviewStatus = 'approved';
+        newProtocolStatus = 'doctor_approved';
+        auditAction = 'doctor_approved';
+        break;
+      case 'reject':
+        doctorReviewStatus = 'rejected';
+        newProtocolStatus = 'rejected';
+        auditAction = 'doctor_rejected';
+        break;
+      case 'request_changes':
+        doctorReviewStatus = 'changes_requested';
+        newProtocolStatus = 'needs_revision';
+        auditAction = 'doctor_requested_changes';
+        break;
+      default:
+        throw new AppError('Invalid action', 400, 'VALIDATION_ERROR');
+    }
+
+    const previousStatus = record.status;
+
+    await db.update(generatedProtocols).set({
+      doctorReviewStatus,
+      doctorReviewedBy: actorName,
+      doctorReviewedAt: new Date(),
+      doctorReviewNotes: notes || null,
+      status: newProtocolStatus,
+      updatedAt: new Date(),
+    }).where(eq(generatedProtocols.id, id));
+
+    await logProtocolAudit({
+      protocolId: id,
+      action: auditAction,
+      actorId,
+      actorName,
+      actorRole,
+      previousStatus,
+      newStatus: newProtocolStatus,
+      notes,
+    });
+
+    // Notify admin/trustee if doctor approved — now ready for final trustee sign-off
+    if (action === 'approve') {
+      try {
+        const adminRows = await db.select({ userId: memberProfiles.userId }).from(memberProfiles).where(eq(memberProfiles.role, 'admin'));
+        await Promise.all(adminRows.map(a =>
+          notificationService.createForUser(
+            a.userId,
+            'protocol_approval_request',
+            'Protocol Ready for Trustee Sign-Off',
+            `Dr. ${actorName} has approved the protocol for ${record.patientName}. It is now pending Trustee final sign-off.`,
+            { protocolId: id }
+          ).catch(() => {})
+        ));
+      } catch (notifyErr) {
+        console.warn('[Doctor Review] Trustee notification failed:', notifyErr);
+      }
+    }
+
+    // Notify generating doctor if changes requested or rejected
+    if ((action === 'reject' || action === 'request_changes') && record.doctorId) {
+      notificationService.createForUser(
+        record.doctorId,
+        'protocol_update',
+        action === 'reject' ? 'Protocol Rejected' : 'Protocol Changes Requested',
+        `${action === 'reject' ? 'The protocol' : 'Changes have been requested for the protocol'} for ${record.patientName}.${notes ? ` Notes: ${notes}` : ''}`,
+        { protocolId: id }
+      ).catch(() => {});
+    }
+
+    const updated = await getProtocol(id);
+    res.json({ success: true, action, protocol: updated });
+  }));
+
+  // GET /api/protocol-assembly/protocols/:id/audit-log — full audit trail for a protocol
+  app.get('/api/protocol-assembly/protocols/:id/audit-log', requireAuth, requireRole('admin', 'trustee', 'doctor'), asyncHandler(async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) throw new AppError('Invalid protocol ID', 400, 'VALIDATION_ERROR');
+
+    const record = await getProtocol(id);
+    if (!record) throw new AppError('Protocol not found', 404, 'NOT_FOUND');
+    enforceDoctorOwnership(req, record);
+
+    const auditEntries = await db.select().from(protocolReviewAuditLog)
+      .where(eq(protocolReviewAuditLog.protocolId, id))
+      .orderBy(desc(protocolReviewAuditLog.createdAt));
+
+    res.json({ protocolId: id, patientName: record.patientName, auditLog: auditEntries });
+  }));
+
   app.patch('/api/protocol-assembly/protocols/:id/status', requireAuth, requireRole('admin', 'trustee'), async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
 
       const { status, reviewNotes, doctorId } = req.body;
-      const validStatuses = ['draft', 'needs_review', 'approved', 'rejected'];
+      const validStatuses = ['draft', 'needs_review', 'doctor_approved', 'approved', 'rejected', 'needs_revision'];
       if (!status || !validStatuses.includes(status)) {
         return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
       }
@@ -573,6 +782,8 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
 
       const user = (req as AuthenticatedRequest).user;
       const reviewerUsername = user?.email || user?.firstName || 'trustee';
+      const actorId = (req as AuthenticatedRequest).user?.id;
+      const previousStatus = record.status;
       const updateData: Record<string, unknown> = {
         status,
         updatedAt: new Date(),
@@ -581,7 +792,7 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       if (status === 'approved' || status === 'rejected') {
         updateData.reviewedBy = reviewerUsername;
         updateData.reviewedAt = new Date();
-      } else {
+      } else if (status === 'needs_review' || status === 'draft' || status === 'needs_revision') {
         updateData.reviewedBy = null;
         updateData.reviewedAt = null;
       }
@@ -600,6 +811,23 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
       }
 
       await db.update(generatedProtocols).set(updateData).where(eq(generatedProtocols.id, id));
+
+      // Audit log for trustee action
+      const auditAction = status === 'approved' ? 'trustee_approved'
+        : status === 'rejected' ? 'trustee_rejected'
+        : status === 'needs_review' ? 'submitted_for_review'
+        : status === 'needs_revision' ? 'trustee_requested_revision'
+        : `status_changed_to_${status}`;
+      await logProtocolAudit({
+        protocolId: id,
+        action: auditAction,
+        actorId,
+        actorName: reviewerUsername,
+        actorRole: 'trustee',
+        previousStatus,
+        newStatus: status,
+        notes: reviewNotes,
+      });
 
       let uploadedPdfLink: string | null = null;
       if (status === 'approved') {

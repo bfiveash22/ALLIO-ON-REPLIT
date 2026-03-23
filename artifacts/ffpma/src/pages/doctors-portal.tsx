@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +62,9 @@ import {
   CheckSquare,
   XCircle,
   Zap,
+  ThumbsUp,
+  ThumbsDown,
+  History,
 } from "lucide-react";
 import { Link } from "wouter";
 import { agents, getAgentsByDivision } from "@shared/agents";
@@ -640,6 +643,376 @@ function AssignedProtocolsSection() {
         </div>
       )}
     </Card>
+  );
+}
+
+interface DoctorQueueProtocol {
+  id: number;
+  patientName: string;
+  patientAge: number | null;
+  sourceType: string;
+  memberId: string | null;
+  doctorId: string | null;
+  status: string;
+  doctorReviewStatus: string;
+  doctorReviewedBy: string | null;
+  doctorReviewedAt: string | null;
+  doctorReviewNotes: string | null;
+  slidesWebViewLink: string | null;
+  pdfDriveFileId: string | null;
+  pdfDriveWebViewLink: string | null;
+  dailySchedulePdfWebViewLink: string | null;
+  peptideSchedulePdfWebViewLink: string | null;
+  generatedBy: string | null;
+  reviewedBy: string | null;
+  reviewNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface AuditEntry {
+  id: number;
+  protocolId: number;
+  action: string;
+  actorName: string | null;
+  actorRole: string | null;
+  previousStatus: string | null;
+  newStatus: string | null;
+  notes: string | null;
+  createdAt: string;
+}
+
+function DoctorProtocolReviewQueue() {
+  const { toast } = useToast();
+  const [selectedProtocol, setSelectedProtocol] = useState<number | null>(null);
+  const [reviewNotes, setReviewNotes] = useState("");
+  const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "reviewed">("pending");
+  const [showAuditLog, setShowAuditLog] = useState<number | null>(null);
+
+  const { data: queue = [], refetch: refetchQueue, isLoading } = useQuery<DoctorQueueProtocol[]>({
+    queryKey: ["/api/protocol-assembly/protocols/doctor-queue"],
+    refetchInterval: 30000,
+  });
+
+  const { data: allDoctorProtocols = [] } = useQuery<DoctorQueueProtocol[]>({
+    queryKey: ["/api/protocol-assembly/protocols"],
+    refetchInterval: 60000,
+  });
+
+  const { data: auditData } = useQuery<{ auditLog: AuditEntry[] }>({
+    queryKey: [`/api/protocol-assembly/protocols/${showAuditLog}/audit-log`],
+    enabled: showAuditLog !== null,
+  });
+
+  const reviewMutation = useMutation({
+    mutationFn: async ({ id, action, notes }: { id: number; action: 'approve' | 'reject' | 'request_changes'; notes: string }) => {
+      const res = await apiRequest("POST", `/api/protocol-assembly/protocols/${id}/doctor-review`, { action, notes });
+      return res.json();
+    },
+    onSuccess: (_, variables) => {
+      const labels = { approve: 'Protocol approved', reject: 'Protocol rejected', request_changes: 'Changes requested' };
+      toast({ title: labels[variables.action] });
+      setSelectedProtocol(null);
+      setReviewNotes("");
+      refetchQueue();
+      queryClient.invalidateQueries({ queryKey: ["/api/protocol-assembly/protocols"] });
+    },
+    onError: (err: any) => toast({ title: err?.message || "Review action failed", variant: "destructive" }),
+  });
+
+  const pendingQueue = queue.filter(p => p.status === 'needs_review');
+  const doctorApproved = allDoctorProtocols.filter(p => p.status === 'doctor_approved');
+  const fullyApproved = allDoctorProtocols.filter(p => p.status === 'approved');
+  const rejected = allDoctorProtocols.filter(p => p.status === 'rejected' || p.status === 'needs_revision');
+
+  const getStatusBadge = (protocol: DoctorQueueProtocol) => {
+    const statusMap: Record<string, { label: string; class: string }> = {
+      needs_review: { label: 'Pending Your Review', class: 'bg-amber-500/20 text-amber-300' },
+      doctor_approved: { label: 'Awaiting Trustee', class: 'bg-blue-500/20 text-blue-300' },
+      approved: { label: 'Fully Approved', class: 'bg-green-500/20 text-green-300' },
+      rejected: { label: 'Rejected', class: 'bg-red-500/20 text-red-300' },
+      needs_revision: { label: 'Needs Revision', class: 'bg-orange-500/20 text-orange-300' },
+      draft: { label: 'Draft', class: 'bg-gray-500/20 text-gray-300' },
+    };
+    const info = statusMap[protocol.status] || { label: protocol.status, class: 'bg-gray-500/20 text-gray-300' };
+    return <Badge className={`text-xs ${info.class}`}>{info.label}</Badge>;
+  };
+
+  const renderProtocolCard = (protocol: DoctorQueueProtocol, showActions: boolean) => (
+    <motion.div
+      key={protocol.id}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`p-4 rounded-lg border transition-colors ${
+        selectedProtocol === protocol.id
+          ? "bg-amber-500/10 border-amber-500/30"
+          : "bg-white/5 border-white/10 hover:border-white/20"
+      }`}
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center font-bold text-sm">
+            {protocol.patientName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+          </div>
+          <div>
+            <p className="font-medium text-white">{protocol.patientName}</p>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              {protocol.patientAge && <span className="text-xs text-white/50">Age: {protocol.patientAge}</span>}
+              <Badge variant="outline" className="text-xs">
+                {protocol.sourceType === 'intake_form' ? 'Intake Form' : 'Transcript'}
+              </Badge>
+              {getStatusBadge(protocol)}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {protocol.pdfDriveWebViewLink && (
+            <a href={protocol.pdfDriveWebViewLink} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm" className="border-white/10 text-xs">
+                <FileText className="w-3 h-3 mr-1" />
+                PDF
+              </Button>
+            </a>
+          )}
+          {protocol.slidesWebViewLink && (
+            <a href={protocol.slidesWebViewLink} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm" className="border-white/10 text-xs">
+                <Eye className="w-3 h-3 mr-1" />
+                Slides
+              </Button>
+            </a>
+          )}
+          <a href={`/api/protocol-assembly/protocols/${protocol.id}/pdf`} target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="sm" className="border-white/10 text-xs">
+              <Download className="w-3 h-3 mr-1" />
+              Download
+            </Button>
+          </a>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white/40 hover:text-white/70"
+            onClick={() => setShowAuditLog(showAuditLog === protocol.id ? null : protocol.id)}
+            title="View Audit Log"
+          >
+            <History className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 text-xs text-white/40 mb-3">
+        <span>Generated: {new Date(protocol.createdAt).toLocaleDateString()}</span>
+        <span>Source: {protocol.sourceType === 'intake_form' ? 'Intake Form' : 'Transcript'}</span>
+        {protocol.generatedBy && <span>By: {protocol.generatedBy}</span>}
+        {protocol.doctorReviewedBy && <span>Reviewed by: {protocol.doctorReviewedBy}</span>}
+      </div>
+
+      {protocol.doctorReviewNotes && (
+        <div className="p-2 rounded bg-white/5 text-xs text-white/60 mb-3">
+          <span className="font-medium text-white/70">Your Review Notes:</span> {protocol.doctorReviewNotes}
+        </div>
+      )}
+
+      {protocol.reviewNotes && (
+        <div className="p-2 rounded bg-blue-500/10 text-xs text-blue-200 mb-3">
+          <span className="font-medium">Trustee Notes:</span> {protocol.reviewNotes}
+        </div>
+      )}
+
+      {/* Audit Log Inline */}
+      {showAuditLog === protocol.id && auditData && (
+        <div className="mt-3 p-3 rounded-lg bg-black/30 border border-white/10">
+          <h5 className="text-xs font-semibold text-white/70 mb-2 flex items-center gap-1">
+            <History className="w-3 h-3" /> Audit Trail
+          </h5>
+          {auditData.auditLog.length === 0 ? (
+            <p className="text-xs text-white/40">No audit entries yet</p>
+          ) : (
+            <div className="space-y-1">
+              {auditData.auditLog.map((entry) => (
+                <div key={entry.id} className="text-xs text-white/60 flex items-start gap-2">
+                  <span className="text-white/30">{new Date(entry.createdAt).toLocaleDateString()}</span>
+                  <span className="font-medium text-white/70 capitalize">{entry.action.replace(/_/g, ' ')}</span>
+                  {entry.actorName && <span>by {entry.actorName}</span>}
+                  {entry.notes && <span className="text-white/40">— "{entry.notes}"</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Doctor Review Actions — only for pending_review status */}
+      {showActions && protocol.status === 'needs_review' && (
+        <div className="mt-3 space-y-3">
+          <Textarea
+            placeholder="Review notes (required for reject/request changes, optional for approve)..."
+            value={selectedProtocol === protocol.id ? reviewNotes : ""}
+            onChange={(e) => {
+              setSelectedProtocol(protocol.id);
+              setReviewNotes(e.target.value);
+            }}
+            className="bg-white/5 border-white/10 text-sm"
+            rows={2}
+          />
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              size="sm"
+              className="bg-green-500 hover:bg-green-600"
+              onClick={() => reviewMutation.mutate({ id: protocol.id, action: 'approve', notes: selectedProtocol === protocol.id ? reviewNotes : '' })}
+              disabled={reviewMutation.isPending}
+            >
+              {reviewMutation.isPending ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <ThumbsUp className="w-3 h-3 mr-1" />}
+              Approve Protocol
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-orange-500/30 text-orange-400 hover:bg-orange-500/10"
+              onClick={() => {
+                const notes = selectedProtocol === protocol.id ? reviewNotes : '';
+                if (!notes.trim()) {
+                  toast({ title: "Please add notes explaining what changes are needed", variant: "destructive" });
+                  setSelectedProtocol(protocol.id);
+                  return;
+                }
+                reviewMutation.mutate({ id: protocol.id, action: 'request_changes', notes });
+              }}
+              disabled={reviewMutation.isPending}
+            >
+              {reviewMutation.isPending ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <RotateCcw className="w-3 h-3 mr-1" />}
+              Request Changes
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+              onClick={() => {
+                const notes = selectedProtocol === protocol.id ? reviewNotes : '';
+                if (!notes.trim()) {
+                  toast({ title: "Please add notes explaining the reason for rejection", variant: "destructive" });
+                  setSelectedProtocol(protocol.id);
+                  return;
+                }
+                reviewMutation.mutate({ id: protocol.id, action: 'reject', notes });
+              }}
+              disabled={reviewMutation.isPending}
+            >
+              {reviewMutation.isPending ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <XCircle className="w-3 h-3 mr-1" />}
+              Reject
+            </Button>
+          </div>
+          <p className="text-xs text-white/40">
+            Note: Rejection and Change Requests require notes. After approval, the Trustee will provide final sign-off.
+          </p>
+        </div>
+      )}
+    </motion.div>
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Summary Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: "Pending Review", value: pendingQueue.length, color: "amber" },
+          { label: "Awaiting Trustee", value: doctorApproved.length, color: "blue" },
+          { label: "Fully Approved", value: fullyApproved.length, color: "green" },
+          { label: "Rejected / Revision", value: rejected.length, color: "red" },
+        ].map((stat) => (
+          <Card key={stat.label} className="bg-black/20 border-white/10 p-4 text-center">
+            <p className={`text-2xl font-bold ${
+              stat.color === 'amber' ? 'text-amber-400' :
+              stat.color === 'blue' ? 'text-blue-400' :
+              stat.color === 'green' ? 'text-green-400' : 'text-red-400'
+            }`}>{stat.value}</p>
+            <p className="text-xs text-white/50 mt-1">{stat.label}</p>
+          </Card>
+        ))}
+      </div>
+
+      {/* Pending Review Queue — your action required */}
+      <Card className="bg-gradient-to-br from-amber-500/5 to-orange-500/5 border-amber-500/20">
+        <div className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-lg flex items-center gap-2">
+              <ClipboardList className="w-5 h-5 text-amber-400" />
+              Pending Your Review
+              <Badge className="bg-amber-500/20 text-amber-300 ml-1">{pendingQueue.length}</Badge>
+            </h3>
+            <Button variant="outline" size="sm" className="border-white/10" onClick={() => refetchQueue()}>
+              <RefreshCw className="w-3 h-3 mr-1" />
+              Refresh
+            </Button>
+          </div>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8 text-white/50">
+              <Loader2 className="w-6 h-6 animate-spin mr-2" />
+              Loading protocols...
+            </div>
+          ) : pendingQueue.length === 0 ? (
+            <div className="text-center py-10">
+              <CheckCircle2 className="w-12 h-12 mx-auto text-green-400/30 mb-3" />
+              <p className="text-white/60 font-medium">No protocols pending your review</p>
+              <p className="text-sm text-white/40 mt-1">Protocols assigned to you for review will appear here</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {pendingQueue.map(p => renderProtocolCard(p, true))}
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Awaiting Trustee Sign-Off */}
+      {doctorApproved.length > 0 && (
+        <Card className="bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border-blue-500/20">
+          <div className="p-5">
+            <h3 className="font-bold text-lg flex items-center gap-2 mb-4">
+              <Shield className="w-5 h-5 text-blue-400" />
+              Awaiting Trustee Sign-Off
+              <Badge className="bg-blue-500/20 text-blue-300 ml-1">{doctorApproved.length}</Badge>
+            </h3>
+            <div className="space-y-4">
+              {doctorApproved.map(p => renderProtocolCard(p, false))}
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Fully Approved — delivered to members */}
+      {fullyApproved.length > 0 && (
+        <Card className="bg-gradient-to-br from-green-500/5 to-emerald-500/5 border-green-500/20">
+          <div className="p-5">
+            <h3 className="font-bold text-lg flex items-center gap-2 mb-4">
+              <CheckCircle2 className="w-5 h-5 text-green-400" />
+              Fully Approved
+              <Badge className="bg-green-500/20 text-green-300 ml-1">{fullyApproved.length}</Badge>
+            </h3>
+            <div className="space-y-4">
+              {fullyApproved.map(p => renderProtocolCard(p, false))}
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Rejected / Needs Revision */}
+      {rejected.length > 0 && (
+        <Card className="bg-gradient-to-br from-red-500/5 to-rose-500/5 border-red-500/20">
+          <div className="p-5">
+            <h3 className="font-bold text-lg flex items-center gap-2 mb-4">
+              <XCircle className="w-5 h-5 text-red-400" />
+              Rejected / Needs Revision
+              <Badge className="bg-red-500/20 text-red-300 ml-1">{rejected.length}</Badge>
+            </h3>
+            <div className="space-y-4">
+              {rejected.map(p => renderProtocolCard(p, false))}
+            </div>
+          </div>
+        </Card>
+      )}
+    </div>
   );
 }
 
@@ -1589,6 +1962,8 @@ export default function DoctorsPortal() {
 
             <TabsContent value="protocols" className="space-y-6">
               <GenerateProtocolPipelineSection />
+
+              <DoctorProtocolReviewQueue />
 
               <AssignedProtocolsSection />
 
