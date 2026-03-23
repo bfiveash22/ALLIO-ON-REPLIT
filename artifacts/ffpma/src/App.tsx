@@ -93,6 +93,7 @@ import BecomeAMemberPage from "@/pages/become-a-member";
 import LegalDocumentPage from "@/pages/legal-document";
 import DoctorInterestFormPage from "@/pages/doctor-interest-form";
 import DoctorPitchViewerPage from "@/pages/doctor-pitch-viewer";
+import VerifyCertificatePage from "@/pages/verify-certificate";
 import NotFound from "@/pages/not-found";
 
 async function fetchProfile(): Promise<MemberProfile | null> {
@@ -545,6 +546,12 @@ function Router() {
             <QuizTakePage />
           </AppLayout>
         </ProtectedRoute>
+      )} />
+      <Route path="/verify/:code" component={() => (
+        <VerifyCertificatePage />
+      )} />
+      <Route path="/verify" component={() => (
+        <VerifyCertificatePage />
       )} />
       <Route path="/doctor-interest" component={() => (
         <DoctorInterestFormPage />

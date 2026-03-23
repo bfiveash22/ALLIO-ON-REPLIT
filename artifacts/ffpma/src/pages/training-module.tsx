@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +28,7 @@ import type { TrainingModule } from "@shared/schema";
 import { InteractiveQuiz, AITutor, ECS_QUIZ, type QuizQuestion } from "@/components/InteractiveQuiz";
 import { InteractiveTrainingPlayer, AudioNarrationButton } from "@/components/InteractiveTrainingPlayer";
 import { EnhancedInteractiveModule } from "@/components/EnhancedInteractiveModule";
+import { AchievementToast } from "@/components/AchievementToast";
 import { getKnowledgeChecksForModule, hasKnowledgeCheck } from "@shared/training-knowledge-checks";
 
 function isPlaceholderVideoUrl(url?: string | null): boolean {
@@ -1534,6 +1535,7 @@ export default function TrainingModulePage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCompleted, setIsCompleted] = useState(false);
+  const [achievementData, setAchievementData] = useState<{ name: string; description: string; points: number; color?: string } | null>(null);
 
   const { data: module, isLoading, error } = useQuery<TrainingModule>({
     queryKey: ["/api/training/modules", slug],
@@ -1575,13 +1577,42 @@ export default function TrainingModulePage() {
       }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       setIsCompleted(true);
       queryClient.invalidateQueries({ queryKey: ["/api/learning/progress", module?.id] });
       toast({
         title: "Module Completed!",
         description: `You've successfully completed "${module?.title}".`,
       });
+      try {
+        const achRes = await fetch("/api/achievements");
+        if (achRes.ok) {
+          const allAchievements = await achRes.json();
+          const moduleAch = allAchievements.find((a: any) =>
+            a.type === "module_complete" || a.name === "First Steps"
+          );
+          if (moduleAch) {
+            const awardRes = await fetch(`/api/my/achievements/${moduleAch.id}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({ metadata: { moduleSlug: slug, moduleTitle: module?.title } }),
+            });
+            if (awardRes.ok) {
+              const awarded = await awardRes.json();
+              if (awarded && !awarded.alreadyEarned) {
+                setAchievementData({
+                  name: moduleAch.name,
+                  description: moduleAch.description,
+                  points: moduleAch.points || 50,
+                  color: moduleAch.color || "gold",
+                });
+              }
+            }
+          }
+        }
+      } catch {
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -1636,6 +1667,15 @@ export default function TrainingModulePage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
+      {achievementData && (
+        <AchievementToast
+          name={achievementData.name}
+          description={achievementData.description}
+          points={achievementData.points}
+          color={achievementData.color}
+          onClose={() => setAchievementData(null)}
+        />
+      )}
       <div className="flex items-center gap-4 mb-6">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/training" data-testid="button-back">

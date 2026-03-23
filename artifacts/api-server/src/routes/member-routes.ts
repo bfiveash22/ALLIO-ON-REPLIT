@@ -84,8 +84,10 @@ export function registerMemberRoutes(app: Express): void {
   app.post("/api/my/achievements/:achievementId", requireAuth, asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user?.id as string;
     if (!userId) throw new AppError("Not authenticated", 401, "UNAUTHORIZED");
+    const existingAchievements = await storage.getUserAchievements(userId);
+    const alreadyEarned = existingAchievements.some(a => a.achievementId === req.params.achievementId);
     const userAchievement = await storage.awardAchievement(userId, req.params.achievementId, req.body.metadata);
-    res.status(201).json(userAchievement);
+    res.status(alreadyEarned ? 200 : 201).json({ ...userAchievement, alreadyEarned });
   }));
 
   app.get("/api/my/bookmarks", requireAuth, asyncHandler(async (req: Request, res: Response) => {
