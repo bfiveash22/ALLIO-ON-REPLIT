@@ -347,6 +347,41 @@ export function registerSentinelRoutes(app: Express): void {
     }
   });
 
+  app.post('/api/admin/clean-duplicate-tasks', adminOnly, async (_req: Request, res: Response) => {
+    try {
+      const allTasks = await storage.getAllAgentTasks();
+      const seen = new Map<string, string>();
+      const duplicateIds: string[] = [];
+
+      for (const task of allTasks) {
+        if (task.status !== 'pending' && task.status !== 'in_progress') continue;
+
+        const key = `${task.agentId.toLowerCase()}::${(task.title || '').toLowerCase().trim()}`;
+        if (seen.has(key)) {
+          duplicateIds.push(task.id);
+        } else {
+          seen.set(key, task.id);
+        }
+      }
+
+      for (const id of duplicateIds) {
+        await storage.updateAgentTask(id, {
+          status: 'failed',
+          errorLog: `[DEDUP] Cancelled as duplicate at ${new Date().toISOString()}`,
+        });
+      }
+
+      res.json({
+        success: true,
+        duplicatesFound: duplicateIds.length,
+        duplicateIds,
+        message: `Cancelled ${duplicateIds.length} duplicate tasks`,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // --- AI Model Evaluations (HuggingFace) ---
   app.get('/api/sentinel/agent-evaluations', adminOnly, async (req: Request, res: Response) => {
     try {

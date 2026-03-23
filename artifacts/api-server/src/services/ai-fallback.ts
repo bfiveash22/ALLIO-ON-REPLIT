@@ -227,7 +227,13 @@ export function validateAIResponse(
   return { score, pass, reasons };
 }
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getOpenAIKey(): string | undefined {
+  const key = process.env.REAL_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+  if (key?.startsWith('sk-svcac')) return undefined;
+  return key;
+}
+
+const openai = new OpenAI({ apiKey: getOpenAIKey() });
 
 async function callOpenAI(prompt: string, model: string, systemPrompt?: string, maxTokens?: number): Promise<string> {
   const messages: ChatCompletionMessageParam[] = [];

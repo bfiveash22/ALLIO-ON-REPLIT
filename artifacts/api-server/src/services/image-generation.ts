@@ -3,7 +3,7 @@ import OpenAI, { toFile } from "openai";
 import { Buffer } from "node:buffer";
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: (process.env.REAL_OPENAI_API_KEY || process.env.OPENAI_API_KEY)?.startsWith("sk-svcac") ? undefined : (process.env.REAL_OPENAI_API_KEY || process.env.OPENAI_API_KEY),
 });
 
 export async function generateImageBuffer(
