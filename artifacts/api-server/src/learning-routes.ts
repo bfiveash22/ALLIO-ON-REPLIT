@@ -36,6 +36,17 @@ export function registerLearningRoutes(app: Express): void {
     }
   });
 
+  app.get('/api/learning/progress', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req.user as any).id;
+      const progress = await db.select().from(userProgressTracking)
+        .where(eq(userProgressTracking.userId, userId));
+      res.json(progress);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Get user progress for a module
   app.get('/api/learning/progress/:moduleId', requireAuth, async (req: Request, res: Response) => {
     try {

@@ -1546,6 +1546,25 @@ export default function TrainingModulePage() {
     enabled: !!slug,
   });
 
+  interface CertRecord {
+    id: string;
+    certificateNumber: string | null;
+    verificationCode: string | null;
+    score: number | null;
+    issuedAt: string | null;
+    referenceTitle: string;
+    status: string;
+  }
+
+  const { data: certData } = useQuery<{ success: boolean; certifications: CertRecord[] }>({
+    queryKey: ["/api/my/certifications"],
+    enabled: isCompleted || false,
+  });
+
+  const moduleCert = certData?.certifications?.find(
+    (c) => c.referenceTitle === module?.title && c.status === "passed"
+  );
+
   const { data: dbContent } = useQuery<ModuleContent>({
     queryKey: ["/api/training/modules", module?.id, "content"],
     queryFn: async () => {
@@ -1893,9 +1912,12 @@ export default function TrainingModulePage() {
           <Certificate
             type="module"
             title={module?.title || "Training Module"}
-            completedAt={progressData?.updatedAt ? new Date(progressData.updatedAt) : new Date()}
+            completedAt={moduleCert?.issuedAt ? new Date(moduleCert.issuedAt) : (progressData?.updatedAt ? new Date(progressData.updatedAt) : new Date())}
             userName="Practitioner"
             duration={module?.duration || undefined}
+            certificateNumber={moduleCert?.certificateNumber}
+            verificationCode={moduleCert?.verificationCode}
+            score={moduleCert?.score}
           />
         </DialogContent>
       </Dialog>
