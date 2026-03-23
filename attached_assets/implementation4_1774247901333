@@ -1,0 +1,50 @@
+# Comprehensive Training Ecosystem Enhancements
+
+This plan outlines the implementation of the 5 requested enhancements for the training and certification modules within the FFPMA ecosystem.
+
+## 1. Verifiable & Shareable Credentials
+The schema already supports `certificateNumber` and `verificationCode` in the `training_certifications` table.
+### Proposed Changes:
+#### [MODIFY] [client/src/components/certificate.tsx](file:///c:/Users/adminstrators1/Allio%20Antigravity%20work%202026/allioffpma.com/client/src/components/certificate.tsx)
+- Display the unique `certificateNumber` and `verificationCode` on the certificate UI.
+- Add a generated QR code (using a simple QR code library or API) that links to a public verification page `/verify/:code`.
+- Add an "Add to LinkedIn" / "Share on LinkedIn" button using the standard LinkedIn share URL.
+
+#### [NEW] `client/src/pages/verify-certificate.tsx`
+- A public-facing page where anyone can enter or scan a verification code to confirm a practitioner's certificate is valid.
+
+## 2. Gamification & Achievements
+The schema has `achievements` and `user_achievements` tables. We need to ensure completing a training module triggers an achievement.
+### Proposed Changes:
+#### [MODIFY] [server/routes.ts](file:///c:/Users/adminstrators1/Allio%20Antigravity%20work%202026/allioffpma.com/server/routes.ts)
+- Add an API endpoint `POST /api/training/complete` that marks a module as completed and automatically awards relevant achievements (e.g., "Module Complete" badge) using the `achievements` table.
+#### [MODIFY] [client/src/components/EnhancedInteractiveModule.tsx](file:///c:/Users/adminstrators1/Allio%20Antigravity%20work%202026/allioffpma.com/client/src/components/EnhancedInteractiveModule.tsx)
+- Add an animated toast/modal that pops up when a module is completed, showing the awarded achievement/XP.
+
+## 3. Ecosystem Access Control (Gated Privileges)
+### Proposed Changes:
+#### [MODIFY] [client/src/pages/doctors-portal.tsx](file:///c:/Users/adminstrators1/Allio%20Antigravity%20work%202026/allioffpma.com/client/src/pages/doctors-portal.tsx)
+- Fetch the doctor's completed `trainingCertifications`.
+- Lock specific advanced features (like Live Blood Analysis or Peptide protocol prescribing) if the required module (e.g., `doc-103-lba-basics`) is not completed.
+- Display a "Requires Certification" badge with a link to the relevant training module.
+
+## 4. AI-Powered Interactive Tutoring
+### Proposed Changes:
+#### [MODIFY] [client/src/components/EnhancedInteractiveModule.tsx](file:///c:/Users/adminstrators1/Allio%20Antigravity%20work%202026/allioffpma.com/client/src/components/EnhancedInteractiveModule.tsx)
+- Integrate the existing `AITutor` component (or create a tailored version) that appears when a user fails a knowledge check.
+- The tutor will provide contextual hints based on the `sectionContent` without giving away the direct answer.
+
+## 5. Practical Assessments
+### Proposed Changes:
+#### [MODIFY] [client/src/components/EnhancedInteractiveModule.tsx](file:///c:/Users/adminstrators1/Allio%20Antigravity%20work%202026/allioffpma.com/client/src/components/EnhancedInteractiveModule.tsx)
+- Add a new "Practical Assessment" step at the end of advanced modules.
+- Include a file upload zone (for videos/images) and a text area for clinical rationale submission.
+- Store these submissions in a new or existing table (e.g., extending `user_progress` or creating `practical_assessments`).
+
+## Verification Plan
+### Automated & Manual Testing
+1. **Certificates**: Complete a module, view the certificate, verify the QR code and LinkedIn button. Ensure the `/verify` page returns the expected result for the generated code.
+2. **Achievements**: Watch the network tab when completing a module to ensure the `POST /api/training/complete` endpoint returns the achievement data, and the UI displays the badge.
+3. **Access Control**: Log in as a doctor user. Verify the LBA tool is locked. Complete the LBA module, return to the portal, and verify the tool is now unlocked.
+4. **AI Tutoring**: Intentionally fail a knowledge check and verify the AI tutor pops up with contextual help.
+5. **Practical Assessment**: Submit a dummy file and text in the practical assessment step and verify it is successfully saved to the server.
