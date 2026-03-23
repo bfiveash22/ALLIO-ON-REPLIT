@@ -353,14 +353,28 @@ export async function seedPMALawTraining() {
     }
     console.log(`[Seed] Added ${pmaLawKnowledgeEntries.length} knowledge base entries`);
     
-    // 5. Create Legal agent task
-    await db.insert(agentTasks).values(pmaLegalAgentTask).onConflictDoNothing();
-    console.log("[Seed] Created Legal division task for JURIS");
-    
-    // 6. Create Marketing agent task
-    await db.insert(agentTasks).values(pmaMarketingAgentTask).onConflictDoNothing();
-    console.log("[Seed] Created Marketing division task for MUSE");
-    
+    // 5. Create Legal agent task (skip if one already exists)
+    const existingJuris = await db.select({ id: agentTasks.id }).from(agentTasks)
+      .where(sql`LOWER(agent_id) = 'juris' AND LOWER(title) = LOWER(${pmaLegalAgentTask.title}) AND status IN ('pending', 'in_progress', 'completed')`)
+      .limit(1);
+    if (existingJuris.length === 0) {
+      await db.insert(agentTasks).values(pmaLegalAgentTask);
+      console.log("[Seed] Created Legal division task for JURIS");
+    } else {
+      console.log("[Seed] JURIS PMA Law task already exists, skipping");
+    }
+
+    // 6. Create Marketing agent task (skip if one already exists)
+    const existingMuse = await db.select({ id: agentTasks.id }).from(agentTasks)
+      .where(sql`LOWER(agent_id) = 'muse' AND LOWER(title) = LOWER(${pmaMarketingAgentTask.title}) AND status IN ('pending', 'in_progress', 'completed')`)
+      .limit(1);
+    if (existingMuse.length === 0) {
+      await db.insert(agentTasks).values(pmaMarketingAgentTask);
+      console.log("[Seed] Created Marketing division task for MUSE");
+    } else {
+      console.log("[Seed] MUSE PMA Law task already exists, skipping");
+    }
+
     return {
       success: true,
       track: pmaLawTrainingTrackData.title,
