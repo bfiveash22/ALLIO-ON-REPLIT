@@ -2,12 +2,12 @@ import type { Express, Request, Response } from "express";
 import { requireAuth, requireRole } from "../working-auth";
 import { storage } from "../storage";
 import { db } from "../db";
-import { eq, sql, count } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { lockManager } from "../services/agent-locks";
 import { signNowService } from "../services/signnow";
 import { sendEmail } from "../services/gmail";
 import { submitIntakeForm } from "../services/intake";
-import { intakeForms, products, categories, orders, memberProfiles, contracts, chatRooms, chatMessages, chatParticipants } from "@shared/schema";
+import { intakeForms, products, categories, orders, contracts, chatRooms, chatMessages, chatParticipants } from "@shared/schema";
 import { fetchCatalogContent, searchCatalog, getCatalogSections, getProductInfo } from "../services/catalog-service";
 import { indexAllMarketingAssets, searchAssets, checkExistingAsset, getAssetStats } from "../services/asset-catalog";
 import { connectSourceMaterials, autoConnectByKeywordMatch } from "../seeds/connect-source-materials-seed";
@@ -728,17 +728,36 @@ export function registerMiscRoutes(app: Express): void {
     try {
       const userId = (req.user as { id: string })?.id;
       if (!userId) return res.status(401).json({ error: "Authentication required" });
-      const rooms = await db.select().from(chatRooms);
-      res.json(rooms);
+      const participantRecords = await db.select({ roomId: chatParticipants.roomId })
+        .from(chatParticipants)
+        .where(eq(chatParticipants.userId, userId));
+      const roomIds = participantRecords.map(p => p.roomId);
+      if (roomIds.length === 0) return res.json([]);
+      const rooms = await db.select().from(chatRooms)
+        .where(eq(chatRooms.isActive, true));
+      const filteredRooms = rooms.filter(r => roomIds.includes(r.id));
+      res.json(filteredRooms);
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       res.status(500).json({ error: msg });
     }
   });
 
+  async function verifyRoomMembership(userId: string, roomId: string): Promise<boolean> {
+    const membership = await db.select({ id: chatParticipants.id })
+      .from(chatParticipants)
+      .where(and(eq(chatParticipants.userId, userId), eq(chatParticipants.roomId, roomId)))
+      .limit(1);
+    return membership.length > 0;
+  }
+
   app.get("/api/chat/rooms/:roomId/messages", requireAuth, async (req: Request, res: Response) => {
     try {
+      const userId = (req.user as { id: string })?.id;
+      if (!userId) return res.status(401).json({ error: "Authentication required" });
       const { roomId } = req.params;
+      const isMember = await verifyRoomMembership(userId, roomId);
+      if (!isMember) return res.status(403).json({ error: "You are not a participant in this room" });
       const msgs = await db.select().from(chatMessages).where(eq(chatMessages.roomId, roomId));
       res.json(msgs);
     } catch (error) {
@@ -749,14 +768,16 @@ export function registerMiscRoutes(app: Express): void {
 
   app.post("/api/chat/rooms/:roomId/messages", requireAuth, async (req: Request, res: Response) => {
     try {
-      const { roomId } = req.params;
-      const { content } = req.body;
       const userId = (req.user as { id: string })?.id;
       if (!userId) return res.status(401).json({ error: "Authentication required" });
+      const { roomId } = req.params;
+      const { content } = req.body;
       if (!content) return res.status(400).json({ error: "Message content required" });
+      const isMember = await verifyRoomMembership(userId, roomId);
+      if (!isMember) return res.status(403).json({ error: "You are not a participant in this room" });
       const [newMsg] = await db.insert(chatMessages).values({
         roomId,
-        userId,
+        senderId: userId,
         content,
       }).returning();
       res.json(newMsg);
