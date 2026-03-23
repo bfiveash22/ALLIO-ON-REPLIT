@@ -477,6 +477,20 @@ app.use(requestLogger);
           }
           startAgentScheduler();
         });
+
+        const SIGNNOW_DRIVE_SYNC_INTERVAL_MS = 30 * 60 * 1000;
+        import('./services/signnow-drive-sync').then(({ syncAllCompletedContracts }) => {
+          log('Starting SignNow → Drive contract sync scheduler (every 30min)', 'startup');
+          const runSync = () => {
+            syncAllCompletedContracts().catch(err => {
+              logger.error('[signnow-drive-sync] Scheduled sync failed', { source: 'scheduler', error: err.message });
+            });
+          };
+          setTimeout(runSync, 5000);
+          setInterval(runSync, SIGNNOW_DRIVE_SYNC_INTERVAL_MS);
+        }).catch(err => {
+          logger.warn('[signnow-drive-sync] Could not start scheduled sync', { source: 'startup', error: err.message });
+        });
       } else {
         log('Background schedulers are disabled (ENABLE_SCHEDULERS != true)', 'startup');
       }

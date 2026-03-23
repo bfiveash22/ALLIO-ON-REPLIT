@@ -3,6 +3,11 @@ import { requireRole } from "../working-auth";
 import { storage } from "../storage";
 import { signNowService } from "../services/signnow";
 import { getTrusteeSigningDocuments } from "../services/legal-documents";
+import {
+  syncAllCompletedContracts,
+  syncSingleContract,
+  getSyncStatus,
+} from "../services/signnow-drive-sync";
 
 const DOCTOR_TEMPLATE_ID = process.env.SIGNNOW_DOCTOR_ONBOARDING_TEMPLATE_ID || process.env.SIGNNOW_DOCTOR_TEMPLATE_ID || '253597f6c6724abd976af62a69b3e0a5b92b38dd';
 const MEMBER_TEMPLATE_ID = process.env.SIGNNOW_MEMBER_TEMPLATE_ID || '';
@@ -487,6 +492,38 @@ export function registerContractRoutes(app: Express): void {
       });
     } catch (error: any) {
       console.error("Error preparing all signing documents:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/contracts/drive-sync/status", requireRole("admin"), async (_req: Request, res: Response) => {
+    try {
+      const status = await getSyncStatus();
+      res.json(status);
+    } catch (error: any) {
+      console.error("Error fetching contract Drive sync status:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/contracts/drive-sync", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { forceResync } = req.body;
+      const summary = await syncAllCompletedContracts({ forceResync: !!forceResync });
+      res.json(summary);
+    } catch (error: any) {
+      console.error("Error running contract Drive sync:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/contracts/:id/drive-sync", requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const result = await syncSingleContract(id);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error syncing single contract to Drive:", error);
       res.status(500).json({ error: error.message });
     }
   });

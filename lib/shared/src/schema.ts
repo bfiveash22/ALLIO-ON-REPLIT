@@ -706,6 +706,10 @@ export const contracts = pgTable("contracts", {
   feePaid: boolean("fee_paid").default(false),
   feeAmount: decimal("fee_amount", { precision: 10, scale: 2 }).default("10.00"),
   contractUrl: varchar("contract_url"),
+  driveFileId: varchar("drive_file_id"),
+  driveLink: varchar("drive_link"),
+  driveSyncedAt: timestamp("drive_synced_at"),
+  driveSyncError: text("drive_sync_error"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
