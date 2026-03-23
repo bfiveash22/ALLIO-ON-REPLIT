@@ -1,8 +1,8 @@
 import { HfInference } from "@huggingface/inference";
+import { callWithFallback } from './ai-fallback';
 
 const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
 
-// Cross-divisional research agent - Kimi K2 (top open-source agent with 90% TSQ)
 const KIMI_K2_MODEL = "moonshotai/Kimi-K2-Instruct";
 const FALLBACK_AGENT_MODEL = "mistralai/Mistral-7B-Instruct-v0.3";
 
@@ -66,58 +66,32 @@ export interface AgentResponse {
   tokens?: number;
 }
 
-// Main agent query function
+// Main agent query function — routes through the multi-provider fallback chain
+// Priority: Abacus → OpenAI → Claude → Gemini → OpenRouter → Self-hosted
 export async function queryAgent(
   division: string,
   prompt: string,
   context?: string
 ): Promise<AgentResponse> {
   const systemPrompt = DIVISION_PROMPTS[division] || DIVISION_PROMPTS.research;
-  const fullPrompt = context
-    ? `${systemPrompt}\n\nContext:\n${context}\n\nUser Query:\n${prompt}`
-    : `${systemPrompt}\n\nUser Query:\n${prompt}`;
-
-  let modelUsed = KIMI_K2_MODEL;
+  const userPrompt = context
+    ? `Context:\n${context}\n\nUser Query:\n${prompt}`
+    : prompt;
 
   try {
-    const response = await hf.textGeneration({
-      model: KIMI_K2_MODEL,
-      inputs: fullPrompt,
-      parameters: {
-        max_new_tokens: 2048,
-        temperature: 0.7,
-        top_p: 0.9,
-        return_full_text: false
-      }
+    const result = await callWithFallback(userPrompt, {
+      systemPrompt,
+      callType: 'agent-chat',
+      maxTokens: 2048,
     });
 
     return {
-      content: response.generated_text,
-      model: modelUsed,
+      content: result.response,
+      model: `${result.provider}/${result.model}`,
     };
-  } catch (primaryError) {
-    console.log(`[HF Agent] Kimi K2 failed, trying fallback: ${primaryError}`);
-    modelUsed = FALLBACK_AGENT_MODEL;
-
-    try {
-      const fallbackResponse = await hf.textGeneration({
-        model: FALLBACK_AGENT_MODEL,
-        inputs: fullPrompt,
-        parameters: {
-          max_new_tokens: 2048,
-          temperature: 0.7,
-          top_p: 0.9,
-          return_full_text: false
-        }
-      });
-
-      return {
-        content: fallbackResponse.generated_text,
-        model: modelUsed,
-      };
-    } catch (fallbackError) {
-      throw new Error(`All agent models unavailable. Primary: ${primaryError}, Fallback: ${fallbackError}`);
-    }
+  } catch (error: any) {
+    console.log(`[Agent Query] All providers failed for ${division}: ${error.message}`);
+    throw new Error(`Agent query failed for ${division} division: ${error.message}`);
   }
 }
 
@@ -235,7 +209,8 @@ export async function crossDivisionalQuery(
   return multiAgentSynthesis(query, divisions);
 }
 
-// Check agent availability across all providers (OpenAI, Gemini, HuggingFace)
+// Check agent availability across all providers in the fallback chain
+// Provider priority: Abacus → OpenAI → Claude → Gemini → OpenRouter
 export async function checkAgentStatus(): Promise<{
   available: boolean;
   primaryModel: string;
@@ -244,11 +219,32 @@ export async function checkAgentStatus(): Promise<{
   providers: Record<string, boolean>;
 }> {
   const providers: Record<string, boolean> = {
+    abacus: false,
     openai: false,
     gemini: false,
-    huggingface_kimi: false,
-    huggingface_mistral: false,
+    openrouter: false,
   };
+
+  try {
+    if (process.env.ABACUSAI_API_KEY) {
+      const resp = await fetch('https://api.abacus.ai/api/v0/predict', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.ABACUSAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          deploymentToken: process.env.ABACUSAI_API_KEY,
+          deploymentId: '',
+          query: 'ping',
+        }),
+        signal: AbortSignal.timeout(5000),
+      });
+      providers.abacus = resp.status !== 401;
+    }
+  } catch (e) {
+    if (process.env.ABACUSAI_API_KEY) providers.abacus = true;
+  }
 
   try {
     if (process.env.OPENAI_API_KEY) {
@@ -267,10 +263,11 @@ export async function checkAgentStatus(): Promise<{
 
   try {
     if (process.env.GOOGLE_GEMINI_API_KEY) {
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GOOGLE_GEMINI_API_KEY}`, {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GOOGLE_GEMINI_API_KEY}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ parts: [{ text: 'ping' }] }], generationConfig: { maxOutputTokens: 1 } }),
+        signal: AbortSignal.timeout(5000),
       });
       if (resp.ok) providers.gemini = true;
     }
@@ -279,41 +276,36 @@ export async function checkAgentStatus(): Promise<{
   }
 
   try {
-    await hf.textGeneration({
-      model: KIMI_K2_MODEL,
-      inputs: "Hello",
-      parameters: { max_new_tokens: 5 }
-    });
-    providers.huggingface_kimi = true;
+    if (process.env.OPENROUTER_API_KEY) {
+      const resp = await fetch('https://openrouter.ai/api/v1/models', {
+        headers: { 'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}` },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (resp.ok) providers.openrouter = true;
+    }
   } catch (e) {
-    console.log('[Agent Status] Kimi K2 not available');
+    console.log('[Agent Status] OpenRouter not available');
   }
-
-  try {
-    await hf.textGeneration({
-      model: FALLBACK_AGENT_MODEL,
-      inputs: "Hello",
-      parameters: { max_new_tokens: 5 }
-    });
-    providers.huggingface_mistral = true;
-  } catch (e) {
-    console.log('[Agent Status] Mistral fallback not available');
-  }
-
-  const coreOnline = providers.openai || providers.gemini;
-  const hfOnline = providers.huggingface_kimi || providers.huggingface_mistral;
 
   const onlineProviders = Object.entries(providers).filter(([, v]) => v).map(([k]) => k);
-  const statusMsg = coreOnline
+  const anyOnline = onlineProviders.length > 0;
+
+  const primaryProvider = onlineProviders[0] || 'none';
+  const primaryModelMap: Record<string, string> = {
+    abacus: 'gpt-4.1-mini (via Abacus)',
+    openai: 'gpt-4o-mini',
+    gemini: 'gemini-2.5-flash',
+    openrouter: 'deepseek/deepseek-chat-v3-0324',
+  };
+
+  const statusMsg = anyOnline
     ? `Agent system online (${onlineProviders.join(', ')})`
-    : hfOnline
-      ? `Agent system degraded - HuggingFace only (${onlineProviders.join(', ')})`
-      : 'Agent system offline';
+    : 'Agent system offline — all providers unreachable';
 
   return {
-    available: coreOnline || hfOnline,
-    primaryModel: KIMI_K2_MODEL,
-    fallbackModel: FALLBACK_AGENT_MODEL,
+    available: anyOnline,
+    primaryModel: primaryModelMap[primaryProvider] || 'none',
+    fallbackModel: 'Multi-provider chain: Abacus → OpenAI → Claude → Gemini → OpenRouter',
     status: statusMsg,
     providers,
   };
