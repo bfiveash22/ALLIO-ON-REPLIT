@@ -27,6 +27,11 @@ import {
   Radio,
   Droplets,
   Network,
+  MapPin,
+  CreditCard,
+  Download,
+  Heart,
+  History,
 } from "lucide-react";
 
 import {
@@ -85,13 +90,18 @@ const mainMenuItems = [
   { title: "About / Handbook", url: "/about", icon: BookOpen },
   { title: "Products", url: "/products", icon: Package },
   { title: "Programs", url: "/programs", icon: Activity },
+  { title: "Clinic Locator", url: "/clinic-locator", icon: MapPin },
 ];
 
 const memberMenuItems = [
   { title: "Dashboard", url: "/dashboard", icon: Activity },
+  { title: "My Account", url: "/my-account", icon: User },
   { title: "Cart", url: "/cart", icon: ShoppingCart },
   { title: "My Orders", url: "/orders", icon: ShoppingCart },
   { title: "My Contracts", url: "/contracts", icon: FileText },
+  { title: "Addresses", url: "/my-account?tab=addresses", icon: MapPin },
+  { title: "Downloads", url: "/my-account?tab=downloads", icon: Download },
+  { title: "Payment Methods", url: "/my-account?tab=payment", icon: CreditCard },
   { title: "Messages", url: "/chat", icon: MessageSquare },
 ];
 
@@ -100,6 +110,9 @@ const resourceMenuItems = [
   { title: "Support Hub", url: "/support", icon: Headphones },
   { title: "Diane - Dietician AI", url: "/diane", icon: Apple },
   { title: "Training Hub", url: "/training", icon: GraduationCap },
+  { title: "My Courses", url: "/training?tab=my-courses", icon: BookOpen },
+  { title: "Quiz History", url: "/training?tab=quiz-history", icon: History },
+  { title: "Wishlist", url: "/training?tab=wishlist", icon: Heart },
   { title: "Protocols", url: "/protocols", icon: ClipboardList },
   { title: "Detox Protocols", url: "/resources/detox-protocols", icon: Droplets },
   { title: "Library", url: "/library", icon: FileText },

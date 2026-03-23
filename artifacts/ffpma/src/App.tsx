@@ -94,7 +94,14 @@ import LegalDocumentPage from "@/pages/legal-document";
 import DoctorInterestFormPage from "@/pages/doctor-interest-form";
 import DoctorPitchViewerPage from "@/pages/doctor-pitch-viewer";
 import VerifyCertificatePage from "@/pages/verify-certificate";
+import MyAccountPage from "@/pages/my-account";
+import ForgotPasswordPage from "@/pages/forgot-password";
+import ResetPasswordPage from "@/pages/reset-password";
+import GuestShopPage from "@/pages/guest-shop";
+import ClinicLocatorPage from "@/pages/clinic-locator";
 import NotFound from "@/pages/not-found";
+import { WhatsAppWidget } from "@/components/WhatsAppWidget";
+import { HeaderCartIcon, HeaderUserMenu } from "@/components/HeaderUserMenu";
 
 async function fetchProfile(): Promise<MemberProfile | null> {
   const response = await fetch("/api/profile", { credentials: "include" });
@@ -144,8 +151,10 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           <header className="sticky top-0 z-50 flex h-14 items-center justify-between gap-4 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
             <div className="flex items-center gap-2">
+              <HeaderCartIcon />
               <NotificationBell />
               <ThemeToggle />
+              <HeaderUserMenu />
             </div>
           </header>
           {children}
@@ -244,6 +253,9 @@ function Router() {
       <Route path="/" component={LandingPage} />
       <Route path="/login" component={WPLoginPage} />
       <Route path="/wp-login" component={WPLoginPage} />
+      <Route path="/forgot-password" component={ForgotPasswordPage} />
+      <Route path="/reset-password/:token" component={ResetPasswordPage} />
+      <Route path="/guest-shop" component={GuestShopPage} />
       <Route path="/intake" component={IntakeForm} />
       <Route path="/legal/:slug" component={LegalDocumentPage} />
 
@@ -263,11 +275,9 @@ function Router() {
         </ProtectedRoute>
       )} />
       <Route path="/products" component={() => (
-        <ProtectedRoute>
-          <AppLayout>
-            <ProductsPage />
-          </AppLayout>
-        </ProtectedRoute>
+        <AppLayout>
+          <ProductsPage />
+        </AppLayout>
       )} />
       <Route path="/products/:slug" component={() => (
         <ProtectedRoute>
@@ -640,6 +650,18 @@ function Router() {
           </AppLayout>
         </RoleProtectedRoute>
       )} />
+      <Route path="/my-account" component={() => (
+        <ProtectedRoute>
+          <AppLayout>
+            <MyAccountPage />
+          </AppLayout>
+        </ProtectedRoute>
+      )} />
+      <Route path="/clinic-locator" component={() => (
+        <AppLayout>
+          <ClinicLocatorPage />
+        </AppLayout>
+      )} />
       <Route path="/dashboard" component={() => (
         <ProtectedRoute>
           <AppLayout>
@@ -725,6 +747,7 @@ function App() {
                 <ErrorBoundary>
                   <Router />
                 </ErrorBoundary>
+                <WhatsAppWidget />
                 <GlobalAgentChat />
                 <DevNavPanel />
               </TooltipProvider>

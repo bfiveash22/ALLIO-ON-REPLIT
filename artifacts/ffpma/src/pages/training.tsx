@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -91,7 +91,21 @@ function getContentTypeIcon(contentType: string | null) {
 
 export default function TrainingPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("overview");
+
+  const getInitialTab = () => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("tab") || "overview";
+  };
+  const [activeTab, setActiveTab] = useState(getInitialTab);
+  const [location] = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [location]);
 
   const { data: modules = [], isLoading: modulesLoading } = useQuery<TrainingModule[]>({
     queryKey: ["/api/training/modules"],
@@ -161,7 +175,7 @@ export default function TrainingPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid gap-1">
+        <TabsList className="flex flex-wrap gap-1 h-auto lg:inline-flex">
           <TabsTrigger value="overview" data-testid="tab-overview">
             <Layers className="h-4 w-4 mr-2" />
             Overview
@@ -174,13 +188,29 @@ export default function TrainingPage() {
             <BookOpen className="h-4 w-4 mr-2" />
             Modules
           </TabsTrigger>
+          <TabsTrigger value="my-courses" data-testid="tab-my-courses">
+            <Bookmark className="h-4 w-4 mr-2" />
+            My Courses
+          </TabsTrigger>
           <TabsTrigger value="quizzes" data-testid="tab-quizzes">
             <GraduationCap className="h-4 w-4 mr-2" />
             Quizzes
           </TabsTrigger>
+          <TabsTrigger value="quiz-history" data-testid="tab-quiz-history">
+            <Target className="h-4 w-4 mr-2" />
+            Quiz History
+          </TabsTrigger>
+          <TabsTrigger value="wishlist" data-testid="tab-wishlist">
+            <Heart className="h-4 w-4 mr-2" />
+            Wishlist
+          </TabsTrigger>
           <TabsTrigger value="documents" data-testid="tab-documents">
             <FileText className="h-4 w-4 mr-2" />
             Documents
+          </TabsTrigger>
+          <TabsTrigger value="reviews" data-testid="tab-reviews">
+            <MessageCircle className="h-4 w-4 mr-2" />
+            Reviews
           </TabsTrigger>
         </TabsList>
 
@@ -646,6 +676,114 @@ export default function TrainingPage() {
               </p>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="my-courses" className="space-y-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Bookmark className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">My Enrolled Courses</h2>
+          </div>
+          {modules.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {modules.slice(0, 4).map((module) => (
+                <Card key={module.id} className="hover-elevate" data-testid={`card-my-course-${module.id}`}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-lg">{module.title}</CardTitle>
+                      <Badge className={getDifficultyColor(module.difficulty)}>
+                        {module.difficulty}
+                      </Badge>
+                    </div>
+                    <CardDescription className="line-clamp-2">{module.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Progress value={0} className="mb-3" />
+                    <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+                      <span>In Progress</span>
+                      {module.duration && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {module.duration}
+                        </span>
+                      )}
+                    </div>
+                    <Button variant="outline" className="w-full" asChild>
+                      <Link href={`/training/${module.slug}`}>
+                        Continue Learning
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="p-12 text-center relative overflow-hidden border-white/10 bg-black/20">
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 pointer-events-none" />
+              <div className="relative z-10 w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center mx-auto mb-6">
+                <Bookmark className="h-8 w-8 text-cyan-400" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-white relative z-10">No enrolled courses yet</h3>
+              <p className="text-white/60 relative z-10 mb-4">Start a training module to see your enrolled courses here.</p>
+              <Button onClick={() => setActiveTab("modules")} className="relative z-10">
+                Browse Modules
+              </Button>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="quiz-history" className="space-y-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Target className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">Quiz History</h2>
+          </div>
+          <Card className="p-12 text-center relative overflow-hidden border-white/10 bg-black/20">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 pointer-events-none" />
+            <div className="relative z-10 w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center mx-auto mb-6">
+              <Target className="h-8 w-8 text-amber-400" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2 text-white relative z-10">No quiz attempts yet</h3>
+            <p className="text-white/60 relative z-10 mb-4">Complete quizzes to track your scores and progress here.</p>
+            <Button onClick={() => setActiveTab("quizzes")} className="relative z-10">
+              Take a Quiz
+            </Button>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="wishlist" className="space-y-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Heart className="h-5 w-5 text-pink-500" />
+            <h2 className="text-xl font-semibold">My Wishlist</h2>
+          </div>
+          <Card className="p-12 text-center relative overflow-hidden border-white/10 bg-black/20">
+            <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-rose-500/5 pointer-events-none" />
+            <div className="relative z-10 w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-500/20 to-rose-500/20 flex items-center justify-center mx-auto mb-6">
+              <Heart className="h-8 w-8 text-pink-400" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2 text-white relative z-10">Wishlist is empty</h3>
+            <p className="text-white/60 relative z-10 mb-4">Save courses you'd like to take later by adding them to your wishlist.</p>
+            <Button onClick={() => setActiveTab("modules")} className="relative z-10">
+              Browse Modules
+            </Button>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="reviews" className="space-y-6">
+          <div className="flex items-center gap-2 mb-4">
+            <MessageCircle className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">Course Reviews</h2>
+          </div>
+          <Card className="p-12 text-center relative overflow-hidden border-white/10 bg-black/20">
+            <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-purple-500/5 pointer-events-none" />
+            <div className="relative z-10 w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center mx-auto mb-6">
+              <MessageCircle className="h-8 w-8 text-violet-400" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2 text-white relative z-10">No reviews yet</h3>
+            <p className="text-white/60 relative z-10 mb-4">After completing a course, share your experience and help other members.</p>
+            <Button onClick={() => setActiveTab("modules")} className="relative z-10">
+              Start Learning
+            </Button>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

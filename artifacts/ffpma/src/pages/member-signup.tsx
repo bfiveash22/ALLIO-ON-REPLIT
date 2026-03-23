@@ -55,6 +55,49 @@ const membershipBenefits = [
   },
 ];
 
+const membershipTiers = [
+  {
+    id: "individual",
+    name: "Individual Member",
+    price: "$10",
+    period: "one-time",
+    description: "Personal PMA membership for individuals seeking natural healing solutions",
+    features: ["Access to products catalog", "Diane AI dietician", "Training hub access", "Community support"],
+    icon: Heart,
+    color: "cyan",
+  },
+  {
+    id: "clinic",
+    name: "Clinic Association",
+    price: "$250",
+    period: "one-time",
+    description: "Clinic-level PMA membership for health practitioners and their patients",
+    features: ["All Individual benefits", "Clinic dashboard", "Patient management", "Wholesale pricing", "Marketing tools"],
+    icon: Shield,
+    color: "violet",
+  },
+  {
+    id: "doctor",
+    name: "Doctor / Practitioner",
+    price: "$500",
+    period: "one-time",
+    description: "Doctor-level membership with full protocol access and downline referrals",
+    features: ["All Clinic benefits", "Protocol builder", "Doctor portal", "Referral network", "Blood analysis tools"],
+    icon: Star,
+    color: "amber",
+  },
+  {
+    id: "wholesaler",
+    name: "Wholesaler Lifetime",
+    price: "$2,500",
+    period: "lifetime",
+    description: "Lifetime wholesale access with maximum discount tiers across all products",
+    features: ["All Doctor benefits", "Maximum wholesale pricing", "Priority shipping", "Lifetime access", "Direct manufacturer line"],
+    icon: Zap,
+    color: "emerald",
+  },
+];
+
 export default function MemberSignup() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -66,6 +109,8 @@ export default function MemberSignup() {
     city: "",
     state: "",
     zip: "",
+    clinicId: "",
+    membershipTier: "individual",
     agreeTerms: false,
     agreePMA: false,
   });
@@ -109,7 +154,7 @@ export default function MemberSignup() {
               </div>
             </div>
             <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30">
-              $10 one-time
+              {membershipTiers.find(t => t.id === formData.membershipTier)?.price || "$10"} {membershipTiers.find(t => t.id === formData.membershipTier)?.period || "one-time"}
             </Badge>
           </div>
         </div>
@@ -204,7 +249,46 @@ export default function MemberSignup() {
                           placeholder="(555) 123-4567"
                         />
                       </div>
+                      <div>
+                        <Label className="text-white/80">Clinic ID (optional)</Label>
+                        <Input
+                          name="clinicId"
+                          value={formData.clinicId}
+                          onChange={handleInputChange}
+                          className="bg-slate-800/50 border-white/10 text-white"
+                          placeholder="Enter clinic referral ID if applicable"
+                        />
+                        <p className="text-xs text-white/40 mt-1">If you were referred by a clinic, enter their ID here</p>
+                      </div>
                     </div>
+
+                    <div>
+                      <Label className="text-white/80 mb-3 block">Membership Tier</Label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {membershipTiers.map((tier) => (
+                          <div
+                            key={tier.id}
+                            onClick={() => setFormData(prev => ({ ...prev, membershipTier: tier.id }))}
+                            className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                              formData.membershipTier === tier.id
+                                ? `border-${tier.color}-500/50 bg-${tier.color}-500/10 ring-1 ring-${tier.color}-500/30`
+                                : "border-white/10 bg-slate-800/30 hover:border-white/20"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 mb-2">
+                              <tier.icon className={`w-4 h-4 ${formData.membershipTier === tier.id ? `text-${tier.color}-400` : "text-white/60"}`} />
+                              <span className="font-medium text-white text-sm">{tier.name}</span>
+                            </div>
+                            <div className="flex items-baseline gap-1 mb-1">
+                              <span className="text-lg font-bold text-white">{tier.price}</span>
+                              <span className="text-xs text-white/40">{tier.period}</span>
+                            </div>
+                            <p className="text-xs text-white/50 line-clamp-2">{tier.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
                     <Button
                       onClick={() => setStep(2)}
                       disabled={!isStep1Valid}
@@ -408,11 +492,12 @@ export default function MemberSignup() {
                     </div>
                     <Card className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border-cyan-500/30 p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <span className="text-white/80">Lifetime Membership</span>
-                        <span className="text-2xl font-bold text-white">$10</span>
+                        <span className="text-white/80">{membershipTiers.find(t => t.id === formData.membershipTier)?.name || "Individual Member"}</span>
+                        <span className="text-2xl font-bold text-white">{membershipTiers.find(t => t.id === formData.membershipTier)?.price || "$10"}</span>
                       </div>
                       <div className="text-sm text-white/60">
-                        <p>One-time fee. Lifetime access.</p>
+                        <p>{membershipTiers.find(t => t.id === formData.membershipTier)?.period === "lifetime" ? "One-time fee. Lifetime access." : "One-time activation fee."}</p>
+                        {formData.clinicId && <p className="mt-1">Clinic referral: {formData.clinicId}</p>}
                       </div>
                     </Card>
                     <div className="space-y-4">

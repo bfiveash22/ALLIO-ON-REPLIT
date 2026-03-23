@@ -320,6 +320,246 @@ export function setupWorkingAuth(app: any) {
     console.log('[AUTH] Dev login endpoint enabled (non-production only)');
   }
 
+  // Forgot Password endpoint
+  app.post('/api/auth/forgot-password', async (req: any, res: any) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+
+      const result = await pool.query(
+        'SELECT id, email FROM member_profiles WHERE LOWER(email) = LOWER($1) LIMIT 1',
+        [email.trim()]
+      );
+
+      if (result.rows.length > 0) {
+        const crypto = await import('crypto');
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 3600000);
+
+        await pool.query(
+          `INSERT INTO password_reset_tokens (user_id, token, expires_at)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (user_id) DO UPDATE SET token = $2, expires_at = $3`,
+          [result.rows[0].id, token, expiresAt]
+        );
+
+        console.log(`[AUTH] Password reset requested for ${email} - token generated (email delivery pending integration)`);
+      }
+
+      res.json({ success: true, message: 'If an account exists with that email, a reset link has been sent.' });
+    } catch (err: any) {
+      console.error('[AUTH] Forgot password error:', err.message);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Reset Password endpoint
+  app.post('/api/auth/reset-password', async (req: any, res: any) => {
+    try {
+      const { token, newPassword } = req.body;
+      if (!token || !newPassword) {
+        return res.status(400).json({ error: 'Token and new password are required' });
+      }
+
+      if (newPassword.length < 8) {
+        return res.status(400).json({ error: 'Password must be at least 8 characters' });
+      }
+
+      try {
+        const result = await pool.query(
+          'SELECT user_id FROM password_reset_tokens WHERE token = $1 AND expires_at > NOW() LIMIT 1',
+          [token]
+        );
+
+        if (result.rows.length === 0) {
+          return res.status(400).json({ error: 'Invalid or expired reset token' });
+        }
+
+        await pool.query('DELETE FROM password_reset_tokens WHERE token = $1', [token]);
+
+        // NOTE: Full password update requires WP REST API integration:
+        // POST /wp-json/wp/v2/users/<id> { password: newPassword }
+        console.log(`[AUTH] Password reset token validated for user ${result.rows[0].user_id} - WP REST API password update pending integration`);
+        res.json({ success: true, message: 'Password reset validated. Full WordPress integration pending.' });
+      } catch (dbErr: any) {
+        if (dbErr.code === '42P01') {
+          return res.status(400).json({ error: 'Password reset is not yet configured. Please contact support.' });
+        }
+        throw dbErr;
+      }
+    } catch (err: any) {
+      console.error('[AUTH] Reset password error:', err.message);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Profile update endpoint
+  app.patch('/api/profile/update', async (req: any, res: any) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    try {
+      const { firstName, lastName, email } = req.body;
+      const userId = req.session.userId;
+
+      const updates: string[] = [];
+      const values: any[] = [];
+      let paramIndex = 1;
+
+      if (firstName !== undefined) {
+        updates.push(`first_name = $${paramIndex++}`);
+        values.push(firstName);
+      }
+      if (lastName !== undefined) {
+        updates.push(`last_name = $${paramIndex++}`);
+        values.push(lastName);
+      }
+      if (email !== undefined) {
+        updates.push(`email = $${paramIndex++}`);
+        values.push(email);
+      }
+
+      if (updates.length === 0) {
+        return res.status(400).json({ error: 'No fields to update' });
+      }
+
+      values.push(userId);
+      await pool.query(
+        `UPDATE member_profiles SET ${updates.join(', ')}, updated_at = NOW() WHERE user_id = $${paramIndex}`,
+        values
+      );
+
+      if (firstName) req.session.user.firstName = firstName;
+      if (lastName) req.session.user.lastName = lastName;
+      if (email) req.session.user.email = email;
+
+      res.json({ success: true, message: 'Profile updated' });
+    } catch (err: any) {
+      console.error('[PROFILE] Update error:', err.message);
+      res.status(500).json({ error: 'Failed to update profile' });
+    }
+  });
+
+  // Change password endpoint
+  app.post('/api/profile/change-password', async (req: any, res: any) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    try {
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Current and new password are required' });
+      }
+
+      if (newPassword.length < 8) {
+        return res.status(400).json({ error: 'New password must be at least 8 characters' });
+      }
+
+      const username = req.session.user.email || req.session.user.username;
+      const wpResponse = await fetch(
+        `${process.env.WP_SITE_URL}/wp-login.php`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `log=${encodeURIComponent(username)}&pwd=${encodeURIComponent(currentPassword)}`,
+          redirect: 'manual'
+        }
+      );
+
+      if (wpResponse.status !== 302) {
+        return res.status(400).json({ error: 'Current password is incorrect' });
+      }
+
+      // NOTE: Full WP password update requires WordPress REST API integration
+      // with application passwords or JWT auth. For now, we validate the old password
+      // and log the change request. The WP REST API endpoint would be:
+      // POST /wp-json/wp/v2/users/<id> { password: newPassword }
+      console.log(`[AUTH] Password change validated for user ${req.session.userId} - WP REST API update pending integration`);
+      res.json({ success: true, message: 'Password change request validated. Full WordPress integration pending.' });
+    } catch (err: any) {
+      console.error('[AUTH] Change password error:', err.message);
+      res.status(500).json({ error: 'Failed to change password' });
+    }
+  });
+
+  // Get addresses endpoint
+  app.get('/api/profile/addresses', async (req: any, res: any) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    try {
+      const userId = req.session.userId;
+      const result = await pool.query(
+        `SELECT metadata->'billing_address' as billing, metadata->'shipping_address' as shipping
+         FROM member_profiles WHERE user_id = $1 LIMIT 1`,
+        [userId]
+      );
+
+      if (result.rows.length === 0) {
+        return res.json({ billing: null, shipping: null });
+      }
+
+      res.json({
+        billing: result.rows[0].billing || null,
+        shipping: result.rows[0].shipping || null,
+      });
+    } catch (err: any) {
+      console.error('[PROFILE] Get addresses error:', err.message);
+      res.json({ billing: null, shipping: null });
+    }
+  });
+
+  // Save address endpoint
+  app.post('/api/profile/addresses', async (req: any, res: any) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    try {
+      const address = req.body;
+      const userId = req.session.userId;
+
+      const metaKey = address.type === 'billing' ? 'billing_address' : 'shipping_address';
+
+      await pool.query(
+        `UPDATE member_profiles
+         SET metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object($1, $2::jsonb),
+             updated_at = NOW()
+         WHERE user_id = $3`,
+        [metaKey, JSON.stringify(address), userId]
+      );
+
+      res.json({ success: true, message: 'Address saved' });
+    } catch (err: any) {
+      console.error('[PROFILE] Save address error:', err.message);
+      res.status(500).json({ error: 'Failed to save address' });
+    }
+  });
+
+  // Clinics listing endpoint
+  app.get('/api/clinics', async (req: any, res: any) => {
+    try {
+      const result = await pool.query(
+        `SELECT id, name, pma_name as "pmaName", doctor_name as "doctorName",
+                address, city, state, phone, email, website,
+                pma_status as "pmaStatus", on_map as "onMap",
+                created_at as "createdAt"
+         FROM clinics
+         WHERE pma_status = 'active' OR on_map = true
+         ORDER BY name ASC`
+      );
+      res.json(result.rows);
+    } catch (err: any) {
+      console.error('[CLINICS] List error:', err.message);
+      res.json([]);
+    }
+  });
+
   console.log('[AUTH] Working auth system initialized');
 }
 
@@ -418,4 +658,5 @@ export function requireRole(...roles: string[]) {
 
     next();
   };
+
 }

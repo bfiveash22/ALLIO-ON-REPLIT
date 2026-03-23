@@ -133,11 +133,15 @@ export default function WPLoginPage() {
             </Button>
           </form>
 
+          <div className="text-right">
+            <Link href="/forgot-password" className="text-sm text-primary hover:underline" data-testid="link-forgot-password">
+              Forgot your password?
+            </Link>
+          </div>
+
           <Separator className="my-4" />
 
           <div className="flex flex-col gap-3">
-
-
             <Button
               variant="ghost"
               className="w-full text-muted-foreground"
@@ -152,6 +156,10 @@ export default function WPLoginPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4 text-center">
+          <p className="text-xs text-muted-foreground">
+            Don't have an account?{" "}
+            <Link href="/become-a-member" className="text-primary hover:underline">Become a Member</Link>
+          </p>
           <p className="text-xs text-muted-foreground">
             Use your forgottenformula.com login credentials
           </p>
