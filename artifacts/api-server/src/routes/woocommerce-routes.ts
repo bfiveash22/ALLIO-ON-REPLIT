@@ -74,6 +74,37 @@ export function registerWooCommerceRoutes(app: Express): void {
         }
       }
 
+      const wooOrderId = req.query.wooOrderId ? parseInt(req.query.wooOrderId as string) : null;
+      if (wooOrderId) {
+        const order = await wooCommerceService.getOrderById(wooOrderId);
+        if (!order) {
+          return res.status(404).json({ error: "Referenced WooCommerce order not found.", qualifies: false });
+        }
+
+        const requestingUser = req.user as any;
+        const userEmail = (requestingUser?.email || "").toLowerCase();
+        const orderBillingEmail = (order.billing?.email || "").toLowerCase();
+        const userWpRolesForOrder: string[] = requestingUser?.wpRoles || [];
+        const isAdminUser =
+          requestingUser?.role === "admin" ||
+          requestingUser?.role === "trustee" ||
+          userWpRolesForOrder.some((r: string) => ["administrator", "trustee"].includes(r.toLowerCase()));
+
+        if (!isAdminUser && (!userEmail || userEmail !== orderBillingEmail)) {
+          return res.status(403).json({ error: "You do not have permission to access this order.", qualifies: false });
+        }
+
+        const verification = wooCommerceService.verifyOrderStatus(order.status);
+        if (!verification.qualifies) {
+          return res.status(403).json({
+            error: `Product access denied: ${verification.reason}`,
+            qualifies: false,
+            orderStatus: order.status,
+            statusCategory: verification.category,
+          });
+        }
+      }
+
       res.json(product);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -176,10 +207,199 @@ export function registerWooCommerceRoutes(app: Express): void {
       const status = req.query.status as string | undefined;
 
       const result = await wooCommerceService.getOrders({ page, perPage, status });
-      res.json(result);
+
+      const annotatedOrders = result.orders.map((order: any) => {
+        const verification = wooCommerceService.verifyOrderStatus(order.status);
+        return {
+          ...order,
+          statusCategory: verification.category,
+          qualifiesForFulfillment: verification.qualifies,
+          statusReason: verification.reason,
+        };
+      });
+
+      res.json({ ...result, orders: annotatedOrders });
     } catch (error: any) {
       console.error('[WooCommerce Orders] Error:', error.message);
       res.json({ orders: [], total: 0, totalPages: 0 });
+    }
+  });
+
+  app.get("/api/woocommerce/orders/:id/verify-access", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      if (!orderId || isNaN(orderId)) {
+        return res.status(400).json({ error: "Invalid order ID" });
+      }
+
+      const order = await wooCommerceService.getOrderById(orderId);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found", qualifies: false });
+      }
+
+      const requestingUser = req.user as any;
+      const userEmail = (requestingUser?.email || "").toLowerCase();
+      const orderBillingEmail = (order.billing?.email || "").toLowerCase();
+      const userWpRoles: string[] = requestingUser?.wpRoles || [];
+      const isAdmin =
+        requestingUser?.role === "admin" ||
+        requestingUser?.role === "trustee" ||
+        userWpRoles.some((r: string) => ["administrator", "trustee"].includes(r.toLowerCase()));
+
+      if (!isAdmin && (!userEmail || userEmail !== orderBillingEmail)) {
+        return res.status(403).json({ error: "You do not have permission to verify this order.", qualifies: false });
+      }
+
+      const verification = wooCommerceService.verifyOrderStatus(order.status);
+
+      if (!verification.qualifies) {
+        return res.status(403).json({
+          qualifies: false,
+          status: order.status,
+          category: verification.category,
+          reason: verification.reason,
+          orderId: order.id,
+        });
+      }
+
+      res.json({
+        qualifies: true,
+        status: order.status,
+        category: verification.category,
+        reason: verification.reason,
+        orderId: order.id,
+        lineItems: order.line_items,
+        total: order.total,
+        currency: order.currency,
+      });
+    } catch (error: any) {
+      console.error('[WooCommerce VerifyAccess] Error:', error.message);
+      res.status(500).json({ error: error.message, qualifies: false });
+    }
+  });
+
+  app.post("/api/woocommerce/grant-access", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { wooOrderId, accessType } = req.body;
+
+      if (!wooOrderId) {
+        return res.status(400).json({
+          error: "wooOrderId is required. Access cannot be granted without a valid WooCommerce order reference.",
+          granted: false,
+        });
+      }
+
+      if (!accessType || !["product", "member-tier"].includes(accessType)) {
+        return res.status(400).json({
+          error: "accessType must be 'product' or 'member-tier'.",
+          granted: false,
+        });
+      }
+
+      const orderId = parseInt(wooOrderId);
+      if (!orderId || isNaN(orderId)) {
+        return res.status(400).json({ error: "Invalid wooOrderId.", granted: false });
+      }
+
+      const order = await wooCommerceService.getOrderById(orderId);
+      if (!order) {
+        return res.status(404).json({ error: "WooCommerce order not found.", granted: false });
+      }
+
+      const requestingUser = req.user as any;
+      const userEmail = (requestingUser?.email || "").toLowerCase();
+      const orderBillingEmail = (order.billing?.email || "").toLowerCase();
+      const userWpRolesForGrant: string[] = requestingUser?.wpRoles || [];
+      const isAdminGrantUser =
+        requestingUser?.role === "admin" ||
+        requestingUser?.role === "trustee" ||
+        userWpRolesForGrant.some((r: string) => ["administrator", "trustee"].includes(r.toLowerCase()));
+
+      if (!isAdminGrantUser && (!userEmail || userEmail !== orderBillingEmail)) {
+        return res.status(403).json({
+          error: "You do not have permission to request access for this order.",
+          granted: false,
+        });
+      }
+
+      const verification = wooCommerceService.verifyOrderStatus(order.status);
+      if (!verification.qualifies) {
+        return res.status(403).json({
+          error: `Access denied: ${verification.reason}`,
+          granted: false,
+          orderStatus: order.status,
+          statusCategory: verification.category,
+        });
+      }
+
+      if (accessType === "member-tier") {
+        const { targetUserId, newRole } = req.body;
+        if (!targetUserId || !newRole) {
+          return res.status(400).json({
+            error: "targetUserId and newRole are required for member-tier access grants.",
+            granted: false,
+          });
+        }
+
+        const requestingUserId = String(requestingUser?.id || "");
+        const targetUserIdStr = String(targetUserId);
+
+        if (!isAdminGrantUser && requestingUserId !== targetUserIdStr) {
+          return res.status(403).json({
+            error: "Non-admin users may only request a tier upgrade for their own account.",
+            granted: false,
+          });
+        }
+
+        const adminOnlyRoles = ["administrator", "trustee"];
+        const allowedNonAdminRoles = ["member", "practitioner"];
+        const allowedAdminRoles = ["member", "doctor", "clinic", "practitioner"];
+
+        if (!isAdminGrantUser && !allowedNonAdminRoles.includes(newRole)) {
+          return res.status(403).json({
+            error: `Non-admin users may not assign privileged roles. Allowed roles: ${allowedNonAdminRoles.join(", ")}.`,
+            granted: false,
+          });
+        }
+
+        if (isAdminGrantUser && !allowedAdminRoles.includes(newRole) && !adminOnlyRoles.includes(newRole)) {
+          return res.status(400).json({
+            error: `Invalid role "${newRole}". Allowed roles: ${[...allowedAdminRoles, ...adminOnlyRoles].join(", ")}.`,
+            granted: false,
+          });
+        }
+
+        const roleUpdateResult = await wordPressAuthService.updateUserRole(parseInt(targetUserId), newRole);
+        if (!roleUpdateResult.success) {
+          return res.status(502).json({
+            error: `Role upgrade failed: ${roleUpdateResult.error}`,
+            granted: false,
+          });
+        }
+
+        return res.json({
+          granted: true,
+          accessType: "member-tier",
+          orderId: order.id,
+          orderStatus: order.status,
+          statusCategory: verification.category,
+          targetUserId,
+          newRole,
+          message: `Member tier upgraded to "${newRole}" for user ${targetUserId}. Order #${order.id} qualified (status: ${order.status}).`,
+        });
+      }
+
+      res.json({
+        granted: true,
+        accessType,
+        orderId: order.id,
+        orderStatus: order.status,
+        statusCategory: verification.category,
+        message: `Access of type "${accessType}" granted. Order #${order.id} qualifies (status: ${order.status}).`,
+      });
+    } catch (error: any) {
+      console.error('[WooCommerce GrantAccess] Error:', error.message);
+      res.status(500).json({ error: error.message, granted: false });
     }
   });
 
@@ -195,9 +415,39 @@ export function registerWooCommerceRoutes(app: Express): void {
 
   app.post("/api/checkout/stripe/create-session", requireAuth, async (req: Request, res: Response) => {
     try {
-      const { lineItems, successUrl, cancelUrl, customerEmail } = req.body;
+      const { lineItems, successUrl, cancelUrl, customerEmail, wooOrderId } = req.body;
       if (!lineItems || !Array.isArray(lineItems) || lineItems.length === 0) {
         return res.status(400).json({ error: "lineItems array is required" });
+      }
+
+      if (wooOrderId) {
+        const wooOrder = await wooCommerceService.getOrderById(parseInt(wooOrderId));
+        if (!wooOrder) {
+          return res.status(404).json({ error: "Referenced WooCommerce order not found.", qualifies: false });
+        }
+
+        const sessionUser = req.user as any;
+        const sessionUserEmail = (sessionUser?.email || "").toLowerCase();
+        const wooOrderEmail = (wooOrder.billing?.email || "").toLowerCase();
+        const sessionUserWpRoles: string[] = sessionUser?.wpRoles || [];
+        const isSessionAdmin =
+          sessionUser?.role === "admin" ||
+          sessionUser?.role === "trustee" ||
+          sessionUserWpRoles.some((r: string) => ["administrator", "trustee"].includes(r.toLowerCase()));
+
+        if (!isSessionAdmin && (!sessionUserEmail || sessionUserEmail !== wooOrderEmail)) {
+          return res.status(403).json({ error: "You do not have permission to checkout with this order.", qualifies: false });
+        }
+
+        const verification = wooCommerceService.verifyOrderStatus(wooOrder.status);
+        if (!verification.qualifies) {
+          return res.status(403).json({
+            error: `Cannot process checkout: ${verification.reason}`,
+            qualifies: false,
+            orderStatus: wooOrder.status,
+            statusCategory: verification.category,
+          });
+        }
       }
 
       const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -228,6 +478,7 @@ export function registerWooCommerceRoutes(app: Express): void {
         metadata: {
           userId: (req.user as any)?.id || "unknown",
           source: "allio-platform",
+          ...(wooOrderId ? { wooOrderId: String(wooOrderId) } : {}),
         },
       });
 
@@ -268,6 +519,22 @@ export function registerWooCommerceRoutes(app: Express): void {
       switch (event.type) {
         case "checkout.session.completed": {
           const session = event.data.object;
+          const wooOrderId = session.metadata?.wooOrderId ? parseInt(session.metadata.wooOrderId) : null;
+
+          if (wooOrderId) {
+            const wooOrder = await wooCommerceService.getOrderById(wooOrderId);
+            if (wooOrder) {
+              const verification = wooCommerceService.verifyOrderStatus(wooOrder.status);
+              if (!verification.qualifies) {
+                console.warn(
+                  `[Stripe] Fulfillment BLOCKED for session ${session.id}: WooCommerce order #${wooOrderId} has non-qualifying status "${wooOrder.status}". Reason: ${verification.reason}`
+                );
+                break;
+              }
+              console.log(`[Stripe] Fulfillment APPROVED for session ${session.id}: WooCommerce order #${wooOrderId} status "${wooOrder.status}" qualifies.`);
+            }
+          }
+
           console.log(`[Stripe] Payment completed: ${session.id}, amount: ${session.amount_total}, email: ${session.customer_email}`);
           break;
         }

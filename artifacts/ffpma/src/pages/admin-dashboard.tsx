@@ -684,6 +684,10 @@ export default function AdminDashboardPage() {
             <Stethoscope className="h-4 w-4 mr-2" />
             Member Management
           </TabsTrigger>
+          <TabsTrigger value="woo-orders" data-testid="tab-woo-orders" className="bg-amber-500/10 text-amber-600 data-[state=active]:bg-amber-500/30">
+            <ShoppingCart className="h-4 w-4 mr-2" />
+            WooCommerce Orders
+          </TabsTrigger>
           <TabsTrigger value="system-health" data-testid="tab-system-health">
             <Server className="h-4 w-4 mr-2" />
             System Health
@@ -1739,10 +1743,255 @@ export default function AdminDashboardPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="woo-orders" className="space-y-4">
+          <WooCommerceOrdersPanel />
+        </TabsContent>
+
         <TabsContent value="system-health" className="space-y-6">
           <SystemHealthDashboard />
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+interface WooOrder {
+  id: number;
+  orderNumber: string;
+  status: string;
+  statusCategory: 'actionable' | 'non-actionable';
+  qualifiesForFulfillment: boolean;
+  statusReason: string;
+  total: string;
+  currency: string;
+  customerName: string;
+  customerEmail: string;
+  dateCreated: string;
+  lineItemsCount: number;
+  paymentMethod: string;
+}
+
+const STATUS_COLORS: Record<string, { bg: string; text: string; border: string; label: string }> = {
+  completed: { bg: 'bg-green-500/10', text: 'text-green-700', border: 'border-green-500/30', label: 'Completed' },
+  processing: { bg: 'bg-blue-500/10', text: 'text-blue-700', border: 'border-blue-500/30', label: 'Processing' },
+  pending: { bg: 'bg-amber-500/10', text: 'text-amber-700', border: 'border-amber-500/30', label: 'Pending' },
+  'on-hold': { bg: 'bg-orange-500/10', text: 'text-orange-700', border: 'border-orange-500/30', label: 'On Hold' },
+  cancelled: { bg: 'bg-gray-500/10', text: 'text-gray-700', border: 'border-gray-500/30', label: 'Cancelled' },
+  refunded: { bg: 'bg-purple-500/10', text: 'text-purple-700', border: 'border-purple-500/30', label: 'Refunded' },
+  failed: { bg: 'bg-red-500/10', text: 'text-red-700', border: 'border-red-500/30', label: 'Failed' },
+};
+
+function getStatusStyle(status: string) {
+  return STATUS_COLORS[status.toLowerCase()] ?? { bg: 'bg-gray-500/10', text: 'text-gray-700', border: 'border-gray-500/30', label: status };
+}
+
+function WooCommerceOrdersPanel() {
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
+
+  const queryStatus = statusFilter === "all" ? undefined : statusFilter;
+
+  const { data: ordersData, isLoading, refetch, isFetching } = useQuery<{
+    orders: WooOrder[];
+    total: number;
+    totalPages: number;
+  }>({
+    queryKey: ["/api/woocommerce/orders", statusFilter, page],
+    queryFn: () => {
+      const params = new URLSearchParams({ page: String(page), per_page: "20" });
+      if (queryStatus) params.set("status", queryStatus);
+      return fetch(`/api/woocommerce/orders?${params}`).then(r => r.json());
+    },
+    staleTime: 30000,
+  });
+
+  const { data: orderStats } = useQuery<{
+    totalOrders: number;
+    pendingOrders: number;
+    processingOrders: number;
+    completedOrders: number;
+    recentRevenue: number;
+  }>({
+    queryKey: ["/api/woocommerce/order-stats"],
+    staleTime: 60000,
+  });
+
+  const orders = ordersData?.orders ?? [];
+  const total = ordersData?.total ?? 0;
+  const totalPages = ordersData?.totalPages ?? 1;
+
+  const actionableCount = orders.filter(o => o.qualifiesForFulfillment).length;
+  const nonActionableCount = orders.filter(o => !o.qualifiesForFulfillment).length;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <ShoppingCart className="w-5 h-5 text-amber-500" />
+            WooCommerce Orders
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Orders are verified for fulfillment eligibility. Only "completed" or "processing" orders qualify.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+          {isFetching ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+          Refresh
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Total (30d)</p>
+            <p className="text-2xl font-bold">{orderStats?.totalOrders ?? "—"}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-green-500/20 bg-green-500/5">
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Completed</p>
+            <p className="text-2xl font-bold text-green-600">{orderStats?.completedOrders ?? "—"}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-blue-500/20 bg-blue-500/5">
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Processing</p>
+            <p className="text-2xl font-bold text-blue-600">{orderStats?.processingOrders ?? "—"}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-amber-500/20 bg-amber-500/5">
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Pending</p>
+            <p className="text-2xl font-bold text-amber-600">{orderStats?.pendingOrders ?? "—"}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {orders.length > 0 && (
+        <div className="flex gap-3 text-sm">
+          <span className="flex items-center gap-1.5 text-green-600">
+            <CheckCircle2 className="w-4 h-4" />
+            {actionableCount} actionable
+          </span>
+          <span className="flex items-center gap-1.5 text-muted-foreground">
+            <XCircle className="w-4 h-4 text-red-500" />
+            {nonActionableCount} non-actionable
+          </span>
+        </div>
+      )}
+
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-muted-foreground">Filter by status:</span>
+        <div className="flex flex-wrap gap-2">
+          {["all", "completed", "processing", "pending", "on-hold", "cancelled", "refunded", "failed"].map((s) => (
+            <button
+              key={s}
+              onClick={() => { setStatusFilter(s); setPage(1); }}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+                statusFilter === s
+                  ? s === "all"
+                    ? "bg-foreground text-background border-foreground"
+                    : `${getStatusStyle(s).bg} ${getStatusStyle(s).text} ${getStatusStyle(s).border}`
+                  : "bg-transparent border-border text-muted-foreground hover:border-foreground/30"
+              }`}
+            >
+              {s === "all" ? "All" : getStatusStyle(s).label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+            </div>
+          ) : orders.length === 0 ? (
+            <div className="text-center py-16 text-muted-foreground">
+              <ShoppingCart className="w-12 h-12 mx-auto mb-4 opacity-30" />
+              <p className="font-medium">No orders found</p>
+              <p className="text-sm mt-1">
+                {statusFilter !== "all"
+                  ? `No orders with status "${statusFilter}".`
+                  : "No WooCommerce orders available. Make sure WooCommerce is connected."}
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {orders.map((order) => {
+                const style = getStatusStyle(order.status);
+                return (
+                  <div
+                    key={order.id}
+                    className={`flex items-center justify-between gap-4 p-4 hover:bg-muted/30 transition-colors ${
+                      order.qualifiesForFulfillment ? "" : "opacity-75"
+                    }`}
+                    data-testid={`woo-order-${order.id}`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`p-2 rounded-full flex-shrink-0 ${order.qualifiesForFulfillment ? "bg-green-500/10" : "bg-red-500/10"}`}>
+                        {order.qualifiesForFulfillment
+                          ? <CheckCircle2 className="w-4 h-4 text-green-600" />
+                          : <XCircle className="w-4 h-4 text-red-500" />
+                        }
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-sm">#{order.orderNumber || order.id}</p>
+                          <Badge className={`text-xs capitalize ${style.bg} ${style.text} border ${style.border}`}>
+                            {style.label}
+                          </Badge>
+                          {order.qualifiesForFulfillment ? (
+                            <Badge variant="outline" className="text-xs bg-green-500/10 text-green-700 border-green-500/30">
+                              Actionable
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs bg-red-500/10 text-red-700 border-red-500/30">
+                              Non-Actionable
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          {order.customerName || "Guest"} &middot; {order.customerEmail || "No email"} &middot; {order.lineItemsCount} item(s)
+                        </p>
+                        {!order.qualifiesForFulfillment && (
+                          <p className="text-xs text-red-500 mt-0.5">{order.statusReason}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-semibold text-sm">
+                        {order.currency || "$"}{parseFloat(order.total || "0").toFixed(2)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {order.dateCreated ? new Date(order.dateCreated).toLocaleDateString() : "—"}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing page {page} of {totalPages} ({total} total)
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>
+              Previous
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

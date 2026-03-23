@@ -928,6 +928,52 @@ class WooCommerceService {
     }
   }
 
+  verifyOrderStatus(status: string): {
+    qualifies: boolean;
+    reason: string;
+    category: 'actionable' | 'non-actionable';
+  } {
+    const ACTIONABLE_STATUSES = ['completed', 'processing'];
+    const NON_ACTIONABLE_STATUSES = ['pending', 'on-hold', 'cancelled', 'refunded', 'failed'];
+
+    const normalized = (status || '').toLowerCase().trim();
+
+    if (ACTIONABLE_STATUSES.includes(normalized)) {
+      return {
+        qualifies: true,
+        reason: `Order status "${status}" qualifies for fulfillment and product access.`,
+        category: 'actionable',
+      };
+    }
+
+    let reason: string;
+    switch (normalized) {
+      case 'pending':
+        reason = 'Order is pending payment. Payment must be completed before access is granted.';
+        break;
+      case 'on-hold':
+        reason = 'Order is on hold awaiting manual review. Access will be granted once the order is confirmed.';
+        break;
+      case 'cancelled':
+        reason = 'Order has been cancelled and does not qualify for product access or fulfillment.';
+        break;
+      case 'refunded':
+        reason = 'Order has been refunded and no longer qualifies for product access.';
+        break;
+      case 'failed':
+        reason = 'Order payment failed. Please retry or contact support.';
+        break;
+      default:
+        reason = `Order status "${status}" is not recognized as qualifying for fulfillment.`;
+    }
+
+    return {
+      qualifies: false,
+      reason,
+      category: 'non-actionable',
+    };
+  }
+
   async getOrderById(orderId: number): Promise<any | null> {
     if (!this.baseUrl || !this.consumerKey || !this.consumerSecret) {
       return null;
@@ -968,3 +1014,11 @@ class WooCommerceService {
 }
 
 export const wooCommerceService = new WooCommerceService();
+
+export function verifyOrderStatus(status: string): {
+  qualifies: boolean;
+  reason: string;
+  category: 'actionable' | 'non-actionable';
+} {
+  return wooCommerceService.verifyOrderStatus(status);
+}
