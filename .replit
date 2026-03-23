@@ -64,28 +64,4 @@ OPENCLAW_WEBHOOK_URL = "http://vm93616.vpsone.xyz:8889/openclaw/receive"
   [nix]
   channel = "stable-25_05"
 packages = ["alsa-lib", "at-spi2-atk", "cairo", "cups", "dbus", "expat", "gitFull", "glib", "gtk3", "libdrm", "libxkbcommon", "mesa", "mesa_glu", "nspr", "nss", "pango", "playwright-driver", "xorg.libX11", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXext", "xorg.libXfixes", "xorg.libXrandr", "xorg.libxcb", "imagemagick"]
-
-[[ports]]
-localPort = 5000
-externalPort = 80
-
-[[ports]]
-localPort = 5173
-externalPort = 5173
-
-[[ports]]
-localPort = 8080
-externalPort = 8080
-
-[[ports]]
-localPort = 19237
-externalPort = 3002
-
-[[ports]]
-localPort = 22375
-externalPort = 3003
-
-[[ports]]
-localPort = 22608
-externalPort = 3000
   

@@ -2020,6 +2020,8 @@ export default function TrusteeDashboard() {
     createdAt: string;
     updatedAt: string | null;
     completedAt: string | null;
+    toolCalls: string | null;
+    agenticIterations: number | null;
   }
 
   const { data: agentTasks = [], refetch: refetchAgentTasks } = useQuery<AgentTask[]>({
@@ -3366,7 +3368,21 @@ export default function TrusteeDashboard() {
                               </div>
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-medium truncate">{task.title}</p>
-                                <p className="text-xs text-white/40">{task.agentId.toUpperCase()} • {task.division}</p>
+                                <p className="text-xs text-white/40">
+                                  {task.agentId.toUpperCase()} • {task.division}
+                                  {task.agenticIterations != null && task.agenticIterations > 0 && (
+                                    <span className="ml-2 text-violet-400/70">⚙ {task.agenticIterations}i</span>
+                                  )}
+                                  {task.toolCalls && (() => {
+                                    try {
+                                      const calls = JSON.parse(task.toolCalls);
+                                      if (Array.isArray(calls) && calls.length > 0) {
+                                        return <span className="ml-1 text-cyan-400/70">🔧 {calls.length}</span>;
+                                      }
+                                    } catch { }
+                                    return null;
+                                  })()}
+                                </p>
                               </div>
                             </div>
                             <ExternalLink className="w-4 h-4 text-white/30 group-hover:text-green-400 transition-colors flex-shrink-0" />
@@ -3850,7 +3866,22 @@ export default function TrusteeDashboard() {
                                           <span className="text-cyan-400 ml-2">({task.progress}%)</span>
                                         )}
                                       </p>
-                                      <p className="text-xs text-white/40">{timeAgo}</p>
+                                      <p className="text-xs text-white/40">
+                                        {timeAgo}
+                                        {task.agenticIterations != null && task.agenticIterations > 0 && (
+                                          <span className="ml-2 text-violet-400/70">⚙ {task.agenticIterations} iter{task.agenticIterations !== 1 ? "s" : ""}</span>
+                                        )}
+                                        {task.toolCalls && (() => {
+                                          try {
+                                            const calls = JSON.parse(task.toolCalls);
+                                            if (Array.isArray(calls) && calls.length > 0) {
+                                              const toolNames = [...new Set(calls.map((c: any) => c.toolName))];
+                                              return <span className="ml-2 text-cyan-400/70">🔧 {calls.length} tool call{calls.length !== 1 ? "s" : ""}: {toolNames.slice(0, 3).join(", ")}{toolNames.length > 3 ? "…" : ""}</span>;
+                                            }
+                                          } catch { }
+                                          return null;
+                                        })()}
+                                      </p>
                                     </div>
                                   </div>
                                 );

@@ -943,6 +943,8 @@ export const agentTasks = pgTable("agent_tasks", {
   crossDivisionFrom: varchar("cross_division_from"),
   crossDivisionTo: varchar("cross_division_to"),
   parentTaskId: varchar("parent_task_id"),
+  toolCalls: text("tool_calls"),
+  agenticIterations: integer("agentic_iterations").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

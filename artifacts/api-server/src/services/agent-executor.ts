@@ -23,6 +23,8 @@ import { AGENT_MODEL_ASSIGNMENTS } from './sentinel-orchestrator';
   import { analyzeWithGemini, GEMINI_TOOLS_DEFINITIONS, handleGeminiToolCall, isGeminiAvailable } from './gemini-provider';
 import { NOTEBOOKLM_TOOLS_DEFINITIONS, handleNotebookLMToolCall, isNotebookLMAvailable } from './notebooklm-provider';
 import { mcpClientManager, getMcpToolsAsOpenAIFormat } from './mcp-client-manager';
+import { buildDivisionToolSet } from './agent-tool-dispatcher';
+import { callWithTools } from './ai-fallback';
 import { generateImage as hfGenerateImage } from './huggingface-media';
 
 const openai = new OpenAI({
@@ -414,7 +416,7 @@ ${profile ? `Agent style: ${profile.specialty}` : ''}`;
   return prompt;
 }
 
-  async function generateDocument(taskTitle: string, taskDescription: string, agentId: string, division: string): Promise<string> {
+  async function generateDocument(taskTitle: string, taskDescription: string, agentId: string, division: string): Promise<{ content: string; toolCallLog: any[]; iterations: number }> {
     const { callWithFallback, isTerminalFailure } = await import('./ai-fallback');
     const profile = getAgentProfile(agentId);
     const modelConfig = AGENT_MODEL_ASSIGNMENTS[agentId.toUpperCase()];
@@ -520,28 +522,69 @@ When filing documents, ALWAYS use the correct Drive folder path from the structu
     const userPrompt = `Generate a complete, professional document for the following task:\n\nTASK TITLE: ${taskTitle}\n\nTASK DESCRIPTION: ${taskDescription}\n\nDIVISION: ${division}\n\nRequirements:\n- Create a comprehensive, well-structured document\n- Include relevant sections, headers, and content\n- Be thorough and professional\n- Make it actionable and useful for the organization\n- Reflect the FFPMA mission: healing over profits, nature over synthetic\n- Include specific details relevant to healthcare, healing, and the PMA's mission\n- Format with clear sections using markdown\n- End with how this contributes to our mission of true healing\n\nGenerate the full document now:`;
 
     const preferredProviderName = provider === 'research' ? 'claude' : provider;
+    const toolPreferredProvider = ['abacus', 'openai'].includes(preferredProviderName) ? preferredProviderName : 'abacus';
+
+    const { tools, dispatcher } = buildDivisionToolSet(division, agentId);
+
+    console.log(`[Agent Executor] Agentic loop starting for ${agentId} (${division}) with ${tools.length} tools (tool provider: ${toolPreferredProvider})`);
 
     try {
-      const result = await callWithFallback(userPrompt, {
-        systemPrompt,
-        preferredProvider: preferredProviderName === 'huggingface' ? 'openai' : preferredProviderName,
-        preferredModel: modelConfig?.model,
-        callType: 'document-generation',
-        maxTokens: 8192,
-        maxRetries: 1,
-        startTier: 'economy',
-      });
-      console.log(`[Agent Executor] Document generated via ${result.provider}/${result.model} (quality: ${result.qualityScore}, fallback: ${result.fallbackUsed}, escalated: ${result.escalationUsed})`);
-      return spellCheckContent(result.response);
-    } catch (err: any) {
-      if (isTerminalFailure(err)) {
-        console.error(`[Agent Executor] Terminal failure for ${agentId}: ${err.message}`);
-        throw new Error(err.userMessage);
+      const agenticResult = await callWithTools(
+        [{ role: 'user', content: userPrompt }],
+        tools,
+        dispatcher,
+        {
+          systemPrompt,
+          maxTokens: 8192,
+          maxIterations: 10,
+          preferredProvider: toolPreferredProvider,
+        }
+      );
+
+      console.log(`[Agent Executor] Agentic loop complete for ${agentId}: ${agenticResult.iterations} iteration(s), ${agenticResult.toolCallLog.length} tool calls, ~${agenticResult.totalTokensEstimate} tokens`);
+
+      if (agenticResult.toolCallLog.length > 0) {
+        const toolSummary = agenticResult.toolCallLog.map(tc =>
+          `${tc.toolName}(${tc.argsSummary.substring(0, 40)}) → ${tc.resultLength}chars [${tc.latencyMs}ms]`
+        ).join('; ');
+        console.log(`[Agent Executor] Tools used: ${toolSummary}`);
       }
-      throw err;
+
+      return {
+        content: spellCheckContent(agenticResult.response),
+        toolCallLog: agenticResult.toolCallLog,
+        iterations: agenticResult.iterations,
+      };
+
+    } catch (agenticErr: any) {
+      console.warn(`[Agent Executor] Agentic loop failed for ${agentId}, falling back to standard generation: ${agenticErr.message}`);
+
+      try {
+        const result = await callWithFallback(userPrompt, {
+          systemPrompt,
+          preferredProvider: preferredProviderName === 'huggingface' ? 'openai' : preferredProviderName,
+          preferredModel: modelConfig?.model,
+          callType: 'document-generation',
+          maxTokens: 8192,
+          maxRetries: 1,
+          startTier: 'economy',
+        });
+        console.log(`[Agent Executor] Fallback document generated via ${result.provider}/${result.model}`);
+        return {
+          content: spellCheckContent(result.response),
+          toolCallLog: [],
+          iterations: 1,
+        };
+      } catch (err: any) {
+        if (isTerminalFailure(err)) {
+          console.error(`[Agent Executor] Terminal failure for ${agentId}: ${err.message}`);
+          throw new Error(err.userMessage);
+        }
+        throw err;
+      }
     }
   }
-  
+
   function enforceSwimLanes(agentId: string, division: string, task: any) {
   const isMarketing = division.toLowerCase() === 'marketing';
   const isScience = division.toLowerCase() === 'science';
@@ -596,7 +639,7 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
       console.log(`[Agent Executor] Step 1: Using OpenAI tools to compile Canva context...`);
       // We run the document generation logic to let the agent use tools (Drive, Docs, Sheets) 
       // to gather the required context before we send the instructions to the browser.
-      const compiledInstructions = await generateDocument(
+      const compiledInstructionsResult = await generateDocument(
         `PREPARE CANVA PROMPT: ${task.title}`,
         `You are preparing instructions for a browser automation agent to execute in Canva. 
         TASK: ${task.description || task.title}. 
@@ -605,8 +648,13 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
         agentId,
         division
       );
+      const compiledInstructions = compiledInstructionsResult.content;
 
-      await storage.updateAgentTask(taskId, { progress: 40 });
+      await storage.updateAgentTask(taskId, {
+        progress: 40,
+        toolCalls: compiledInstructionsResult.toolCallLog.length > 0 ? JSON.stringify(compiledInstructionsResult.toolCallLog) : null,
+        agenticIterations: compiledInstructionsResult.iterations,
+      });
 
       console.log(`[Agent Executor] Step 2: Executing enriched prompt in Canva browser...`);
       const result = await canvaAgent.executeCanvaTask(compiledInstructions);
@@ -764,15 +812,20 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
         };
       }
   
-      // Default to Document Generation for all non-image agents
-    console.log(`[Agent Executor] Generating document for ${agentId} (Default Fallback)...`);
+      // Default to Document Generation for all non-image agents (agentic loop)
+    console.log(`[Agent Executor] Starting agentic document generation for ${agentId} (${division})...`);
 
     await storage.updateAgentTask(taskId, { progress: 30 });
 
-    const documentContent = await generateDocument(task.title, task.description || '', agentId, division);
-    console.log(`[Agent Executor] Document generated, length: ${documentContent.length} chars`);
+    const trackedResult = await generateDocument(task.title, task.description || '', agentId, division);
+    const documentContent = trackedResult.content;
+    console.log(`[Agent Executor] Document generated, length: ${documentContent.length} chars, ${trackedResult.iterations} iterations, ${trackedResult.toolCallLog.length} tool calls`);
 
-    await storage.updateAgentTask(taskId, { progress: 60 });
+    await storage.updateAgentTask(taskId, {
+      progress: 60,
+      toolCalls: trackedResult.toolCallLog.length > 0 ? JSON.stringify(trackedResult.toolCallLog) : null,
+      agenticIterations: trackedResult.iterations,
+    });
 
     const crossDivisionPrefix = getCrossDivisionFilePrefix(task);
     const fileName = `${crossDivisionPrefix}${task.title.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`;

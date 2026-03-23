@@ -677,6 +677,266 @@ export async function callWithFallback(
   throw createTerminalFailure(allAttempts);
 }
 
+export interface ToolCallEntry {
+  toolName: string;
+  argsSummary: string;
+  resultLength: number;
+  latencyMs: number;
+  iteration: number;
+  timestamp: string;
+}
+
+export interface AgenticLoopResult {
+  response: string;
+  provider: string;
+  model: string;
+  iterations: number;
+  toolCallLog: ToolCallEntry[];
+  totalTokensEstimate: number;
+}
+
+interface ToolProviderConfig {
+  name: string;
+  client: any;
+  economyModel: string;
+  premiumModel: string;
+}
+
+async function buildToolProviderChain(preferredProvider?: string): Promise<ToolProviderConfig[]> {
+  const OpenAILib = (await import('openai')).default;
+
+  const abacusKey = process.env.ABACUSAI_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
+
+  const abacusConfig: ToolProviderConfig | null = abacusKey ? {
+    name: 'abacus',
+    client: new OpenAILib({ apiKey: abacusKey, baseURL: 'https://apps.abacus.ai/v1' }),
+    economyModel: 'gpt-4.1-mini',
+    premiumModel: 'gpt-4.1',
+  } : null;
+
+  const openaiConfig: ToolProviderConfig | null = openaiKey ? {
+    name: 'openai',
+    client: new OpenAILib({ apiKey: openaiKey }),
+    economyModel: 'gpt-4o-mini',
+    premiumModel: 'gpt-4o',
+  } : null;
+
+  const allProviders = [abacusConfig, openaiConfig].filter(Boolean) as ToolProviderConfig[];
+
+  if (!preferredProvider) return allProviders;
+
+  const preferred = preferredProvider.toLowerCase();
+  const sorted = [
+    ...allProviders.filter(p => p.name === preferred),
+    ...allProviders.filter(p => p.name !== preferred),
+  ];
+  return sorted;
+}
+
+async function runToolLoop(
+  client: any,
+  economyModel: string,
+  conversationMessages: any[],
+  tools: any[],
+  toolDispatcher: (toolName: string, args: Record<string, any>) => Promise<string>,
+  maxTokens: number,
+  maxIterations: number,
+  toolCallLog: ToolCallEntry[],
+  providerName: string
+): Promise<{ finalText: string; iterations: number; totalTokensEstimate: number } | null> {
+  let iterations = 0;
+  let totalTokensEstimate = 0;
+  const msgs = [...conversationMessages];
+
+  while (iterations < maxIterations) {
+    iterations++;
+    console.log(`[callWithTools] Iteration ${iterations}/${maxIterations} (${providerName}/${economyModel})`);
+
+    const completion = await client.chat.completions.create({
+      model: economyModel,
+      messages: msgs,
+      tools: tools.length > 0 ? tools : undefined,
+      tool_choice: tools.length > 0 ? 'auto' : undefined,
+      max_completion_tokens: maxTokens,
+    });
+
+    const responseMsg = completion.choices[0]?.message;
+    totalTokensEstimate += completion.usage?.total_tokens || Math.round((JSON.stringify(msgs).length + (responseMsg?.content?.length || 0)) / 4);
+
+    if (!responseMsg) return null;
+    msgs.push(responseMsg);
+
+    if (!responseMsg.tool_calls || responseMsg.tool_calls.length === 0) {
+      return { finalText: responseMsg.content || '', iterations, totalTokensEstimate };
+    }
+
+    for (const toolCall of responseMsg.tool_calls) {
+      const toolName = toolCall.function.name;
+      let args: Record<string, any> = {};
+      try { args = JSON.parse(toolCall.function.arguments || '{}'); } catch { args = {}; }
+
+      const argsSummary = Object.keys(args).map(k => `${k}=${String(args[k]).substring(0, 60)}`).join(', ');
+      console.log(`[callWithTools] Tool call: ${toolName}(${argsSummary})`);
+
+      const toolStart = Date.now();
+      let toolResult: string;
+      try {
+        toolResult = await toolDispatcher(toolName, args);
+      } catch (err: any) {
+        toolResult = `[Tool error: ${err.message}]`;
+        console.warn(`[callWithTools] Tool ${toolName} failed: ${err.message}`);
+      }
+      const toolLatency = Date.now() - toolStart;
+
+      toolCallLog.push({
+        toolName,
+        argsSummary,
+        resultLength: toolResult.length,
+        latencyMs: toolLatency,
+        iteration: iterations,
+        timestamp: new Date().toISOString(),
+      });
+
+      msgs.push({
+        role: 'tool',
+        tool_call_id: toolCall.id,
+        content: toolResult.substring(0, 12000),
+      });
+    }
+  }
+
+  console.warn(`[callWithTools] Hit max iterations (${maxIterations}), forcing synthesis`);
+  const finalCompletion = await client.chat.completions.create({
+    model: economyModel,
+    messages: [
+      ...msgs,
+      { role: 'user', content: 'Based on all information gathered above, provide your final comprehensive response now.' },
+    ],
+    max_completion_tokens: maxTokens,
+  });
+  totalTokensEstimate += finalCompletion.usage?.total_tokens || 0;
+  return { finalText: finalCompletion.choices[0]?.message?.content || '', iterations, totalTokensEstimate };
+}
+
+export async function callWithTools(
+  messages: Array<{ role: string; content: string }>,
+  tools: any[],
+  toolDispatcher: (toolName: string, args: Record<string, any>) => Promise<string>,
+  options?: {
+    systemPrompt?: string;
+    maxTokens?: number;
+    maxIterations?: number;
+    callType?: CallType;
+    skipQualityCheck?: boolean;
+    preferredProvider?: string;
+  }
+): Promise<AgenticLoopResult> {
+  const {
+    systemPrompt,
+    maxTokens = 4096,
+    maxIterations = 10,
+    callType = 'document-generation',
+    skipQualityCheck = false,
+    preferredProvider,
+  } = options || {};
+
+  const providerChain = await buildToolProviderChain(preferredProvider);
+  if (providerChain.length === 0) {
+    throw new Error('[callWithTools] No compatible provider available for tool-calling (requires OpenAI or Abacus)');
+  }
+
+  const baseMessages: any[] = [];
+  if (systemPrompt) {
+    baseMessages.push({ role: 'system', content: systemPrompt });
+  }
+  baseMessages.push(...messages);
+
+  const toolCallLog: ToolCallEntry[] = [];
+
+  for (let pi = 0; pi < providerChain.length; pi++) {
+    const provider = providerChain[pi];
+
+    let loopResult: { finalText: string; iterations: number; totalTokensEstimate: number } | null = null;
+    try {
+      loopResult = await runToolLoop(
+        provider.client,
+        provider.economyModel,
+        baseMessages,
+        tools,
+        toolDispatcher,
+        maxTokens,
+        maxIterations,
+        toolCallLog,
+        provider.name
+      );
+    } catch (err: any) {
+      console.warn(`[callWithTools] Provider ${provider.name} loop failed: ${err.message}`);
+      if (pi < providerChain.length - 1) continue;
+      throw err;
+    }
+
+    if (!loopResult) {
+      if (pi < providerChain.length - 1) continue;
+      throw new Error('[callWithTools] All providers returned empty response');
+    }
+
+    const { finalText, iterations, totalTokensEstimate } = loopResult;
+    let usedModel = provider.economyModel;
+
+    if (!skipQualityCheck) {
+      const quality = validateAIResponse(finalText, callType);
+      console.log(`[callWithTools] Quality check (${provider.name}/${usedModel}): score=${quality.score} pass=${quality.pass}`);
+
+      if (!quality.pass) {
+        console.log(`[callWithTools] Quality failed (${quality.score}/100), escalating to ${provider.name}/${provider.premiumModel}`);
+        try {
+          const escalationCompletion = await provider.client.chat.completions.create({
+            model: provider.premiumModel,
+            messages: [
+              ...baseMessages,
+              { role: 'assistant', content: `[Previous draft - quality score ${quality.score}/100, needs improvement: ${quality.reasons.join(', ')}]\n\n${finalText}` },
+              { role: 'user', content: 'The above draft did not meet quality standards. Please produce a significantly improved, comprehensive, and complete version.' },
+            ],
+            max_completion_tokens: maxTokens,
+          });
+          const escalatedText = escalationCompletion.choices[0]?.message?.content || finalText;
+          const escalatedQuality = validateAIResponse(escalatedText, callType);
+          console.log(`[callWithTools] Escalated quality: score=${escalatedQuality.score} pass=${escalatedQuality.pass}`);
+          usedModel = provider.premiumModel;
+
+          if (escalatedQuality.pass || pi === providerChain.length - 1) {
+            return {
+              response: escalatedText,
+              provider: provider.name,
+              model: usedModel,
+              iterations,
+              toolCallLog,
+              totalTokensEstimate: totalTokensEstimate + (escalationCompletion.usage?.total_tokens || 0),
+            };
+          }
+          console.log(`[callWithTools] Escalated quality still failed (${escalatedQuality.score}/100), trying next provider`);
+          continue;
+        } catch (escalationErr: any) {
+          console.warn(`[callWithTools] Escalation failed: ${escalationErr.message}, using original`);
+        }
+      }
+    }
+
+    console.log(`[callWithTools] Final response via ${provider.name}/${usedModel} after ${iterations} iteration(s), length: ${finalText.length}, tokens~${totalTokensEstimate}`);
+    return {
+      response: finalText,
+      provider: provider.name,
+      model: usedModel,
+      iterations,
+      toolCallLog,
+      totalTokensEstimate,
+    };
+  }
+
+  throw new Error('[callWithTools] All providers in chain exhausted');
+}
+
 export async function callWithFallbackStreaming(
   messages: Array<{ role: string; content: string }>,
   options?: {
