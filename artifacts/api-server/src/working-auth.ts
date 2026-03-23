@@ -386,15 +386,15 @@ export function requireRole(...roles: string[]) {
 
     // Map wpRoles to Allio roles
     if (!hasRole) {
+      const WP_DOCTOR_ROLES = [
+        'doctor', 'physician', 'healer', 'practitioner',
+        'ff_doctor', 'ff_healer',
+        'um_doctor', 'um_healer', 'um_practitioner',
+        'wellness_practitioner', 'healthcare_provider',
+      ];
       if (userRoles.includes('administrator') || userRoles.includes('shop_manager')) {
         hasRole = roles.includes('admin') || roles.includes('trustee');
-      } else if (
-        userRoles.some((r: string) =>
-          ['doctor', 'physician', 'ff_doctor', 'ff_healer', 'healer', 'practitioner',
-           'um_doctor', 'um_healer', 'um_practitioner', 'wellness_practitioner',
-           'healthcare_provider'].includes(r)
-        )
-      ) {
+      } else if (userRoles.some((r: string) => WP_DOCTOR_ROLES.includes(r))) {
         hasRole = roles.includes('doctor') || roles.includes('clinic');
       }
     }

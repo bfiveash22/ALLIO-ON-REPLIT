@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +55,13 @@ import {
   ExternalLink,
   Share2,
   Settings,
-  Link2
+  Link2,
+  Loader2,
+  PlayCircle,
+  RotateCcw,
+  CheckSquare,
+  XCircle,
+  Zap,
 } from "lucide-react";
 import { Link } from "wouter";
 import { agents, getAgentsByDivision } from "@shared/agents";
@@ -145,6 +152,405 @@ interface AssignedProtocol {
   reviewedBy: string | null;
   reviewNotes: string | null;
   createdAt: string;
+}
+
+// ─── Pipeline Types ──────────────────────────────────────────────────────────
+
+interface PipelineStageRecord {
+  stage: "intake" | "analysis" | "assembly" | "presentation" | "delivery";
+  status: "pending" | "in_progress" | "completed" | "failed" | "skipped";
+  startedAt?: string;
+  completedAt?: string;
+  errorMessage?: string;
+  outputUrl?: string;
+  estimatedSeconds?: number;
+}
+
+interface PipelineRun {
+  id: string;
+  protocolId: number | null;
+  intakeFormId: number | null;
+  memberId: string | null;
+  doctorId: string | null;
+  initiatedBy: string | null;
+  currentStage: string;
+  overallStatus: "pending" | "in_progress" | "completed" | "completed_with_warnings" | "failed" | "skipped";
+  stages: PipelineStageRecord[];
+  driveFileUrl: string | null;
+  driveFolderId: string | null;
+  trusteeNotified: boolean;
+  errorMessage: string | null;
+  startedAt: string;
+  completedAt: string | null;
+  updatedAt: string;
+}
+
+interface IntakeFormSummary {
+  id: number;
+  patientName: string;
+  patientEmail: string;
+  status: string;
+  createdAt: string;
+}
+
+// ─── Pipeline Stage Indicator ─────────────────────────────────────────────────
+
+const STAGE_LABELS: Record<string, string> = {
+  intake: "Member Intake",
+  analysis: "DR_FORMULA Analysis",
+  assembly: "Protocol Assembly",
+  presentation: "Presentation & PDF",
+  delivery: "Drive Upload & Notify",
+};
+
+const STAGE_ORDER = ["intake", "analysis", "assembly", "presentation", "delivery"];
+
+function StageIcon({ status }: { status: string }) {
+  if (status === "completed") return <CheckCircle2 className="w-4 h-4 text-emerald-400" />;
+  if (status === "in_progress") return <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />;
+  if (status === "failed") return <XCircle className="w-4 h-4 text-red-400" />;
+  return <Clock className="w-4 h-4 text-white/30" />;
+}
+
+function PipelineRunCard({ run, onRetry }: { run: PipelineRun; onRetry?: (runId: string) => void }) {
+  const stages: PipelineStageRecord[] = Array.isArray(run.stages) ? run.stages : [];
+  const completedCount = stages.filter(s => s.status === "completed").length;
+  const progressPct = stages.length > 0 ? (completedCount / stages.length) * 100 : 0;
+
+  const overallColor =
+    run.overallStatus === "completed" ? "border-emerald-500/30 bg-emerald-500/5" :
+    run.overallStatus === "completed_with_warnings" ? "border-yellow-500/30 bg-yellow-500/5" :
+    run.overallStatus === "failed" ? "border-red-500/30 bg-red-500/5" :
+    run.overallStatus === "in_progress" ? "border-cyan-500/30 bg-cyan-500/5" :
+    "border-white/10 bg-white/5";
+
+  const statusBadge =
+    run.overallStatus === "completed" ? <Badge className="bg-emerald-500/20 text-emerald-300 text-xs">Completed</Badge> :
+    run.overallStatus === "completed_with_warnings" ? <Badge className="bg-yellow-500/20 text-yellow-300 text-xs">Completed (warnings)</Badge> :
+    run.overallStatus === "failed" ? <Badge className="bg-red-500/20 text-red-300 text-xs">Failed</Badge> :
+    run.overallStatus === "in_progress" ? <Badge className="bg-cyan-500/20 text-cyan-300 text-xs">Running</Badge> :
+    <Badge className="bg-white/10 text-white/50 text-xs">Pending</Badge>;
+
+  return (
+    <div className={`rounded-xl border p-4 ${overallColor} transition-colors`}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          {run.overallStatus === "in_progress" && <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />}
+          {run.overallStatus === "completed" && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+          {run.overallStatus === "completed_with_warnings" && <CheckCircle2 className="w-4 h-4 text-yellow-400" />}
+          {run.overallStatus === "failed" && <XCircle className="w-4 h-4 text-red-400" />}
+          {run.overallStatus === "pending" && <Clock className="w-4 h-4 text-white/40" />}
+          <span className="text-sm font-medium text-white/80">
+            Run {run.id.slice(0, 8)}…
+          </span>
+          {statusBadge}
+        </div>
+        <div className="flex items-center gap-2">
+          {run.driveFileUrl && (
+            <a href={run.driveFileUrl} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm" className="text-xs border-white/10 h-6 px-2">
+                <ExternalLink className="w-3 h-3 mr-1" />
+                Drive
+              </Button>
+            </a>
+          )}
+          {(run.overallStatus === "failed" || (run.overallStatus === "completed_with_warnings" && run.stages?.some(s => s.status === "failed"))) && onRetry && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onRetry(run.id)}
+              className="text-xs border-amber-500/30 text-amber-300 hover:bg-amber-500/10 h-6 px-2"
+            >
+              <RotateCcw className="w-3 h-3 mr-1" />
+              Retry Failed
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <Progress value={progressPct} className="h-1.5 mb-3" />
+
+      <div className="grid grid-cols-5 gap-1">
+        {STAGE_ORDER.map(stageName => {
+          const stageRecord = stages.find(s => s.stage === stageName);
+          const stageStatus = stageRecord?.status ?? "pending";
+          return (
+            <div key={stageName} className="text-center">
+              <div className="flex justify-center mb-1">
+                <StageIcon status={stageStatus} />
+              </div>
+              <p className="text-[9px] text-white/40 leading-tight">{STAGE_LABELS[stageName]}</p>
+              {stageStatus === "in_progress" && stageRecord?.estimatedSeconds && (
+                <p className="text-[8px] text-cyan-400/60 mt-0.5">~{stageRecord.estimatedSeconds}s</p>
+              )}
+              {stageRecord?.errorMessage && (
+                <p className="text-[8px] text-red-400 mt-0.5 truncate" title={stageRecord.errorMessage}>
+                  {stageRecord.errorMessage.slice(0, 20)}…
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {run.errorMessage && (
+        <div className="mt-3 p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+          <p className="text-xs text-red-300">{run.errorMessage}</p>
+        </div>
+      )}
+
+      {run.overallStatus === "in_progress" && (() => {
+        const remaining = stages
+          .filter(s => s.status === "pending" || s.status === "in_progress")
+          .reduce((acc, s) => acc + (s.estimatedSeconds ?? 0), 0);
+        return remaining > 0 ? (
+          <div className="mt-2 text-[9px] text-cyan-400/50">
+            Est. remaining: ~{remaining < 60 ? `${remaining}s` : `${Math.ceil(remaining / 60)}m`}
+          </div>
+        ) : null;
+      })()}
+
+      <div className="flex items-center gap-3 mt-3 text-[10px] text-white/30">
+        <span>Started: {new Date(run.startedAt).toLocaleString()}</span>
+        {run.completedAt && <span>Completed: {new Date(run.completedAt).toLocaleString()}</span>}
+        {run.initiatedBy && <span>By: {run.initiatedBy}</span>}
+      </div>
+    </div>
+  );
+}
+
+// ─── Generate Protocol Pipeline Section ──────────────────────────────────────
+
+function GenerateProtocolPipelineSection() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [sourceMode, setSourceMode] = useState<"transcript" | "intake">("transcript");
+  const [transcript, setTranscript] = useState("");
+  const [selectedIntakeId, setSelectedIntakeId] = useState<number | null>(null);
+  const [generateSlides, setGenerateSlides] = useState(true);
+  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const { data: pipelineRuns = [], refetch: refetchRuns } = useQuery<PipelineRun[]>({
+    queryKey: ["/api/pipeline"],
+    refetchInterval: activeRunId ? 3000 : false,
+  });
+
+  const { data: intakeForms = [] } = useQuery<IntakeFormSummary[]>({
+    queryKey: ["/api/protocol-assembly/intake-forms"],
+  });
+
+  // Poll the active run
+  const { data: activeRun } = useQuery<PipelineRun>({
+    queryKey: ["/api/pipeline", activeRunId],
+    enabled: !!activeRunId,
+    refetchInterval: activeRunId ? 3000 : false,
+  });
+
+  useEffect(() => {
+    const isTerminal =
+      activeRun?.overallStatus === "completed" ||
+      activeRun?.overallStatus === "completed_with_warnings" ||
+      activeRun?.overallStatus === "failed";
+
+    if (activeRun && isTerminal) {
+      setActiveRunId(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/pipeline"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/protocol-assembly/protocols"] });
+      if (activeRun.overallStatus === "completed") {
+        toast({ title: "Protocol Generated!", description: "The pipeline completed successfully. Trustee has been notified." });
+      } else if (activeRun.overallStatus === "completed_with_warnings") {
+        toast({
+          title: "Protocol Generated (with warnings)",
+          description: "The protocol was assembled but some delivery steps encountered issues. Check the run details.",
+          variant: "default",
+        });
+      } else {
+        toast({ title: "Pipeline Failed", description: activeRun.errorMessage ?? "An error occurred.", variant: "destructive" });
+      }
+    }
+  }, [activeRun]);
+
+  const startMutation = useMutation({
+    mutationFn: async () => {
+      const body: Record<string, any> = {
+        sourceType: sourceMode,
+        generateSlides,
+      };
+      if (sourceMode === "transcript") {
+        body.transcript = transcript;
+      } else {
+        body.intakeFormId = selectedIntakeId;
+      }
+      const res = await apiRequest("POST", "/api/pipeline/generate", body);
+      return res.json();
+    },
+    onSuccess: (data: { runId: string }) => {
+      setActiveRunId(data.runId);
+      setTranscript("");
+      setSelectedIntakeId(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/pipeline"] });
+      toast({ title: "Pipeline Started", description: `Run ${data.runId.slice(0, 8)} is now in progress.` });
+    },
+    onError: (err: any) => {
+      toast({ title: "Failed to start pipeline", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const retryMutation = useMutation({
+    mutationFn: async (runId: string) => {
+      const res = await apiRequest("POST", `/api/pipeline/${runId}/retry`, { generateSlides: true });
+      return res.json();
+    },
+    onSuccess: (data: { runId: string }) => {
+      setActiveRunId(data.runId);
+      queryClient.invalidateQueries({ queryKey: ["/api/pipeline"] });
+      toast({ title: "Retrying Pipeline", description: `New run ${data.runId.slice(0, 8)} started.` });
+    },
+  });
+
+  const canStart =
+    !startMutation.isPending &&
+    !activeRunId &&
+    (sourceMode === "transcript" ? transcript.trim().length > 0 : !!selectedIntakeId);
+
+  return (
+    <Card className="bg-gradient-to-br from-violet-500/5 to-purple-500/5 border-violet-500/20 p-5">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="p-2 rounded-xl bg-violet-500/20 border border-violet-500/30">
+          <Zap className="w-5 h-5 text-violet-400" />
+        </div>
+        <div>
+          <h3 className="font-bold text-lg text-white">Generate Protocol — Full Pipeline</h3>
+          <p className="text-xs text-white/50">One-click: intake → DR_FORMULA analysis → 90-day protocol → slides → Drive upload → Trustee review</p>
+        </div>
+      </div>
+
+      {/* Source mode toggle */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setSourceMode("transcript")}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+            sourceMode === "transcript"
+              ? "bg-violet-500/20 text-violet-300 border border-violet-500/40"
+              : "bg-white/5 text-white/50 border border-white/10 hover:text-white"
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          From Transcript
+        </button>
+        <button
+          onClick={() => setSourceMode("intake")}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+            sourceMode === "intake"
+              ? "bg-violet-500/20 text-violet-300 border border-violet-500/40"
+              : "bg-white/5 text-white/50 border border-white/10 hover:text-white"
+          }`}
+        >
+          <ClipboardList className="w-4 h-4" />
+          From Intake Form
+        </button>
+      </div>
+
+      {sourceMode === "transcript" ? (
+        <textarea
+          value={transcript}
+          onChange={e => setTranscript(e.target.value)}
+          placeholder="Paste the full member consultation transcript here…"
+          rows={5}
+          className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-violet-500/50 resize-none text-sm font-mono mb-4"
+        />
+      ) : (
+        <div className="mb-4 space-y-2 max-h-48 overflow-y-auto pr-1">
+          {intakeForms.length === 0 ? (
+            <p className="text-sm text-white/40 py-4 text-center">No intake forms available. Have members complete the intake form first.</p>
+          ) : intakeForms.map(form => (
+            <button
+              key={form.id}
+              onClick={() => setSelectedIntakeId(form.id)}
+              className={`w-full text-left p-3 rounded-lg border transition-all text-sm ${
+                selectedIntakeId === form.id
+                  ? "bg-violet-500/15 border-violet-500/40"
+                  : "bg-white/5 border-white/10 hover:bg-white/10"
+              }`}
+            >
+              <span className="font-medium text-white">{form.patientName}</span>
+              <span className="text-white/40 ml-3 text-xs">{form.patientEmail}</span>
+              <Badge className={`ml-2 text-[10px] ${form.status === "submitted" ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400"}`}>
+                {form.status}
+              </Badge>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="flex items-center justify-between">
+        <label className="flex items-center gap-2 cursor-pointer text-sm text-white/70">
+          <input
+            type="checkbox"
+            checked={generateSlides}
+            onChange={e => setGenerateSlides(e.target.checked)}
+            className="w-4 h-4 rounded border-white/20 bg-white/5 text-violet-500 focus:ring-violet-500/50"
+          />
+          <Video className="w-4 h-4 text-white/40" />
+          Auto-generate Google Slides
+        </label>
+
+        <Button
+          onClick={() => startMutation.mutate()}
+          disabled={!canStart}
+          className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white px-6 shadow-lg shadow-violet-500/20"
+        >
+          {startMutation.isPending || !!activeRunId ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Running…
+            </>
+          ) : (
+            <>
+              <PlayCircle className="w-4 h-4 mr-2" />
+              Generate Protocol
+            </>
+          )}
+        </Button>
+      </div>
+
+      {/* Active run progress */}
+      {activeRun && (
+        <div className="mt-4">
+          <p className="text-xs text-white/50 mb-2">Active Pipeline Run</p>
+          <PipelineRunCard run={activeRun} />
+        </div>
+      )}
+
+      {/* Recent runs */}
+      {pipelineRuns.length > 0 && (
+        <div className="mt-5">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium text-white/60">Recent Pipeline Runs</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => refetchRuns()}
+              className="text-white/40 hover:text-white/70 text-xs h-6"
+            >
+              <RefreshCw className="w-3 h-3 mr-1" />
+              Refresh
+            </Button>
+          </div>
+          <div className="space-y-3">
+            {pipelineRuns.slice(0, 5).map(run => (
+              <PipelineRunCard
+                key={run.id}
+                run={run}
+                onRetry={runId => retryMutation.mutate(runId)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </Card>
+  );
 }
 
 function AssignedProtocolsSection() {
@@ -1182,6 +1588,8 @@ export default function DoctorsPortal() {
             </TabsContent>
 
             <TabsContent value="protocols" className="space-y-6">
+              <GenerateProtocolPipelineSection />
+
               <AssignedProtocolsSection />
 
               {/* Active Member Protocols */}

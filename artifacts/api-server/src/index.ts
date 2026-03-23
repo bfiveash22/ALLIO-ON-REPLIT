@@ -211,6 +211,8 @@ app.use(requestLogger);
   registerFrequencyRoutes(app);
   const { registerProtocolAssemblyRoutes } = await import("./routes/protocol-assembly-routes");
   await registerProtocolAssemblyRoutes(app);
+  const { registerPipelineRoutes } = await import("./routes/pipeline-routes");
+  registerPipelineRoutes(app);
   const { registerVitalityRoutes } = await import("./routes/vitality-routes");
   registerVitalityRoutes(app);
   const { registerAutomationRoutes } = await import("./routes/automation-routes");

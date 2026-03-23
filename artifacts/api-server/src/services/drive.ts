@@ -1605,6 +1605,54 @@ export async function createPatientProtocolsFolder(): Promise<{
   }
 }
 
+/**
+ * Upload a protocol PDF to a specific, known Drive folder ID.
+ * Use this when placing files in a member-specific subfolder.
+ */
+export async function uploadProtocolToFolder(
+  pdfBuffer: Buffer,
+  fileName: string,
+  folderId: string,
+  mimeType: string = 'application/pdf'
+): Promise<{
+  success: boolean;
+  fileId?: string;
+  webViewLink?: string;
+  error?: string;
+}> {
+  try {
+    if (process.env.GOOGLE_REFRESH_TOKEN === 'dummy-local-token') {
+      console.error(`[Drive] ERROR: Google Drive not configured. Cannot upload "${fileName}".`);
+      return { success: false, error: 'Google Drive not configured' };
+    }
+
+    const drive = await getUncachableGoogleDriveClient();
+    const { Readable } = await import('stream');
+
+    const file = await drive.files.create({
+      requestBody: {
+        name: fileName,
+        parents: [folderId],
+        mimeType,
+      },
+      media: {
+        mimeType,
+        body: Readable.from(pdfBuffer),
+      },
+      fields: 'id, name, webViewLink',
+    });
+
+    return {
+      success: true,
+      fileId: file.data.id || undefined,
+      webViewLink: file.data.webViewLink || undefined,
+    };
+  } catch (error: any) {
+    console.error(`Error uploading protocol to folder ${folderId}:`, error);
+    return { success: false, error: error.message || 'Upload failed' };
+  }
+}
+
 export async function uploadProtocolToDrive(
   pdfBuffer: Buffer,
   fileName: string,

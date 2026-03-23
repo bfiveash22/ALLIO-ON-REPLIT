@@ -2659,3 +2659,54 @@ export const insertDoctorProspectSchema = createInsertSchema(doctorProspects).om
 });
 export type InsertDoctorProspect = z.infer<typeof insertDoctorProspectSchema>;
 export type DoctorProspect = typeof doctorProspects.$inferSelect;
+
+// ─── Protocol Pipeline ────────────────────────────────────────────────────────
+
+export const pipelineStageEnum = pgEnum("pipeline_stage", [
+  "intake",
+  "analysis",
+  "assembly",
+  "presentation",
+  "delivery",
+]);
+
+export const pipelineStatusEnum = pgEnum("pipeline_status", [
+  "pending",
+  "in_progress",
+  "completed",
+  "completed_with_warnings",
+  "failed",
+  "skipped",
+]);
+
+export const pipelineRuns = pgTable("pipeline_runs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  protocolId: integer("protocol_id"),
+  intakeFormId: integer("intake_form_id"),
+  memberId: varchar("member_id"),
+  doctorId: varchar("doctor_id"),
+  initiatedBy: varchar("initiated_by"),
+  currentStage: pipelineStageEnum("current_stage").default("intake"),
+  overallStatus: pipelineStatusEnum("overall_status").default("pending"),
+  stages: jsonb("stages").$type<PipelineStageRecord[]>().default([]),
+  driveFileUrl: varchar("drive_file_url"),
+  driveFolderId: varchar("drive_folder_id"),
+  trusteeNotified: boolean("trustee_notified").default(false),
+  errorMessage: text("error_message"),
+  startedAt: timestamp("started_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export interface PipelineStageRecord {
+  stage: "intake" | "analysis" | "assembly" | "presentation" | "delivery";
+  status: "pending" | "in_progress" | "completed" | "failed" | "skipped";
+  startedAt?: string;
+  completedAt?: string;
+  errorMessage?: string;
+  outputUrl?: string;
+  estimatedSeconds?: number;
+}
+
+export type PipelineRun = typeof pipelineRuns.$inferSelect;
+export type InsertPipelineRun = typeof pipelineRuns.$inferInsert;
