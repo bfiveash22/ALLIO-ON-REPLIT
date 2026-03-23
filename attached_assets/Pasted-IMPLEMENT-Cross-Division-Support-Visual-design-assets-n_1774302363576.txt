@@ -1,0 +1,34 @@
+IMPLEMENT] Cross-Division Support: Visual/design assets needed
+
+pending
+AUTO-ROUTED: Review and implement output from sentinel. Original Task: Cross-Division Support: Visual/design assets needed Original Description: CROSS-DIVISION SUPPORT REQUEST Requesting Agent: ANTIGRAVITY Requesting Division: engineering Original Task: [IMPLEMENT] Technical Review: Cross-Division Support: Video production support needed Requirement: Visual/design assets needed Please provide the requested support and upload to your output folder. The requesting agent's task will be updated with the asset link upon completion. This is cross-division support for ANTIGRAVITY Output URL: https://docs.google.com/document/d/1RVztrGHlghhag1QBF20-0yQBDnxDE2KU0Og6ctACiRw/edit?usp=drivesdk Drive File ID: 1RVztrGHlghhag1QBF20-0yQBDnxDE2KU0Og6ctACiRw Source Task ID: 5b9e4aae-d32b-4a11-853d-29e7aae12f7e Action Required: Review the generated artifact and natively implement any code, assets, or configurations into the platform.
+
+ANTIGRAVITY • engineering
+
+Review & Learn PMA Principles Law Reference Manual
+
+pending
+PRIORITY LEARNING ASSIGNMENT Document: ForgottenFormula PMA Principles Law Reference Manual 2024 (173 pages) OBJECTIVES: 1. Review the complete PMA Principles & Law Reference Manual 2. Extract key legal principles relevant to PMA operations 3. Identify case law precedents that support PMA structure 4. Create compliance checklists for member protection 5. Prepare internal guidance documents for team KEY AREAS TO FOCUS: - Common Law vs Civil Law distinctions - 14th Amendment protections - State action doctrine - Supremacy Clause implications - Freedom of contract principles - U.S. v. Caldwell precedent DELIVERABLES: - Summary brief of key legal principles (2-3 pages) - Compliance checklist for PMA operations - Training notes for staff education - Legal FAQ for member inquiries DEADLINE: Within 7 days PRIORITY: High Report findings to ATHENA upon completion. [SENTINEL AUTO-RESET: Task was stuck in_progress for over 2 hours at 2026-03-23T21:42:43.422Z]
+
+JURIS • legal
+
+Review & Learn PMA Principles Law Reference Manual
+
+in_progress
+PRIORITY LEARNING ASSIGNMENT Document: ForgottenFormula PMA Principles Law Reference Manual 2024 (173 pages) OBJECTIVES: 1. Review the complete PMA Principles & Law Reference Manual 2. Extract key legal principles relevant to PMA operations 3. Identify case law precedents that support PMA structure 4. Create compliance checklists for member protection 5. Prepare internal guidance documents for team KEY AREAS TO FOCUS: - Common Law vs Civil Law distinctions - 14th Amendment protections - State action doctrine - Supremacy Clause implications - Freedom of contract principles - U.S. v. Caldwell precedent DELIVERABLES: - Summary brief of key legal principles (2-3 pages) - Compliance checklist for PMA operations - Training notes for staff education - Legal FAQ for member inquiries DEADLINE: Within 7 days PRIORITY: High Report findings to ATHENA upon completion.
+
+JURIS • legal
+
+Bring PMA Law Training to Life - Create Engaging Content
+
+in_progress
+CREATIVE BRIEF: PMA Law Education Campaign OBJECTIVE: Transform the PMA Principles & Law Reference Manual into engaging, accessible content for members. BRAND VOICE: - Empowering and educational - Professional but approachable - Trust-building and reassuring - ALLIO unified healing energy DELIVERABLES REQUESTED: 1. VIDEO CONTENT (assign to PRISM): - 3-5 minute animated explainer: "Your Rights Under Common Law" - Member testimonial compilation on PMA benefits - Brief legal concept videos for each training module 2. VISUAL ASSETS (assign to PEXEL): - Infographic series: "Common Law vs Civil Law" - Social media graphics (carousel format) - Training module cover images - Quote cards from key case law 3. WRITTEN CONTENT: - Member newsletter article - Blog post series (3-4 articles) - Email campaign for training launch - FAQ document in plain language 4. INTERACTIVE ELEMENTS: - Quiz questions for training modules - Discussion prompts for community - Knowledge check assessments TARGET AUDIENCE: PMA Members, New Signups, Health Practitioners TIMELINE: - Phase 1 (Week 1): Visual assets and infographics - Phase 2 (Week 2): Video production begins - Phase 3 (Week 3): Written content and launch Coordinate with Legal (JURIS) for accuracy review before publishing. PRIORITY: High Report progress to ATHENA weekly.
+
+MUSE • marketing
+
+Review & Learn PMA Principles Law Reference Manual
+
+in_progress
+PRIORITY LEARNING ASSIGNMENT Document: ForgottenFormula PMA Principles Law Reference Manual 2024 (173 pages) OBJECTIVES: 1. Review the complete PMA Principles & Law Reference Manual 2. Extract key legal principles relevant to PMA operations 3. Identify case law precedents that support PMA structure 4. Create compliance checklists for member protection 5. Prepare internal guidance documents for team KEY AREAS TO FOCUS: - Common Law vs Civil Law distinctions - 14th Amendment protections - State action doctrine - Supremacy Clause implications - Freedom of contract principles - U.S. v. Caldwell precedent DELIVERABLES: - Summary brief of key legal principles (2-3 pages) - Compliance checklist for PMA operations - Training notes for staff education - Legal FAQ for member inquiries DEADLINE: Within 7 days PRIORITY: High Report findings to ATHENA upon completion.
+
+JURIS • legal

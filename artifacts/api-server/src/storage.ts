@@ -300,6 +300,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAgentTask(task: InsertAgentTask): Promise<AgentTask> {
+    const existingDupe = await db.select({ id: agentTasks.id }).from(agentTasks)
+      .where(
+        sql`LOWER(agent_id) = LOWER(${task.agentId})
+            AND LOWER(TRIM(title)) = LOWER(TRIM(${task.title}))
+            AND status IN ('pending', 'in_progress')`
+      )
+      .limit(1);
+    if (existingDupe.length > 0) {
+      console.log(`[Storage] Blocked duplicate task: ${task.agentId} / "${task.title}" (existing: ${existingDupe[0].id})`);
+      const [existing] = await db.select().from(agentTasks).where(eq(agentTasks.id, existingDupe[0].id));
+      return existing;
+    }
     const [newTask] = await db.insert(agentTasks).values(task).returning();
     return newTask;
   }

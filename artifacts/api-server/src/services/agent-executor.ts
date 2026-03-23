@@ -44,6 +44,17 @@ async function routeToAntigravity(
   if (!outputUrl && !outputDriveFileId) return;
 
   try {
+    const implementTitle = `[IMPLEMENT] ${taskTitle}`;
+    const allTasks = await storage.getAllAgentTasks();
+    const alreadyExists = allTasks.some(t =>
+      t.agentId.toLowerCase() === 'antigravity' &&
+      t.title.toLowerCase().trim() === implementTitle.toLowerCase().trim()
+    );
+    if (alreadyExists) {
+      console.log(`[Agent Executor] ANTIGRAVITY already has task "${implementTitle}", skipping duplicate route`);
+      return;
+    }
+
     const implementationDescription = [
       `AUTO-ROUTED: Review and implement output from ${completedAgentId}.`,
       `Original Task: ${taskTitle}`,
@@ -57,7 +68,7 @@ async function routeToAntigravity(
     await storage.createAgentTask({
       agentId: 'antigravity',
       division: 'engineering',
-      title: `[IMPLEMENT] ${taskTitle}`,
+      title: implementTitle,
       description: implementationDescription,
       priority: 1,
       status: 'pending',
