@@ -32,6 +32,45 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
 
+async function routeToAntigravity(
+  completedTaskId: string,
+  completedAgentId: string,
+  taskTitle: string,
+  taskDescription: string | null,
+  outputUrl?: string,
+  outputDriveFileId?: string
+): Promise<void> {
+  if (completedAgentId.toLowerCase() === 'antigravity') return;
+  if (!outputUrl && !outputDriveFileId) return;
+
+  try {
+    const implementationDescription = [
+      `AUTO-ROUTED: Review and implement output from ${completedAgentId}.`,
+      `Original Task: ${taskTitle}`,
+      taskDescription ? `Original Description: ${taskDescription}` : null,
+      outputUrl ? `Output URL: ${outputUrl}` : null,
+      outputDriveFileId ? `Drive File ID: ${outputDriveFileId}` : null,
+      `Source Task ID: ${completedTaskId}`,
+      `Action Required: Review the generated artifact and natively implement any code, assets, or configurations into the platform.`,
+    ].filter(Boolean).join('\n');
+
+    await storage.createAgentTask({
+      agentId: 'antigravity',
+      division: 'engineering',
+      title: `[IMPLEMENT] ${taskTitle}`,
+      description: implementationDescription,
+      priority: 1,
+      status: 'pending',
+      parentTaskId: completedTaskId,
+      assignedBy: completedAgentId,
+    });
+
+    console.log(`[Agent Executor] Auto-routed implementation task to ANTIGRAVITY for: ${taskTitle}`);
+  } catch (err: any) {
+    console.error(`[Agent Executor] Failed to route task to ANTIGRAVITY:`, err.message);
+  }
+}
+
 async function notifyTrustees(title: string, message: string, metadata?: Record<string, unknown>): Promise<void> {
   try {
     const admins = await db.select({ userId: memberProfiles.userId })
@@ -698,6 +737,8 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
         outputDriveFileId: uploadResult?.id,
       });
 
+      await routeToAntigravity(taskId, agentId, task.title, task.description || null, result.outputUrl, uploadResult?.id);
+
       return {
         success: true,
         outputUrl: result.outputUrl,
@@ -746,6 +787,8 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
         outputUrl: labResult.resultUrl,
         outputDriveFileId: uploadResult?.id,
       });
+
+      await routeToAntigravity(taskId, agentId, task.title, task.description || null, labResult.resultUrl || undefined, uploadResult?.id);
 
       return {
         success: true,
@@ -818,7 +861,9 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
   
         await sentinel.notifyTaskCompleted(agentId, division, task.title, uploadResult.webViewLink, taskId);
         notifyTrustees(`Agent Task Completed: ${agentId}`, `${task.title} has been completed by the ${division} division.`, { taskId, outputUrl: uploadResult.webViewLink });
-  
+
+        await routeToAntigravity(taskId, agentId, task.title, task.description || null, uploadResult.webViewLink, uploadResult.id);
+
         return {
           success: true,
           outputUrl: uploadResult.webViewLink,
@@ -861,11 +906,14 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
     console.log(`[Agent Executor] Uploaded to Drive: ${uploadResult.webViewLink}`);
 
     await storage.updateAgentTask(taskId, {
-      status: 'in_progress',
+      status: 'completed',
       progress: 100,
       outputUrl: uploadResult.webViewLink,
       outputDriveFileId: uploadResult.id,
+      completedAt: new Date(),
     });
+
+    await routeToAntigravity(taskId, agentId, task.title, task.description || null, uploadResult.webViewLink, uploadResult.id);
 
     return {
       success: true,
