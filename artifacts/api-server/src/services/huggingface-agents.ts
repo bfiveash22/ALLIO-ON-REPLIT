@@ -29,203 +29,254 @@ Your capabilities:
 
 Remember: We demonstrate effective AI-human collaboration for true healing, free from corporate pharmaceutical influence.`,
 
-  legal: `You are ALLIO's Legal Division Agent, ensuring compliance and protection for the PMA structure.
+  legal: `You are ALLIO's Legal Division Agent, specializing in PMA (Private Member Association) compliance, member agreements, and regulatory navigation.
 
 Your capabilities:
-- Private Membership Association compliance guidance
-- Document review and contract analysis
-- Regulatory awareness for health-related content
-- Member rights and privacy protection
+- PMA formation and compliance guidance
+- Member agreement drafting and review
+- Regulatory landscape analysis
+- Privacy and data protection strategy
 
-Always prioritize member protection while enabling the healing mission.`,
+Always remember: FFPMA operates as a private member association. Our communications are private, member-to-member.`,
 
-  training: `You are ALLIO's Training Division Agent, focused on educational content and certification programs.
+  training: `You are ALLIO's Training Division Agent, creating educational content about ECS, peptides, frequency healing, and holistic health.
 
 Your capabilities:
-- Live Blood Analysis certification curriculum
-- Peptide protocol training modules
-- ECS education program development
+- Curriculum development for healing modalities
 - Quiz and assessment creation
-- Learning path optimization
+- Learning pathway design
+- Certification program management
 
-Make complex medical concepts accessible while maintaining clinical accuracy.`
+Make complex healing science accessible and engaging.`,
+
+  medical: `You are ALLIO's Medical Division Agent, supporting practitioners with evidence-based healing protocols.
+
+Your capabilities:
+- Protocol development and optimization
+- Research synthesis for healing modalities
+- Drug interaction and safety analysis
+- Evidence assessment for healing approaches
+
+Always prioritize member safety and evidence-based recommendations.`
 };
 
-export interface AgentRequest {
-  division: 'research' | 'marketing' | 'legal' | 'training';
-  query: string;
-  context?: string;
-  previousMessages?: Array<{role: 'user' | 'assistant'; content: string}>;
-}
-
 export interface AgentResponse {
-  response: string;
-  division: string;
-  modelUsed: string;
-  suggestedActions?: string[];
-  relatedDivisions?: string[];
+  content: string;
+  model: string;
+  tokens?: number;
 }
 
-async function callAgent(
-  systemPrompt: string,
-  userMessage: string,
+// Main agent query function
+export async function queryAgent(
+  division: string,
+  prompt: string,
   context?: string
-): Promise<{text: string; modelUsed: string}> {
-  const fullPrompt = context 
-    ? `${systemPrompt}\n\n## Context\n${context}\n\n## User Query\n${userMessage}`
-    : `${systemPrompt}\n\n## User Query\n${userMessage}`;
+): Promise<AgentResponse> {
+  const systemPrompt = DIVISION_PROMPTS[division] || DIVISION_PROMPTS.research;
+  const fullPrompt = context
+    ? `${systemPrompt}\n\nContext:\n${context}\n\nUser Query:\n${prompt}`
+    : `${systemPrompt}\n\nUser Query:\n${prompt}`;
 
   let modelUsed = KIMI_K2_MODEL;
 
   try {
-    const result = await hf.textGeneration({
+    const response = await hf.textGeneration({
       model: KIMI_K2_MODEL,
       inputs: fullPrompt,
       parameters: {
-        max_new_tokens: 1024,
+        max_new_tokens: 2048,
         temperature: 0.7,
         top_p: 0.9,
         return_full_text: false
       }
     });
-    return { text: result.generated_text, modelUsed };
-  } catch (primaryError: any) {
-    console.log(`[HF Agent] Kimi K2 unavailable: ${primaryError.message}, using fallback...`);
-    
+
+    return {
+      content: response.generated_text,
+      model: modelUsed,
+    };
+  } catch (primaryError) {
+    console.log(`[HF Agent] Kimi K2 failed, trying fallback: ${primaryError}`);
+    modelUsed = FALLBACK_AGENT_MODEL;
+
     try {
-      modelUsed = FALLBACK_AGENT_MODEL;
-      const result = await hf.textGeneration({
+      const fallbackResponse = await hf.textGeneration({
         model: FALLBACK_AGENT_MODEL,
         inputs: fullPrompt,
         parameters: {
-          max_new_tokens: 1024,
+          max_new_tokens: 2048,
           temperature: 0.7,
           top_p: 0.9,
           return_full_text: false
         }
       });
-      return { text: result.generated_text, modelUsed };
-    } catch (fallbackError: any) {
-      throw new Error(`Agent service unavailable: ${fallbackError.message}`);
+
+      return {
+        content: fallbackResponse.generated_text,
+        model: modelUsed,
+      };
+    } catch (fallbackError) {
+      throw new Error(`All agent models unavailable. Primary: ${primaryError}, Fallback: ${fallbackError}`);
     }
   }
 }
 
-// Parse response for suggested actions and related divisions
-function parseAgentResponse(text: string, currentDivision: string): Partial<AgentResponse> {
-  const suggestedActions: string[] = [];
-  const relatedDivisions: string[] = [];
+// Division-specific research queries
+export async function researchQuery(topic: string, depth: 'brief' | 'detailed' = 'detailed'): Promise<AgentResponse> {
+  const prompt = depth === 'brief'
+    ? `Provide a brief, focused summary on: ${topic}`
+    : `Provide a comprehensive, detailed analysis on: ${topic}. Include:
+1. Current scientific understanding
+2. Historical context and evolution
+3. Practical applications
+4. Future implications
+5. Relevant research and citations`;
 
-  // Extract action items
-  const actionPatterns = [
-    /(?:recommend|suggest|should|next step|action)[:\s]+([^.]+)/gi,
-    /(?:\d+\.\s*)([A-Z][^.]+(?:review|create|develop|implement|analyze)[^.]*)/g
-  ];
-
-  actionPatterns.forEach(pattern => {
-    let match;
-    while ((match = pattern.exec(text)) !== null) {
-      const action = match[1]?.trim();
-      if (action && action.length > 10 && action.length < 150) {
-        suggestedActions.push(action);
-      }
-    }
-  });
-
-  // Detect references to other divisions
-  const divisionMentions = {
-    marketing: /marketing|campaign|brand|content|audience/i,
-    legal: /legal|compliance|regulation|contract|privacy/i,
-    training: /training|education|certification|course|module/i,
-    research: /research|analysis|study|data|insight/i
-  };
-
-  Object.entries(divisionMentions).forEach(([div, pattern]) => {
-    if (div !== currentDivision && pattern.test(text)) {
-      relatedDivisions.push(div);
-    }
-  });
-
-  return {
-    suggestedActions: Array.from(new Set(suggestedActions)).slice(0, 5),
-    relatedDivisions: Array.from(new Set(relatedDivisions))
-  };
+  return queryAgent('research', prompt);
 }
 
-export async function queryAgent(request: AgentRequest): Promise<AgentResponse> {
-  const systemPrompt = DIVISION_PROMPTS[request.division] || DIVISION_PROMPTS.research;
-  
-  const { text, modelUsed } = await callAgent(
-    systemPrompt,
-    request.query,
-    request.context
+// Marketing content generation
+export async function generateMarketingContent(
+  type: 'blog' | 'social' | 'email' | 'landing',
+  topic: string,
+  audience: string = 'members'
+): Promise<AgentResponse> {
+  const typePrompts: Record<string, string> = {
+    blog: `Write a compelling blog post for PMA ${audience} about: ${topic}`,
+    social: `Create engaging social media content for PMA ${audience} about: ${topic}`,
+    email: `Draft a professional email campaign for PMA ${audience} about: ${topic}`,
+    landing: `Write landing page copy for PMA ${audience} about: ${topic}`
+  };
+
+  return queryAgent('marketing', typePrompts[type] || typePrompts.blog);
+}
+
+// Legal document assistance
+export async function legalAnalysis(
+  documentType: string,
+  question: string
+): Promise<AgentResponse> {
+  const prompt = `Regarding a ${documentType}: ${question}
+
+Remember to frame all guidance within the PMA structure and member-to-member communication framework.`;
+
+  return queryAgent('legal', prompt);
+}
+
+// Training content generation
+export async function generateTrainingContent(
+  module: string,
+  topic: string,
+  format: 'lesson' | 'quiz' | 'summary' = 'lesson'
+): Promise<AgentResponse> {
+  const formatPrompts: Record<string, string> = {
+    lesson: `Create a comprehensive training lesson for module "${module}" on: ${topic}`,
+    quiz: `Generate assessment questions for module "${module}" on: ${topic}. Include multiple choice and short answer.`,
+    summary: `Create a concise summary/cheat sheet for module "${module}" on: ${topic}`
+  };
+
+  return queryAgent('training', formatPrompts[format]);
+}
+
+// Medical protocol assistance
+export async function medicalProtocolAssist(
+  condition: string,
+  approach: string = 'holistic'
+): Promise<AgentResponse> {
+  const prompt = `Develop a ${approach} protocol framework for: ${condition}
+
+Include:
+1. Root cause analysis considerations
+2. Recommended assessments
+3. Protocol components (supplements, lifestyle, frequency therapy if applicable)
+4. Monitoring and adjustment guidelines
+5. Safety considerations and contraindications
+
+Remember: This is for practitioner guidance within our PMA framework, not public medical advice.`;
+
+  return queryAgent('medical', prompt);
+}
+
+// Multi-agent synthesis - queries multiple divisions and combines insights
+export async function multiAgentSynthesis(
+  topic: string,
+  divisions: string[] = ['research', 'medical', 'legal']
+): Promise<{ synthesis: string; individualResponses: Record<string, AgentResponse> }> {
+  const responses: Record<string, AgentResponse> = {};
+
+  for (const division of divisions) {
+    try {
+      responses[division] = await queryAgent(division, `Provide your division's perspective on: ${topic}`);
+    } catch (e) {
+      responses[division] = { content: `[${division} division unavailable]`, model: 'none' };
+    }
+  }
+
+  const combinedContext = Object.entries(responses)
+    .map(([div, resp]) => `${div.toUpperCase()} DIVISION:\n${resp.content}`)
+    .join('\n\n---\n\n');
+
+  const synthesis = await queryAgent('research',
+    `Synthesize these multi-division perspectives into a unified analysis and recommendation:`,
+    combinedContext
   );
 
-  const parsed = parseAgentResponse(text, request.division);
-
   return {
-    response: text,
-    division: request.division,
-    modelUsed,
-    ...parsed
+    synthesis: synthesis.content,
+    individualResponses: responses
   };
 }
 
-// Cross-divisional query that synthesizes across multiple agents
+// Cross-divisional query alias
 export async function crossDivisionalQuery(
   query: string,
-  divisions: Array<'research' | 'marketing' | 'legal' | 'training'> = ['research', 'marketing', 'legal', 'training']
-): Promise<{
-  synthesis: string;
-  divisionResponses: Record<string, AgentResponse>;
-  modelUsed: string;
-}> {
-  // Query each division in parallel
-  const responses = await Promise.all(
-    divisions.map(div => queryAgent({ division: div, query }))
-  );
-
-  const divisionResponses: Record<string, AgentResponse> = {};
-  responses.forEach((resp, idx) => {
-    divisionResponses[divisions[idx]] = resp;
-  });
-
-  // Synthesize responses using research agent
-  const synthesisContext = Object.entries(divisionResponses)
-    .map(([div, resp]) => `## ${div.toUpperCase()} Division Input\n${resp.response}`)
-    .join('\n\n');
-
-  const synthesisPrompt = `Based on the following multi-divisional analysis, provide a unified strategic synthesis:
-
-${synthesisContext}
-
-Please provide:
-1. Key insights from each division
-2. Areas of alignment or conflict
-3. Recommended unified approach
-4. Priority actions`;
-
-  const { text, modelUsed } = await callAgent(
-    DIVISION_PROMPTS.research,
-    synthesisPrompt
-  );
-
-  return {
-    synthesis: text,
-    divisionResponses,
-    modelUsed
-  };
+  divisions: string[] = ['research', 'medical', 'legal']
+): Promise<{ synthesis: string; individualResponses: Record<string, AgentResponse> }> {
+  return multiAgentSynthesis(query, divisions);
 }
 
-// Check agent availability
+// Check agent availability across all providers (OpenAI, Gemini, HuggingFace)
 export async function checkAgentStatus(): Promise<{
   available: boolean;
   primaryModel: string;
   fallbackModel: string;
   status: string;
+  providers: Record<string, boolean>;
 }> {
-  let primaryAvailable = false;
-  let fallbackAvailable = false;
+  const providers: Record<string, boolean> = {
+    openai: false,
+    gemini: false,
+    huggingface_kimi: false,
+    huggingface_mistral: false,
+  };
+
+  try {
+    if (process.env.OPENAI_API_KEY) {
+      const { default: OpenAI } = await import('openai');
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const resp = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: 'ping' }],
+        max_tokens: 1,
+      });
+      if (resp.choices?.length > 0) providers.openai = true;
+    }
+  } catch (e) {
+    console.log('[Agent Status] OpenAI not available');
+  }
+
+  try {
+    if (process.env.GOOGLE_GEMINI_API_KEY) {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GOOGLE_GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: 'ping' }] }], generationConfig: { maxOutputTokens: 1 } }),
+      });
+      if (resp.ok) providers.gemini = true;
+    }
+  } catch (e) {
+    console.log('[Agent Status] Gemini not available');
+  }
 
   try {
     await hf.textGeneration({
@@ -233,9 +284,9 @@ export async function checkAgentStatus(): Promise<{
       inputs: "Hello",
       parameters: { max_new_tokens: 5 }
     });
-    primaryAvailable = true;
+    providers.huggingface_kimi = true;
   } catch (e) {
-    console.log('[HF Agent] Kimi K2 not available');
+    console.log('[Agent Status] Kimi K2 not available');
   }
 
   try {
@@ -244,19 +295,26 @@ export async function checkAgentStatus(): Promise<{
       inputs: "Hello",
       parameters: { max_new_tokens: 5 }
     });
-    fallbackAvailable = true;
+    providers.huggingface_mistral = true;
   } catch (e) {
-    console.log('[HF Agent] Fallback agent not available');
+    console.log('[Agent Status] Mistral fallback not available');
   }
 
+  const coreOnline = providers.openai || providers.gemini;
+  const hfOnline = providers.huggingface_kimi || providers.huggingface_mistral;
+
+  const onlineProviders = Object.entries(providers).filter(([, v]) => v).map(([k]) => k);
+  const statusMsg = coreOnline
+    ? `Agent system online (${onlineProviders.join(', ')})`
+    : hfOnline
+      ? `Agent system degraded - HuggingFace only (${onlineProviders.join(', ')})`
+      : 'Agent system offline';
+
   return {
-    available: primaryAvailable || fallbackAvailable,
+    available: coreOnline || hfOnline,
     primaryModel: KIMI_K2_MODEL,
     fallbackModel: FALLBACK_AGENT_MODEL,
-    status: primaryAvailable 
-      ? 'Agent system online (Kimi K2)'
-      : fallbackAvailable 
-        ? 'Agent system online (Mistral fallback)'
-        : 'Agent system offline'
+    status: statusMsg,
+    providers,
   };
 }

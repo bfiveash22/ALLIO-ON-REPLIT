@@ -296,7 +296,7 @@ export function registerAgentRoutes(app: Express): void {
       }
 
       const { queryAgent } = await import("../services/huggingface-agents");
-      const result = await queryAgent(parsed.data);
+      const result = await queryAgent(parsed.data.division, parsed.data.query, parsed.data.context);
       res.json(result);
     } catch (error: any) {
       console.error("[Agent Query] Error:", error.message);
@@ -573,8 +573,8 @@ export function registerAgentRoutes(app: Express): void {
           timestamp: new Date().toISOString()
         },
         synthesis: synthesis.synthesis,
-        divisionResponses: synthesis.divisionResponses,
-        modelUsed: synthesis.modelUsed
+        divisionResponses: synthesis.individualResponses,
+        modelUsed: Object.values(synthesis.individualResponses).find(r => r.model !== 'none')?.model || 'unknown'
       });
     } catch (error: any) {
       console.error("[Cross-Division] Handoff error:", error);
