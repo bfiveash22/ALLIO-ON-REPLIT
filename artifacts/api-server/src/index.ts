@@ -111,6 +111,7 @@ app.use('/api/doctor', readRateLimiter);
 app.use('/api/settings', writeRateLimiter);
 app.use('/api/enrollment', writeRateLimiter);
 app.use('/api/pma-filing', writeRateLimiter);
+app.use('/api/recruitment', writeRateLimiter);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -225,6 +226,10 @@ app.use(requestLogger);
   registerBackupRoutes(app);
   const { registerNotificationsRoutes } = await import("./routes/notifications-routes");
   registerNotificationsRoutes(app);
+  const { registerRecruitmentRoutes } = await import("./routes/recruitment-routes");
+  registerRecruitmentRoutes(app);
+  const { startRecruitmentReminderScheduler } = await import("./services/recruitment-reminders");
+  startRecruitmentReminderScheduler();
   const { startFailoverScheduler } = await import("./services/clinic-node-service");
   startFailoverScheduler(60000);
 
@@ -305,6 +310,12 @@ app.use(requestLogger);
   });
 
   if (process.env.NODE_ENV === "production") {
+    const pitchDeckDist = path.resolve(process.cwd(), "artifacts", "doctor-pitch-deck", "dist", "public");
+    app.use("/doctor-pitch-deck", express.static(pitchDeckDist));
+    app.get("/doctor-pitch-deck/*", (_req, res) => {
+      res.sendFile(path.join(pitchDeckDist, "index.html"));
+    });
+
     const frontendDist = path.resolve(process.cwd(), "artifacts", "ffpma", "dist", "public");
     app.use(express.static(frontendDist));
     app.get("*", (req, res, next) => {

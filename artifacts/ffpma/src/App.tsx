@@ -91,6 +91,8 @@ import ResearchViewerPage from "@/pages/research-viewer";
 import VitalityAssessmentPage from "@/pages/vitality-assessment";
 import BecomeAMemberPage from "@/pages/become-a-member";
 import LegalDocumentPage from "@/pages/legal-document";
+import DoctorInterestFormPage from "@/pages/doctor-interest-form";
+import DoctorPitchViewerPage from "@/pages/doctor-pitch-viewer";
 import NotFound from "@/pages/not-found";
 
 async function fetchProfile(): Promise<MemberProfile | null> {
@@ -543,6 +545,12 @@ function Router() {
             <QuizTakePage />
           </AppLayout>
         </ProtectedRoute>
+      )} />
+      <Route path="/doctor-interest" component={() => (
+        <DoctorInterestFormPage />
+      )} />
+      <Route path="/doctor-pitch" component={() => (
+        <DoctorPitchViewerPage />
       )} />
       <Route path="/become-a-member" component={() => (
         <BecomeAMemberPage />

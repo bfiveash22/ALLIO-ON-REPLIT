@@ -1542,6 +1542,475 @@ interface OpenClawTasksResponse {
   summary: { pending: number; in_progress: number; completed: number; failed: number };
 }
 
+interface DoctorProspect {
+  id: string;
+  fullName: string;
+  email: string;
+  phone?: string;
+  practiceName?: string;
+  practiceType?: string;
+  specialties?: string[];
+  city?: string;
+  state?: string;
+  stage: "contacted" | "interested" | "reviewing" | "onboarded" | "declined";
+  pitchDeckViews: number;
+  pitchDeckLastViewedAt?: string;
+  shareToken?: string;
+  notes?: string;
+  followUpAt?: string;
+  lastContactedAt?: string;
+  createdAt: string;
+}
+
+const STAGE_LABELS: Record<string, string> = {
+  contacted: "Contacted",
+  interested: "Interested",
+  reviewing: "Reviewing",
+  onboarded: "Onboarded",
+  declined: "Declined",
+};
+
+const STAGE_COLORS: Record<string, string> = {
+  contacted: "bg-slate-500/20 text-slate-300 border-slate-500/30",
+  interested: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+  reviewing: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+  onboarded: "bg-green-500/20 text-green-300 border-green-500/30",
+  declined: "bg-red-500/20 text-red-300 border-red-500/30",
+};
+
+function RecruitmentPipelinePanel() {
+  const { toast } = useToast();
+  const [stageFilter, setStageFilter] = useState("all");
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedProspect, setSelectedProspect] = useState<DoctorProspect | null>(null);
+  const [shareLink, setShareLink] = useState<string | null>(null);
+  const [addForm, setAddForm] = useState({
+    fullName: "", email: "", phone: "", practiceName: "",
+    practiceType: "", city: "", state: "", notes: "",
+  });
+  const [editNotes, setEditNotes] = useState("");
+  const [editStage, setEditStage] = useState<DoctorProspect["stage"]>("contacted");
+  const [editFollowUpAt, setEditFollowUpAt] = useState("");
+
+  const { data: prospectsData, refetch: refetchProspects } = useQuery<{ success: boolean; prospects: DoctorProspect[] }>({
+    queryKey: ["/api/recruitment/prospects", stageFilter],
+    queryFn: () => apiRequest("GET", `/api/recruitment/prospects${stageFilter !== "all" ? `?stage=${stageFilter}` : ""}`).then(r => r.json()),
+  });
+
+  const { data: statsData } = useQuery<{ success: boolean; stats: Record<string, number> }>({
+    queryKey: ["/api/recruitment/pipeline-stats"],
+    queryFn: () => apiRequest("GET", "/api/recruitment/pipeline-stats").then(r => r.json()),
+  });
+
+  const addProspectMutation = useMutation({
+    mutationFn: async (data: typeof addForm) => {
+      const res = await apiRequest("POST", "/api/recruitment/prospects", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Prospect added" });
+      setShowAddForm(false);
+      setAddForm({ fullName: "", email: "", phone: "", practiceName: "", practiceType: "", city: "", state: "", notes: "" });
+      refetchProspects();
+      queryClient.invalidateQueries({ queryKey: ["/api/recruitment/pipeline-stats"] });
+    },
+    onError: () => toast({ title: "Failed to add prospect", variant: "destructive" }),
+  });
+
+  const updateProspectMutation = useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; stage?: DoctorProspect["stage"]; notes?: string; followUpAt?: string | null }) => {
+      const res = await apiRequest("PATCH", `/api/recruitment/prospects/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Prospect updated" });
+      setSelectedProspect(null);
+      refetchProspects();
+      queryClient.invalidateQueries({ queryKey: ["/api/recruitment/pipeline-stats"] });
+    },
+    onError: () => toast({ title: "Update failed", variant: "destructive" }),
+  });
+
+  const deleteProspectMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/recruitment/prospects/${id}`);
+    },
+    onSuccess: () => {
+      toast({ title: "Prospect removed" });
+      setSelectedProspect(null);
+      refetchProspects();
+      queryClient.invalidateQueries({ queryKey: ["/api/recruitment/pipeline-stats"] });
+    },
+  });
+
+  const getShareLinkMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("POST", `/api/recruitment/prospects/${id}/share-link`);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      const fullUrl = `${window.location.origin}/doctor-pitch?token=${data.shareToken}`;
+      setShareLink(fullUrl);
+      navigator.clipboard.writeText(fullUrl).catch(() => {});
+      toast({ title: "Share link copied to clipboard" });
+    },
+  });
+
+  const prospects = prospectsData?.prospects || [];
+  const stats = statsData?.stats;
+
+  const STAGES: DoctorProspect["stage"][] = ["contacted", "interested", "reviewing", "onboarded", "declined"];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Stethoscope className="w-6 h-6 text-cyan-400" />
+            Doctor Recruitment Pipeline
+          </h2>
+          <p className="text-white/50 text-sm mt-1">Manage prospective doctor partners from outreach to onboarding</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-white/10 text-white/70"
+            onClick={() => window.open("/doctor-interest", "_blank")}
+            data-testid="button-view-interest-form"
+          >
+            <ExternalLink className="w-4 h-4 mr-2" />
+            Interest Form
+          </Button>
+          <Button
+            size="sm"
+            className="bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30"
+            onClick={() => setShowAddForm(true)}
+            data-testid="button-add-prospect"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Prospect
+          </Button>
+        </div>
+      </div>
+
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+          {[
+            { label: "Total", value: stats.total, color: "text-white" },
+            { label: "Contacted", value: stats.contacted, color: "text-slate-300" },
+            { label: "Interested", value: stats.interested, color: "text-blue-300" },
+            { label: "Reviewing", value: stats.reviewing, color: "text-amber-300" },
+            { label: "Onboarded", value: stats.onboarded, color: "text-green-300" },
+            { label: "Pitch Views", value: stats.totalPitchViews, color: "text-cyan-300" },
+            { label: "Follow-up Due", value: stats.followUpDue, color: stats.followUpDue > 0 ? "text-red-300" : "text-white/40" },
+          ].map(({ label, value, color }) => (
+            <Card key={label} className="bg-black/20 border-white/10 p-3 text-center">
+              <div className={`text-2xl font-bold ${color}`}>{value}</div>
+              <div className="text-xs text-white/40 mt-1">{label}</div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {shareLink && (
+        <Card className="bg-cyan-500/10 border-cyan-500/30">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-cyan-300 text-sm font-medium">Share link generated and copied:</p>
+              <code className="text-xs text-white/70 break-all">{shareLink}</code>
+            </div>
+            <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(shareLink); toast({ title: "Copied" }); }}>
+              <Copy className="w-4 h-4" />
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {showAddForm && (
+        <Card className="bg-black/30 border-cyan-500/30">
+          <CardHeader>
+            <CardTitle className="text-white text-lg">Add New Prospect</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-white/50 mb-1 block">Full Name *</label>
+                <Input
+                  value={addForm.fullName}
+                  onChange={e => setAddForm(p => ({ ...p, fullName: e.target.value }))}
+                  className="bg-white/5 border-white/10 text-white"
+                  placeholder="Dr. Jane Smith"
+                  data-testid="input-prospect-name"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-white/50 mb-1 block">Email *</label>
+                <Input
+                  value={addForm.email}
+                  onChange={e => setAddForm(p => ({ ...p, email: e.target.value }))}
+                  className="bg-white/5 border-white/10 text-white"
+                  placeholder="dr@clinic.com"
+                  data-testid="input-prospect-email"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-white/50 mb-1 block">Phone</label>
+                <Input
+                  value={addForm.phone}
+                  onChange={e => setAddForm(p => ({ ...p, phone: e.target.value }))}
+                  className="bg-white/5 border-white/10 text-white"
+                  placeholder="(555) 000-0000"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-white/50 mb-1 block">Practice Name</label>
+                <Input
+                  value={addForm.practiceName}
+                  onChange={e => setAddForm(p => ({ ...p, practiceName: e.target.value }))}
+                  className="bg-white/5 border-white/10 text-white"
+                  placeholder="Smith Wellness Center"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-white/50 mb-1 block">City</label>
+                <Input
+                  value={addForm.city}
+                  onChange={e => setAddForm(p => ({ ...p, city: e.target.value }))}
+                  className="bg-white/5 border-white/10 text-white"
+                  placeholder="Austin"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-white/50 mb-1 block">State</label>
+                <Input
+                  value={addForm.state}
+                  onChange={e => setAddForm(p => ({ ...p, state: e.target.value }))}
+                  className="bg-white/5 border-white/10 text-white"
+                  placeholder="TX"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-white/50 mb-1 block">Notes</label>
+              <Textarea
+                value={addForm.notes}
+                onChange={e => setAddForm(p => ({ ...p, notes: e.target.value }))}
+                className="bg-white/5 border-white/10 text-white min-h-[80px]"
+                placeholder="Initial contact notes..."
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button
+                size="sm"
+                onClick={() => addProspectMutation.mutate(addForm)}
+                disabled={!addForm.fullName || !addForm.email || addProspectMutation.isPending}
+                className="bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30"
+                data-testid="button-save-prospect"
+              >
+                {addProspectMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+                Save Prospect
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setShowAddForm(false)} className="text-white/50">
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="flex items-center gap-3">
+        <span className="text-white/50 text-sm">Filter by stage:</span>
+        <div className="flex gap-2 flex-wrap">
+          {["all", ...STAGES].map(stage => (
+            <Badge
+              key={stage}
+              className={`cursor-pointer px-3 py-1 ${stageFilter === stage ? "bg-cyan-500/30 text-cyan-200" : "bg-white/5 text-white/40 hover:bg-white/10"}`}
+              onClick={() => setStageFilter(stage)}
+              data-testid={`badge-filter-${stage}`}
+            >
+              {stage === "all" ? "All" : STAGE_LABELS[stage]}
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {prospects.length === 0 ? (
+          <Card className="bg-black/20 border-white/10">
+            <CardContent className="p-12 text-center">
+              <Stethoscope className="w-16 h-16 mx-auto mb-4 text-white/20" />
+              <h3 className="text-lg font-medium text-white/60 mb-2">No prospects yet</h3>
+              <p className="text-white/40 text-sm">Add a doctor prospect or share the interest form link to start building your pipeline.</p>
+            </CardContent>
+          </Card>
+        ) : prospects.map(prospect => (
+          <motion.div
+            key={prospect.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Card className="bg-black/20 border-white/10 hover:border-white/20 transition-colors">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-1">
+                      <h3 className="text-white font-semibold">{prospect.fullName}</h3>
+                      <Badge className={`text-xs ${STAGE_COLORS[prospect.stage]}`} data-testid={`badge-stage-${prospect.id}`}>
+                        {STAGE_LABELS[prospect.stage]}
+                      </Badge>
+                      {prospect.pitchDeckViews > 0 && (
+                        <Badge className="bg-cyan-500/10 text-cyan-400 text-xs border-cyan-500/20">
+                          <Eye className="w-3 h-3 mr-1" />
+                          {prospect.pitchDeckViews} view{prospect.pitchDeckViews !== 1 ? "s" : ""}
+                        </Badge>
+                      )}
+                      {prospect.followUpAt && new Date(prospect.followUpAt) <= new Date() && prospect.stage !== "onboarded" && prospect.stage !== "declined" && (
+                        <Badge className="bg-red-500/20 text-red-300 text-xs border-red-500/30">Follow-up due</Badge>
+                      )}
+                    </div>
+                    <div className="text-white/50 text-sm flex items-center gap-4">
+                      <span>{prospect.email}</span>
+                      {prospect.practiceName && <span>{prospect.practiceName}</span>}
+                      {(prospect.city || prospect.state) && (
+                        <span>{[prospect.city, prospect.state].filter(Boolean).join(", ")}</span>
+                      )}
+                      {prospect.practiceType && <span className="text-cyan-400/70">{prospect.practiceType}</span>}
+                    </div>
+                    {prospect.notes && (
+                      <p className="text-white/40 text-xs mt-2 italic line-clamp-2">{prospect.notes}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-cyan-400/70 hover:text-cyan-300 h-8 px-2"
+                      onClick={() => getShareLinkMutation.mutate(prospect.id)}
+                      disabled={getShareLinkMutation.isPending}
+                      title="Get shareable pitch deck link"
+                      data-testid={`button-share-${prospect.id}`}
+                    >
+                      <Share className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-white/40 hover:text-white h-8 px-2"
+                      onClick={() => {
+                        setSelectedProspect(prospect);
+                        setEditNotes(prospect.notes || "");
+                        setEditStage(prospect.stage);
+                        setEditFollowUpAt(prospect.followUpAt ? new Date(prospect.followUpAt).toISOString().slice(0, 16) : "");
+                      }}
+                      data-testid={`button-edit-${prospect.id}`}
+                    >
+                      <Settings className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-red-400/70 hover:text-red-300 h-8 px-2"
+                      onClick={() => deleteProspectMutation.mutate(prospect.id)}
+                      data-testid={`button-delete-${prospect.id}`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+
+      {selectedProspect && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedProspect(null)}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-slate-900 border border-white/20 rounded-xl shadow-2xl w-full max-w-lg p-6"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white">{selectedProspect.fullName}</h3>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedProspect(null)} className="text-white/50">✕</Button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-white/50 mb-1 block">Stage</label>
+                <div className="flex gap-2 flex-wrap">
+                  {STAGES.map(stage => (
+                    <Badge
+                      key={stage}
+                      className={`cursor-pointer px-3 py-1 text-xs ${editStage === stage ? STAGE_COLORS[stage] : "bg-white/5 text-white/40 hover:bg-white/10"}`}
+                      onClick={() => setEditStage(stage)}
+                    >
+                      {STAGE_LABELS[stage]}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-white/50 mb-1 block">Notes</label>
+                <Textarea
+                  value={editNotes}
+                  onChange={e => setEditNotes(e.target.value)}
+                  className="bg-white/5 border-white/10 text-white min-h-[100px]"
+                  placeholder="Add notes about this prospect..."
+                />
+              </div>
+              <div>
+                <label className="text-xs text-white/50 mb-1 block">Follow-up Date &amp; Time</label>
+                <input
+                  type="datetime-local"
+                  value={editFollowUpAt}
+                  onChange={e => setEditFollowUpAt(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                />
+                {editFollowUpAt && (
+                  <button
+                    type="button"
+                    onClick={() => setEditFollowUpAt("")}
+                    className="text-xs text-white/30 hover:text-white/60 mt-1"
+                  >
+                    Clear date
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  size="sm"
+                  className="bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30"
+                  onClick={() => updateProspectMutation.mutate({
+                    id: selectedProspect.id,
+                    stage: editStage,
+                    notes: editNotes,
+                    followUpAt: editFollowUpAt || null,
+                  })}
+                  disabled={updateProspectMutation.isPending}
+                  data-testid="button-save-edit"
+                >
+                  {updateProspectMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
+                  Save Changes
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setSelectedProspect(null)} className="text-white/50">
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
 function OpenClawTasksPanel() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
@@ -3271,6 +3740,10 @@ export default function TrusteeDashboard() {
                 <TabsTrigger value="openclaw-tasks" className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-orange-400 data-[state=active]:bg-orange-950/20 data-[state=active]:text-white text-white/60 hover:text-white/80 transition-all whitespace-nowrap" data-testid="tab-openclaw-tasks">
                   <Zap className="w-4 h-4 mr-2" />
                   OPENCLAW Tasks
+                </TabsTrigger>
+                <TabsTrigger value="doctor-recruitment" className="px-6 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-400 data-[state=active]:bg-cyan-950/20 data-[state=active]:text-white text-white/60 hover:text-white/80 transition-all whitespace-nowrap" data-testid="tab-doctor-recruitment">
+                  <Stethoscope className="w-4 h-4 mr-2" />
+                  Recruit Doctors
                 </TabsTrigger>
               </TabsList>
             </ScrollArea>
@@ -5558,6 +6031,10 @@ export default function TrusteeDashboard() {
 
             <TabsContent value="openclaw-tasks" className="space-y-6">
               <OpenClawTasksPanel />
+            </TabsContent>
+
+            <TabsContent value="doctor-recruitment" className="space-y-6">
+              <RecruitmentPipelinePanel />
             </TabsContent>
           </Tabs>
         </main>

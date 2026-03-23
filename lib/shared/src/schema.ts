@@ -2613,3 +2613,49 @@ export const databaseBackups = pgTable("database_backups", {
 
 export type DatabaseBackup = typeof databaseBackups.$inferSelect;
 export type InsertDatabaseBackup = typeof databaseBackups.$inferInsert;
+
+// Doctor recruitment pipeline stages
+export const doctorProspectStageEnum = pgEnum("doctor_prospect_stage", [
+  "contacted",
+  "interested",
+  "reviewing",
+  "onboarded",
+  "declined",
+]);
+
+export const doctorProspects = pgTable("doctor_prospects", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fullName: varchar("full_name").notNull(),
+  email: varchar("email").notNull(),
+  phone: varchar("phone"),
+  practiceName: varchar("practice_name"),
+  practiceType: varchar("practice_type"),
+  specialties: text("specialties").array(),
+  city: varchar("city"),
+  state: varchar("state"),
+  zipCode: varchar("zip_code"),
+  stage: doctorProspectStageEnum("stage").notNull().default("contacted"),
+  pitchDeckViews: integer("pitch_deck_views").default(0),
+  pitchDeckLastViewedAt: timestamp("pitch_deck_last_viewed_at"),
+  pitchDeckTimeSpentSeconds: integer("pitch_deck_time_spent_seconds").default(0),
+  shareToken: varchar("share_token").unique(),
+  source: varchar("source").default("manual"),
+  notes: text("notes"),
+  followUpAt: timestamp("follow_up_at"),
+  lastContactedAt: timestamp("last_contacted_at"),
+  lastReminderSentAt: timestamp("last_reminder_sent_at"),
+  addedBy: varchar("added_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertDoctorProspectSchema = createInsertSchema(doctorProspects).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  pitchDeckViews: true,
+  pitchDeckLastViewedAt: true,
+  shareToken: true,
+});
+export type InsertDoctorProspect = z.infer<typeof insertDoctorProspectSchema>;
+export type DoctorProspect = typeof doctorProspects.$inferSelect;
