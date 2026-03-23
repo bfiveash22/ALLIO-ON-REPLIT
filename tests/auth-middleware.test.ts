@@ -164,7 +164,7 @@ describe("requireRole middleware", () => {
 
   it("grants exclusive trustee access to blake by email", async () => {
     const req = createAuthenticatedRequest({
-      email: "blake@example.com",
+      email: "blake@forgottenformula.com",
       wpRoles: ["subscriber"],
     });
     const res = createMockResponse();
