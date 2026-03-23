@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Award, Download, Share2, Linkedin, Link2, CheckCircle2 } from "lucide-react";
+import { Award, Download, Linkedin, Link2, CheckCircle2 } from "lucide-react";
 
 interface CertificateProps {
   type: "module" | "program";

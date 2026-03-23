@@ -1617,7 +1617,8 @@ export default function TrainingModulePage() {
             }
           }
         }
-      } catch {
+      } catch (err) {
+        console.warn("Achievement award failed:", err);
       }
     },
     onError: (error: Error) => {
