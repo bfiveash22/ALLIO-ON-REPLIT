@@ -1,0 +1,141 @@
+{
+  "meta": {
+    "generatedAt": "2026-03-23T06:34:32.288Z",
+    "baseUrl": "http://localhost:8080",
+    "durationPerScenario": 5,
+    "concurrencyLevels": [
+      10,
+      50,
+      100
+    ],
+    "totalRuntimeMs": 19216
+  },
+  "summary": {
+    "totalScenarios": 1,
+    "totalRuns": 3,
+    "criticalIssues": 2,
+    "warnings": 0,
+    "status": "FAIL"
+  },
+  "results": [
+    {
+      "scenario": "sentinel-status",
+      "title": "Sentinel Status (/api/sentinel/status)",
+      "connections": 10,
+      "duration": 5,
+      "requests": {
+        "total": 2992,
+        "perSecond": 598.4,
+        "perSecondMax": 661
+      },
+      "latency": {
+        "p50": 14,
+        "p75": 18,
+        "p95": 0,
+        "p99": 40,
+        "max": 240,
+        "mean": 16.2
+      },
+      "throughput": {
+        "totalMB": "59.60",
+        "perSecondKB": "12205.60"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 0
+      },
+      "statusCodes": {
+        "200": {
+          "count": 2992
+        }
+      }
+    },
+    {
+      "scenario": "sentinel-status",
+      "title": "Sentinel Status (/api/sentinel/status)",
+      "connections": 50,
+      "duration": 5,
+      "requests": {
+        "total": 8974,
+        "perSecond": 1795.2,
+        "perSecondMax": 4773
+      },
+      "latency": {
+        "p50": 10,
+        "p75": 17,
+        "p95": 0,
+        "p99": 128,
+        "max": 319,
+        "mean": 27.45
+      },
+      "throughput": {
+        "totalMB": "45.18",
+        "perSecondKB": "9253.80"
+      },
+      "errors": {
+        "count": 6976,
+        "rate": "77.74%",
+        "timeouts": 0,
+        "non2xx": 6976
+      },
+      "statusCodes": {
+        "200": {
+          "count": 1998
+        },
+        "429": {
+          "count": 6976
+        }
+      }
+    },
+    {
+      "scenario": "sentinel-status",
+      "title": "Sentinel Status (/api/sentinel/status)",
+      "connections": 100,
+      "duration": 5,
+      "requests": {
+        "total": 27039,
+        "perSecond": 5408.4,
+        "perSecondMax": 5847
+      },
+      "latency": {
+        "p50": 17,
+        "p75": 19,
+        "p95": 0,
+        "p99": 35,
+        "max": 119,
+        "mean": 18.22
+      },
+      "throughput": {
+        "totalMB": "20.84",
+        "perSecondKB": "4266.60"
+      },
+      "errors": {
+        "count": 27039,
+        "rate": "100.00%",
+        "timeouts": 0,
+        "non2xx": 27039
+      },
+      "statusCodes": {
+        "429": {
+          "count": 27039
+        }
+      }
+    }
+  ],
+  "bottlenecks": [
+    {
+      "severity": "CRITICAL",
+      "scenario": "sentinel-status",
+      "connections": 50,
+      "issue": "High error rate: 77.74% (threshold: 10%)"
+    },
+    {
+      "severity": "CRITICAL",
+      "scenario": "sentinel-status",
+      "connections": 100,
+      "issue": "High error rate: 100.00% (threshold: 10%)"
+    }
+  ]
+}

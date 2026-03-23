@@ -1,0 +1,125 @@
+{
+  "meta": {
+    "generatedAt": "2026-03-23T06:32:21.909Z",
+    "baseUrl": "http://localhost:8080",
+    "durationPerScenario": 5,
+    "concurrencyLevels": [
+      10,
+      50,
+      100
+    ],
+    "totalRuntimeMs": 19156
+  },
+  "summary": {
+    "totalScenarios": 1,
+    "totalRuns": 3,
+    "criticalIssues": 0,
+    "warnings": 0,
+    "status": "PASS"
+  },
+  "results": [
+    {
+      "scenario": "health-check",
+      "title": "Health Check (/api/healthz)",
+      "connections": 10,
+      "duration": 5,
+      "requests": {
+        "total": 13122,
+        "perSecond": 2625,
+        "perSecondMax": 2752
+      },
+      "latency": {
+        "p50": 3,
+        "p75": 4,
+        "p95": 0,
+        "p99": 9,
+        "max": 34,
+        "mean": 3.32
+      },
+      "throughput": {
+        "totalMB": "7.65",
+        "perSecondKB": "1566.10"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 0
+      },
+      "statusCodes": {
+        "200": {
+          "count": 13122
+        }
+      }
+    },
+    {
+      "scenario": "health-check",
+      "title": "Health Check (/api/healthz)",
+      "connections": 50,
+      "duration": 5,
+      "requests": {
+        "total": 14174,
+        "perSecond": 2835,
+        "perSecondMax": 2997
+      },
+      "latency": {
+        "p50": 16,
+        "p75": 18,
+        "p95": 0,
+        "p99": 40,
+        "max": 83,
+        "mean": 17.17
+      },
+      "throughput": {
+        "totalMB": "8.26",
+        "perSecondKB": "1691.30"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 0
+      },
+      "statusCodes": {
+        "200": {
+          "count": 14174
+        }
+      }
+    },
+    {
+      "scenario": "health-check",
+      "title": "Health Check (/api/healthz)",
+      "connections": 100,
+      "duration": 5,
+      "requests": {
+        "total": 13032,
+        "perSecond": 2607.4,
+        "perSecondMax": 2740
+      },
+      "latency": {
+        "p50": 35,
+        "p75": 38,
+        "p95": 0,
+        "p99": 77,
+        "max": 194,
+        "mean": 37.81
+      },
+      "throughput": {
+        "totalMB": "7.59",
+        "perSecondKB": "1555.10"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 0
+      },
+      "statusCodes": {
+        "200": {
+          "count": 13032
+        }
+      }
+    }
+  ],
+  "bottlenecks": []
+}

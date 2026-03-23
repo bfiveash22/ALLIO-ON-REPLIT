@@ -1,0 +1,125 @@
+{
+  "meta": {
+    "generatedAt": "2026-03-23T06:33:15.446Z",
+    "baseUrl": "http://localhost:8080",
+    "durationPerScenario": 5,
+    "concurrencyLevels": [
+      10,
+      50,
+      100
+    ],
+    "totalRuntimeMs": 19158
+  },
+  "summary": {
+    "totalScenarios": 1,
+    "totalRuns": 3,
+    "criticalIssues": 0,
+    "warnings": 0,
+    "status": "PASS"
+  },
+  "results": [
+    {
+      "scenario": "health-extended",
+      "title": "Extended Health (/api/health)",
+      "connections": 10,
+      "duration": 5,
+      "requests": {
+        "total": 8149,
+        "perSecond": 1629.8,
+        "perSecondMax": 1670
+      },
+      "latency": {
+        "p50": 4,
+        "p75": 6,
+        "p95": 0,
+        "p99": 21,
+        "max": 66,
+        "mean": 5.64
+      },
+      "throughput": {
+        "totalMB": "5.10",
+        "perSecondKB": "1044.10"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 0
+      },
+      "statusCodes": {
+        "200": {
+          "count": 8149
+        }
+      }
+    },
+    {
+      "scenario": "health-extended",
+      "title": "Extended Health (/api/health)",
+      "connections": 50,
+      "duration": 5,
+      "requests": {
+        "total": 8417,
+        "perSecond": 1683.4,
+        "perSecondMax": 1817
+      },
+      "latency": {
+        "p50": 25,
+        "p75": 33,
+        "p95": 0,
+        "p99": 65,
+        "max": 79,
+        "mean": 29.15
+      },
+      "throughput": {
+        "totalMB": "5.27",
+        "perSecondKB": "1078.55"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 0
+      },
+      "statusCodes": {
+        "200": {
+          "count": 8417
+        }
+      }
+    },
+    {
+      "scenario": "health-extended",
+      "title": "Extended Health (/api/health)",
+      "connections": 100,
+      "duration": 5,
+      "requests": {
+        "total": 8521,
+        "perSecond": 1704.2,
+        "perSecondMax": 1881
+      },
+      "latency": {
+        "p50": 51,
+        "p75": 68,
+        "p95": 0,
+        "p99": 114,
+        "max": 260,
+        "mean": 58
+      },
+      "throughput": {
+        "totalMB": "5.33",
+        "perSecondKB": "1091.80"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 0
+      },
+      "statusCodes": {
+        "200": {
+          "count": 8521
+        }
+      }
+    }
+  ],
+  "bottlenecks": []
+}

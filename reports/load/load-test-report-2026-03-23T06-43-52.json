@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "generatedAt": "2026-03-23T06:43:45.055Z",
+    "baseUrl": "http://localhost:8080",
+    "durationPerScenario": 5,
+    "concurrencyLevels": [
+      10,
+      50,
+      100
+    ],
+    "totalRuntimeMs": 7062
+  },
+  "summary": {
+    "totalScenarios": 1,
+    "totalRuns": 1,
+    "criticalIssues": 0,
+    "warnings": 0,
+    "status": "PASS"
+  },
+  "results": [
+    {
+      "scenario": "health-check",
+      "title": "Health Check (/api/healthz)",
+      "connections": 10,
+      "duration": 5,
+      "requests": {
+        "total": 11448,
+        "perSecond": 2289.81,
+        "perSecondMax": 2578
+      },
+      "latency": {
+        "p50": 3,
+        "p75": 5,
+        "p95": 0,
+        "p99": 10,
+        "max": 43,
+        "mean": 3.87
+      },
+      "throughput": {
+        "totalMB": "6.67",
+        "perSecondKB": "1366.30"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 0
+      },
+      "statusCodes": {
+        "200": {
+          "count": 11448
+        }
+      }
+    }
+  ],
+  "bottlenecks": []
+}

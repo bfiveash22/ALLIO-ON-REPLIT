@@ -1,0 +1,144 @@
+{
+  "meta": {
+    "generatedAt": "2026-03-23T06:34:05.924Z",
+    "baseUrl": "http://localhost:8080",
+    "durationPerScenario": 5,
+    "concurrencyLevels": [
+      10,
+      50,
+      100
+    ],
+    "totalRuntimeMs": 19146
+  },
+  "summary": {
+    "totalScenarios": 1,
+    "totalRuns": 3,
+    "criticalIssues": 3,
+    "warnings": 0,
+    "status": "FAIL"
+  },
+  "results": [
+    {
+      "scenario": "member-dashboard",
+      "title": "Member Dashboard (/api/members/profile)",
+      "connections": 10,
+      "duration": 5,
+      "requests": {
+        "total": 9214,
+        "perSecond": 1842.8,
+        "perSecondMax": 1920
+      },
+      "latency": {
+        "p50": 4,
+        "p75": 5,
+        "p95": 0,
+        "p99": 12,
+        "max": 33,
+        "mean": 4.93
+      },
+      "throughput": {
+        "totalMB": "7.05",
+        "perSecondKB": "1443.30"
+      },
+      "errors": {
+        "count": 9214,
+        "rate": "100.00%",
+        "timeouts": 0,
+        "non2xx": 9214
+      },
+      "statusCodes": {
+        "404": {
+          "count": 9214
+        }
+      }
+    },
+    {
+      "scenario": "member-dashboard",
+      "title": "Member Dashboard (/api/members/profile)",
+      "connections": 50,
+      "duration": 5,
+      "requests": {
+        "total": 9235,
+        "perSecond": 1847,
+        "perSecondMax": 1918
+      },
+      "latency": {
+        "p50": 26,
+        "p75": 27,
+        "p95": 0,
+        "p99": 51,
+        "max": 290,
+        "mean": 26.54
+      },
+      "throughput": {
+        "totalMB": "7.06",
+        "perSecondKB": "1446.50"
+      },
+      "errors": {
+        "count": 9235,
+        "rate": "100.00%",
+        "timeouts": 0,
+        "non2xx": 9235
+      },
+      "statusCodes": {
+        "404": {
+          "count": 9235
+        }
+      }
+    },
+    {
+      "scenario": "member-dashboard",
+      "title": "Member Dashboard (/api/members/profile)",
+      "connections": 100,
+      "duration": 5,
+      "requests": {
+        "total": 9988,
+        "perSecond": 1997.6,
+        "perSecondMax": 2225
+      },
+      "latency": {
+        "p50": 46,
+        "p75": 53,
+        "p95": 0,
+        "p99": 90,
+        "max": 242,
+        "mean": 49.37
+      },
+      "throughput": {
+        "totalMB": "7.64",
+        "perSecondKB": "1564.70"
+      },
+      "errors": {
+        "count": 9988,
+        "rate": "100.00%",
+        "timeouts": 0,
+        "non2xx": 9988
+      },
+      "statusCodes": {
+        "404": {
+          "count": 9988
+        }
+      }
+    }
+  ],
+  "bottlenecks": [
+    {
+      "severity": "CRITICAL",
+      "scenario": "member-dashboard",
+      "connections": 10,
+      "issue": "High error rate: 100.00% (threshold: 10%)"
+    },
+    {
+      "severity": "CRITICAL",
+      "scenario": "member-dashboard",
+      "connections": 50,
+      "issue": "High error rate: 100.00% (threshold: 10%)"
+    },
+    {
+      "severity": "CRITICAL",
+      "scenario": "member-dashboard",
+      "connections": 100,
+      "issue": "High error rate: 100.00% (threshold: 10%)"
+    }
+  ]
+}

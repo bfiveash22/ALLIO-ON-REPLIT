@@ -1,0 +1,128 @@
+{
+  "meta": {
+    "generatedAt": "2026-03-23T06:36:18.945Z",
+    "baseUrl": "http://localhost:8080",
+    "durationPerScenario": 5,
+    "concurrencyLevels": [
+      10,
+      50,
+      100
+    ],
+    "totalRuntimeMs": 19182
+  },
+  "summary": {
+    "totalScenarios": 1,
+    "totalRuns": 3,
+    "criticalIssues": 0,
+    "warnings": 0,
+    "status": "PASS"
+  },
+  "results": [
+    {
+      "scenario": "auth-login",
+      "title": "Auth Flow (/api/auth/login)",
+      "connections": 10,
+      "duration": 5,
+      "requests": {
+        "total": 24421,
+        "perSecond": 4884.4,
+        "perSecondMax": 5213
+      },
+      "latency": {
+        "p50": 1,
+        "p75": 2,
+        "p95": 0,
+        "p99": 4,
+        "max": 24,
+        "mean": 1.51
+      },
+      "throughput": {
+        "totalMB": "19.31",
+        "perSecondKB": "3954.80"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 24421,
+        "note": "Error rate excludes expected non-2xx (401/403/429) — only network errors and timeouts counted"
+      },
+      "statusCodes": {
+        "429": {
+          "count": 24421
+        }
+      }
+    },
+    {
+      "scenario": "auth-login",
+      "title": "Auth Flow (/api/auth/login)",
+      "connections": 50,
+      "duration": 5,
+      "requests": {
+        "total": 24768,
+        "perSecond": 4954,
+        "perSecondMax": 5251
+      },
+      "latency": {
+        "p50": 9,
+        "p75": 10,
+        "p95": 0,
+        "p99": 20,
+        "max": 57,
+        "mean": 9.62
+      },
+      "throughput": {
+        "totalMB": "19.58",
+        "perSecondKB": "4010.80"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 24768,
+        "note": "Error rate excludes expected non-2xx (401/403/429) — only network errors and timeouts counted"
+      },
+      "statusCodes": {
+        "429": {
+          "count": 24768
+        }
+      }
+    },
+    {
+      "scenario": "auth-login",
+      "title": "Auth Flow (/api/auth/login)",
+      "connections": 100,
+      "duration": 5,
+      "requests": {
+        "total": 26377,
+        "perSecond": 5276.4,
+        "perSecondMax": 5714
+      },
+      "latency": {
+        "p50": 18,
+        "p75": 19,
+        "p95": 0,
+        "p99": 38,
+        "max": 130,
+        "mean": 18.55
+      },
+      "throughput": {
+        "totalMB": "20.85",
+        "perSecondKB": "4270.80"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 26377,
+        "note": "Error rate excludes expected non-2xx (401/403/429) — only network errors and timeouts counted"
+      },
+      "statusCodes": {
+        "429": {
+          "count": 26377
+        }
+      }
+    }
+  ],
+  "bottlenecks": []
+}

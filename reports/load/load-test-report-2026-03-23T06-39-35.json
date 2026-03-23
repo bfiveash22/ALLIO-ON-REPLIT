@@ -1,0 +1,58 @@
+{
+  "meta": {
+    "generatedAt": "2026-03-23T06:39:27.972Z",
+    "baseUrl": "http://localhost:8080",
+    "durationPerScenario": 5,
+    "concurrencyLevels": [
+      10,
+      50,
+      100
+    ],
+    "totalRuntimeMs": 7108
+  },
+  "summary": {
+    "totalScenarios": 1,
+    "totalRuns": 1,
+    "criticalIssues": 0,
+    "warnings": 0,
+    "status": "PASS"
+  },
+  "results": [
+    {
+      "scenario": "catalog-read",
+      "title": "Catalog Read (/api/catalog)",
+      "connections": 50,
+      "duration": 5,
+      "requests": {
+        "total": 23370,
+        "perSecond": 4673.4,
+        "perSecondMax": 5351
+      },
+      "latency": {
+        "p50": 10,
+        "p75": 12,
+        "p95": 0,
+        "p99": 23,
+        "max": 110,
+        "mean": 10.25
+      },
+      "throughput": {
+        "totalMB": "18.21",
+        "perSecondKB": "3729.20"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 23370,
+        "note": "Error rate excludes expected non-2xx (401/403/429) — only network errors and timeouts counted"
+      },
+      "statusCodes": {
+        "429": {
+          "count": 23370
+        }
+      }
+    }
+  ],
+  "bottlenecks": []
+}

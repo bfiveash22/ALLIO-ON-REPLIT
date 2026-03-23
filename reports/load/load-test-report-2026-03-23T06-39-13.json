@@ -1,0 +1,58 @@
+{
+  "meta": {
+    "generatedAt": "2026-03-23T06:39:06.021Z",
+    "baseUrl": "http://localhost:8080",
+    "durationPerScenario": 5,
+    "concurrencyLevels": [
+      10,
+      50,
+      100
+    ],
+    "totalRuntimeMs": 7150
+  },
+  "summary": {
+    "totalScenarios": 1,
+    "totalRuns": 1,
+    "criticalIssues": 0,
+    "warnings": 0,
+    "status": "PASS"
+  },
+  "results": [
+    {
+      "scenario": "protocol-assembly-list",
+      "title": "Protocol Assembly List (/api/protocol-assembly/list)",
+      "connections": 100,
+      "duration": 5,
+      "requests": {
+        "total": 22742,
+        "perSecond": 4549,
+        "perSecondMax": 4945
+      },
+      "latency": {
+        "p50": 21,
+        "p75": 24,
+        "p95": 0,
+        "p99": 42,
+        "max": 211,
+        "mean": 21.72
+      },
+      "throughput": {
+        "totalMB": "17.68",
+        "perSecondKB": "3619.80"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 22742,
+        "note": "Error rate excludes expected non-2xx (401/403/429) — only network errors and timeouts counted"
+      },
+      "statusCodes": {
+        "429": {
+          "count": 22742
+        }
+      }
+    }
+  ],
+  "bottlenecks": []
+}

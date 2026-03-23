@@ -11,6 +11,9 @@
     "test": "vitest run --coverage",
     "test:unit": "vitest run",
     "test:agents": "vitest run tests/agents",
+    "test:load": "node tests/load/load-test.js",
+    "test:load:quick": "LOAD_TEST_DURATION=5 node tests/load/load-test.js --concurrency 10",
+    "test:load:scenario": "node tests/load/load-test.js --scenario",
     "lint": "eslint artifacts lib scripts tests vitest.config.ts",
     "lint:fix": "eslint artifacts lib scripts tests vitest.config.ts --fix",
     "pre-deploy": "tsx scripts/pre-deploy.ts"
@@ -37,6 +40,7 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "adm-zip": "^0.5.16",
+    "autocannon": "^8.0.0",
     "happy-dom": "^20.8.4",
     "jsdom": "^28.1.0",
     "jszip": "^3.10.1",

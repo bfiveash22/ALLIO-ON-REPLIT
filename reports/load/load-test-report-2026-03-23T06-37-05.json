@@ -1,0 +1,128 @@
+{
+  "meta": {
+    "generatedAt": "2026-03-23T06:36:46.658Z",
+    "baseUrl": "http://localhost:8080",
+    "durationPerScenario": 5,
+    "concurrencyLevels": [
+      10,
+      50,
+      100
+    ],
+    "totalRuntimeMs": 19200
+  },
+  "summary": {
+    "totalScenarios": 1,
+    "totalRuns": 3,
+    "criticalIssues": 0,
+    "warnings": 0,
+    "status": "PASS"
+  },
+  "results": [
+    {
+      "scenario": "sentinel-status",
+      "title": "Sentinel Status (/api/sentinel/status)",
+      "connections": 10,
+      "duration": 5,
+      "requests": {
+        "total": 26188,
+        "perSecond": 5238,
+        "perSecondMax": 5641
+      },
+      "latency": {
+        "p50": 1,
+        "p75": 2,
+        "p95": 0,
+        "p99": 4,
+        "max": 22,
+        "mean": 1.37
+      },
+      "throughput": {
+        "totalMB": "20.18",
+        "perSecondKB": "4132.40"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 26188,
+        "note": "Error rate excludes expected non-2xx (401/403/429) — only network errors and timeouts counted"
+      },
+      "statusCodes": {
+        "429": {
+          "count": 26188
+        }
+      }
+    },
+    {
+      "scenario": "sentinel-status",
+      "title": "Sentinel Status (/api/sentinel/status)",
+      "connections": 50,
+      "duration": 5,
+      "requests": {
+        "total": 27554,
+        "perSecond": 5510,
+        "perSecondMax": 5791
+      },
+      "latency": {
+        "p50": 8,
+        "p75": 9,
+        "p95": 0,
+        "p99": 17,
+        "max": 65,
+        "mean": 8.6
+      },
+      "throughput": {
+        "totalMB": "21.23",
+        "perSecondKB": "4348.20"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 27554,
+        "note": "Error rate excludes expected non-2xx (401/403/429) — only network errors and timeouts counted"
+      },
+      "statusCodes": {
+        "429": {
+          "count": 27554
+        }
+      }
+    },
+    {
+      "scenario": "sentinel-status",
+      "title": "Sentinel Status (/api/sentinel/status)",
+      "connections": 100,
+      "duration": 5,
+      "requests": {
+        "total": 27316,
+        "perSecond": 5463.6,
+        "perSecondMax": 5734
+      },
+      "latency": {
+        "p50": 17,
+        "p75": 19,
+        "p95": 0,
+        "p99": 34,
+        "max": 130,
+        "mean": 18.03
+      },
+      "throughput": {
+        "totalMB": "21.05",
+        "perSecondKB": "4311.00"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 27316,
+        "note": "Error rate excludes expected non-2xx (401/403/429) — only network errors and timeouts counted"
+      },
+      "statusCodes": {
+        "429": {
+          "count": 27316
+        }
+      }
+    }
+  ],
+  "bottlenecks": []
+}

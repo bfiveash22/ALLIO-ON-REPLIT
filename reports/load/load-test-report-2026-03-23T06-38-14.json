@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "generatedAt": "2026-03-23T06:37:55.774Z",
+    "baseUrl": "http://localhost:8080",
+    "durationPerScenario": 5,
+    "concurrencyLevels": [
+      10,
+      50,
+      100
+    ],
+    "totalRuntimeMs": 19213
+  },
+  "summary": {
+    "totalScenarios": 1,
+    "totalRuns": 3,
+    "criticalIssues": 0,
+    "warnings": 0,
+    "status": "PASS"
+  },
+  "results": [
+    {
+      "scenario": "protocol-assembly-list",
+      "title": "Protocol Assembly List (/api/protocol-assembly/list)",
+      "connections": 10,
+      "duration": 5,
+      "requests": {
+        "total": 22245,
+        "perSecond": 4450,
+        "perSecondMax": 4605
+      },
+      "latency": {
+        "p50": 1,
+        "p75": 2,
+        "p95": 0,
+        "p99": 5,
+        "max": 29,
+        "mean": 1.71
+      },
+      "throughput": {
+        "totalMB": "17.31",
+        "perSecondKB": "3544.60"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 22245,
+        "note": "Error rate excludes expected non-2xx (401/403/429) — only network errors and timeouts counted"
+      },
+      "statusCodes": {
+        "404": {
+          "count": 200
+        },
+        "429": {
+          "count": 22045
+        }
+      }
+    },
+    {
+      "scenario": "protocol-assembly-list",
+      "title": "Protocol Assembly List (/api/protocol-assembly/list)",
+      "connections": 50,
+      "duration": 5,
+      "requests": {
+        "total": 21858,
+        "perSecond": 4372.4,
+        "perSecondMax": 4500
+      },
+      "latency": {
+        "p50": 11,
+        "p75": 12,
+        "p95": 0,
+        "p99": 23,
+        "max": 70,
+        "mean": 10.98
+      },
+      "throughput": {
+        "totalMB": "16.99",
+        "perSecondKB": "3479.00"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 21858,
+        "note": "Error rate excludes expected non-2xx (401/403/429) — only network errors and timeouts counted"
+      },
+      "statusCodes": {
+        "429": {
+          "count": 21858
+        }
+      }
+    },
+    {
+      "scenario": "protocol-assembly-list",
+      "title": "Protocol Assembly List (/api/protocol-assembly/list)",
+      "connections": 100,
+      "duration": 5,
+      "requests": {
+        "total": 25783,
+        "perSecond": 5156.4,
+        "perSecondMax": 5354
+      },
+      "latency": {
+        "p50": 18,
+        "p75": 20,
+        "p95": 0,
+        "p99": 37,
+        "max": 178,
+        "mean": 19.06
+      },
+      "throughput": {
+        "totalMB": "20.04",
+        "perSecondKB": "4104.40"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 25783,
+        "note": "Error rate excludes expected non-2xx (401/403/429) — only network errors and timeouts counted"
+      },
+      "statusCodes": {
+        "429": {
+          "count": 25783
+        }
+      }
+    }
+  ],
+  "bottlenecks": []
+}

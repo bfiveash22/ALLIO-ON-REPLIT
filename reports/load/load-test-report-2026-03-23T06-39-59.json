@@ -1,0 +1,58 @@
+{
+  "meta": {
+    "generatedAt": "2026-03-23T06:39:52.272Z",
+    "baseUrl": "http://localhost:8080",
+    "durationPerScenario": 5,
+    "concurrencyLevels": [
+      10,
+      50,
+      100
+    ],
+    "totalRuntimeMs": 7059
+  },
+  "summary": {
+    "totalScenarios": 1,
+    "totalRuns": 1,
+    "criticalIssues": 0,
+    "warnings": 0,
+    "status": "PASS"
+  },
+  "results": [
+    {
+      "scenario": "member-dashboard",
+      "title": "Member Dashboard (/api/members/profile)",
+      "connections": 10,
+      "duration": 5,
+      "requests": {
+        "total": 7366,
+        "perSecond": 1473.2,
+        "perSecondMax": 1700
+      },
+      "latency": {
+        "p50": 5,
+        "p75": 7,
+        "p95": 0,
+        "p99": 20,
+        "max": 53,
+        "mean": 6.29
+      },
+      "throughput": {
+        "totalMB": "5.63",
+        "perSecondKB": "1153.90"
+      },
+      "errors": {
+        "count": 0,
+        "rate": "0.00%",
+        "timeouts": 0,
+        "non2xx": 7366,
+        "note": "Error rate excludes expected non-2xx (401/403/429) — only network errors and timeouts counted"
+      },
+      "statusCodes": {
+        "404": {
+          "count": 7366
+        }
+      }
+    }
+  ],
+  "bottlenecks": []
+}

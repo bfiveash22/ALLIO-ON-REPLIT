@@ -1,0 +1,144 @@
+{
+  "meta": {
+    "generatedAt": "2026-03-23T06:33:38.784Z",
+    "baseUrl": "http://localhost:8080",
+    "durationPerScenario": 5,
+    "concurrencyLevels": [
+      10,
+      50,
+      100
+    ],
+    "totalRuntimeMs": 19230
+  },
+  "summary": {
+    "totalScenarios": 1,
+    "totalRuns": 3,
+    "criticalIssues": 3,
+    "warnings": 0,
+    "status": "FAIL"
+  },
+  "results": [
+    {
+      "scenario": "auth-login",
+      "title": "Auth Flow (/api/auth/login)",
+      "connections": 10,
+      "duration": 5,
+      "requests": {
+        "total": 23245,
+        "perSecond": 4649.8,
+        "perSecondMax": 4949
+      },
+      "latency": {
+        "p50": 1,
+        "p75": 2,
+        "p95": 0,
+        "p99": 5,
+        "max": 26,
+        "mean": 1.62
+      },
+      "throughput": {
+        "totalMB": "18.38",
+        "perSecondKB": "3763.80"
+      },
+      "errors": {
+        "count": 23245,
+        "rate": "100.00%",
+        "timeouts": 0,
+        "non2xx": 23245
+      },
+      "statusCodes": {
+        "429": {
+          "count": 23245
+        }
+      }
+    },
+    {
+      "scenario": "auth-login",
+      "title": "Auth Flow (/api/auth/login)",
+      "connections": 50,
+      "duration": 5,
+      "requests": {
+        "total": 26712,
+        "perSecond": 5343.6,
+        "perSecondMax": 5640
+      },
+      "latency": {
+        "p50": 8,
+        "p75": 10,
+        "p95": 0,
+        "p99": 19,
+        "max": 55,
+        "mean": 8.9
+      },
+      "throughput": {
+        "totalMB": "21.12",
+        "perSecondKB": "4325.00"
+      },
+      "errors": {
+        "count": 26712,
+        "rate": "100.00%",
+        "timeouts": 0,
+        "non2xx": 26712
+      },
+      "statusCodes": {
+        "429": {
+          "count": 26712
+        }
+      }
+    },
+    {
+      "scenario": "auth-login",
+      "title": "Auth Flow (/api/auth/login)",
+      "connections": 100,
+      "duration": 5,
+      "requests": {
+        "total": 26637,
+        "perSecond": 5327.6,
+        "perSecondMax": 5698
+      },
+      "latency": {
+        "p50": 18,
+        "p75": 19,
+        "p95": 0,
+        "p99": 38,
+        "max": 99,
+        "mean": 18.46
+      },
+      "throughput": {
+        "totalMB": "21.06",
+        "perSecondKB": "4313.20"
+      },
+      "errors": {
+        "count": 26637,
+        "rate": "100.00%",
+        "timeouts": 0,
+        "non2xx": 26637
+      },
+      "statusCodes": {
+        "429": {
+          "count": 26637
+        }
+      }
+    }
+  ],
+  "bottlenecks": [
+    {
+      "severity": "CRITICAL",
+      "scenario": "auth-login",
+      "connections": 10,
+      "issue": "High error rate: 100.00% (threshold: 10%)"
+    },
+    {
+      "severity": "CRITICAL",
+      "scenario": "auth-login",
+      "connections": 50,
+      "issue": "High error rate: 100.00% (threshold: 10%)"
+    },
+    {
+      "severity": "CRITICAL",
+      "scenario": "auth-login",
+      "connections": 100,
+      "issue": "High error rate: 100.00% (threshold: 10%)"
+    }
+  ]
+}
