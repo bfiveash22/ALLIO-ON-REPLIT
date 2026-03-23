@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
@@ -9,18 +9,20 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import type { Order, Program, TrainingModule, Payment } from "@shared/schema";
+import type { Order, Program, TrainingModule, Payment, ProgramEnrollment, UserProgress } from "@shared/schema";
 import { MemberMessages } from "@/components/MemberMessages";
+import { ProtocolTimeline } from "@/components/ProtocolTimeline";
+import { HealingJourneyChart } from "@/components/HealingJourneyChart";
+import { ExpandableProtocolCard, sampleProtocols, type ProtocolCardData } from "@/components/ExpandableProtocolCard";
+import { QuickStats } from "@/components/QuickStats";
 import {
   ShoppingBag,
   GraduationCap,
   FileText,
-  Users,
   Heart,
   Shield,
   ChevronRight,
   Package,
-  Clock,
   CheckCircle2,
   Sparkles,
   Activity,
@@ -31,7 +33,6 @@ import {
   CreditCard,
   Pill,
   Syringe,
-  Calendar,
   TrendingUp,
   Leaf,
 } from "lucide-react";
@@ -120,6 +121,19 @@ const featuredPrograms = [
   },
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.07 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 18 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+};
+
 export default function MemberHomePage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
@@ -146,7 +160,7 @@ export default function MemberHomePage() {
     enabled: isAuthenticated,
   });
 
-  const { data: programs = [], isLoading: programsLoading } = useQuery<Program[]>({
+  const { data: programs = [] } = useQuery<Program[]>({
     queryKey: ["/api/programs"],
   });
 
@@ -154,10 +168,72 @@ export default function MemberHomePage() {
     queryKey: ["/api/training/modules"],
   });
 
+  const { data: enrollments = [] } = useQuery<ProgramEnrollment[]>({
+    queryKey: ["/api/my/enrollments"],
+    enabled: isAuthenticated,
+  });
+
+  const { data: trainingProgressData = [] } = useQuery<UserProgress[]>({
+    queryKey: ["/api/my/progress"],
+    enabled: isAuthenticated,
+  });
+
   const recentOrders = orders.slice(0, 3);
-  const completedModules = 0; // Training progress tracked via separate progress API
+
+  const completedModules = trainingProgressData.filter(
+    p => p.contentType === "module" && p.status === "completed"
+  ).length;
+
   const totalModules = modules.length;
   const trainingProgress = totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
+
+  const activeEnrollments = enrollments.filter(e => e.status === "active");
+  const activeProtocolCount = activeEnrollments.length > 0 ? activeEnrollments.length : sampleProtocols.length;
+
+  const primaryEnrollment = activeEnrollments[0];
+  const daysInPhase = primaryEnrollment?.startedAt
+    ? Math.floor((Date.now() - new Date(primaryEnrollment.startedAt).getTime()) / (1000 * 60 * 60 * 24))
+    : 27;
+  const primaryProgress = primaryEnrollment?.progress ?? 54;
+
+  const protocolCards: ProtocolCardData[] = useMemo(() => {
+    if (activeEnrollments.length === 0) return sampleProtocols;
+
+    const phaseStyles = [
+      { phase: "Phase 2: Rebuild", phaseColor: "text-cyan-400", phaseBg: "bg-cyan-500/10", phaseBorder: "border-cyan-500/30", phaseDot: "bg-cyan-400" },
+      { phase: "Phase 1: Detox", phaseColor: "text-amber-400", phaseBg: "bg-amber-500/10", phaseBorder: "border-amber-500/30", phaseDot: "bg-amber-400" },
+      { phase: "Phase 3: Maintain", phaseColor: "text-violet-400", phaseBg: "bg-violet-500/10", phaseBorder: "border-violet-500/30", phaseDot: "bg-violet-400" },
+    ] as const;
+
+    const programMap = new Map(programs.map(p => [p.id, p]));
+
+    return activeEnrollments.map((enrollment, idx) => {
+      const prog = programMap.get(enrollment.programId);
+      const style = phaseStyles[idx % phaseStyles.length];
+      const daysAgo = enrollment.startedAt
+        ? Math.floor((Date.now() - new Date(enrollment.startedAt).getTime()) / (1000 * 60 * 60 * 24))
+        : idx * 10 + 5;
+      const sample = sampleProtocols[idx % sampleProtocols.length];
+
+      return {
+        id: enrollment.id,
+        name: prog?.name || sample.name,
+        category: prog?.type || sample.category,
+        phase: style.phase,
+        phaseColor: style.phaseColor,
+        phaseBg: style.phaseBg,
+        phaseBorder: style.phaseBorder,
+        phaseDot: style.phaseDot,
+        progress: enrollment.progress ?? 0,
+        startedDaysAgo: daysAgo,
+        nextMilestone: sample.nextMilestone,
+        daysUntilMilestone: Math.max(1, 30 - daysAgo),
+        dailySchedule: sample.dailySchedule,
+        supplements: sample.supplements,
+        href: "/protocols",
+      };
+    });
+  }, [activeEnrollments, programs]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -189,10 +265,11 @@ export default function MemberHomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
       <div className="p-6 max-w-7xl mx-auto space-y-8">
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-2"
+          className="space-y-4"
         >
           <div className="flex items-center gap-3">
             <Badge className="gap-1 bg-violet-500/20 text-violet-300 border-violet-500/30">
@@ -206,56 +283,73 @@ export default function MemberHomePage() {
               </Badge>
             )}
           </div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent" data-testid="text-greeting">
-            {getGreeting()}, {user?.firstName || user?.wpUsername || "Member"}!
-          </h1>
-          <div className="mt-4 p-5 rounded-xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 to-transparent backdrop-blur-sm shadow-lg shadow-cyan-500/5">
-            <h2 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-cyan-400" />
-              Recommended Next Step
-            </h2>
-            {!(user as any)?.contractSigned ? (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <p className="text-sm text-amber-300">Your Private Member Association agreement needs to be signed before you can access all features.</p>
-                <Button asChild size="sm" className="bg-amber-500 hover:bg-amber-600 text-black whitespace-nowrap">
-                  <Link href="/contracts">Review Agreement</Link>
-                </Button>
-              </div>
-            ) : completedModules === 0 ? (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <p className="text-sm text-slate-300">Begin your healing journey by exploring the Training Hub and understanding the 5 Phases of Wellness.</p>
-                <Button asChild size="sm" className="bg-cyan-600 hover:bg-cyan-500 text-white whitespace-nowrap">
-                  <Link href="/training">Start Training</Link>
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <p className="text-sm text-slate-300">Great progress! Continue your education in the Training Hub or explore our advanced healing protocols.</p>
-                <Button asChild size="sm" className="bg-violet-600 hover:bg-violet-500 text-white whitespace-nowrap">
-                  <Link href="/protocols">View Protocols</Link>
-                </Button>
-              </div>
-            )}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent" data-testid="text-greeting">
+                {getGreeting()}, {user?.firstName || user?.wpUsername || "Member"}!
+              </h1>
+              <p className="text-slate-400 mt-1">Here's your healing journey at a glance</p>
+            </div>
           </div>
+
+          <QuickStats
+            activeProtocols={activeProtocolCount}
+            daysInCurrentPhase={daysInPhase}
+            nextMilestone={protocolCards[0] ? `${protocolCards[0].daysUntilMilestone}d` : "—"}
+            trainingModulesCompleted={completedModules}
+          />
         </motion.div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 items-stretch">
-          {quickActions.map((action, index) => (
-            <motion.div
-              key={action.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="h-full"
-            >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="p-5 rounded-xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 to-transparent backdrop-blur-sm shadow-lg shadow-cyan-500/5"
+        >
+          <h2 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-cyan-400" />
+            Recommended Next Step
+          </h2>
+          {!(user as any)?.contractSigned ? (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <p className="text-sm text-amber-300">Your Private Member Association agreement needs to be signed before you can access all features.</p>
+              <Button asChild size="sm" className="bg-amber-500 hover:bg-amber-600 text-black whitespace-nowrap">
+                <Link href="/contracts">Review Agreement</Link>
+              </Button>
+            </div>
+          ) : completedModules === 0 ? (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <p className="text-sm text-slate-300">Begin your healing journey by exploring the Training Hub and understanding the 5 Phases of Wellness.</p>
+              <Button asChild size="sm" className="bg-cyan-600 hover:bg-cyan-500 text-white whitespace-nowrap">
+                <Link href="/training">Start Training</Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <p className="text-sm text-slate-300">Great progress! Continue your education in the Training Hub or explore our advanced healing protocols.</p>
+              <Button asChild size="sm" className="bg-violet-600 hover:bg-violet-500 text-white whitespace-nowrap">
+                <Link href="/protocols">View Protocols</Link>
+              </Button>
+            </div>
+          )}
+        </motion.div>
+
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 items-stretch"
+        >
+          {quickActions.map((action) => (
+            <motion.div key={action.title} variants={itemVariants} className="h-full">
               <Link href={action.href} className="h-full block">
-                <Card 
+                <Card
                   className={`h-full cursor-pointer transition-all hover:scale-[1.02] bg-gradient-to-br ${action.gradient} ${action.borderColor} border backdrop-blur-sm`}
                   data-testid={`card-action-${action.title.toLowerCase().replace(/\s+/g, "-")}`}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-lg bg-white/10`}>
+                      <div className="p-3 rounded-lg bg-white/10">
                         <action.icon className={`h-5 w-5 ${action.iconColor}`} />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -269,7 +363,7 @@ export default function MemberHomePage() {
               </Link>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -286,6 +380,81 @@ export default function MemberHomePage() {
             transition={{ delay: 0.2 }}
             className="lg:col-span-2 space-y-6"
           >
+            <Card className="bg-white/5 border-white/10 backdrop-blur-sm" data-testid="card-protocol-timeline">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-white">
+                      <Activity className="h-5 w-5 text-cyan-400" />
+                      Protocol Journey
+                    </CardTitle>
+                    <CardDescription className="text-slate-400">Your active protocol phases</CardDescription>
+                  </div>
+                  <Button asChild variant="ghost" size="sm" className="text-slate-300 hover:text-white">
+                    <Link href="/protocols">
+                      View All <ArrowRight className="ml-1 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ProtocolTimeline
+                  protocolName={protocolCards[0]?.name || "Exosome Regeneration Protocol"}
+                  currentDay={Math.max(1, daysInPhase)}
+                  totalDays={
+                    primaryEnrollment != null && primaryProgress > 0
+                      ? Math.max(84, Math.round((Math.max(1, daysInPhase) / primaryProgress) * 100))
+                      : 84
+                  }
+                />
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/5 border-white/10 backdrop-blur-sm" data-testid="card-healing-journey">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-white">
+                      <TrendingUp className="h-5 w-5 text-emerald-400" />
+                      Healing Journey Metrics
+                    </CardTitle>
+                    <CardDescription className="text-slate-400">Progress over the last 8 weeks</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <HealingJourneyChart />
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/5 border-white/10 backdrop-blur-sm" data-testid="card-my-protocols">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-white">
+                      <FileText className="h-5 w-5 text-amber-400" />
+                      My Protocols
+                    </CardTitle>
+                    <CardDescription className="text-slate-400">Active protocols with daily schedules</CardDescription>
+                  </div>
+                  <Button asChild variant="ghost" size="sm" className="text-slate-300 hover:text-white">
+                    <Link href="/protocols">
+                      View All <ArrowRight className="ml-1 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {protocolCards.map((protocol, index) => (
+                  <ExpandableProtocolCard
+                    key={protocol.id}
+                    protocol={protocol}
+                    defaultExpanded={index === 0}
+                  />
+                ))}
+              </CardContent>
+            </Card>
+
             <Card data-testid="card-training-progress" className="bg-white/5 border-white/10 backdrop-blur-sm">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
