@@ -10,7 +10,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@shared/": path.resolve(__dirname, "ffpma-app/shared/"),
+      "@shared/": path.resolve(__dirname, "lib/shared/src/"),
+      "@shared": path.resolve(__dirname, "lib/shared/src"),
       "@server/": path.resolve(__dirname, "ffpma-app/server/"),
       "@db": path.resolve(__dirname, "ffpma-app/server/db.ts"),
     },

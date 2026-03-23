@@ -8,7 +8,8 @@
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --if-present run typecheck",
     "typecheck:all": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:agents": "vitest run tests/agents"
   },
   "private": true,
   "devDependencies": {
