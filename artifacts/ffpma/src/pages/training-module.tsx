@@ -1546,25 +1546,6 @@ export default function TrainingModulePage() {
     enabled: !!slug,
   });
 
-  interface CertRecord {
-    id: string;
-    certificateNumber: string | null;
-    verificationCode: string | null;
-    score: number | null;
-    issuedAt: string | null;
-    referenceTitle: string;
-    status: string;
-  }
-
-  const { data: certData } = useQuery<{ success: boolean; certifications: CertRecord[] }>({
-    queryKey: ["/api/my/certifications"],
-    enabled: isCompleted || progressData?.status === "completed",
-  });
-
-  const moduleCert = certData?.certifications?.find(
-    (c) => c.referenceTitle === module?.title && c.status === "passed"
-  );
-
   const { data: dbContent } = useQuery<ModuleContent>({
     queryKey: ["/api/training/modules", module?.id, "content"],
     queryFn: async () => {
@@ -1586,6 +1567,25 @@ export default function TrainingModulePage() {
     },
     enabled: !!module?.id,
   });
+
+  interface CertRecord {
+    id: string;
+    certificateNumber: string | null;
+    verificationCode: string | null;
+    score: number | null;
+    issuedAt: string | null;
+    referenceTitle: string;
+    status: string;
+  }
+
+  const { data: certData } = useQuery<{ success: boolean; certifications: CertRecord[] }>({
+    queryKey: ["/api/my/certifications"],
+    enabled: isCompleted || progressData?.status === "completed",
+  });
+
+  const moduleCert = certData?.certifications?.find(
+    (c) => c.referenceTitle === module?.title && c.status === "passed"
+  );
 
   const markCompleteMutation = useMutation({
     mutationFn: async () => {
