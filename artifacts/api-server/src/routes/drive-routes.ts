@@ -155,8 +155,11 @@ export function registerDriveRoutes(app: Express): void {
       const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'];
       if (!allowedMimeTypes.includes(req.file.mimetype)) return res.status(400).json({ success: false, error: "Invalid file type." });
       if (req.file.size > 100 * 1024 * 1024) return res.status(400).json({ success: false, error: "File too large. Maximum size is 100MB." });
-      const uploaderId = (req.user as any)?.id || "unknown";
-      const result = await uploadBloodAnalysisFile(req.file.buffer, req.file.originalname, req.file.mimetype, patientId || uploaderId, analysisType);
+      const r = req as any;
+      const userRoles: string[] = r.user?.wpRoles || [];
+      const isPrivileged = userRoles.some((role: string) => ['administrator', 'shop_manager', 'admin', 'trustee'].includes(role));
+      const resolvedPatientId = isPrivileged && patientId ? patientId : (r.user?.id?.toString() || "unknown");
+      const result = await uploadBloodAnalysisFile(req.file.buffer, req.file.originalname, req.file.mimetype, resolvedPatientId, analysisType);
       res.json(result);
     } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
   });
