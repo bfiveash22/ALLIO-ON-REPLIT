@@ -1558,7 +1558,7 @@ export default function TrainingModulePage() {
 
   const { data: certData } = useQuery<{ success: boolean; certifications: CertRecord[] }>({
     queryKey: ["/api/my/certifications"],
-    enabled: isCompleted || false,
+    enabled: isCompleted || progressData?.status === "completed",
   });
 
   const moduleCert = certData?.certifications?.find(
@@ -1892,7 +1892,7 @@ export default function TrainingModulePage() {
           )}
           {alreadyCompleted ? "Completed" : markCompleteMutation.isPending ? "Saving..." : "Mark as Complete"}
         </Button>
-        {alreadyCompleted && (
+        {alreadyCompleted && moduleCert && (
           <Button
             variant="outline"
             onClick={() => setShowCertificate(true)}
