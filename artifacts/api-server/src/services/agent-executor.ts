@@ -692,7 +692,7 @@ export async function executeAgentTask(taskId: string): Promise<TaskExecutionRes
       }
 
       await storage.updateAgentTask(taskId, {
-        status: 'in_progress',
+        status: 'completed',
         progress: 100,
         outputUrl: result.outputUrl,
         outputDriveFileId: uploadResult?.id,

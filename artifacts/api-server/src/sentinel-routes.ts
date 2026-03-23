@@ -538,17 +538,7 @@ export function registerSentinelRoutes(app: Express): void {
         return res.status(400).json({ error: 'Either "prompt" or "description" is required' });
       }
 
-      const status = await canvaAgent.getStatus();
-      if (!status.available) {
-        return res.status(503).json({
-          error: 'Canva agent is not ready',
-          details: status.error,
-          browserUseInstalled: status.browserUseInstalled,
-          browserUseApiKeyConfigured: status.browserUseApiKeyConfigured,
-          sessionConfigured: status.sessionConfigured,
-        });
-      }
-
+      const canvaStatus = await canvaAgent.getStatus();
       const taskTitle = title || 'Canva Design Generation';
       const taskDescription = description || prompt;
 
@@ -562,6 +552,25 @@ export function registerSentinelRoutes(app: Express): void {
       });
 
       console.log(`[CANVA-API] Created task ${task.id} for Canva generation: ${taskTitle}`);
+
+      if (!canvaStatus.available) {
+        const errorNote = `[PREREQUISITE CHECK FAILED: ${canvaStatus.error || 'Canva agent not ready'}. Task queued but will fail until prerequisites are met.]`;
+        await storage.updateAgentTask(task.id, {
+          description: `${taskDescription}\n\n${errorNote}`,
+        });
+        console.warn(`[CANVA-API] Task ${task.id} created with prerequisite warning: ${canvaStatus.error}`);
+        return res.status(202).json({
+          taskId: task.id,
+          agentId: 'PIXEL',
+          status: 'queued_with_warnings',
+          message: `PIXEL task queued but Canva prerequisites are not met. Poll task status at GET /api/sentinel/tasks/${task.id}`,
+          prerequisites: {
+            playwrightAvailable: canvaStatus.browserUseInstalled,
+            sessionConfigured: canvaStatus.sessionConfigured,
+            error: canvaStatus.error,
+          },
+        });
+      }
 
       executeAgentTask(task.id).then((result) => {
         console.log(`[CANVA-API] Task ${task.id} completed:`, result.success ? 'success' : result.error);
@@ -580,6 +589,93 @@ export function registerSentinelRoutes(app: Express): void {
     }
   });
 
+  // Dedicated PIXEL design task trigger with explicit prerequisite validation
+  app.post('/api/sentinel/pixel/trigger', adminOnly, async (req: Request, res: Response) => {
+    try {
+      const { prompt, title, description, priority, skipPrerequisiteCheck } = req.body;
+
+      if (!prompt && !description) {
+        return res.status(400).json({
+          error: 'Either "prompt" or "description" is required',
+          example: { prompt: 'Create a logo for FFPMA healing brand', title: 'FFPMA Logo Design' },
+        });
+      }
+
+      // Always validate prerequisites and report them
+      const canvaStatus = await canvaAgent.getStatus();
+      const prerequisites = {
+        // playwrightInstalled: true when the playwright package is importable
+        playwrightInstalled: canvaStatus.browserUseInstalled,
+        // browserLaunchable: true when Chromium can actually be launched (subset of playwrightInstalled)
+        browserLaunchable: canvaStatus.available || canvaStatus.browserUseInstalled,
+        sessionConfigured: canvaStatus.sessionConfigured,
+        ready: canvaStatus.available,
+        error: canvaStatus.error,
+      };
+
+      if (!canvaStatus.available && !skipPrerequisiteCheck) {
+        return res.status(503).json({
+          error: 'Canva prerequisites not met. Task not created.',
+          prerequisites,
+          hint: canvaStatus.sessionConfigured
+            ? 'Playwright/Chromium is not available. Ensure chromium browsers are installed.'
+            : 'CANVA_SESSION_ID environment variable is not set. Configure it to enable Canva automation.',
+          bypass: 'Pass "skipPrerequisiteCheck": true to queue the task anyway (it will fail at execution time with a clear error).',
+        });
+      }
+
+      const taskTitle = title || (prompt ? `PIXEL Design: ${prompt.substring(0, 60)}` : 'PIXEL Design Task');
+      const taskDescription = description || prompt;
+
+      const task = await storage.createAgentTask({
+        agentId: 'PIXEL',
+        division: 'marketing',
+        title: taskTitle,
+        description: taskDescription,
+        status: 'pending',
+        priority: priority ?? 2,
+      });
+
+      console.log(`[PIXEL-TRIGGER] Created task ${task.id}: "${taskTitle}"`);
+
+      if (!canvaStatus.available && skipPrerequisiteCheck) {
+        const errorNote = `[PREREQUISITE CHECK SKIPPED: ${canvaStatus.error || 'Canva not ready'}. Task will fail at execution unless prerequisites are resolved.]`;
+        await storage.updateAgentTask(task.id, {
+          description: `${taskDescription}\n\n${errorNote}`,
+        });
+      }
+
+      // Immediately dispatch to agent executor (non-blocking)
+      executeAgentTask(task.id).then((result) => {
+        if (result.success) {
+          console.log(`[PIXEL-TRIGGER] Task ${task.id} succeeded. Output: ${result.outputUrl}`);
+        } else {
+          console.error(`[PIXEL-TRIGGER] Task ${task.id} failed: ${result.error}`);
+        }
+      }).catch((err) => {
+        console.error(`[PIXEL-TRIGGER] Task ${task.id} executor error: ${err.message}`);
+      });
+
+      // When skipPrerequisiteCheck was used with an unavailable agent, use 'dispatched_with_warnings'
+      // to distinguish from a clean dispatch (all prerequisites met)
+      const responseStatus = canvaStatus.available
+        ? 'dispatched'
+        : (skipPrerequisiteCheck ? 'dispatched_with_warnings' : 'queued_with_warnings');
+
+      res.status(202).json({
+        taskId: task.id,
+        agentId: 'PIXEL',
+        service: 'canva-agent',
+        status: responseStatus,
+        message: `PIXEL task dispatched. Poll status at GET /api/sentinel/tasks/${task.id}`,
+        prerequisites,
+        pollUrl: `/api/sentinel/tasks/${task.id}`,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   console.log('[SENTINEL] Orchestrator routes registered (admin-protected)');
-  console.log('[SENTINEL] Canva API routes registered: GET /api/canva/status, POST /api/canva/generate');
+  console.log('[SENTINEL] Canva API routes registered: GET /api/canva/status, POST /api/canva/generate, POST /api/sentinel/pixel/trigger');
 }
