@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRoute } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,17 +20,17 @@ interface VerificationResult {
 
 export default function VerifyCertificatePage() {
   const [, params] = useRoute("/verify/:code");
-  const [manualCode, setManualCode] = useState("");
+  const codeFromUrl = params?.code;
+  const initializedFromUrl = useRef(false);
+  const [inputCode, setInputCode] = useState(codeFromUrl || "");
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [lastSearchedCode, setLastSearchedCode] = useState<string | null>(null);
-
-  const codeFromUrl = params?.code;
+  const [hasSearched, setHasSearched] = useState(false);
 
   const verify = useCallback(async (code: string) => {
     if (!code.trim()) return;
     setLoading(true);
-    setLastSearchedCode(code.trim());
+    setHasSearched(true);
     try {
       const res = await fetch(`/api/certifications/verify/${encodeURIComponent(code.trim())}`);
       const data = await res.json();
@@ -43,10 +43,12 @@ export default function VerifyCertificatePage() {
   }, []);
 
   useEffect(() => {
-    if (codeFromUrl && codeFromUrl !== lastSearchedCode) {
+    if (codeFromUrl && !initializedFromUrl.current) {
+      initializedFromUrl.current = true;
+      setInputCode(codeFromUrl);
       verify(codeFromUrl);
     }
-  }, [codeFromUrl, lastSearchedCode, verify]);
+  }, [codeFromUrl, verify]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
@@ -67,13 +69,13 @@ export default function VerifyCertificatePage() {
             <div className="flex gap-2">
               <Input
                 placeholder="Enter verification code"
-                value={manualCode || codeFromUrl || ""}
-                onChange={(e) => setManualCode(e.target.value)}
+                value={inputCode}
+                onChange={(e) => setInputCode(e.target.value)}
                 className="bg-slate-800 border-white/10 text-white placeholder:text-slate-500"
-                onKeyDown={(e) => e.key === "Enter" && verify(manualCode || codeFromUrl || "")}
+                onKeyDown={(e) => e.key === "Enter" && verify(inputCode)}
               />
               <Button
-                onClick={() => verify(manualCode || codeFromUrl || "")}
+                onClick={() => verify(inputCode)}
                 disabled={loading}
                 className="bg-cyan-600 hover:bg-cyan-700"
               >
@@ -85,7 +87,7 @@ export default function VerifyCertificatePage() {
               </Button>
             </div>
 
-            {lastSearchedCode && result && (
+            {hasSearched && result && (
               <div className="mt-4">
                 {result.success && result.valid ? (
                   <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
