@@ -363,8 +363,9 @@ function OrderLabsSection() {
   const [notes, setNotes] = useState("");
   const [panelSearch, setPanelSearch] = useState("");
 
-  const { data: rupaStatus } = useQuery<{ success: boolean; available: boolean; error?: string }>({
+  const { data: rupaStatus, isError: rupaStatusError } = useQuery<{ success: boolean; available: boolean; error?: string }>({
     queryKey: ["/api/doctor/rupa-health/status"],
+    retry: 1,
   });
 
   const { data: savedPanelsData } = useQuery<{ success: boolean; panels: SavedPanel[] }>({
@@ -425,12 +426,74 @@ function OrderLabsSection() {
         <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
           <Send className="w-5 h-5 text-violet-400" />
           Order Lab Tests
-          {rupaStatus?.available ? (
-            <Badge className="bg-emerald-500/20 text-emerald-300 text-xs">Rupa Connected</Badge>
+          {rupaStatusError ? (
+            <Badge className="bg-red-500/20 text-red-300 text-xs">
+              <AlertCircle className="w-3 h-3 mr-1" />
+              Rupa Status Unavailable
+            </Badge>
+          ) : rupaStatus === undefined ? (
+            <Badge className="bg-white/10 text-white/50 text-xs">Checking Rupa…</Badge>
+          ) : rupaStatus?.available ? (
+            <Badge className="bg-emerald-500/20 text-emerald-300 text-xs">
+              <CheckCircle2 className="w-3 h-3 mr-1" />
+              Rupa Connected
+            </Badge>
           ) : (
-            <Badge className="bg-amber-500/20 text-amber-300 text-xs">Rupa Not Configured</Badge>
+            <Badge className="bg-amber-500/20 text-amber-300 text-xs">
+              <AlertCircle className="w-3 h-3 mr-1" />
+              Rupa — Manual Ordering
+            </Badge>
           )}
         </h3>
+
+        {/* Rupa Health Status Banner — query error */}
+        {rupaStatusError && (
+          <div className="mb-4 p-3 rounded-lg border bg-red-500/10 border-red-500/20 text-red-200 text-sm">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium">Unable to retrieve Rupa Health status</p>
+                <p className="text-xs text-red-200/70 mt-0.5">
+                  The status endpoint returned an error (check API server or authentication). Lab orders will be processed in HITL mode — submitted manually at{' '}
+                  <a href="https://app.rupahealth.com/orders/new" target="_blank" rel="noopener noreferrer" className="underline text-red-300">app.rupahealth.com</a>.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Rupa Health Status Banner */}
+        {rupaStatus !== undefined && (
+          <div className={`mb-4 p-3 rounded-lg border text-sm ${
+            rupaStatus.available
+              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
+              : 'bg-amber-500/10 border-amber-500/20 text-amber-200'
+          }`}>
+            {rupaStatus.available ? (
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium">Rupa Health integration active</p>
+                  <p className="text-xs text-emerald-300/70 mt-0.5">Lab orders will be automatically submitted via Rupa Health. Live order tracking available.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium">Browser automation unavailable — HITL mode active</p>
+                  <p className="text-xs text-amber-200/70 mt-0.5">
+                    {rupaStatus.error
+                      ? `Reason: ${rupaStatus.error}`
+                      : 'Rupa Health credentials (RUPA_USERNAME / RUPA_PASSWORD) are not configured.'}
+                    {' '}Lab orders will be sent to Trustee for manual placement at{' '}
+                    <a href="https://app.rupahealth.com/orders/new" target="_blank" rel="noopener noreferrer" className="underline text-amber-300">app.rupahealth.com</a>.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="space-y-2">

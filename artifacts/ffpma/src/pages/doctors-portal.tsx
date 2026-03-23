@@ -1017,6 +1017,194 @@ function DoctorProtocolReviewQueue() {
   );
 }
 
+function KathrynSmithProtocolSection() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [rebuildStatus, setRebuildStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [slideStatus, setSlideStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [rebuildMessage, setRebuildMessage] = useState<string | null>(null);
+  const [slideResult, setSlideResult] = useState<{ webViewLink: string; slideCount: number } | null>(null);
+  const [slideError, setSlideError] = useState<string | null>(null);
+
+  const handleRebuildProtocol = async () => {
+    setRebuildStatus("loading");
+    setRebuildMessage(null);
+    try {
+      const res = await apiRequest("POST", "/api/protocol-assembly/rebuild-kathryn-smith", {});
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Rebuild failed");
+      setRebuildStatus("success");
+      setRebuildMessage(data.message || "Protocol rebuild started. Check the pipeline section below for progress.");
+      queryClient.invalidateQueries({ queryKey: ["/api/pipeline"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/protocol-assembly/protocols"] });
+      toast({ title: "Kathryn Smith Protocol Rebuild Started", description: "The protocol rebuild is running in the background." });
+    } catch (err: any) {
+      setRebuildStatus("error");
+      setRebuildMessage(err.message || "An unexpected error occurred.");
+      toast({ title: "Rebuild Failed", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleGenerateSlides = async () => {
+    setSlideStatus("loading");
+    setSlideResult(null);
+    setSlideError(null);
+    try {
+      const res = await apiRequest("POST", "/api/protocol-slides/kathryn-smith", {});
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Slide generation failed");
+      setSlideStatus("success");
+      setSlideResult({ webViewLink: data.webViewLink, slideCount: data.slideCount });
+      toast({ title: "Google Slides Generated!", description: `${data.slideCount} slides created and available in Google Drive.` });
+    } catch (err: any) {
+      setSlideStatus("error");
+      setSlideError(err.message || "Slide generation failed. Check Google Drive credentials.");
+      toast({ title: "Slide Generation Failed", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const FIVE_R_TIMELINE = [
+    { phase: "REMOVE", weeks: "Weeks 1-3", color: "text-red-400", bg: "bg-red-500/10 border-red-500/20", desc: "Eliminate mycotoxins, amalgam mercury, parasites, inflammatory foods" },
+    { phase: "RESTORE", weeks: "Weeks 3-5", color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20", desc: "Restore gut integrity, microbiome, BPC-157, bone broth, probiotics" },
+    { phase: "REPLENISH", weeks: "Weeks 5-8", color: "text-yellow-400", bg: "bg-yellow-500/10 border-yellow-500/20", desc: "Copper, iodine, selenium, 90 essentials, IV Vitamin C, zinc" },
+    { phase: "REGENERATE", weeks: "Weeks 8-11", color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", desc: "Thymosin Alpha-1, ECS cannabinoids, bioregulators, HBOT" },
+    { phase: "REBALANCE", weeks: "Weeks 11-13+", color: "text-cyan-400", bg: "bg-cyan-500/10 border-cyan-500/20", desc: "Trauma resolution, hormone balancing, long-term maintenance" },
+  ];
+
+  return (
+    <Card className="bg-gradient-to-br from-rose-500/5 to-pink-500/5 border-rose-500/20 p-5">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="p-2 rounded-xl bg-rose-500/20 border border-rose-500/30">
+          <Heart className="w-5 h-5 text-rose-400" />
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-3">
+            <h3 className="font-bold text-lg text-white">Kathryn Smith — Active Case</h3>
+            <Badge className="bg-rose-500/20 text-rose-300 text-xs">ER+/PR+/HER2+ Breast Cancer</Badge>
+            <Badge className="bg-amber-500/20 text-amber-300 text-xs">Feb 26, 2026</Badge>
+          </div>
+          <p className="text-xs text-white/50 mt-0.5">90-Day Healing Protocol · Fort Worth, TX · Consultation: Michael Blake / FFPMA</p>
+        </div>
+      </div>
+
+      {/* 5-Phase Timeline */}
+      <div className="mb-5">
+        <p className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3">5 Rs Protocol Timeline</p>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+          {FIVE_R_TIMELINE.map((phase) => (
+            <div key={phase.phase} className={`p-3 rounded-lg border ${phase.bg}`}>
+              <p className={`text-xs font-bold ${phase.color} mb-1`}>{phase.phase}</p>
+              <p className="text-[10px] text-white/50 mb-1">{phase.weeks}</p>
+              <p className="text-[10px] text-white/70 leading-relaxed">{phase.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Root Cause Summary */}
+      <div className="mb-5 p-3 rounded-lg bg-black/30 border border-white/10">
+        <p className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">Root Cause Assessment</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+          {[
+            "Childhood mold exposure (tetracycline, gray teeth)",
+            "Sexual abuse trauma → early puberty (age 10) → hormone disruption",
+            "Amalgam filling (mercury) — still present, requires removal",
+            "Copper/iodine/selenium deficiency → p53/p21 gene dysfunction",
+            "First cancer (2018) lumpectomy — root cause not addressed",
+            "HER2+ recurrence (Feb 2026) with lymph node involvement",
+          ].map((cause, i) => (
+            <div key={i} className="flex items-start gap-1.5 text-white/70">
+              <AlertCircle className="w-3 h-3 text-rose-400 flex-shrink-0 mt-0.5" />
+              <span>{cause}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Protocol Rebuild */}
+        <div className="p-4 rounded-xl bg-black/20 border border-white/10">
+          <div className="flex items-center gap-2 mb-3">
+            <RotateCcw className="w-4 h-4 text-violet-400" />
+            <p className="font-semibold text-sm text-white">Rebuild 90-Day Protocol</p>
+          </div>
+          <p className="text-xs text-white/50 mb-3">
+            Re-analyzes the Kathryn Smith timeline file and regenerates her full protocol through the DR_FORMULA pipeline. Results appear in the pipeline section below.
+          </p>
+
+          {rebuildStatus === "success" && rebuildMessage && (
+            <div className="mb-3 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-emerald-300">{rebuildMessage}</p>
+            </div>
+          )}
+          {rebuildStatus === "error" && rebuildMessage && (
+            <div className="mb-3 p-2 rounded-lg bg-red-500/10 border border-red-500/20 flex items-start gap-2">
+              <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-red-300">{rebuildMessage}</p>
+            </div>
+          )}
+
+          <Button
+            onClick={handleRebuildProtocol}
+            disabled={rebuildStatus === "loading"}
+            className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 disabled:opacity-50"
+          >
+            {rebuildStatus === "loading" ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Rebuilding Protocol…</>
+            ) : (
+              <><RotateCcw className="w-4 h-4 mr-2" /> Rebuild Protocol</>
+            )}
+          </Button>
+        </div>
+
+        {/* Slide Generation */}
+        <div className="p-4 rounded-xl bg-black/20 border border-white/10">
+          <div className="flex items-center gap-2 mb-3">
+            <Video className="w-4 h-4 text-blue-400" />
+            <p className="font-semibold text-sm text-white">Generate Google Slides</p>
+          </div>
+          <p className="text-xs text-white/50 mb-3">
+            Creates a full-length FFPMA-branded Google Slides presentation of Kathryn's protocol and uploads it to the Allio Drive folder.
+          </p>
+
+          {slideStatus === "success" && slideResult && (
+            <div className="mb-3 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-xs text-emerald-300 mb-1">{slideResult.slideCount} slides generated</p>
+                <a href={slideResult.webViewLink} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 underline flex items-center gap-1">
+                  <ExternalLink className="w-3 h-3" />
+                  Open in Google Slides
+                </a>
+              </div>
+            </div>
+          )}
+          {slideStatus === "error" && slideError && (
+            <div className="mb-3 p-2 rounded-lg bg-red-500/10 border border-red-500/20 flex items-start gap-2">
+              <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-red-300">{slideError}</p>
+            </div>
+          )}
+
+          <Button
+            onClick={handleGenerateSlides}
+            disabled={slideStatus === "loading"}
+            className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 disabled:opacity-50"
+          >
+            {slideStatus === "loading" ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating Slides…</>
+            ) : (
+              <><Video className="w-4 h-4 mr-2" /> Generate Slides</>
+            )}
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 function DoctorSettingsTab() {
   const { toast } = useToast();
   const [memberType, setMemberType] = useState<'member' | 'info_only'>('member');
@@ -1995,6 +2183,8 @@ export default function DoctorsPortal() {
             </TabsContent>
 
             <TabsContent value="protocols" className="space-y-6">
+              <KathrynSmithProtocolSection />
+
               <GenerateProtocolPipelineSection />
 
               <DoctorProtocolReviewQueue />

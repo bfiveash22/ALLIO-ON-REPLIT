@@ -497,7 +497,7 @@ export async function registerProtocolAssemblyRoutes(app: Express): Promise<void
   app.post('/api/protocol-assembly/rebuild-kathryn-smith', async (req: Request, res: Response, next) => {
     const internalKey = req.headers['x-internal-key'] || req.body?.internalKey;
     if (internalKey === process.env.CORE_API_KEY) return next();
-    requireAuth(req, res, () => requireRole('admin', 'trustee')(req, res, next));
+    requireAuth(req, res, () => requireRole('admin', 'trustee', 'doctor')(req, res, next));
   }, async (_req: Request, res: Response) => {
     try {
       const { rebuildKathrynSmithProtocol } = await import('../services/kathryn-smith-protocol');
