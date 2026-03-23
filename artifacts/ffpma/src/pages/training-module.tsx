@@ -1606,6 +1606,7 @@ export default function TrainingModulePage() {
     onSuccess: async () => {
       setIsCompleted(true);
       queryClient.invalidateQueries({ queryKey: ["/api/learning/progress", module?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/my/certifications"] });
       toast({
         title: "Module Completed!",
         description: `You've successfully completed "${module?.title}".`,
