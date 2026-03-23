@@ -51,11 +51,11 @@ const mcpServerRegistry: McpServerConfig[] = [
     name: 'Web Fetch MCP Server',
     description: 'Fetch and extract content from web URLs. Useful for retrieving documentation, web pages, and API responses.',
     transport: 'stdio',
-    enabled: true,
+    enabled: false,
     allowedDivisions: ['engineering', 'science', 'executive'],
     stdio: {
       command: 'npx',
-      args: ['-y', '@modelcontextprotocol/server-fetch'],
+      args: ['-y', '@anthropic-ai/mcp-server-fetch'],
     },
     healthCheckTimeoutMs: 15000,
   },

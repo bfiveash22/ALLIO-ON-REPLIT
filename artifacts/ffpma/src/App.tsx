@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { I18nextProvider } from "react-i18next";
 import i18n from "./lib/i18n";
+import { ErrorBoundary } from "@/components/error-boundary";
 import {
   SidebarProvider,
   SidebarTrigger,
@@ -689,20 +690,24 @@ function Router() {
 
 function App() {
   return (
-    <I18nextProvider i18n={i18n}>
-      <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider defaultTheme="dark">
-            <TooltipProvider>
-              <Toaster />
-              <Router />
-              <GlobalAgentChat />
-              <DevNavPanel />
-            </TooltipProvider>
-          </ThemeProvider>
-        </QueryClientProvider>
-      </Suspense>
-    </I18nextProvider>
+    <ErrorBoundary>
+      <I18nextProvider i18n={i18n}>
+        <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider defaultTheme="dark">
+              <TooltipProvider>
+                <Toaster />
+                <ErrorBoundary>
+                  <Router />
+                </ErrorBoundary>
+                <GlobalAgentChat />
+                <DevNavPanel />
+              </TooltipProvider>
+            </ThemeProvider>
+          </QueryClientProvider>
+        </Suspense>
+      </I18nextProvider>
+    </ErrorBoundary>
   );
 }
 

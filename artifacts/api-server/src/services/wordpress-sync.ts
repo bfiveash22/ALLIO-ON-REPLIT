@@ -484,8 +484,12 @@ export async function syncLibraryContent(): Promise<number> {
       }
       
       page++;
-    } catch (error) {
-      console.log(`Finished syncing posts (page ${page}):`, error);
+    } catch (error: any) {
+      if (error?.message?.includes('400')) {
+        console.log(`WordPress returned 400 on page ${page} — no more posts available.`);
+      } else {
+        console.log(`WordPress sync stopped at page ${page}: ${error?.message || error}`);
+      }
       break;
     }
   }

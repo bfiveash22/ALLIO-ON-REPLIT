@@ -325,6 +325,9 @@ export function setupWorkingAuth(app: any) {
 
 // Auth middleware for protecting routes
 export function requireAuth(req: any, res: any, next: any) {
+  if (typeof req.isAuthenticated !== 'function') {
+    return res.status(500).json({ error: 'Auth middleware not initialized — route registered before setupWorkingAuth' });
+  }
   if (!req.isAuthenticated()) {
     return res.status(401).json({ error: 'Authentication required' });
   }
@@ -333,6 +336,9 @@ export function requireAuth(req: any, res: any, next: any) {
 
 export function requireRole(...roles: string[]) {
   return async (req: any, res: any, next: any) => {
+    if (typeof req.isAuthenticated !== 'function') {
+      return res.status(500).json({ error: 'Auth middleware not initialized — route registered before setupWorkingAuth' });
+    }
     // API KEY FALLBACK FOR SENTINEL/INTERNAL AGENT ENDPOINTS
     if (!req.isAuthenticated()) {
       if (roles.includes('admin')) {

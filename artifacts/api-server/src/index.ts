@@ -125,8 +125,6 @@ export function log(message: string, source = "express") {
 
 app.use(requestLogger);
 
-registerHealthRoutes(app);
-
 (async () => {
   try {
     const { db } = await import('./db');
@@ -149,6 +147,8 @@ registerHealthRoutes(app);
 
   const { setupWorkingAuth } = await import("./working-auth");
   await setupWorkingAuth(app);
+
+  registerHealthRoutes(app);
 
   const { registerSentinelRoutes } = await import("./sentinel-routes");
   registerSentinelRoutes(app);
