@@ -53,10 +53,17 @@ if [ "$API_RUNNING" = true ]; then
   check_endpoint "/api/health" "200"
   check_endpoint "/api/health/details" "401"
   check_endpoint "/api/catalog" "200"
+  check_endpoint "/api/products" "200"
+  check_endpoint "/api/categories" "200"
   check_endpoint "/api/programs" "200"
   check_endpoint "/api/training/modules" "200"
   check_endpoint "/api/frequencies" "200"
   check_endpoint "/api/canva/status" "200"
+  check_endpoint "/api/orders" "401"
+  check_endpoint "/api/admin/members" "401"
+  check_endpoint "/api/admin/contracts" "401"
+  check_endpoint "/api/chat/rooms" "401"
+  check_endpoint "/api/library" "401"
 
   if [ "$API_ERRORS" -gt 0 ]; then
     echo "  [FAIL] $API_ERRORS endpoint(s) returned unexpected status codes"
